@@ -2,22 +2,32 @@ extern crate ggez;
 extern crate specs;
 
 use ggez::conf::{WindowMode, WindowSetup};
-use ggez::graphics::{DrawParam, Rect, Text};
+use ggez::graphics::{DrawParam, Image, Rect, Text};
+use ggez::nalgebra::Point2;
+use specs::prelude::*;
+
+mod components;
+
+use components::{Position, Sprite};
 
 struct Game<'a, 'b> {
-  dispatcher: specs::Dispatcher<'a, 'b>,
   world: specs::World,
+  dispatcher: specs::Dispatcher<'a, 'b>,
   fps_text: Text,
 }
 
 impl<'a, 'b> Game<'a, 'b> {
   fn new() -> ggez::GameResult<Game<'a, 'b>> {
+    let mut world = specs::World::new();
+
+    world.register::<Position>();
+    world.register::<Sprite>();
+
     let dispatcher = specs::DispatcherBuilder::new().build();
-    let world = specs::World::new();
 
     Ok(Game {
-      dispatcher,
       world,
+      dispatcher,
       fps_text: Text::new("FPS: ?"),
     })
   }
@@ -42,8 +52,27 @@ impl<'a, 'b> ggez::event::EventHandler for Game<'a, 'b> {
   fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()> {
     ggez::graphics::clear(ctx, ggez::graphics::BLACK);
 
+    // Draw all sprites with positions.
+    let sprites = self.world.read_storage::<Sprite>();
+    let positions = self.world.read_storage::<Position>();
+
+    let mut data = (&sprites, &positions).join().collect::<Vec<_>>();
+
+    data.sort_by(|(_, a), (_, b)| a.y.partial_cmp(&b.y).unwrap_or(std::cmp::Ordering::Equal));
+
+    for (sprite, position) in data {
+      ggez::graphics::draw(
+        ctx,
+        &sprite.image,
+        DrawParam::default()
+          .color(sprite.color)
+          .src(sprite.rect)
+          .dest(Point2::new(position.x, position.y - position.z)),
+      )?;
+    }
+
     // Draw the FPS counter in the top left of the screen.
-    ggez::graphics::draw(ctx, &mut self.fps_text, DrawParam::default())?;
+    ggez::graphics::draw(ctx, &self.fps_text, DrawParam::default())?;
 
     ggez::graphics::present(ctx)?;
 
@@ -60,14 +89,59 @@ impl<'a, 'b> ggez::event::EventHandler for Game<'a, 'b> {
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<std::error::Error>> {
   // Create a new ggez Context.
-  let (mut ctx, mut event_loop) = ggez::ContextBuilder::new("nova", "bfrydl")
+  let (mut ctx, mut event_loop) = {
+    let mut builder = ggez::ContextBuilder::new("nova", "bfrydl")
     // Create a resizable window with vsync disabled.
     .window_mode(WindowMode::default().resizable(true))
-    .window_setup(WindowSetup::default().title("nova").vsync(false))
-    .build()?;
+    .window_setup(WindowSetup::default().title("nova").vsync(false));
+
+    // Add the resources dir for development.
+    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+      let mut path = std::path::PathBuf::from(manifest_dir);
+
+      path.push("resources");
+      builder = builder.add_resource_path(path);
+    }
+
+    builder.build()?
+  };
 
   // Create a new game instance.
   let mut game = Game::new()?;
+
+  let image = Image::new(&mut ctx, "/charizard.png")?;
+  let width = image.width();
+  let height = image.height();
+
+  game
+    .world
+    .create_entity()
+    .with(Position {
+      x: 0.0,
+      y: 0.0,
+      z: 0.0,
+    })
+    .with(Sprite {
+      image,
+      color: ggez::graphics::WHITE,
+      rect: Rect::new(0.0, 0.0, width as f32, height as f32),
+    })
+    .build();
+
+  game
+    .world
+    .create_entity()
+    .with(Position {
+      x: 0.0,
+      y: -32.0,
+      z: 0.0,
+    })
+    .with(Sprite {
+      image: Image::new(&mut ctx, "/venusaur.png")?,
+      color: ggez::graphics::WHITE,
+      rect: Rect::new(0.0, 0.0, width as f32, height as f32),
+    })
+    .build();
 
   // Run the main event loop.
   ggez::event::run(&mut ctx, &mut event_loop, &mut game)?;
