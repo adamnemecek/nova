@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 
 [dependencies]
-ggez = "0.4.4"
+ggez = { git = "https://github.com/ggez/ggez.git", branch = "devel" }
 specs = "0.12.2"
