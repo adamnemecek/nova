@@ -1,0 +1,8 @@
+[package]
+name = "nova-game"
+version = "0.1.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+
+[dependencies]
+ggez = "0.4.4"
+specs = "0.12.2"
