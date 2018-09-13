@@ -1032,13 +1032,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "nova-game"
+name = "nova-engine"
 version = "0.1.0"
 dependencies = [
  "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
  "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "nova-game"
+version = "0.1.0"
+dependencies = [
+ "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
+ "nova-engine 0.1.0",
  "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

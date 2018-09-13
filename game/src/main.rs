@@ -1,18 +1,13 @@
 extern crate ggez;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_yaml;
+extern crate nova_engine;
 extern crate specs;
 
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::graphics::{DrawParam, Rect, Text};
 use ggez::nalgebra::Point2;
+use nova_engine::{core, sprites};
 use specs::prelude::*;
 use std::sync::Arc;
-
-mod core;
-mod sprites;
 
 struct Game<'a, 'b> {
   world: specs::World,
