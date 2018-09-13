@@ -2,7 +2,8 @@ use ggez;
 use serde_yaml;
 use specs::prelude::*;
 use std::error::Error;
-use std::path::PathBuf;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub use ggez::graphics::{Image, Rect};
@@ -59,15 +60,23 @@ impl Atlas {
 }
 
 /// Data loaded from a YAML file associated with an atlas.
-#[derive(Debug, Deserialize)]
-struct AtlasData {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AtlasData {
   /// Number of columns in the grid that defines the frames of the atlas.
-  columns: u16,
+  pub columns: u16,
   /// Number of rows in the grid that defines the frames of the atlas.
-  rows: u16,
+  pub rows: u16,
 }
 
 impl AtlasData {
+  pub fn save(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+    let file = File::create(path)?;
+
+    serde_yaml::to_writer(file, self)?;
+
+    Ok(())
+  }
+
   /// Converts atlas data into an atlas by calculating the rects of each frame.
   fn into_atlas(self, image: Image) -> Atlas {
     let mut frames = Vec::with_capacity((self.columns * self.rows) as usize);

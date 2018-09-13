@@ -111,26 +111,12 @@ pub fn main() -> Result<(), Box<std::error::Error>> {
     .world
     .create_entity()
     .with(core::Position {
-      x: 0.0,
-      y: 0.0,
+      x: 100.0,
+      y: 100.0,
       z: 0.0,
     })
     .with(sprites::Sprite {
-      atlas: Arc::new(sprites::Atlas::new(&mut ctx, "/charizard")?),
-      frame: 0,
-    })
-    .build();
-
-  game
-    .world
-    .create_entity()
-    .with(core::Position {
-      x: 0.0,
-      y: -10.0,
-      z: 0.0,
-    })
-    .with(sprites::Sprite {
-      atlas: Arc::new(sprites::Atlas::new(&mut ctx, "/venusaur")?),
+      atlas: Arc::new(sprites::Atlas::new(&mut ctx, "/004-fire-salamander/atlas")?),
       frame: 0,
     })
     .build();

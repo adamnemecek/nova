@@ -2,6 +2,7 @@
 members = [
   "engine",
   "game",
+  "tools/audino-import",
 ]
 
 [profile.dev]

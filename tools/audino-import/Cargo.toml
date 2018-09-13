@@ -1,0 +1,8 @@
+[package]
+name = "nova-audino-import"
+version = "0.1.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+
+[dependencies]
+nova-engine = { path = "../../engine" }
+clap = "2.32.0"
