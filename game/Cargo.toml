@@ -6,3 +6,6 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 [dependencies]
 ggez = { git = "https://github.com/ggez/ggez.git", branch = "devel" }
 specs = "0.12.2"
+serde = "1.0.78"
+serde_yaml = "0.8.3"
+serde_derive = "1.0.78"

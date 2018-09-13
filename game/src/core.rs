@@ -1,4 +1,3 @@
-use ggez::graphics::{Color, Image, Rect};
 use specs::prelude::*;
 
 /// Component that stores the position of an entity in the world.
@@ -16,15 +15,4 @@ pub struct Position {
 
 impl Component for Position {
   type Storage = VecStorage<Self>;
-}
-
-/// Component that stores information on the sprite that represents the entity.
-pub struct Sprite {
-  pub image: Image,
-  pub color: Color,
-  pub rect: Rect,
-}
-
-impl Component for Sprite {
-  type Storage = HashMapStorage<Self>;
 }

@@ -1,14 +1,18 @@
 extern crate ggez;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_yaml;
 extern crate specs;
 
 use ggez::conf::{WindowMode, WindowSetup};
-use ggez::graphics::{DrawParam, Image, Rect, Text};
+use ggez::graphics::{DrawParam, Rect, Text};
 use ggez::nalgebra::Point2;
 use specs::prelude::*;
+use std::sync::Arc;
 
-mod components;
-
-use components::{Position, Sprite};
+mod core;
+mod sprites;
 
 struct Game<'a, 'b> {
   world: specs::World,
@@ -20,8 +24,8 @@ impl<'a, 'b> Game<'a, 'b> {
   fn new() -> ggez::GameResult<Game<'a, 'b>> {
     let mut world = specs::World::new();
 
-    world.register::<Position>();
-    world.register::<Sprite>();
+    world.register::<core::Position>();
+    world.register::<sprites::Sprite>();
 
     let dispatcher = specs::DispatcherBuilder::new().build();
 
@@ -53,8 +57,8 @@ impl<'a, 'b> ggez::event::EventHandler for Game<'a, 'b> {
     ggez::graphics::clear(ctx, ggez::graphics::BLACK);
 
     // Draw all sprites with positions.
-    let sprites = self.world.read_storage::<Sprite>();
-    let positions = self.world.read_storage::<Position>();
+    let sprites = self.world.read_storage::<sprites::Sprite>();
+    let positions = self.world.read_storage::<core::Position>();
 
     let mut data = (&sprites, &positions).join().collect::<Vec<_>>();
 
@@ -63,10 +67,9 @@ impl<'a, 'b> ggez::event::EventHandler for Game<'a, 'b> {
     for (sprite, position) in data {
       ggez::graphics::draw(
         ctx,
-        &sprite.image,
+        &sprite.atlas.image,
         DrawParam::default()
-          .color(sprite.color)
-          .src(sprite.rect)
+          .src(sprite.atlas.frames[sprite.frame])
           .dest(Point2::new(position.x, position.y - position.z)),
       )?;
     }
@@ -109,37 +112,31 @@ pub fn main() -> Result<(), Box<std::error::Error>> {
   // Create a new game instance.
   let mut game = Game::new()?;
 
-  let image = Image::new(&mut ctx, "/charizard.png")?;
-  let width = image.width();
-  let height = image.height();
-
   game
     .world
     .create_entity()
-    .with(Position {
+    .with(core::Position {
       x: 0.0,
       y: 0.0,
       z: 0.0,
     })
-    .with(Sprite {
-      image,
-      color: ggez::graphics::WHITE,
-      rect: Rect::new(0.0, 0.0, width as f32, height as f32),
+    .with(sprites::Sprite {
+      atlas: Arc::new(sprites::Atlas::new(&mut ctx, "/charizard")?),
+      frame: 0,
     })
     .build();
 
   game
     .world
     .create_entity()
-    .with(Position {
+    .with(core::Position {
       x: 0.0,
-      y: -32.0,
+      y: -10.0,
       z: 0.0,
     })
-    .with(Sprite {
-      image: Image::new(&mut ctx, "/venusaur.png")?,
-      color: ggez::graphics::WHITE,
-      rect: Rect::new(0.0, 0.0, width as f32, height as f32),
+    .with(sprites::Sprite {
+      atlas: Arc::new(sprites::Atlas::new(&mut ctx, "/venusaur")?),
+      frame: 0,
     })
     .build();
 
