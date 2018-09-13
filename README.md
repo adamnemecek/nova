@@ -21,3 +21,6 @@ To create a release build, use the included `Makefile`:
 
 This currently only works on Linux (and possibly MacOS). Nova works perfectly
 fine on Windows, but the Makefile assumes Linux.
+
+[1]: https://ggez.rs/
+[2]: https://slide-rs.github.io/specs/
