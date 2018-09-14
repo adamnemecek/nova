@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use ggez;
+use ggez::graphics::FilterMode;
 use serde_yaml;
 use specs::prelude::*;
 use std::error::Error;
@@ -42,7 +43,9 @@ impl Atlas {
     // Append `.png` to the path and load it as the image.
     path.set_extension("png");
 
-    let image = Image::new(ctx, &path)?;
+    let mut image = Image::new(ctx, &path)?;
+
+    image.set_filter(FilterMode::Nearest);
 
     // Append `.yml` to the path and attempt to load it.
     path.set_extension("yml");
@@ -88,12 +91,9 @@ impl AtlasData {
     let w = 1.0 / self.columns as f32;
     let h = 1.0 / self.rows as f32;
 
-    for x in 0..self.columns {
-      for y in 0..self.rows {
-        let left = x as f32 * w;
-        let top = y as f32 * h;
-
-        frames.push(Rect::new(left, top, left + w, top + h));
+    for y in 0..self.rows {
+      for x in 0..self.columns {
+        frames.push(Rect::new(x as f32 * w, y as f32 * h, w, h));
       }
     }
 

@@ -4,6 +4,7 @@
 
 use ggez;
 use ggez::graphics::{DrawParam, Text, TextFragment};
+use ggez::nalgebra::Vector2;
 use specs::prelude::*;
 use std::cmp;
 use std::error::Error;

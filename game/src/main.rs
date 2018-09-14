@@ -33,6 +33,20 @@ pub fn main() -> Result<(), Box<std::error::Error>> {
       .with(sprites::Sprite { atlas, frame: 0 })
       .with(rendering::Rendered)
       .build();
+
+    let atlas = Arc::new(sprites::Atlas::new(&mut engine.ctx, "/hero-f/atlas")?);
+
+    engine
+      .world
+      .create_entity()
+      .with(core::Position {
+        x: 164.0,
+        y: 164.0,
+        z: 0.0,
+      })
+      .with(sprites::Sprite { atlas, frame: 7 })
+      .with(rendering::Rendered)
+      .build();
   }
 
   // Run the main event loop.

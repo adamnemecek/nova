@@ -100,7 +100,12 @@ impl<'a, 'b> Engine<'a, 'b> {
             WindowEvent::Resized(size) => {
               ggez::graphics::set_screen_coordinates(
                 ctx,
-                ggez::graphics::Rect::new(0.0, 0.0, size.width as f32, size.height as f32),
+                ggez::graphics::Rect::new(
+                  0.0,
+                  0.0,
+                  size.width as f32 / 2.0,
+                  size.height as f32 / 2.0,
+                ),
               ).unwrap();
             }
 
