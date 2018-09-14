@@ -4,7 +4,6 @@
 
 use ggez;
 use ggez::graphics::{DrawParam, Text, TextFragment};
-use ggez::nalgebra::Vector2;
 use specs::prelude::*;
 use std::cmp;
 use std::error::Error;
@@ -13,9 +12,9 @@ use {core, sprites, Engine};
 
 /// A component that flags an entity to be drawn by the `Renderer`.
 #[derive(Debug, Default)]
-pub struct Rendered;
+pub struct Drawable;
 
-impl Component for Rendered {
+impl Component for Drawable {
   type Storage = NullStorage<Self>;
 }
 
@@ -46,13 +45,13 @@ impl Renderer {
 
   /// Draws one frame for the given `engine`.
   pub fn draw(&mut self, engine: &mut Engine) -> Result<(), Box<dyn Error>> {
-    // Add all entities with the `Rendered` and `Position` components to the
+    // Add all entities with the `Drawable` and `Position` components to the
     // queue.
     let entities = engine.world.entities();
-    let rendereds = engine.world.read_storage::<Rendered>();
+    let drawables = engine.world.read_storage::<Drawable>();
     let positions = engine.world.read_storage::<core::Position>();
 
-    for (entity, _, position) in (&*entities, &rendereds, &positions).join() {
+    for (entity, _, position) in (&*entities, &drawables, &positions).join() {
       self.queue.push(QueueEntry {
         entity,
         position: *position,

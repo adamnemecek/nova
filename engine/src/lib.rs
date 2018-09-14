@@ -10,7 +10,7 @@ extern crate serde_yaml;
 extern crate specs;
 
 pub mod core;
-pub mod rendering;
+pub mod graphics;
 pub mod sprites;
 pub mod time;
 
@@ -36,7 +36,7 @@ impl<'a, 'b> Engine<'a, 'b> {
     world.add_resource(time::Clock::default());
 
     world.register::<core::Position>();
-    world.register::<rendering::Rendered>();
+    world.register::<graphics::Drawable>();
     world.register::<sprites::Sprite>();
 
     // Create a new ggez context and winit events loop.
@@ -74,7 +74,7 @@ impl<'a, 'b> Engine<'a, 'b> {
 
   /// Runs the main engine loop until quit.
   pub fn run(mut self) -> Result<(), Box<dyn Error>> {
-    let mut renderer = rendering::Renderer::new();
+    let mut renderer = graphics::Renderer::new();
 
     while self.ctx.continuing {
       // Update the clock.

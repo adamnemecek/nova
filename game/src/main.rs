@@ -6,7 +6,7 @@ extern crate ggez;
 extern crate nova_engine;
 extern crate specs;
 
-use nova_engine::{core, rendering, sprites, Engine};
+use nova_engine::{core, graphics, sprites, Engine};
 use specs::prelude::*;
 use std::sync::Arc;
 
@@ -31,7 +31,7 @@ pub fn main() -> Result<(), Box<std::error::Error>> {
         z: 0.0,
       })
       .with(sprites::Sprite { atlas, frame: 0 })
-      .with(rendering::Rendered)
+      .with(graphics::Drawable)
       .build();
 
     let atlas = Arc::new(sprites::Atlas::new(&mut engine.ctx, "/hero-f/atlas")?);
@@ -45,7 +45,7 @@ pub fn main() -> Result<(), Box<std::error::Error>> {
         z: 0.0,
       })
       .with(sprites::Sprite { atlas, frame: 7 })
-      .with(rendering::Rendered)
+      .with(graphics::Drawable)
       .build();
   }
 
