@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use ggez;
+use ggez::graphics::{DrawParam, Text, TextFragment};
 use specs::prelude::*;
 use std::cmp;
 use std::error::Error;
@@ -21,6 +22,8 @@ impl Component for Rendered {
 pub struct Renderer {
   /// Queue of entries that is filled each frame for sorting draw calls.
   queue: Vec<QueueEntry>,
+  /// Text for displaying the current FPS.
+  fps_text: Text,
 }
 
 /// An entry in the draw queue for a particular frame.
@@ -36,6 +39,7 @@ impl Renderer {
   pub fn new() -> Renderer {
     Renderer {
       queue: Vec::with_capacity(1024),
+      fps_text: Text::default(),
     }
   }
 
@@ -73,7 +77,7 @@ impl Renderer {
         ggez::graphics::draw(
           &mut engine.ctx,
           &sprite.atlas.image,
-          ggez::graphics::DrawParam::default()
+          DrawParam::default()
             .src(sprite.atlas.frames[sprite.frame])
             .dest(ggez::nalgebra::Point2::new(
               entry.position.x,
@@ -83,10 +87,21 @@ impl Renderer {
       }
     }
 
+    // Draw the current FPS on the screen.
+    ggez::graphics::draw(&mut engine.ctx, &self.fps_text, DrawParam::default())?;
+
     ggez::graphics::present(&mut engine.ctx)?;
 
     // Clear the queue for the next frame.
     self.queue.clear();
+
+    // Update the current FPS once a second.
+    if ggez::timer::check_update_time(&mut engine.ctx, 1) {
+      self.fps_text = Text::new(TextFragment::from(format!(
+        "FPS: {}",
+        ggez::timer::fps(&mut engine.ctx) as u32
+      )));
+    }
 
     Ok(())
   }
