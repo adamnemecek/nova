@@ -11,11 +11,12 @@ extern crate specs;
 
 pub mod core;
 pub mod graphics;
+pub mod input;
 pub mod sprites;
 pub mod time;
 
 use ggez::conf::{WindowMode, WindowSetup};
-use ggez::event::winit_event::{Event, WindowEvent};
+use ggez::event::winit_event::{ElementState, Event, WindowEvent};
 use specs::prelude::*;
 use std::env;
 use std::error::Error;
@@ -34,6 +35,7 @@ impl<'a, 'b> Engine<'a, 'b> {
     let mut world = World::new();
 
     world.add_resource(time::Clock::default());
+    world.add_resource(input::Keyboard::default());
 
     world.register::<core::Position>();
     world.register::<graphics::Drawable>();
@@ -80,16 +82,21 @@ impl<'a, 'b> Engine<'a, 'b> {
       // Update the clock.
       self.ctx.timer_context.tick();
 
-      self
-        .world
-        .write_resource::<time::Clock>()
-        .tick(ggez::timer::duration_to_f64(ggez::timer::delta(
+      // Update the clock and get the current tick.
+      let tick = {
+        let mut clock = self.world.write_resource::<time::Clock>();
+
+        clock.tick(ggez::timer::duration_to_f64(ggez::timer::delta(
           &mut self.ctx,
         )));
+
+        clock.tick
+      };
 
       // Process events.
       {
         let ctx = &mut self.ctx;
+        let mut keyboard = self.world.write_resource::<input::Keyboard>();
 
         self.events_loop.poll_events(|event| match event {
           Event::WindowEvent { event, .. } => match event {
@@ -107,6 +114,15 @@ impl<'a, 'b> Engine<'a, 'b> {
                   size.height as f32 / 2.0,
                 ),
               ).unwrap();
+            }
+
+            WindowEvent::KeyboardInput { input, .. } => {
+              if let Some(key) = input.virtual_keycode {
+                match input.state {
+                  ElementState::Pressed => keyboard.set_pressed(key, tick),
+                  ElementState::Released => keyboard.set_released(key),
+                }
+              }
             }
 
             _ => (),
