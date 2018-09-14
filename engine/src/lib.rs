@@ -12,6 +12,7 @@ extern crate specs;
 pub mod core;
 pub mod rendering;
 pub mod sprites;
+pub mod time;
 
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::winit_event::{Event, WindowEvent};
@@ -29,7 +30,10 @@ pub struct Engine<'a, 'b> {
 
 impl<'a, 'b> Engine<'a, 'b> {
   pub fn new() -> Result<Self, Box<dyn Error>> {
+    // Create a new world for entities and resources.
     let mut world = World::new();
+
+    world.add_resource(time::Clock::default());
 
     world.register::<core::Position>();
     world.register::<rendering::Rendered>();
@@ -53,6 +57,7 @@ impl<'a, 'b> Engine<'a, 'b> {
       builder.build()?
     };
 
+    // Create a new dispatcher for systems.
     let dispatcher = {
       let builder = DispatcherBuilder::new();
 
@@ -67,12 +72,22 @@ impl<'a, 'b> Engine<'a, 'b> {
     })
   }
 
+  /// Runs the main engine loop until quit.
   pub fn run(mut self) -> Result<(), Box<dyn Error>> {
     let mut renderer = rendering::Renderer::new();
 
     while self.ctx.continuing {
+      // Update the clock.
       self.ctx.timer_context.tick();
 
+      self
+        .world
+        .write_resource::<time::Clock>()
+        .tick(ggez::timer::duration_to_f64(ggez::timer::delta(
+          &mut self.ctx,
+        )));
+
+      // Process events.
       {
         let ctx = &mut self.ctx;
 
@@ -96,8 +111,10 @@ impl<'a, 'b> Engine<'a, 'b> {
         });
       }
 
+      // Dispatch systems.
       self.dispatcher.dispatch(&mut self.world.res);
 
+      // Render.
       renderer.draw(&mut self)?;
     }
 
