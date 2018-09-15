@@ -6,50 +6,50 @@ use specs::prelude::*;
 
 use prelude::*;
 
-use super::{Button, Input};
+use super::{Button, State};
 
 #[derive(Default)]
-pub struct InputUpdater;
+pub struct Updater;
 
-impl<'a> System<'a> for InputUpdater {
+impl<'a> System<'a> for Updater {
   type SystemData = (
     Read<'a, core::Clock>,
     Read<'a, core::keyboard::Events>,
-    Write<'a, Input>,
+    Write<'a, State>,
   );
 
-  fn run(&mut self, (clock, events, mut input): Self::SystemData) {
-    for state in &mut input.buttons {
-      state.repeated = false;
+  fn run(&mut self, (clock, events, mut state): Self::SystemData) {
+    for button in &mut state.buttons {
+      button.repeated = false;
     }
 
     for event in &events.list {
       match event {
         core::keyboard::Event::Pressed(key) => {
           if let Some(button) = Button::from_keycode(key) {
-            let state = &mut input.buttons[button as usize];
+            let button = &mut state.buttons[button as usize];
 
-            if state.pressed_time.is_some() {
-              state.repeated = true;
-            } else {
-              state.pressed_time = Some(clock.time);
+            if button.pressed_time.is_none() {
+              button.pressed_time = Some(clock.time);
             }
+
+            button.repeated = true;
           }
         }
 
         core::keyboard::Event::Released(key) => {
           if let Some(button) = Button::from_keycode(key) {
-            let state = &mut input.buttons[button as usize];
+            let button = &mut state.buttons[button as usize];
 
-            state.pressed_time = None;
-            state.repeated = false;
+            button.pressed_time = None;
+            button.repeated = false;
           }
         }
       }
     }
 
     if events.list.len() > 0 {
-      println!("{:?}", *input);
+      println!("{:?}", *state);
     }
   }
 }

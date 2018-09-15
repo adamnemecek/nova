@@ -18,7 +18,7 @@ pub use prelude::*;
 
 pub mod prelude {
   pub(crate) use ggez;
-  pub use specs::{Component, Entity, World};
+  pub use specs::prelude::*;
 
   pub use core::Core;
   pub use {core, graphics, input, stage};

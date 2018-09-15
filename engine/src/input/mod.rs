@@ -2,25 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use specs::DispatcherBuilder;
+
 use prelude::*;
 
 pub mod buttons;
+pub mod state;
 pub mod updater;
 
 pub use self::buttons::Button;
-pub use self::updater::InputUpdater;
+pub use self::state::State;
+pub use self::updater::Updater;
 
-#[derive(Default, Debug)]
-pub struct Input {
-  pub buttons: [ButtonState; buttons::COUNT],
-}
-
-#[derive(Default, Debug)]
-pub struct ButtonState {
-  pressed_time: Option<f64>,
-  repeated: bool,
-}
-
-pub fn setup(core: &mut Core) {
-  core.world.add_resource(Input::default());
+pub fn setup<'a, 'b>(core: &mut Core, builder: &mut DispatcherBuilder<'a, 'b>) {
+  core.world.add_resource(State::default());
+  builder.add(Updater::default(), "input::Updater", &[]);
 }

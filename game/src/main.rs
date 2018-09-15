@@ -7,64 +7,77 @@ extern crate nova_engine;
 extern crate specs;
 
 use nova_engine::prelude::*;
-use specs::prelude::*;
 use std::error::Error;
 use std::sync::Arc;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
   let mut core = Core::new(core::context::build("nova", "bfrydl"));
-  let mut stage = stage::Stage::new(&mut core);
+  let mut dispatch = DispatcherBuilder::default();
+
+  input::setup(&mut core, &mut dispatch);
+  graphics::setup(&mut core, &mut dispatch);
+  stage::setup(&mut core, &mut dispatch);
+
+  setup(&mut core)?;
+
+  let mut dispatcher = dispatch.build();
+
+  let mut stage_renderer = stage::Renderer::default();
   let mut fps_display = core::FpsDisplay::default();
-
-  input::setup(&mut core);
-
-  let mut input_updater = input::InputUpdater::default();
-
-  // Add a character to the world.
-  {
-    let atlas = Arc::new(graphics::Atlas::load(
-      &mut core,
-      "/004-fire-salamander/atlas",
-    )?);
-
-    core
-      .world
-      .create_entity()
-      .with(graphics::Sprite { atlas, cell: 0 })
-      .with(stage::Position {
-        x: 100.0,
-        y: 100.0,
-        z: 0.0,
-      })
-      .with(stage::Drawable)
-      .build();
-
-    let atlas = Arc::new(graphics::Atlas::load(&mut core, "/hero-f/atlas")?);
-
-    core
-      .world
-      .create_entity()
-      .with(graphics::Sprite { atlas, cell: 7 })
-      .with(stage::Position {
-        x: 164.0,
-        y: 164.0,
-        z: 0.0,
-      })
-      .with(stage::Drawable)
-      .build();
-  }
 
   // Run the main event loop.
   while core.is_running() {
     core.update();
 
-    input_updater.run_now(&mut core.world.res);
+    dispatcher.dispatch(&mut core.world.res);
 
-    fps_display.update(&core);
-
-    stage.draw(&mut core);
+    stage_renderer.draw(&mut core);
     fps_display.draw(&mut core);
+  }
+
+  Ok(())
+}
+
+fn setup(core: &mut Core) -> Result<(), Box<dyn Error>> {
+  // Add a character to the world.
+  {
+    let atlas = graphics::Atlas::load(core, "/004-fire-salamander/atlas")?;
+
+    core
+      .world
+      .create_entity()
+      .with(graphics::Sprite {
+        atlas: Arc::new(atlas),
+        cell: 0,
+      })
+      .with(stage::Position {
+        x: 100.0,
+        y: 100.0,
+        z: 0.0,
+      })
+      .with(stage::Render)
+      .build();
+  }
+
+  // Add another character to the world.
+  {
+    let atlas = graphics::Atlas::load(core, "/hero-f/atlas")?;
+
+    core
+      .world
+      .create_entity()
+      .with(graphics::Sprite {
+        atlas: Arc::new(atlas),
+        cell: 7,
+      })
+      .with(stage::Position {
+        x: 164.0,
+        y: 164.0,
+        z: 0.0,
+      })
+      .with(stage::Render)
+      .build();
   }
 
   Ok(())

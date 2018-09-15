@@ -15,7 +15,7 @@ pub struct FpsDisplay {
 }
 
 impl FpsDisplay {
-  pub fn update(&mut self, core: &Core) {
+  pub fn draw(&mut self, core: &mut Core) {
     let clock = core.world.read_resource::<Clock>();
 
     self.elapsed += clock.delta_time;
@@ -24,9 +24,7 @@ impl FpsDisplay {
       self.text = Text::new(TextFragment::from(format!("FPS: {}", clock.fps as u32)));
       self.elapsed = 0.0;
     }
-  }
 
-  pub fn draw(&self, core: &mut Core) {
     ggez::graphics::draw(&mut core.ctx, &self.text, DrawParam::default())
       .expect("could not draw fps counter");
   }
