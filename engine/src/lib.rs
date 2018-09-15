@@ -16,13 +16,12 @@ pub mod graphics;
 pub mod input;
 pub mod stage;
 
-pub use prelude::*;
+pub use core::Core;
 
 pub mod prelude {
   pub(crate) use ggez;
   pub use specs::prelude::*;
   pub use specs::storage::BTreeStorage;
 
-  pub use core::Core;
-  pub use {core, graphics, input, stage};
+  pub use {core, graphics, input, stage, Core};
 }
