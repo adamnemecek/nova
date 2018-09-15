@@ -9,11 +9,10 @@ extern crate serde_derive;
 extern crate serde_yaml;
 extern crate specs;
 
-pub mod game;
+pub mod core;
+
 pub mod graphics;
-pub mod motion;
-pub mod platform;
-pub mod time;
+pub mod stage;
 
 pub use prelude::*;
 
@@ -21,6 +20,7 @@ pub mod prelude {
   pub(crate) use ggez;
   pub use specs::{Component, Entity, World};
 
-  pub use game::Game;
-  pub use {game, graphics, motion, platform, time};
+  pub use core::Core;
+  pub use stage::Stage;
+  pub use {core, graphics, stage};
 }

@@ -13,45 +13,52 @@ use std::sync::Arc;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
-  // Initialize the game.
-  let mut game = Game::new();
+  let mut core = Core::new(core::context::build("nova", "bfrydl"));
+  let mut stage = Stage::new(&mut core);
+  let mut fps_display = core::fps::Display::default();
 
   // Add a character to the world.
   {
     let atlas = Arc::new(graphics::Atlas::load(
-      &mut game,
+      &mut core,
       "/004-fire-salamander/atlas",
     )?);
 
-    game
+    core
       .world
       .create_entity()
-      .with(motion::Position {
+      .with(stage::Position {
         x: 100.0,
         y: 100.0,
         z: 0.0,
       })
-      .with(graphics::Sprite { atlas, cell: 0 })
-      .with(graphics::Drawable)
+      .with(stage::Sprite { atlas, cell: 0 })
+      .with(stage::Drawable)
       .build();
 
-    let atlas = Arc::new(graphics::Atlas::load(&mut game, "/hero-f/atlas")?);
+    let atlas = Arc::new(graphics::Atlas::load(&mut core, "/hero-f/atlas")?);
 
-    game
+    core
       .world
       .create_entity()
-      .with(motion::Position {
+      .with(stage::Position {
         x: 164.0,
         y: 164.0,
         z: 0.0,
       })
-      .with(graphics::Sprite { atlas, cell: 7 })
-      .with(graphics::Drawable)
+      .with(stage::Sprite { atlas, cell: 7 })
+      .with(stage::Drawable)
       .build();
   }
 
   // Run the main event loop.
-  game.run();
+  while core.is_running() {
+    core.update();
+    fps_display.update(&core);
+
+    stage.draw(&mut core);
+    fps_display.draw(&mut core);
+  }
 
   Ok(())
 }

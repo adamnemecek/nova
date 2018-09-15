@@ -14,4 +14,6 @@ pub struct Clock {
   pub time: f64,
   /// Time elapsed in seconds between this tick and the last.
   pub delta_time: f64,
+  /// Average FPS over the last 200 frames.
+  pub fps: f64,
 }

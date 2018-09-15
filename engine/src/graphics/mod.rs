@@ -3,11 +3,5 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod atlas;
-pub mod drawable;
-pub mod engine;
-pub mod sprite;
 
 pub use self::atlas::Atlas;
-pub use self::drawable::Drawable;
-pub use self::engine::Engine;
-pub use self::sprite::Sprite;
