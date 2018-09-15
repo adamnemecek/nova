@@ -22,21 +22,20 @@ pub struct Atlas {
 }
 
 impl Atlas {
-  /// Creates a new atlas from the given `path`.
-  pub fn new(ctx: &mut ggez::Context, path: impl Into<PathBuf>) -> Result<Atlas, Box<dyn Error>> {
+  pub fn load(game: &mut Game, path: impl Into<PathBuf>) -> Result<Self, Box<dyn Error>> {
     let mut path = path.into();
 
     // Append `.png` to the path and load it as the image.
     path.set_extension("png");
 
-    let mut image = Image::new(ctx, &path)?;
+    let mut image = Image::new(&mut game.platform.ctx, &path)?;
 
     image.set_filter(FilterMode::Nearest);
 
     // Append `.yml` to the path and attempt to load it.
     path.set_extension("yml");
 
-    if let Ok(file) = ggez::filesystem::open(ctx, path) {
+    if let Ok(file) = ggez::filesystem::open(&mut game.platform.ctx, &path) {
       // Deserialize the file as `Data`.
       let data = serde_yaml::from_reader::<_, Data>(file)?;
 

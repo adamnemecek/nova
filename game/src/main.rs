@@ -14,12 +14,12 @@ use std::sync::Arc;
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
   // Initialize the game.
-  let mut game = Game::new()?;
+  let mut game = Game::new();
 
   // Add a character to the world.
   {
-    let atlas = Arc::new(graphics::Atlas::new(
-      &mut game.platform.ctx,
+    let atlas = Arc::new(graphics::Atlas::load(
+      &mut game,
       "/004-fire-salamander/atlas",
     )?);
 
@@ -35,10 +35,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
       .with(graphics::Drawable)
       .build();
 
-    let atlas = Arc::new(graphics::Atlas::new(
-      &mut game.platform.ctx,
-      "/hero-f/atlas",
-    )?);
+    let atlas = Arc::new(graphics::Atlas::load(&mut game, "/hero-f/atlas")?);
 
     game
       .world
@@ -54,5 +51,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   }
 
   // Run the main event loop.
-  game.run()
+  game.run();
+
+  Ok(())
 }

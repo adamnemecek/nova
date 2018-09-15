@@ -2,12 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::winit_event::*;
 use ggez::event::EventsLoop;
+use std::env;
+use std::path::PathBuf;
 
 use prelude::*;
 
-use super::keyboard::Keyboard;
+use super::Keyboard;
 
 pub struct Engine {
   pub ctx: ggez::Context,
@@ -15,8 +18,26 @@ pub struct Engine {
 }
 
 impl Engine {
-  pub fn new(world: &mut World, ctx: ggez::Context, events_loop: EventsLoop) -> Engine {
+  pub fn new(world: &mut World) -> Engine {
     world.add_resource(Keyboard::default());
+
+    // Create a new ggez context and winit events loop.
+    let (ctx, events_loop) = {
+      let mut builder = ggez::ContextBuilder::new("nova", "bfrydl")
+        // Create a resizable window with vsync disabled.
+        .window_mode(WindowMode::default().resizable(true))
+        .window_setup(WindowSetup::default().title("nova").vsync(false));
+
+      // Add the resources dir for development.
+      if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = PathBuf::from(manifest_dir);
+
+        path.push("resources");
+        builder = builder.add_resource_path(path);
+      }
+
+      builder.build().expect("could not create platform context")
+    };
 
     Engine { ctx, events_loop }
   }
