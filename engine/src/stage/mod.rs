@@ -10,11 +10,9 @@ use prelude::*;
 
 pub mod drawable;
 pub mod position;
-pub mod sprite;
 
 pub use self::drawable::Drawable;
 pub use self::position::Position;
-pub use self::sprite::Sprite;
 
 pub struct Stage {
   draw_queue: Vec<(Entity, Position)>,
@@ -24,7 +22,7 @@ impl Stage {
   pub fn new(core: &mut Core) -> Stage {
     core.world.register::<Drawable>();
     core.world.register::<Position>();
-    core.world.register::<Sprite>();
+    core.world.register::<graphics::Sprite>();
 
     Stage {
       draw_queue: Vec::with_capacity(1024),
@@ -48,7 +46,7 @@ impl Stage {
       .sort_by(|a, b| a.1.y.partial_cmp(&b.1.y).unwrap_or(cmp::Ordering::Equal));
 
     // Finally, draw the entities.
-    let sprites = core.world.read_storage::<Sprite>();
+    let sprites = core.world.read_storage::<graphics::Sprite>();
 
     ggez::graphics::clear(&mut core.ctx, ggez::graphics::BLACK);
 

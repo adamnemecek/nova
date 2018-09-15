@@ -27,12 +27,12 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     core
       .world
       .create_entity()
+      .with(graphics::Sprite { atlas, cell: 0 })
       .with(stage::Position {
         x: 100.0,
         y: 100.0,
         z: 0.0,
       })
-      .with(stage::Sprite { atlas, cell: 0 })
       .with(stage::Drawable)
       .build();
 
@@ -41,12 +41,12 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     core
       .world
       .create_entity()
+      .with(graphics::Sprite { atlas, cell: 7 })
       .with(stage::Position {
         x: 164.0,
         y: 164.0,
         z: 0.0,
       })
-      .with(stage::Sprite { atlas, cell: 7 })
       .with(stage::Drawable)
       .build();
   }

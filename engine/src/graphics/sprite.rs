@@ -5,7 +5,7 @@
 use specs::prelude::*;
 use std::sync::Arc;
 
-use graphics::Atlas;
+use super::Atlas;
 
 /// Component representing a sprite to be drawn.
 pub struct Sprite {
