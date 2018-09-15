@@ -61,6 +61,8 @@ impl Core {
     // Process events.
     let mut kb_events = self.world.write_resource::<keyboard::Events>();
 
+    kb_events.list.clear();
+
     self.events_loop.poll_events(|event| match event {
       Event::WindowEvent { event, .. } => match event {
         WindowEvent::CloseRequested => {

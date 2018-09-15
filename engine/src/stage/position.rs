@@ -8,7 +8,7 @@ use specs::prelude::*;
 ///
 /// One unit is the size of one pixel in a sprite, which may be larger than one
 /// screen pixel depending on DPI.
-#[derive(Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 pub struct Position {
   /// West/East coordinate. East is positive.
   pub x: f32,

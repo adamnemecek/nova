@@ -14,8 +14,12 @@ use std::sync::Arc;
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
   let mut core = Core::new(core::context::build("nova", "bfrydl"));
-  let mut stage = Stage::new(&mut core);
+  let mut stage = stage::Stage::new(&mut core);
   let mut fps_display = core::FpsDisplay::default();
+
+  input::setup(&mut core);
+
+  let mut input_updater = input::InputUpdater::default();
 
   // Add a character to the world.
   {
@@ -54,6 +58,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   // Run the main event loop.
   while core.is_running() {
     core.update();
+
+    input_updater.run_now(&mut core.world.res);
+
     fps_display.update(&core);
 
     stage.draw(&mut core);
