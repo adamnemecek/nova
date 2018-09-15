@@ -14,7 +14,8 @@ pub use self::buttons::Button;
 pub use self::state::State;
 pub use self::updater::Updater;
 
-pub fn setup<'a, 'b>(core: &mut Core, builder: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.add_resource(State::default());
-  builder.add(Updater::default(), "input::Updater", &[]);
+
+  dispatch.add(Updater::default(), "input::Updater", &[]);
 }
