@@ -19,7 +19,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   graphics::setup(&mut core, &mut dispatch);
   stage::setup(&mut core, &mut dispatch);
 
-  unstable::movement::setup(&mut core, &mut dispatch);
+  unstable::setup(&mut core, &mut dispatch);
 
   setup(&mut core)?;
 
@@ -71,7 +71,11 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       })
       .with(stage::Position(Point3::new(164.0, 164.0, 0.0)))
       .with(stage::Render)
-      .with(unstable::movement::Controlled { speed: 64.0 })
+      .with(unstable::Character {
+        state: unstable::character::State::Idle,
+        speed: 64.0,
+      })
+      .with(unstable::movement::Controlled)
       .build();
 
     // Set the camera target to the hero character.
