@@ -47,9 +47,5 @@ impl<'a> System<'a> for Updater {
         }
       }
     }
-
-    if events.list.len() > 0 {
-      println!("{:?}", *state);
-    }
   }
 }

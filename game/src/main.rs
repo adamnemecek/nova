@@ -19,6 +19,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   graphics::setup(&mut core, &mut dispatch);
   stage::setup(&mut core, &mut dispatch);
 
+  unstable::movement::setup(&mut core, &mut dispatch);
+
   setup(&mut core)?;
 
   let mut dispatcher = dispatch.build();
@@ -39,7 +41,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   Ok(())
 }
 
-fn setup(core: &mut Core) -> Result<(), Box<dyn Error>> {
+fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
   // Add a character to the world.
   {
     let atlas = graphics::Atlas::load(core, "/004-fire-salamander/atlas")?;
@@ -51,11 +53,7 @@ fn setup(core: &mut Core) -> Result<(), Box<dyn Error>> {
         atlas: Arc::new(atlas),
         cell: 0,
       })
-      .with(stage::Position {
-        x: 100.0,
-        y: 100.0,
-        z: 0.0,
-      })
+      .with(stage::Position(Point3::new(100.0, 100.0, 0.0)))
       .with(stage::Render)
       .build();
   }
@@ -71,12 +69,9 @@ fn setup(core: &mut Core) -> Result<(), Box<dyn Error>> {
         atlas: Arc::new(atlas),
         cell: 7,
       })
-      .with(stage::Position {
-        x: 164.0,
-        y: 164.0,
-        z: 0.0,
-      })
+      .with(stage::Position(Point3::new(164.0, 164.0, 0.0)))
       .with(stage::Render)
+      .with(unstable::movement::Controlled { speed: 64.0 })
       .build();
   }
 

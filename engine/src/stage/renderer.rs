@@ -43,15 +43,15 @@ impl Renderer {
     for (entity, position) in &self.draw_queue {
       // If the entity has a sprite, draw that.
       if let Some(sprite) = sprites.get(*entity) {
+        let x = position.x.round();
+        let y = (position.y - position.z).round();
+
         ggez::graphics::draw(
           &mut core.ctx,
           &sprite.atlas.image,
           DrawParam::default()
             .src(sprite.atlas.cells[sprite.cell])
-            .dest(ggez::nalgebra::Point2::new(
-              position.x,
-              position.y - position.z,
-            )),
+            .dest(Point2::new(x, y)),
         ).expect("could not draw sprite");
       }
     }

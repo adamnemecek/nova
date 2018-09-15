@@ -595,7 +595,7 @@ dependencies = [
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "lyon 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "nalgebra 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nalgebra 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -979,7 +979,7 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "alga 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1044,6 +1044,7 @@ name = "nova-engine"
 version = "0.1.0"
 dependencies = [
  "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
+ "nalgebra 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_yaml 0.8.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2073,7 +2074,7 @@ dependencies = [
 "checksum mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c9e6c29b4bb0155117ea1a61520406c975673ee71b0287323f06d1a8d69c4a7c"
 "checksum mopa 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a785740271256c230f57462d3b83e52f998433a7062fc18f96d5999474a9f915"
 "checksum msdos_time 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "aad9dfe950c057b1bfe9c1f2aa51583a8468ef2a5baba2ebbe06d775efeb7729"
-"checksum nalgebra 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4534bc88a178e411e634e1e44e7f2ad6e9bf062ea539f40e579bd49ef2fad056"
+"checksum nalgebra 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)" = "93499be6c6ac5a8f3315a682e8e43cabd748f73c5f3ffde936b8588ccc1c2f03"
 "checksum nix 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b7fd5681d13fda646462cfbd4e5f2051279a89a544d50eb98c365b507246839f"
 "checksum nix 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d37e713a259ff641624b6cb20e3b12b2952313ba36b6823c0f16e6cfd9e5de17"
 "checksum nodrop 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)" = "9a2228dca57108069a5262f2ed8bd2e82496d2e074a06d1ccc7ce1687b6ae0a2"
