@@ -62,7 +62,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
   {
     let atlas = graphics::Atlas::load(core, "/hero-f/atlas")?;
 
-    core
+    let entity = core
       .world
       .create_entity()
       .with(graphics::Sprite {
@@ -73,6 +73,12 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       .with(stage::Render)
       .with(unstable::movement::Controlled { speed: 64.0 })
       .build();
+
+    // Set the camera target to the hero character.
+    core
+      .world
+      .write_resource::<stage::Camera>()
+      .set_target(entity);
   }
 
   Ok(())

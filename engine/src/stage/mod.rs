@@ -4,13 +4,17 @@
 
 use prelude::*;
 
+pub mod camera;
 pub mod position;
 pub mod renderer;
 
+pub use self::camera::Camera;
 pub use self::position::Position;
 pub use self::renderer::{Render, Renderer};
 
 pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.register::<Position>();
   core.world.register::<Render>();
+
+  core.world.add_resource(Camera::default());
 }

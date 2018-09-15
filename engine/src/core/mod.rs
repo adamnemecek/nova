@@ -10,9 +10,11 @@ pub mod clock;
 pub mod context;
 pub mod fps_display;
 pub mod keyboard;
+pub mod viewport;
 
 pub use self::clock::Clock;
 pub use self::fps_display::FpsDisplay;
+pub use self::viewport::Viewport;
 
 pub type Tick = u64;
 
@@ -24,11 +26,12 @@ pub struct Core {
 
 impl Core {
   pub fn new(ctx_builder: ggez::ContextBuilder) -> Self {
-    let (ctx, events_loop) = ctx_builder.build().expect("could not create ggez::Context");
+    let (mut ctx, events_loop) = ctx_builder.build().expect("could not create ggez::Context");
     let mut world = World::new();
 
     world.add_resource(Clock::default());
     world.add_resource(keyboard::Events::default());
+    world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
 
     Core {
       world,
@@ -43,13 +46,14 @@ impl Core {
 
   pub fn update(&mut self) {
     let ctx = &mut self.ctx;
+    let world = &mut self.world;
 
     // Present the previous frame and clear the buffer.
     ggez::graphics::present(ctx).expect("could not present");
     ggez::graphics::clear(ctx, ggez::graphics::BLACK);
 
     // Progress time.
-    let mut clock = self.world.write_resource::<Clock>();
+    let mut clock = world.write_resource::<Clock>();
 
     ctx.timer_context.tick();
 
@@ -59,7 +63,7 @@ impl Core {
     clock.fps = ggez::timer::fps(ctx);
 
     // Process events.
-    let mut kb_events = self.world.write_resource::<keyboard::Events>();
+    let mut kb_events = world.write_resource::<keyboard::Events>();
 
     kb_events.list.clear();
 
@@ -74,6 +78,11 @@ impl Core {
             ctx,
             ggez::graphics::Rect::new(0.0, 0.0, size.width as f32, size.height as f32),
           ).expect("could not resize");
+
+          let mut viewport = world.write_resource::<Viewport>();
+
+          viewport.width = size.width as f32;
+          viewport.height = size.height as f32;
         }
 
         WindowEvent::KeyboardInput { input, .. } => {
