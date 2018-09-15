@@ -2,13 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use specs::prelude::*;
+use prelude::*;
 
 /// Component that stores the position of an entity in the world.
 ///
 /// One unit is the size of one pixel in a sprite, which may be larger than one
 /// screen pixel depending on DPI.
-#[derive(Default, Clone, Copy)]
+#[derive(Component, Clone, Copy)]
+#[storage(BTreeStorage)]
 pub struct Position {
   /// West/East coordinate. East is positive.
   pub x: f32,
@@ -16,8 +17,4 @@ pub struct Position {
   pub y: f32,
   /// Up/Down coordinate. Up is positive.
   pub z: f32,
-}
-
-impl Component for Position {
-  type Storage = VecStorage<Self>;
 }

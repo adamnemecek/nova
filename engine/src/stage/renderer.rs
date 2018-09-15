@@ -10,12 +10,9 @@ use prelude::*;
 
 use super::Position;
 
-#[derive(Default)]
+#[derive(Default, Component)]
+#[storage(NullStorage)]
 pub struct Render;
-
-impl Component for Render {
-  type Storage = NullStorage<Self>;
-}
 
 #[derive(Default)]
 pub struct Renderer {
