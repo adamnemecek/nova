@@ -6,7 +6,7 @@ extern crate clap;
 extern crate nova_engine;
 
 use clap::{App, Arg};
-use nova_engine::sprites::AtlasData;
+use nova_engine::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 
@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Save the sprite atlas metadata.
   dest_path.set_extension("yml");
 
-  AtlasData { columns, rows }.save(&dest_path)?;
+  graphics::atlas::Data { columns, rows }.save(&dest_path)?;
 
   Ok(())
 }

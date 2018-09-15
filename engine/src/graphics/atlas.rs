@@ -2,37 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use ggez;
-use ggez::graphics::FilterMode;
+use ggez::graphics::{FilterMode, Image, Rect};
 use serde_yaml;
-use specs::prelude::*;
 use std::error::Error;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
-pub use ggez::graphics::{Image, Rect};
+use prelude::*;
 
-/// Component representing a sprite to be rendered.
-pub struct Sprite {
-  /// Atlas to source frames from.
-  pub atlas: Arc<Atlas>,
-  /// Index of the frame in the atlas to render.
-  pub frame: usize,
-}
-
-impl Component for Sprite {
-  type Storage = HashMapStorage<Self>;
-}
-
-/// An image split into one or more frames. Also known as a spritesheet.
-#[derive(Debug)]
+/// An image split into one or more cells.
+///
+/// Also known as a spritesheet.
 pub struct Atlas {
   /// Image data for the atlas.
   pub image: Image,
-  /// List of frames in the atlas, where each frame is a rectangular slice of
+  /// List of cells in the atlas, where each cell is a rectangular slice of
   /// the entire image.
-  pub frames: Vec<Rect>,
+  pub cells: Vec<Rect>,
 }
 
 impl Atlas {
@@ -51,8 +37,8 @@ impl Atlas {
     path.set_extension("yml");
 
     if let Ok(file) = ggez::filesystem::open(ctx, path) {
-      // Deserialize the file as `AtlasData`.
-      let data = serde_yaml::from_reader::<_, AtlasData>(file)?;
+      // Deserialize the file as `Data`.
+      let data = serde_yaml::from_reader::<_, Data>(file)?;
 
       // Convert the data into an atlas with the loaded image.
       Ok(data.into_atlas(image))
@@ -60,7 +46,7 @@ impl Atlas {
       // Return an atlas with one frame covering the entire loaded image.
       Ok(Atlas {
         image,
-        frames: vec![Rect::new(0.0, 0.0, 1.0, 1.0)],
+        cells: vec![Rect::new(0.0, 0.0, 1.0, 1.0)],
       })
     }
   }
@@ -68,14 +54,14 @@ impl Atlas {
 
 /// Data loaded from a YAML file associated with an atlas.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AtlasData {
+pub struct Data {
   /// Number of columns in the grid that defines the frames of the atlas.
   pub columns: u16,
   /// Number of rows in the grid that defines the frames of the atlas.
   pub rows: u16,
 }
 
-impl AtlasData {
+impl Data {
   pub fn save(&self, path: &Path) -> Result<(), Box<dyn Error>> {
     let file = File::create(path)?;
 
@@ -86,17 +72,17 @@ impl AtlasData {
 
   /// Converts atlas data into an atlas by calculating the rects of each frame.
   fn into_atlas(self, image: Image) -> Atlas {
-    let mut frames = Vec::with_capacity((self.columns * self.rows) as usize);
+    let mut cells = Vec::with_capacity((self.columns * self.rows) as usize);
 
     let w = 1.0 / self.columns as f32;
     let h = 1.0 / self.rows as f32;
 
     for y in 0..self.rows {
       for x in 0..self.columns {
-        frames.push(Rect::new(x as f32 * w, y as f32 * h, w, h));
+        cells.push(Rect::new(x as f32 * w, y as f32 * h, w, h));
       }
     }
 
-    Atlas { image, frames }
+    Atlas { image, cells }
   }
 }
