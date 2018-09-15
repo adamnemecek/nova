@@ -9,12 +9,12 @@ use prelude::*;
 use super::Clock;
 
 #[derive(Default)]
-pub struct Display {
+pub struct FpsDisplay {
   elapsed: f64,
   text: Text,
 }
 
-impl Display {
+impl FpsDisplay {
   pub fn update(&mut self, core: &Core) {
     let clock = core.world.read_resource::<Clock>();
 

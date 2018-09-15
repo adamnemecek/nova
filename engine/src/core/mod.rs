@@ -8,10 +8,11 @@ use prelude::*;
 
 pub mod clock;
 pub mod context;
-pub mod fps;
+pub mod fps_display;
 pub mod keyboard;
 
 pub use self::clock::Clock;
+pub use self::fps_display::FpsDisplay;
 
 pub type Tick = u64;
 

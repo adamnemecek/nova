@@ -15,7 +15,7 @@ use std::sync::Arc;
 pub fn main() -> Result<(), Box<dyn Error>> {
   let mut core = Core::new(core::context::build("nova", "bfrydl"));
   let mut stage = Stage::new(&mut core);
-  let mut fps_display = core::fps::Display::default();
+  let mut fps_display = core::FpsDisplay::default();
 
   // Add a character to the world.
   {
