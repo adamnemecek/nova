@@ -9,7 +9,7 @@ use std::path::Path;
 
 use super::Animation;
 
-/// Data loaded from a YAML file associated with an atlas.
+/// Data for an atlas.
 #[derive(Serialize, Deserialize)]
 pub struct Data {
   /// Width of a single cell in the atlas.
@@ -22,6 +22,7 @@ pub struct Data {
 }
 
 impl Data {
+  /// Creates new atlas data with the given cell dimensions.
   pub fn new(cell_width: usize, cell_height: usize) -> Data {
     Data {
       cell_width,
@@ -30,6 +31,7 @@ impl Data {
     }
   }
 
+  /// Loads atlas data from the YAML file at the given `path`.
   pub fn load(path: &Path) -> Result<Self, Box<dyn Error>> {
     let file = File::create(path)?;
     let data = serde_yaml::from_reader(file)?;
@@ -37,6 +39,7 @@ impl Data {
     Ok(data)
   }
 
+  /// Saves atlas data to the YAML file at the given `path`.
   pub fn save(&self, path: &Path) -> Result<(), Box<dyn Error>> {
     let file = File::create(path)?;
 

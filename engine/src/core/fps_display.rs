@@ -8,6 +8,7 @@ use prelude::*;
 
 use super::Clock;
 
+/// Draws the current FPS in the top-left corner of the screen.
 #[derive(Default)]
 pub struct FpsDisplay {
   elapsed: f64,
@@ -15,11 +16,13 @@ pub struct FpsDisplay {
 }
 
 impl FpsDisplay {
+  /// Updates and draws the FPS display on the screen.
   pub fn draw(&mut self, core: &mut Core) {
     let clock = core.world.read_resource::<Clock>();
 
     self.elapsed += clock.delta_time;
 
+    // Update the cached text every second.
     if self.elapsed >= 1.0 {
       self.text = Text::new(TextFragment::from(format!("FPS: {}", clock.fps as u32)));
       self.elapsed = 0.0;

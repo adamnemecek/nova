@@ -12,6 +12,7 @@ pub use self::camera::Camera;
 pub use self::position::Position;
 pub use self::renderer::{Render, Renderer};
 
+/// Sets up stage components, resources, and systems.
 pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.register::<Position>();
   core.world.register::<Render>();

@@ -7,66 +7,95 @@ use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 
+/// Loads an `animations.xml` file as `AnimData`.
 pub fn load(path: &Path) -> Result<AnimData, Box<dyn Error>> {
   let file = File::open(path)?;
 
   Ok(serde_xml_rs::deserialize(file)?)
 }
 
+/// Data from an `animations.xml` file about the animations for a monster.
 #[derive(Debug, Deserialize)]
 pub struct AnimData {
+  /// Width of a cell in the sprite sheet.
   #[serde(rename = "FrameWidth")]
   pub frame_width: usize,
+  /// Height of a cell in the sprite sheet.
   #[serde(rename = "FrameHeight")]
   pub frame_height: usize,
+  /// Table of animation groups defining individual animations.
   #[serde(rename = "AnimGroupTable")]
   pub group_table: AnimGroupTable,
+  /// Table of sequences defining individual animation sequences referenced in
+  /// groups.
   #[serde(rename = "AnimSequenceTable")]
   pub sequence_table: AnimSequenceTable,
 }
 
+/// Table of animation groups defining individual animations.
 #[derive(Debug, Deserialize)]
 pub struct AnimGroupTable {
+  /// List of animation groups in the table.
   #[serde(rename = "AnimGroup")]
   pub groups: Vec<AnimGroup>,
 }
 
+/// Animation group, which defines an individual animation.
 #[derive(Debug, Deserialize)]
 pub struct AnimGroup {
+  /// List of sequence indices, with one element in the list for each direction,
+  /// that define this animation.
   #[serde(rename = "AnimSequenceIndex")]
   pub sequence_indices: Vec<usize>,
 }
 
+/// Short name of directions in the same order as animation group sequence
+/// indices.
+pub const DIRECTONS: [&'static str; 8] = ["s", "sw", "w", "nw", "n", "ne", "e", "se"];
+
+/// Table of animation sequences defining individual animation sequences used in
+/// groups.
 #[derive(Debug, Deserialize)]
 pub struct AnimSequenceTable {
+  /// List of animation sequences in the table.
   #[serde(rename = "AnimSequence")]
   pub sequences: Vec<AnimSequence>,
 }
 
+/// An animation sequence, which defines a sequence of frames for use in an
+/// animation group.
 #[derive(Debug, Deserialize)]
 pub struct AnimSequence {
+  /// For attack animations, the frame to rush forward.
   #[serde(rename = "RushPoint")]
   pub rush_point: usize,
+  /// For attack animations, the frame the rush hits.
   #[serde(rename = "HitPoint")]
   pub hit_point: usize,
+  /// For attack animations, the frame the rush completes.
   #[serde(rename = "ReturnPoint")]
   pub return_point: usize,
+  /// List of frames in the sequence.
   #[serde(rename = "AnimFrame")]
   pub frames: Vec<AnimFrame>,
 }
 
+// An animation frame.
 #[derive(Debug, Deserialize)]
 pub struct AnimFrame {
+  /// Duration of this frame in 60ths of a second.
   #[serde(rename = "Duration")]
   pub duration: usize,
+  /// Index of the sprite in the sprite sheet to use during this frame.
   #[serde(rename = "MetaFrameGroupIndex")]
   pub meta_frame_group_index: usize,
+  /// Whether the sprite is horizontally flipped during this frame.
   #[serde(rename = "HFlip")]
   pub hflip: usize,
 }
 
-pub const DIRECTONS: [&'static str; 8] = ["s", "sw", "w", "nw", "n", "ne", "e", "se"];
-
+/// Animation types in order of index in audino data files.
+#[allow(dead_code)]
 pub enum Type {
   Static,
   Idle,

@@ -8,6 +8,7 @@ use std::path::PathBuf;
 
 use prelude::*;
 
+/// Create a `ggez::ContextBuilder` that can be passed to `Core::new`.
 pub fn build(game: &'static str, author: &'static str) -> ggez::ContextBuilder {
   let mut builder = ggez::ContextBuilder::new(game, author)
     // Create a resizable window with vsync disabled.

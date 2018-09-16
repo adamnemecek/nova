@@ -19,11 +19,14 @@ pub use self::data::Data;
 ///
 /// Also known as a spritesheet.
 pub struct Atlas {
+  /// Image to render cells from.
   pub image: Image,
+  /// Data describing the atlas.
   pub data: Data,
 }
 
 impl Atlas {
+  /// Load an atlas from the resources at the given `path`.
   pub fn load(core: &mut Core, path: impl Into<PathBuf>) -> Result<Self, Box<dyn Error>> {
     let mut path = path.into();
 
@@ -48,6 +51,7 @@ impl Atlas {
     }
   }
 
+  /// Gets the source rectangle for a given `cell` in the atlas.
   pub fn get(&self, cell: usize) -> Rect {
     let width = self.image.width() as f32;
 
@@ -62,7 +66,8 @@ impl Atlas {
     Rect::new(x, y, w, h)
   }
 
-  pub fn get_animation(&self, name: &str) -> Option<usize> {
+  /// Gets the index of an animation in the atlas by name.
+  pub fn get_animation_index(&self, name: &str) -> Option<usize> {
     for (i, animation) in self.data.animations.iter().enumerate() {
       if animation.name == name {
         return Some(i);

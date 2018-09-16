@@ -30,7 +30,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   // Run the main event loop.
   while core.is_running() {
-    core.update();
+    core.tick();
 
     dispatcher.dispatch(&mut core.world.res);
 
@@ -50,7 +50,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       .world
       .create_entity()
       .with(graphics::sprite::Animated {
-        animation: atlas.get_animation("walk_se"),
+        animation: atlas.get_animation_index("walk_se"),
         elapsed: 0.0,
       })
       .with(graphics::Sprite {
@@ -71,7 +71,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       .world
       .create_entity()
       .with(graphics::sprite::Animated {
-        animation: atlas.get_animation("walk_n"),
+        animation: atlas.get_animation_index("walk_n"),
         elapsed: 0.0,
       })
       .with(graphics::Sprite {

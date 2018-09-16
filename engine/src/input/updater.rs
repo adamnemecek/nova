@@ -8,6 +8,7 @@ use prelude::*;
 
 use super::{Button, State};
 
+/// System that updates input state.
 #[derive(Default)]
 pub struct Updater;
 
@@ -19,16 +20,19 @@ impl<'a> System<'a> for Updater {
   );
 
   fn run(&mut self, (clock, events, mut state): Self::SystemData) {
+    // Unset `repeated` flag for every button.
     for button in &mut state.buttons {
       button.repeated = false;
     }
 
     for event in &events.list {
       match event {
+        // When a button is pressed, update pressed time and set repeated.
         core::keyboard::Event::Pressed(key) => {
           if let Some(button) = Button::from_keycode(key) {
             let button = &mut state.buttons[button as usize];
 
+            // Set pressed time if the button was not already pressed.
             if button.pressed_time.is_none() {
               button.pressed_time = Some(clock.time);
             }
@@ -37,6 +41,7 @@ impl<'a> System<'a> for Updater {
           }
         }
 
+        // When a button is released, unset pressed time and repeated flag.
         core::keyboard::Event::Released(key) => {
           if let Some(button) = Button::from_keycode(key) {
             let button = &mut state.buttons[button as usize];

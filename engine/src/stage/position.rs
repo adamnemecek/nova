@@ -5,10 +5,7 @@
 use prelude::*;
 use std::ops::{Deref, DerefMut};
 
-/// Component that stores the position of an entity in the world.
-///
-/// One unit is the size of one pixel in a sprite, which may be larger than one
-/// screen pixel depending on DPI.
+/// Component that stores the position of an entity on the stage.
 #[derive(Component, Clone, Copy)]
 #[storage(BTreeStorage)]
 pub struct Position(pub Point3<f32>);
@@ -19,6 +16,7 @@ impl Default for Position {
   }
 }
 
+// Implement deref ops so it's easy to use position with nalgebra types.
 impl Deref for Position {
   type Target = Point3<f32>;
 

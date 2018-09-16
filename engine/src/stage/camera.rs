@@ -4,19 +4,25 @@
 
 use prelude::*;
 
+/// Resource that indicates what is the target of the stage's camera.
 #[derive(Default)]
 pub struct Camera {
+  /// The current target of the camera.
   pub target: Target,
 }
 
 impl Camera {
+  /// Sets the current target of the camera.
   pub fn set_target(&mut self, target: impl Into<Target>) {
     self.target = target.into();
   }
 }
 
+/// A possible target for the `Camera`.
 pub enum Target {
+  /// Targets a single point in space.
   Position(Point2<f32>),
+  /// Follows an entity's position.
   Entity(Entity),
 }
 

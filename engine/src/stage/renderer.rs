@@ -9,16 +9,20 @@ use prelude::*;
 
 use super::{camera, Camera, Position};
 
+/// Component that indicates that an entity should be drawn by a `Renderer`.
 #[derive(Default, Component)]
 #[storage(NullStorage)]
 pub struct Render;
 
+/// Renders the stage onto the screen.
 #[derive(Default)]
 pub struct Renderer {
+  /// A queue of entities to draw this frame for sorting by position.
   draw_queue: Vec<(Entity, Position)>,
 }
 
 impl Renderer {
+  /// Draws the stage.
   pub fn draw(&mut self, core: &mut Core) {
     let entities = core.world.entities();
 
@@ -40,6 +44,7 @@ impl Renderer {
       }
     };
 
+    // Calculate the offset in drawing needed for the camera's position.
     let draw_offset = Point2::new(viewport.width / 2.0, viewport.height / 2.0) - camera_pos;
 
     // Queue all rendered entities for drawing.

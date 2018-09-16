@@ -4,12 +4,16 @@
 
 use ggez::graphics::Rect;
 
+/// Resource containing information about the viewport.
 pub struct Viewport {
+  /// Width of the viewport in pixels.
   pub width: f32,
+  /// Height of the viewport in pixels.
   pub height: f32,
 }
 
 impl From<Rect> for Viewport {
+  /// Creates a new viewport state from a ggez `Rect`.
   fn from(rect: Rect) -> Self {
     Viewport {
       width: rect.w,

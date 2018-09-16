@@ -30,6 +30,7 @@ pub struct Animated {
   pub elapsed: f64,
 }
 
+/// System that animates sprite components.
 #[derive(Default)]
 pub struct Animator;
 
@@ -41,6 +42,7 @@ impl<'a> System<'a> for Animator {
   );
 
   fn run(&mut self, (clock, mut animated, mut sprites): Self::SystemData) {
+    // For all sprites that are animated…
     for (state, sprite) in (&mut animated, &mut sprites).join() {
       match state.animation {
         Some(animation) if animation < sprite.atlas.data.animations.len() => {
@@ -50,14 +52,17 @@ impl<'a> System<'a> for Animator {
             continue;
           }
 
+          // Elapse the animation by delta time.
           state.elapsed += clock.delta_time;
 
+          // Determine total duration of animation for wrapping.
           let mut duration = 0.0;
 
           for frame in &animation.frames {
             duration += frame.length;
           }
 
+          // Determine current frame based on wrapped elapsed time.
           let mut current = &animation.frames[0];
           let mut elapsed = state.elapsed * 60.0;
 
@@ -74,6 +79,7 @@ impl<'a> System<'a> for Animator {
             }
           }
 
+          // Update the sprite with the current frame data.
           sprite.cell = current.cell;
           sprite.hflip = current.hflip;
         }

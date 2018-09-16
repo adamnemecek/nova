@@ -4,14 +4,21 @@
 
 use super::{buttons, Button};
 
+/// Resource containing current input state.
 #[derive(Default, Debug)]
 pub struct State {
+  /// State of all available input buttons.
   pub buttons: [ButtonState; buttons::COUNT],
 }
 
+/// Current state of an input button.
 #[derive(Default, Debug)]
 pub struct ButtonState {
+  /// The time the button was pressed if it is currently pressed; otherwise,
+  /// `None`.
   pub pressed_time: Option<f64>,
+  /// Whether or not the press was repeated this frame because the button was
+  /// held down enough.
   pub repeated: bool,
 }
 

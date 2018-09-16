@@ -39,13 +39,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mut src_path = PathBuf::from(matches.value_of_os("src").unwrap());
   let mut dest_path = PathBuf::from(matches.value_of_os("dest").unwrap());
 
-  // Load the animations.xml data.
-  src_path.push("animations.xml");
-
-  let animations_data = animations::load(&src_path)?;
-
-  src_path.pop();
-
   // Ensure dest path exists.
   fs::create_dir_all(&dest_path)?;
 
@@ -55,8 +48,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   fs::copy(&src_path, &dest_path)?;
 
-  // Save the sprite atlas metadata.
-  dest_path.set_extension("yml");
+  // Load the animations.xml data.
+  src_path.push("animations.xml");
+
+  let animations_data = animations::load(&src_path)?;
+
+  src_path.pop();
 
   // Convert animations.
   let mut animations = Vec::new();
@@ -68,6 +65,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     &mut animations,
   );
 
+  // Save the sprite atlas metadata.
+  dest_path.set_extension("yml");
+
   graphics::atlas::Data {
     cell_width: animations_data.frame_width,
     cell_height: animations_data.frame_height,
@@ -77,6 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   Ok(())
 }
 
+/// Builds sprite atlas animations from audino animation data.
 fn build_animations(
   name: &str,
   input: &animations::AnimData,

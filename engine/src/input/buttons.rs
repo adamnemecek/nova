@@ -4,6 +4,7 @@
 
 use core::keyboard::KeyCode;
 
+/// One of the available input buttons.
 #[derive(Debug)]
 pub enum Button {
   Up,
@@ -12,9 +13,13 @@ pub enum Button {
   Right,
 }
 
+/// Total number of available input buttons.
 pub const COUNT: usize = Button::Right as usize + 1;
 
 impl Button {
+  /// Converts a given `KeyCode` to a `Button`.
+  ///
+  /// Currently hard-coded for Neo2 keyboard layout. Sorry!
   pub fn from_keycode(key: &KeyCode) -> Option<Button> {
     match key {
       KeyCode::V => Some(Button::Up),

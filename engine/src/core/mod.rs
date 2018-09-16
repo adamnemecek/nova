@@ -16,15 +16,21 @@ pub use self::clock::Clock;
 pub use self::fps_display::FpsDisplay;
 pub use self::viewport::Viewport;
 
+/// Number of ticks (game loops) since launch.
 pub type Tick = u64;
 
+/// Provides core engine functionality.
 pub struct Core {
+  /// ECS world state.
   pub world: World,
+  /// ggez context.
   pub(crate) ctx: ggez::Context,
+  /// winit events loop.
   events_loop: ggez::event::EventsLoop,
 }
 
 impl Core {
+  /// Creates a new core from the given ggez context builder.
   pub fn new(ctx_builder: ggez::ContextBuilder) -> Self {
     let (mut ctx, events_loop) = ctx_builder.build().expect("could not create ggez::Context");
     let mut world = World::new();
@@ -40,11 +46,13 @@ impl Core {
     }
   }
 
+  /// Returns `true` until the game loop should quit.
   pub fn is_running(&self) -> bool {
     self.ctx.continuing
   }
 
-  pub fn update(&mut self) {
+  /// Updates the core, running through one engine tick.
+  pub fn tick(&mut self) {
     let ctx = &mut self.ctx;
     let world = &mut self.world;
 
