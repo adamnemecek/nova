@@ -4,113 +4,177 @@ cell_height: 64
 animations:
   - name: walk_s
     frames:
-      - cell: 0
+      - cell:
+          - 0
+          - 0
         length: 6.0
         hflip: false
-      - cell: 1
+      - cell:
+          - 1
+          - 0
         length: 8.0
         hflip: false
-      - cell: 0
+      - cell:
+          - 0
+          - 0
         length: 6.0
         hflip: false
-      - cell: 2
+      - cell:
+          - 2
+          - 0
         length: 8.0
         hflip: false
   - name: walk_sw
     frames:
-      - cell: 3
+      - cell:
+          - 3
+          - 0
         length: 6.0
         hflip: true
-      - cell: 4
+      - cell:
+          - 4
+          - 0
         length: 8.0
         hflip: true
-      - cell: 3
+      - cell:
+          - 3
+          - 0
         length: 6.0
         hflip: true
-      - cell: 5
+      - cell:
+          - 5
+          - 0
         length: 8.0
         hflip: true
   - name: walk_w
     frames:
-      - cell: 6
+      - cell:
+          - 6
+          - 0
         length: 6.0
         hflip: true
-      - cell: 7
+      - cell:
+          - 7
+          - 0
         length: 8.0
         hflip: true
-      - cell: 6
+      - cell:
+          - 6
+          - 0
         length: 6.0
         hflip: true
-      - cell: 8
+      - cell:
+          - 0
+          - 1
         length: 8.0
         hflip: true
   - name: walk_nw
     frames:
-      - cell: 9
+      - cell:
+          - 1
+          - 1
         length: 6.0
         hflip: true
-      - cell: 10
+      - cell:
+          - 2
+          - 1
         length: 8.0
         hflip: true
-      - cell: 9
+      - cell:
+          - 1
+          - 1
         length: 6.0
         hflip: true
-      - cell: 11
+      - cell:
+          - 3
+          - 1
         length: 8.0
         hflip: true
   - name: walk_n
     frames:
-      - cell: 12
+      - cell:
+          - 4
+          - 1
         length: 6.0
         hflip: false
-      - cell: 13
+      - cell:
+          - 5
+          - 1
         length: 8.0
         hflip: false
-      - cell: 12
+      - cell:
+          - 4
+          - 1
         length: 6.0
         hflip: false
-      - cell: 14
+      - cell:
+          - 6
+          - 1
         length: 8.0
         hflip: false
   - name: walk_ne
     frames:
-      - cell: 9
+      - cell:
+          - 1
+          - 1
         length: 6.0
         hflip: false
-      - cell: 10
+      - cell:
+          - 2
+          - 1
         length: 8.0
         hflip: false
-      - cell: 9
+      - cell:
+          - 1
+          - 1
         length: 6.0
         hflip: false
-      - cell: 11
+      - cell:
+          - 3
+          - 1
         length: 8.0
         hflip: false
   - name: walk_e
     frames:
-      - cell: 6
+      - cell:
+          - 6
+          - 0
         length: 6.0
         hflip: false
-      - cell: 7
+      - cell:
+          - 7
+          - 0
         length: 8.0
         hflip: false
-      - cell: 6
+      - cell:
+          - 6
+          - 0
         length: 6.0
         hflip: false
-      - cell: 8
+      - cell:
+          - 0
+          - 1
         length: 8.0
         hflip: false
   - name: walk_se
     frames:
-      - cell: 3
+      - cell:
+          - 3
+          - 0
         length: 6.0
         hflip: false
-      - cell: 4
+      - cell:
+          - 4
+          - 0
         length: 8.0
         hflip: false
-      - cell: 3
+      - cell:
+          - 3
+          - 0
         length: 6.0
         hflip: false
-      - cell: 5
+      - cell:
+          - 5
+          - 0
         length: 8.0
         hflip: false

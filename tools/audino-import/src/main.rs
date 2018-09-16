@@ -48,6 +48,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   fs::copy(&src_path, &dest_path)?;
 
+  src_path.pop();
+
   // Load the animations.xml data.
   src_path.push("animations.xml");
 
@@ -97,7 +99,7 @@ fn build_animations(
         .frames
         .iter()
         .map(|f| graphics::atlas::animation::Frame {
-          cell: f.meta_frame_group_index,
+          cell: (f.meta_frame_group_index % 8, f.meta_frame_group_index / 8),
           length: f.duration as f64,
           hflip: f.hflip != 0,
         })

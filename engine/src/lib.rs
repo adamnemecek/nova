@@ -25,6 +25,7 @@ pub mod prelude {
   pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
   pub use specs::prelude::*;
   pub use specs::storage::BTreeStorage;
+  pub use std::sync::Arc;
 
   pub use {core, graphics, input, stage, unstable, Core};
 }

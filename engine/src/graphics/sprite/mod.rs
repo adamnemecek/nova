@@ -19,7 +19,7 @@ pub struct Sprite {
   /// Atlas to source cells from.
   pub atlas: Arc<Atlas>,
   /// Cell in the atlas to render.
-  pub cell: usize,
+  pub cell: graphics::atlas::Cell,
   /// Whether to flip the sprite horizontally.
   pub hflip: bool,
 }

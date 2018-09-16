@@ -15,6 +15,9 @@ pub mod data;
 pub use self::animation::Animation;
 pub use self::data::Data;
 
+/// Coordinates for a cell in an atlas.
+pub type Cell = (usize, usize);
+
 /// An image split into one or more cells.
 ///
 /// Also known as a spritesheet.
@@ -52,16 +55,12 @@ impl Atlas {
   }
 
   /// Gets the source rectangle for a given `cell` in the atlas.
-  pub fn get(&self, cell: usize) -> Rect {
-    let width = self.image.width() as f32;
-
-    let w = self.data.cell_width as f32 / width;
+  pub fn get(&self, cell: Cell) -> Rect {
+    let w = self.data.cell_width as f32 / self.image.width() as f32;
     let h = self.data.cell_height as f32 / self.image.height() as f32;
 
-    let mut x = cell as f32 * w;
-    let y = x.floor() * h;
-
-    x %= 1.0;
+    let x = cell.0 as f32 * w;
+    let y = cell.1 as f32 * h;
 
     Rect::new(x, y, w, h)
   }

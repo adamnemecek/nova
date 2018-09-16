@@ -55,7 +55,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       })
       .with(graphics::Sprite {
         atlas: Arc::new(atlas),
-        cell: 0,
+        cell: (0, 0),
         hflip: false,
       })
       .with(stage::Position(Point3::new(100.0, 100.0, 0.0)))
@@ -76,7 +76,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
       })
       .with(graphics::Sprite {
         atlas: Arc::new(atlas),
-        cell: 7,
+        cell: (0, 0),
         hflip: false,
       })
       .with(stage::Position(Point3::new(164.0, 164.0, 0.0)))
