@@ -15,8 +15,9 @@ use super::{camera, Camera, Position};
 pub struct Render;
 
 /// Renders the stage onto the screen.
-#[derive(Default)]
 pub struct Renderer {
+  /// Render scale multiplier.
+  pub scale: f32,
   /// A queue of entities to draw this frame for sorting by position.
   draw_queue: Vec<(Entity, Position)>,
 }
@@ -45,7 +46,7 @@ impl Renderer {
     };
 
     // Calculate the offset in drawing needed for the camera's position.
-    let draw_offset = Point2::new(viewport.width / 2.0, viewport.height / 2.0) - camera_pos;
+    let draw_offset = Point2::new(viewport.width, viewport.height) / self.scale / 2.0 - camera_pos;
 
     // Queue all rendered entities for drawing.
     for (entity, _, position) in (&*entities, &rendered, &positions).join() {
@@ -60,7 +61,8 @@ impl Renderer {
     // Finally, draw the entities.
     let sprites = core.world.read_storage::<graphics::Sprite>();
 
-    ggez::graphics::clear(&mut core.ctx, ggez::graphics::BLACK);
+    ggez::graphics::push_transform(&mut core.ctx, Some(Matrix4::new_scaling(self.scale)));
+    ggez::graphics::apply_transformations(&mut core.ctx).expect("could not scale for stage draw");
 
     for (entity, position) in &self.draw_queue {
       // If the entity has a sprite, draw that.
@@ -79,7 +81,20 @@ impl Renderer {
       }
     }
 
+    ggez::graphics::pop_transform(&mut core.ctx);
+    ggez::graphics::apply_transformations(&mut core.ctx)
+      .expect("could not restore scale after stage draw");
+
     // Clear the queue for the next frame.
     self.draw_queue.clear();
+  }
+}
+
+impl Default for Renderer {
+  fn default() -> Self {
+    Renderer {
+      scale: 2.0,
+      draw_queue: Vec::with_capacity(1024),
+    }
   }
 }
