@@ -12,8 +12,74 @@ use super::Atlas;
 #[derive(Component)]
 #[storage(BTreeStorage)]
 pub struct Sprite {
-  /// Atlas to source frames from.
+  /// Atlas to source cells from.
   pub atlas: Arc<Atlas>,
-  /// Index of the frame in the atlas to render.
+  /// Cell in the atlas to render.
   pub cell: usize,
+  /// Whether to flip the sprite horizontally.
+  pub hflip: bool,
+}
+
+/// Component indicating that entity has an animated sprite.
+#[derive(Default, Component)]
+#[storage(BTreeStorage)]
+pub struct Animated {
+  /// Index of the animation in the atlas to play.
+  pub animation: Option<usize>,
+  /// Elapsed time in the animation.
+  pub elapsed: f64,
+}
+
+#[derive(Default)]
+pub struct Animator;
+
+impl<'a> System<'a> for Animator {
+  type SystemData = (
+    Read<'a, core::Clock>,
+    WriteStorage<'a, Animated>,
+    WriteStorage<'a, Sprite>,
+  );
+
+  fn run(&mut self, (clock, mut animated, mut sprites): Self::SystemData) {
+    for (state, sprite) in (&mut animated, &mut sprites).join() {
+      match state.animation {
+        Some(animation) if animation < sprite.atlas.data.animations.len() => {
+          let animation = &sprite.atlas.data.animations[animation];
+
+          if animation.frames.len() == 0 {
+            continue;
+          }
+
+          state.elapsed += clock.delta_time;
+
+          let mut duration = 0.0;
+
+          for frame in &animation.frames {
+            duration += frame.length;
+          }
+
+          let mut current = &animation.frames[0];
+          let mut elapsed = state.elapsed * 60.0;
+
+          if duration > 0.0 {
+            elapsed %= duration;
+          }
+
+          for frame in &animation.frames {
+            elapsed -= frame.length;
+
+            if elapsed <= 0.0 {
+              current = frame;
+              break;
+            }
+          }
+
+          sprite.cell = current.cell;
+          sprite.hflip = current.hflip;
+        }
+
+        _ => {}
+      }
+    }
+  }
 }

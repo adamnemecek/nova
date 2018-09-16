@@ -1,3 +1,116 @@
 ---
-columns: 8
-rows: 7
+cell_width: 48
+cell_height: 64
+animations:
+  - name: walk_s
+    frames:
+      - cell: 0
+        length: 6.0
+        hflip: false
+      - cell: 1
+        length: 8.0
+        hflip: false
+      - cell: 0
+        length: 6.0
+        hflip: false
+      - cell: 2
+        length: 8.0
+        hflip: false
+  - name: walk_sw
+    frames:
+      - cell: 3
+        length: 6.0
+        hflip: true
+      - cell: 4
+        length: 8.0
+        hflip: true
+      - cell: 3
+        length: 6.0
+        hflip: true
+      - cell: 5
+        length: 8.0
+        hflip: true
+  - name: walk_w
+    frames:
+      - cell: 6
+        length: 6.0
+        hflip: true
+      - cell: 7
+        length: 8.0
+        hflip: true
+      - cell: 6
+        length: 6.0
+        hflip: true
+      - cell: 8
+        length: 8.0
+        hflip: true
+  - name: walk_nw
+    frames:
+      - cell: 9
+        length: 6.0
+        hflip: true
+      - cell: 10
+        length: 8.0
+        hflip: true
+      - cell: 9
+        length: 6.0
+        hflip: true
+      - cell: 11
+        length: 8.0
+        hflip: true
+  - name: walk_n
+    frames:
+      - cell: 12
+        length: 6.0
+        hflip: false
+      - cell: 13
+        length: 8.0
+        hflip: false
+      - cell: 12
+        length: 6.0
+        hflip: false
+      - cell: 14
+        length: 8.0
+        hflip: false
+  - name: walk_ne
+    frames:
+      - cell: 9
+        length: 6.0
+        hflip: false
+      - cell: 10
+        length: 8.0
+        hflip: false
+      - cell: 9
+        length: 6.0
+        hflip: false
+      - cell: 11
+        length: 8.0
+        hflip: false
+  - name: walk_e
+    frames:
+      - cell: 6
+        length: 6.0
+        hflip: false
+      - cell: 7
+        length: 8.0
+        hflip: false
+      - cell: 6
+        length: 6.0
+        hflip: false
+      - cell: 8
+        length: 8.0
+        hflip: false
+  - name: walk_se
+    frames:
+      - cell: 3
+        length: 6.0
+        hflip: false
+      - cell: 4
+        length: 8.0
+        hflip: false
+      - cell: 3
+        length: 6.0
+        hflip: false
+      - cell: 5
+        length: 8.0
+        hflip: false

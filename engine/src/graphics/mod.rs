@@ -10,6 +10,9 @@ pub mod sprite;
 pub use self::atlas::Atlas;
 pub use self::sprite::Sprite;
 
-pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.register::<Sprite>();
+  core.world.register::<sprite::Animated>();
+
+  dispatch.add(sprite::Animator::default(), "sprite::Animator", &[]);
 }

@@ -4,11 +4,16 @@
 
 extern crate clap;
 extern crate nova_engine;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_xml_rs;
 
 use clap::{App, Arg};
 use nova_engine::prelude::*;
 use std::fs;
 use std::path::PathBuf;
+
+mod animations;
 
 /// Main entry point for the tool.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -26,21 +31,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .help("Path to save imported Nova assets to.")
         .index(2)
         .required(true),
-    )
-    .arg(
-      Arg::with_name("columns")
-        .short("c")
-        .value_name("NUM")
-        .help("Number of columns in the sprite sheet.")
-        .default_value("8")
-        .required(true),
-    )
-    .arg(
-      Arg::with_name("rows")
-        .short("r")
-        .value_name("NUM")
-        .help("Number of rows in the sprite sheet.")
-        .required(true),
     );
 
   // Get all matching arguments from the command line.
@@ -49,18 +39,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mut src_path = PathBuf::from(matches.value_of_os("src").unwrap());
   let mut dest_path = PathBuf::from(matches.value_of_os("dest").unwrap());
 
-  let columns = matches
-    .value_of("columns")
-    .unwrap()
-    .parse()
-    .expect("invalid columns");
+  // Load the animations.xml data.
+  src_path.push("animations.xml");
 
-  let rows = matches
-    .value_of("rows")
-    .unwrap()
-    .parse()
-    .expect("invalid rows");
+  let animations_data = animations::load(&src_path)?;
 
+  src_path.pop();
+
+  // Ensure dest path exists.
   fs::create_dir_all(&dest_path)?;
 
   // Copy the monster's sprite sheet.
@@ -72,7 +58,49 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Save the sprite atlas metadata.
   dest_path.set_extension("yml");
 
-  graphics::atlas::Data { columns, rows }.save(&dest_path)?;
+  // Convert animations.
+  let mut animations = Vec::new();
+
+  build_animations(
+    "walk",
+    &animations_data,
+    animations::Type::Walk as usize,
+    &mut animations,
+  );
+
+  graphics::atlas::Data {
+    cell_width: animations_data.frame_width,
+    cell_height: animations_data.frame_height,
+    animations,
+  }.save(&dest_path)?;
 
   Ok(())
+}
+
+fn build_animations(
+  name: &str,
+  input: &animations::AnimData,
+  group_index: usize,
+  output: &mut Vec<graphics::atlas::Animation>,
+) {
+  for (i, sequence_index) in input.group_table.groups[group_index]
+    .sequence_indices
+    .iter()
+    .enumerate()
+  {
+    let sequence = &input.sequence_table.sequences[*sequence_index];
+
+    output.push(graphics::atlas::Animation {
+      name: format!("{}_{}", name, animations::DIRECTONS[i]),
+      frames: sequence
+        .frames
+        .iter()
+        .map(|f| graphics::atlas::animation::Frame {
+          cell: f.meta_frame_group_index,
+          length: f.duration as f64,
+          hflip: f.hflip != 0,
+        })
+        .collect(),
+    });
+  }
 }

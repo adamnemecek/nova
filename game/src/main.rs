@@ -49,9 +49,14 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
     core
       .world
       .create_entity()
+      .with(graphics::sprite::Animated {
+        animation: atlas.get_animation("walk_se"),
+        elapsed: 0.0,
+      })
       .with(graphics::Sprite {
         atlas: Arc::new(atlas),
         cell: 0,
+        hflip: false,
       })
       .with(stage::Position(Point3::new(100.0, 100.0, 0.0)))
       .with(stage::Render)
@@ -65,17 +70,22 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
     let entity = core
       .world
       .create_entity()
+      .with(graphics::sprite::Animated {
+        animation: atlas.get_animation("walk_n"),
+        elapsed: 0.0,
+      })
       .with(graphics::Sprite {
         atlas: Arc::new(atlas),
         cell: 7,
+        hflip: false,
       })
       .with(stage::Position(Point3::new(164.0, 164.0, 0.0)))
-      .with(stage::Render)
+      .with(stage::Render::default())
       .with(unstable::Character {
         state: unstable::character::State::Idle,
         speed: 64.0,
       })
-      .with(unstable::movement::Controlled)
+      .with(unstable::movement::Controlled::default())
       .build();
 
     // Set the camera target to the hero character.
