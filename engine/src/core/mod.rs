@@ -9,6 +9,7 @@ use prelude::*;
 pub mod clock;
 pub mod context;
 pub mod fps_display;
+pub mod fs;
 pub mod keyboard;
 pub mod viewport;
 

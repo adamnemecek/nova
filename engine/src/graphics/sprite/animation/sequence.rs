@@ -2,24 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Cell;
+use graphics::sprite::*;
 
-/// Data for an animation in an atlas.
 #[derive(Serialize, Deserialize)]
-pub struct Animation {
-  /// Name of the animation.
+pub struct Sequence {
   pub name: String,
-  /// List of frames in the animation.
   pub frames: Vec<Frame>,
 }
 
-/// Data for one frame of an atlas animation.
 #[derive(Serialize, Deserialize)]
 pub struct Frame {
-  /// Which cell in the atlas to draw.
-  pub cell: Cell,
   /// Length of this frame in 60ths of a second.
   pub length: f64,
+  /// Which cell in the atlas to draw.
+  pub cell: atlas::Cell,
   /// Whether to flip the sprite horizontally.
   #[serde(default)]
   pub hflip: bool,

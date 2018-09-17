@@ -19,7 +19,7 @@ pub struct Renderer {
   /// Render scale multiplier.
   pub scale: f32,
   /// A queue of entities to draw this frame for sorting by position.
-  draw_queue: Vec<(Entity, Position)>,
+  draw_queue: Vec<(Entity, Point3<f32>)>,
 }
 
 impl Renderer {
@@ -38,7 +38,7 @@ impl Renderer {
       camera::Target::Position(pos) => pos,
       camera::Target::Entity(entity) => {
         if let Some(pos) = positions.get(entity) {
-          Point2::new(pos.x, pos.y)
+          Point2::new(pos.point.x, pos.point.y)
         } else {
           Point2::new(0.0, 0.0)
         }
@@ -50,7 +50,7 @@ impl Renderer {
 
     // Queue all rendered entities for drawing.
     for (entity, _, position) in (&*entities, &rendered, &positions).join() {
-      self.draw_queue.push((entity, *position));
+      self.draw_queue.push((entity, position.point));
     }
 
     // Sort the queue by the y-coordinate of the position.

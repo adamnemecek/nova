@@ -8,7 +8,6 @@ extern crate specs;
 
 use nova_engine::prelude::*;
 use std::error::Error;
-use std::sync::Arc;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -42,58 +41,20 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
-  // Add a character to the world.
-  {
-    let atlas = graphics::Atlas::load(core, "/004-fire-salamander/atlas")?;
+  let hero = unstable::actor::load(core, "/hero-f")?;
 
-    core
-      .world
-      .create_entity()
-      .with(graphics::sprite::Animated {
-        animation: atlas.get_animation_index("walk_se"),
-        elapsed: 0.0,
-      })
-      .with(graphics::Sprite {
-        atlas: Arc::new(atlas),
-        cell: (0, 0),
-        hflip: false,
-      })
-      .with(stage::Position(Point3::new(100.0, 100.0, 0.0)))
-      .with(stage::Render)
-      .build();
-  }
+  unstable::actor::load(core, "/004-fire-salamander")?;
 
-  // Add another character to the world.
-  {
-    let atlas = graphics::Atlas::load(core, "/hero-f/atlas")?;
+  // Set the camera target to the hero actor.
+  core
+    .world
+    .write_resource::<stage::Camera>()
+    .set_target(hero);
 
-    let entity = core
-      .world
-      .create_entity()
-      .with(graphics::sprite::Animated {
-        animation: atlas.get_animation_index("walk_n"),
-        elapsed: 0.0,
-      })
-      .with(graphics::Sprite {
-        atlas: Arc::new(atlas),
-        cell: (0, 0),
-        hflip: false,
-      })
-      .with(stage::Position(Point3::new(164.0, 164.0, 0.0)))
-      .with(stage::Render::default())
-      .with(unstable::Character {
-        state: unstable::character::State::Idle,
-        speed: 64.0,
-      })
-      .with(unstable::movement::Controlled::default())
-      .build();
-
-    // Set the camera target to the hero character.
-    core
-      .world
-      .write_resource::<stage::Camera>()
-      .set_target(entity);
-  }
+  core
+    .world
+    .write_storage()
+    .insert(hero, unstable::InputControlled)?;
 
   Ok(())
 }

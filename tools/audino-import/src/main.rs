@@ -53,38 +53,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Load the animations.xml data.
   src_path.push("animations.xml");
 
-  let animations_data = animations::load(&src_path)?;
+  let anim_data = animations::load(&src_path)?;
 
   src_path.pop();
-
-  // Convert animations.
-  let mut animations = Vec::new();
-
-  build_animations(
-    "walk",
-    &animations_data,
-    animations::Type::Walk as usize,
-    &mut animations,
-  );
 
   // Save the sprite atlas metadata.
   dest_path.set_extension("yml");
 
-  graphics::atlas::Data {
-    cell_width: animations_data.frame_width,
-    cell_height: animations_data.frame_height,
-    animations,
-  }.save(&dest_path)?;
+  yaml::save(
+    &dest_path,
+    &graphics::sprite::atlas::Data {
+      cell_width: anim_data.frame_width,
+      cell_height: anim_data.frame_height,
+    },
+  )?;
+
+  dest_path.pop();
+
+  // Convert animations to sequences.
+  let mut sequences = Vec::new();
+
+  build_sequences(
+    "walk",
+    &anim_data,
+    animations::Type::Walk as usize,
+    &mut sequences,
+  );
+
+  // Save sequences.yml.
+  dest_path.push("sequences.yml");
+
+  yaml::save(&dest_path, &sequences)?;
 
   Ok(())
 }
 
 /// Builds sprite atlas animations from audino animation data.
-fn build_animations(
+fn build_sequences(
   name: &str,
   input: &animations::AnimData,
   group_index: usize,
-  output: &mut Vec<graphics::atlas::Animation>,
+  output: &mut Vec<graphics::sprite::animation::Sequence>,
 ) {
   for (i, sequence_index) in input.group_table.groups[group_index]
     .sequence_indices
@@ -93,12 +102,12 @@ fn build_animations(
   {
     let sequence = &input.sequence_table.sequences[*sequence_index];
 
-    output.push(graphics::atlas::Animation {
+    output.push(graphics::sprite::animation::Sequence {
       name: format!("{}_{}", name, animations::DIRECTONS[i]),
       frames: sequence
         .frames
         .iter()
-        .map(|f| graphics::atlas::animation::Frame {
+        .map(|f| graphics::sprite::animation::Frame {
           cell: (f.meta_frame_group_index % 8, f.meta_frame_group_index / 8),
           length: f.duration as f64,
           hflip: f.hflip != 0,

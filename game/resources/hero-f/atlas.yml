@@ -1,13 +1,2 @@
 cell_width: 32
 cell_height: 32
-animations:
-  - name: walk_n
-    frames:
-      - cell: [0, 0]
-        length: 6
-      - cell: [1, 0]
-        length: 8
-      - cell: [0, 0]
-        length: 6
-      - cell: [2, 0]
-        length: 8

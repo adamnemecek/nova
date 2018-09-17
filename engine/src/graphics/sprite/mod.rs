@@ -6,11 +6,11 @@ use std::sync::Arc;
 
 use prelude::*;
 
-use super::Atlas;
-
 pub mod animation;
+pub mod atlas;
 
-pub use self::animation::{Animated, Animator};
+pub use self::animation::{Animation, AnimationSystem};
+pub use self::atlas::Atlas;
 
 /// Component representing a sprite to be drawn.
 #[derive(Component)]
@@ -19,7 +19,17 @@ pub struct Sprite {
   /// Atlas to source cells from.
   pub atlas: Arc<Atlas>,
   /// Cell in the atlas to render.
-  pub cell: graphics::atlas::Cell,
+  pub cell: atlas::Cell,
   /// Whether to flip the sprite horizontally.
   pub hflip: bool,
+}
+
+impl Sprite {
+  pub fn new(atlas: Arc<Atlas>) -> Self {
+    Sprite {
+      atlas,
+      cell: (0, 0),
+      hflip: false,
+    }
+  }
 }

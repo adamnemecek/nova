@@ -4,16 +4,18 @@
 
 use prelude::*;
 
-pub mod atlas;
 pub mod sprite;
 
-pub use self::atlas::Atlas;
 pub use self::sprite::Sprite;
 
 /// Sets up graphics components, resources, and systems.
 pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<Sprite>();
-  core.world.register::<sprite::Animated>();
+  core.world.register::<sprite::Sprite>();
+  core.world.register::<sprite::Animation>();
 
-  dispatch.add(sprite::Animator::default(), "sprite::Animator", &[]);
+  dispatch.add(
+    sprite::AnimationSystem::default(),
+    "graphics::sprite::AnimationSystem",
+    &[],
+  );
 }

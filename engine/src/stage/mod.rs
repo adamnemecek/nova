@@ -5,17 +5,22 @@
 use prelude::*;
 
 pub mod camera;
-pub mod position;
+pub mod compass_direction;
+pub mod motion;
 pub mod renderer;
 
 pub use self::camera::Camera;
-pub use self::position::Position;
+pub use self::compass_direction::CompassDirection;
+pub use self::motion::{MotionSystem, Position, Velocity};
 pub use self::renderer::{Render, Renderer};
 
 /// Sets up stage components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.register::<Position>();
+  core.world.register::<Velocity>();
   core.world.register::<Render>();
 
   core.world.add_resource(Camera::default());
+
+  dispatch.add(MotionSystem, "stage::MotionSystem", &[]);
 }
