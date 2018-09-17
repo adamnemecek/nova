@@ -1,4 +1,4 @@
-atlas: atlas.yml
+atlas: texture.yml
 cardinal_dirs_only: true
 animations:
   - name: walk

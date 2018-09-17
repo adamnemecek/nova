@@ -2,10 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::*;
 use ggez::graphics::DrawParam;
 use std::cmp;
-
-use prelude::*;
 
 use super::{camera, Camera, Position};
 
@@ -14,16 +13,19 @@ use super::{camera, Camera, Position};
 #[storage(NullStorage)]
 pub struct Render;
 
-/// Renders the stage onto the screen.
+/// Renders the graphics for the stage.
 pub struct Renderer {
-  /// Render scale multiplier.
+  /// Global scale for everything the renderer draws.
   pub scale: f32,
-  /// A queue of entities to draw this frame for sorting by position.
+  /// Buffer for the queue of all entities on the stage to render during each
+  /// draw call.
+  ///
+  /// This is used to sort entities by position before drawing.
   draw_queue: Vec<(Entity, Point3<f32>)>,
 }
 
 impl Renderer {
-  /// Draws the stage.
+  /// Draws all the graphics on the stage.
   pub fn draw(&mut self, core: &mut Core) {
     let entities = core.world.entities();
 
@@ -91,6 +93,8 @@ impl Renderer {
   }
 }
 
+// Set the default scale to 2.0 and initialize the draw queue with a good buffer
+// capacity.
 impl Default for Renderer {
   fn default() -> Self {
     Renderer {

@@ -4,15 +4,15 @@
 
 use super::*;
 
-/// Component representing a sprite to be drawn.
+/// Component that describes an entity's sprite representation.
 #[derive(Component, Debug)]
 #[storage(BTreeStorage)]
 pub struct Sprite {
-  /// Atlas to source cells from.
+  /// Source `Atlas` for the sprite graphics.
   pub atlas: Arc<Atlas>,
-  /// Cell in the atlas to render.
+  /// Cell of the atlas to get the sprite from.
   pub cell: atlas::Cell,
-  /// Scale of the sprite.
+  /// Scale of the sprite in x- and y-directions.
   pub scale: Vector2<f32>,
 }
 

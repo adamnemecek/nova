@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use prelude::*;
+use super::*;
 
-/// Resource that indicates what is the target of the stage's camera.
+/// Resource that stores the target of the stage's camera.
 #[derive(Default)]
 pub struct Camera {
-  /// The current target of the camera.
+  /// Current target of the camera.
   pub target: Target,
 }
 
@@ -18,26 +18,29 @@ impl Camera {
   }
 }
 
-/// A possible target for the `Camera`.
+/// Target for a `Camera`.
 pub enum Target {
-  /// Targets a single point in space.
+  /// Fixes the camera at a particular position.
   Position(Point2<f32>),
-  /// Follows an entity's position.
+  /// Follows an entity's position with the camera
   Entity(Entity),
 }
 
+// Set the default target to the origin point.
 impl Default for Target {
   fn default() -> Self {
     Target::Position(Point2::new(0.0, 0.0))
   }
 }
 
+// Create targets from points.
 impl From<Point2<f32>> for Target {
   fn from(point: Point2<f32>) -> Self {
     Target::Position(point)
   }
 }
 
+// Create targets from entities.
 impl From<Entity> for Target {
   fn from(entity: Entity) -> Self {
     Target::Entity(entity)

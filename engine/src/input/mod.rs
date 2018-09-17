@@ -12,7 +12,7 @@ pub mod system;
 pub use self::buttons::Button;
 pub use self::system::InputSystem;
 
-/// Resource containing current input state.
+/// Resource that stores the current input state.
 #[derive(Default, Debug)]
 pub struct Input {
   /// State of all available input buttons.
@@ -29,20 +29,20 @@ impl Input {
   /// periodically while it is held down.
   ///
   /// This is useful for discrete actions that should repeatedly happen while a
-  /// button is held, such as selecting menu items with arrow keys.
+  /// button is held, such as selecting menu items with the directional pad.
   pub fn is_pressed_repeated(&self, button: Button) -> bool {
     self.buttons[button as usize].repeated
   }
 }
 
-/// Current state of an input button.
+/// Sstate of an input button.
 #[derive(Default, Debug)]
 pub struct ButtonState {
-  /// The time the button was pressed if it is currently pressed; otherwise,
+  /// Time the button was first pressed or `None` if the button is not pressed.
   /// `None`.
   pub pressed_time: Option<f64>,
-  /// Whether or not the press was repeated this frame because the button was
-  /// held down enough.
+  /// Whether the press was repeated, which is `true` periodically while the
+  /// button is held down.
   pub repeated: bool,
 }
 

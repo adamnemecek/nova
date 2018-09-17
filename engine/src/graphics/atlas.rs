@@ -2,22 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::*;
 use std::error::Error;
 use std::path::{Path, PathBuf};
-
-use super::*;
 
 /// Coordinates for a cell in an atlas.
 pub type Cell = (usize, usize);
 
-/// A single image divided into cells containing individual sprites.
+/// Asset that divides a single texture into one or more cells.
 #[derive(Debug)]
 pub struct Atlas {
-  /// Image to render cells from.
+  /// Texture of the atlas.
   pub texture: core::Texture,
-  /// Width of a single cell in the atlas.
+  /// Width of a single cell.
   pub cell_width: usize,
-  /// Height of a single cell in the atlas.
+  /// Height of a single cell.
   pub cell_height: usize,
 }
 
@@ -34,15 +33,18 @@ impl Atlas {
   }
 }
 
+// Support loading atlases from YAML files that reference image files.
 impl core::Asset for Atlas {
   fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
     let mut path = path.to_owned();
 
+    // Load the atlas data.
     let data = assets.load::<Data>(&path)?;
 
     path.pop();
 
-    let texture = assets.load(&path.join(data.image))?;
+    // Load the texture referenced in the data.
+    let texture = assets.load(&path.join(data.texture))?;
 
     Ok(Atlas {
       texture,
@@ -52,11 +54,11 @@ impl core::Asset for Atlas {
   }
 }
 
-/// Data for an atlas.
+/// Serializable data for an `Atlas` asset.
 #[derive(Serialize, Deserialize)]
 pub struct Data {
-  /// Path to the image to use for the atlas.
-  pub image: PathBuf,
+  /// Relative path to the atlas texture.
+  pub texture: PathBuf,
   /// Width of a single cell in the atlas.
   pub cell_width: usize,
   /// Height of a single cell in the atlas.

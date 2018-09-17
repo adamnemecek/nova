@@ -25,7 +25,6 @@ pub use core::Core;
 use prelude::*;
 
 pub mod prelude {
-  pub(crate) use ggez;
   pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
   pub use specs::prelude::*;
   pub use specs::storage::BTreeStorage;

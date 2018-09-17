@@ -1,5 +1,5 @@
 ---
-atlas: atlas.yml
+atlas: texture.yml
 animations:
   - name: static
     south:
