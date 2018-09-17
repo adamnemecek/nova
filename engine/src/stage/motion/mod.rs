@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use prelude::*;
+use super::*;
 
 pub mod system;
 
@@ -15,6 +15,7 @@ pub struct Position {
   pub point: Point3<f32>,
 }
 
+// Sets the default position to all zeros.
 impl Default for Position {
   fn default() -> Self {
     Position {
@@ -30,6 +31,7 @@ pub struct Velocity {
   pub vector: Vector3<f32>,
 }
 
+// Sets the default velocity to zero.
 impl Default for Velocity {
   fn default() -> Self {
     Velocity {
