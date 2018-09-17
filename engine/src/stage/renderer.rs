@@ -75,8 +75,6 @@ impl Renderer {
             param = param.dest(Point2::new(position.x, position.y - position.z) + draw_offset);
             param = param.scale(sprite.scale);
 
-            println!("{:?}\n{:?}\n", param, image.as_ref().unwrap());
-
             ggez::graphics::draw(&mut core.ctx, image.as_ref().unwrap(), param)
               .expect("could not draw sprite");
           }
