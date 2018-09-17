@@ -26,28 +26,6 @@ impl Assets {
   pub fn save<T: Asset>(&self, path: &Path, asset: &T) -> Result<(), Box<dyn Error>> {
     asset.save(self.path.join(path))
   }
-
-  /// Load a ggez `Image` from the given `path`.
-  pub fn load_image(
-    &self,
-    ctx: &mut ggez::Context,
-    path: &Path,
-  ) -> Result<ggez::graphics::Image, Box<dyn Error>> {
-    let img = {
-      let mut buf = Vec::new();
-      let mut file = File::open(self.path.join(path))?;
-
-      file.read_to_end(&mut buf)?;
-      image::load_from_memory(&buf)?.to_rgba()
-    };
-
-    let (width, height) = img.dimensions();
-    let mut image = ggez::graphics::Image::from_rgba8(ctx, width as u16, height as u16, &img)?;
-
-    image.set_filter(ggez::graphics::FilterMode::Nearest);
-
-    Ok(image)
-  }
 }
 
 impl Default for Assets {
@@ -91,4 +69,24 @@ where
 
     Ok(serde_yaml::to_writer(file, self)?)
   }
+}
+
+/// Load a ggez `Image` from the given `path` relative to the core's asset
+/// directory.
+pub fn load_image(core: &mut Core, path: &Path) -> Result<ggez::graphics::Image, Box<dyn Error>> {
+  let img = {
+    let mut buf = Vec::new();
+    let mut file = File::open(core.world.read_resource::<Assets>().path.join(path))?;
+
+    file.read_to_end(&mut buf)?;
+    image::load_from_memory(&buf)?.to_rgba()
+  };
+
+  let (width, height) = img.dimensions();
+  let mut image =
+    ggez::graphics::Image::from_rgba8(&mut core.ctx, width as u16, height as u16, &img)?;
+
+  image.set_filter(ggez::graphics::FilterMode::Nearest);
+
+  Ok(image)
 }

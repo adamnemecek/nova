@@ -11,15 +11,13 @@ pub fn load(core: &mut Core, path: impl Into<PathBuf>) -> Result<Entity, Box<dyn
   let mut path = path.into();
 
   let atlas = {
-    let assets = core.world.read_resource::<core::Assets>();
-
     path.push("atlas.png");
 
-    let image = assets.load_image(&mut core.ctx, &path)?;
+    let image = core::assets::load_image(core, &path)?;
 
     path.set_extension("yml");
 
-    let data = assets.load(&path)?;
+    let data = core.world.read_resource::<core::Assets>().load(&path)?;
 
     path.pop();
 
