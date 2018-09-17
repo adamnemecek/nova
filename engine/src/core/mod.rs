@@ -99,37 +99,41 @@ impl Core {
 
     key_events.list.clear();
 
-    self.events_loop.poll_events(|event| match event {
-      Event::WindowEvent { event, .. } => match event {
-        WindowEvent::CloseRequested => {
-          ctx.quit();
-        }
+    self.events_loop.poll_events(|event| {
+      let event = ctx.process_event(&event);
 
-        WindowEvent::Resized(size) => {
-          ggez::graphics::set_screen_coordinates(
-            ctx,
-            ggez::graphics::Rect::new(0.0, 0.0, size.width as f32, size.height as f32),
-          ).expect("could not resize");
-
-          let mut viewport = world.write_resource::<Viewport>();
-
-          viewport.width = size.width as f32;
-          viewport.height = size.height as f32;
-        }
-
-        WindowEvent::KeyboardInput { input, .. } => {
-          if let Some(key) = input.virtual_keycode {
-            key_events.list.push(match input.state {
-              ElementState::Pressed => input::KeyEvent::Pressed(key),
-              ElementState::Released => input::KeyEvent::Released(key),
-            });
+      match event {
+        Event::WindowEvent { event, .. } => match event {
+          WindowEvent::CloseRequested => {
+            ctx.quit();
           }
-        }
+
+          WindowEvent::Resized(size) => {
+            ggez::graphics::set_screen_coordinates(
+              ctx,
+              ggez::graphics::Rect::new(0.0, 0.0, size.width as f32, size.height as f32),
+            ).expect("could not resize");
+
+            let mut viewport = world.write_resource::<Viewport>();
+
+            viewport.width = size.width as f32;
+            viewport.height = size.height as f32;
+          }
+
+          WindowEvent::KeyboardInput { input, .. } => {
+            if let Some(key) = input.virtual_keycode {
+              key_events.list.push(match input.state {
+                ElementState::Pressed => input::KeyEvent::Pressed(key),
+                ElementState::Released => input::KeyEvent::Released(key),
+              });
+            }
+          }
+
+          _ => {}
+        },
 
         _ => {}
-      },
-
-      _ => {}
+      };
     });
   }
 }
