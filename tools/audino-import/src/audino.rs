@@ -7,12 +7,18 @@ use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 
-/// Loads an `animations.xml` file as `AnimData`.
-pub fn load(path: &Path) -> Result<AnimData, Box<dyn Error>> {
-  let file = File::open(path)?;
+pub const GROUP_NAMES: [&'static str; 3] = ["static", "idle", "walk"];
 
-  Ok(serde_xml_rs::deserialize(file)?)
-}
+pub const DIRECTION_NAMES: [&'static str; 8] = [
+  "south",
+  "southwest",
+  "west",
+  "northwest",
+  "north",
+  "northeast",
+  "east",
+  "southeast",
+];
 
 /// Data from an `animations.xml` file about the animations for a monster.
 #[derive(Debug, Deserialize)]
@@ -32,6 +38,15 @@ pub struct AnimData {
   pub sequence_table: AnimSequenceTable,
 }
 
+impl AnimData {
+  /// Loads an `animations.xml` file as `AnimData`.
+  pub fn load(path: &Path) -> Result<Self, Box<dyn Error>> {
+    let file = File::open(path)?;
+
+    Ok(serde_xml_rs::deserialize(file)?)
+  }
+}
+
 /// Table of animation groups defining individual animations.
 #[derive(Debug, Deserialize)]
 pub struct AnimGroupTable {
@@ -48,10 +63,6 @@ pub struct AnimGroup {
   #[serde(rename = "AnimSequenceIndex")]
   pub sequence_indices: Vec<usize>,
 }
-
-/// Short name of directions in the same order as animation group sequence
-/// indices.
-pub const DIRECTONS: [&'static str; 8] = ["s", "sw", "w", "nw", "n", "ne", "e", "se"];
 
 /// Table of animation sequences defining individual animation sequences used in
 /// groups.

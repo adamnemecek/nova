@@ -8,6 +8,7 @@ extern crate specs;
 
 use nova_engine::prelude::*;
 use std::error::Error;
+use std::path::PathBuf;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -36,20 +37,37 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
-  let hero = unstable::actor::load(core, "hero-f")?;
+  let (hero_template, monster_template) = {
+    let assets = core.world.read_resource::<core::Assets>();
 
-  unstable::actor::load(core, "004-fire-salamander")?;
+    (
+      assets.load::<stage::ObjectTemplate>(&PathBuf::from("hero-f/object.yml"))?,
+      assets.load::<stage::ObjectTemplate>(&PathBuf::from("004-fire-salamander/object.yml"))?,
+    )
+  };
 
-  // Set the camera target to the hero actor.
+  let hero = stage::build_object(Arc::new(hero_template), core.world.create_entity()).build();
+  let monster = stage::build_object(Arc::new(monster_template), core.world.create_entity()).build();
+
+  // Set the camera target to the hero.
   core
     .world
     .write_resource::<stage::Camera>()
     .set_target(hero);
 
+  // Set the hero to be input controlled.
   core
     .world
     .write_storage()
     .insert(hero, unstable::InputControlled)?;
+
+  // Set the monter's animation to idle.
+  core
+    .world
+    .write_storage::<stage::object::animation::Animated>()
+    .get_mut(monster)
+    .unwrap()
+    .animation = 1;
 
   Ok(())
 }

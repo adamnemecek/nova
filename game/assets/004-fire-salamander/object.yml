@@ -1,0 +1,391 @@
+---
+atlas: atlas.yml
+animations:
+  - name: static
+    south:
+      - length: 18.0
+        cell:
+          - 0
+          - 0
+        hflip: false
+    northwest:
+      - length: 18.0
+        cell:
+          - 1
+          - 1
+        hflip: true
+    northeast:
+      - length: 18.0
+        cell:
+          - 1
+          - 1
+        hflip: false
+    southeast:
+      - length: 18.0
+        cell:
+          - 3
+          - 0
+        hflip: false
+    east:
+      - length: 18.0
+        cell:
+          - 6
+          - 0
+        hflip: false
+    west:
+      - length: 18.0
+        cell:
+          - 6
+          - 0
+        hflip: true
+    southwest:
+      - length: 18.0
+        cell:
+          - 3
+          - 0
+        hflip: true
+    north:
+      - length: 18.0
+        cell:
+          - 4
+          - 1
+        hflip: false
+  - name: idle
+    east:
+      - length: 12.0
+        cell:
+          - 6
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 7
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 6
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 0
+          - 1
+        hflip: false
+    south:
+      - length: 12.0
+        cell:
+          - 0
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 1
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 0
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 2
+          - 0
+        hflip: false
+    north:
+      - length: 12.0
+        cell:
+          - 4
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 5
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 4
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 6
+          - 1
+        hflip: false
+    southeast:
+      - length: 12.0
+        cell:
+          - 3
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 4
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 3
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 5
+          - 0
+        hflip: false
+    west:
+      - length: 12.0
+        cell:
+          - 6
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 7
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 6
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 0
+          - 1
+        hflip: true
+    southwest:
+      - length: 12.0
+        cell:
+          - 3
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 4
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 3
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 5
+          - 0
+        hflip: true
+    northwest:
+      - length: 12.0
+        cell:
+          - 1
+          - 1
+        hflip: true
+      - length: 8.0
+        cell:
+          - 2
+          - 1
+        hflip: true
+      - length: 8.0
+        cell:
+          - 1
+          - 1
+        hflip: true
+      - length: 8.0
+        cell:
+          - 3
+          - 1
+        hflip: true
+    northeast:
+      - length: 12.0
+        cell:
+          - 1
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 2
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 1
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 3
+          - 1
+        hflip: false
+  - name: walk
+    northeast:
+      - length: 6.0
+        cell:
+          - 1
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 2
+          - 1
+        hflip: false
+      - length: 6.0
+        cell:
+          - 1
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 3
+          - 1
+        hflip: false
+    northwest:
+      - length: 6.0
+        cell:
+          - 1
+          - 1
+        hflip: true
+      - length: 8.0
+        cell:
+          - 2
+          - 1
+        hflip: true
+      - length: 6.0
+        cell:
+          - 1
+          - 1
+        hflip: true
+      - length: 8.0
+        cell:
+          - 3
+          - 1
+        hflip: true
+    east:
+      - length: 6.0
+        cell:
+          - 6
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 7
+          - 0
+        hflip: false
+      - length: 6.0
+        cell:
+          - 6
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 0
+          - 1
+        hflip: false
+    southwest:
+      - length: 6.0
+        cell:
+          - 3
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 4
+          - 0
+        hflip: true
+      - length: 6.0
+        cell:
+          - 3
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 5
+          - 0
+        hflip: true
+    north:
+      - length: 6.0
+        cell:
+          - 4
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 5
+          - 1
+        hflip: false
+      - length: 6.0
+        cell:
+          - 4
+          - 1
+        hflip: false
+      - length: 8.0
+        cell:
+          - 6
+          - 1
+        hflip: false
+    south:
+      - length: 6.0
+        cell:
+          - 0
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 1
+          - 0
+        hflip: false
+      - length: 6.0
+        cell:
+          - 0
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 2
+          - 0
+        hflip: false
+    west:
+      - length: 6.0
+        cell:
+          - 6
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 7
+          - 0
+        hflip: true
+      - length: 6.0
+        cell:
+          - 6
+          - 0
+        hflip: true
+      - length: 8.0
+        cell:
+          - 0
+          - 1
+        hflip: true
+    southeast:
+      - length: 6.0
+        cell:
+          - 3
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 4
+          - 0
+        hflip: false
+      - length: 6.0
+        cell:
+          - 3
+          - 0
+        hflip: false
+      - length: 8.0
+        cell:
+          - 5
+          - 0
+        hflip: false
+cardinal_dirs_only: false

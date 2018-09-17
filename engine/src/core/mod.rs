@@ -9,10 +9,12 @@ use prelude::*;
 pub mod assets;
 pub mod clock;
 pub mod input;
+pub mod texture;
 pub mod viewport;
 
 pub use self::assets::{Asset, Assets};
 pub use self::clock::Clock;
+pub use self::texture::Texture;
 pub use self::viewport::Viewport;
 
 /// Number of ticks (game loops) since launch.
@@ -88,6 +90,9 @@ impl Core {
       ctx,
       &format!("{} ({} FPS)", self.app_name, clock.fps as usize),
     );
+
+    // Load queued resources for assets (e.g. images).
+    world.read_resource::<Assets>().load_queued_resources(ctx);
 
     // Process events.
     let mut key_events = world.write_resource::<input::KeyEvents>();

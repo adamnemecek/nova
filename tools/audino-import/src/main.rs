@@ -10,10 +10,11 @@ extern crate serde_xml_rs;
 
 use clap::{App, Arg};
 use nova_engine::prelude::*;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-mod animations;
+mod audino;
 
 /// Main entry point for the tool.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -36,88 +37,73 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Get all matching arguments from the command line.
   let matches = app.get_matches();
 
-  let mut src_path = PathBuf::from(matches.value_of_os("src").unwrap());
-  let mut dest_path = PathBuf::from(matches.value_of_os("dest").unwrap());
+  let src_path = PathBuf::from(matches.value_of_os("src").unwrap());
+  let dest_path = PathBuf::from(matches.value_of_os("dest").unwrap());
+
+  // Load audino AnimData.
+  let anim_data = audino::AnimData::load(&src_path.join("animations.xml"))?;
+
+  // Create `graphics::atlas::Data` from the AnimData.
+  let atlas_data = graphics::atlas::Data {
+    image: "image.png".into(),
+    cell_width: anim_data.frame_width,
+    cell_height: anim_data.frame_height,
+  };
+
+  // Create `stage::object::template::Data` from the AnimData.
+  let object_template_data = {
+    let mut animations = Vec::new();
+
+    for (i, name) in audino::GROUP_NAMES.iter().enumerate() {
+      let anim_group = &anim_data.group_table.groups[i];
+      let mut sequences = HashMap::new();
+
+      for (i, direction) in audino::DIRECTION_NAMES.iter().enumerate() {
+        let anim_sequence_index = anim_group.sequence_indices[i];
+        let anim_sequence = &anim_data.sequence_table.sequences[anim_sequence_index];
+
+        let mut frames = Vec::new();
+
+        for anim_frame in anim_sequence.frames.iter() {
+          let cell = anim_frame.meta_frame_group_index;
+
+          frames.push(stage::object::animation::Frame {
+            length: anim_frame.duration as f64,
+            cell: (cell % 8, cell / 8),
+            hflip: anim_frame.hflip != 0,
+          });
+        }
+
+        sequences.insert((*direction).to_owned(), frames);
+      }
+
+      animations.push(stage::object::animation::Data {
+        name: (*name).to_owned(),
+        sequences,
+      });
+    }
+
+    stage::object::template::Data {
+      atlas: "atlas.yml".into(),
+      animations,
+      cardinal_dirs_only: false,
+    }
+  };
 
   // Ensure dest path exists.
   fs::create_dir_all(&dest_path)?;
 
   // Copy the monster's sprite sheet.
-  src_path.push("sheet.png");
-  dest_path.push("atlas.png");
+  fs::copy(&src_path.join("sheet.png"), &dest_path.join("image.png"))?;
 
-  fs::copy(&src_path, &dest_path)?;
-
-  src_path.pop();
-
-  // Load the animations.xml data.
-  src_path.push("animations.xml");
-
-  let anim_data = animations::load(&src_path)?;
-
-  src_path.pop();
-
-  // Create an `Assets` resource to save assets with.
-  let assets = core::Assets {
-    path: std::env::current_dir().unwrap(),
-  };
+  // Create an `Assets` resource to save assets.
+  let assets = core::Assets::new(std::env::current_dir().unwrap());
 
   // Save the sprite atlas metadata.
-  dest_path.set_extension("yml");
+  assets.save(&dest_path.join("atlas.yml"), &atlas_data)?;
 
-  assets.save(
-    &dest_path,
-    &graphics::sprite::atlas::Data {
-      cell_width: anim_data.frame_width,
-      cell_height: anim_data.frame_height,
-    },
-  )?;
-
-  dest_path.pop();
-
-  // Convert animations to sequences.
-  let mut sequences = Vec::new();
-
-  build_sequences(
-    "walk",
-    &anim_data,
-    animations::Type::Walk as usize,
-    &mut sequences,
-  );
-
-  // Save sequences.yml.
-  dest_path.push("sequences.yml");
-
-  assets.save(&dest_path, &sequences)?;
+  // Save the sprite atlas metadata.
+  assets.save(&dest_path.join("object.yml"), &object_template_data)?;
 
   Ok(())
-}
-
-/// Builds sprite atlas animations from audino animation data.
-fn build_sequences(
-  name: &str,
-  input: &animations::AnimData,
-  group_index: usize,
-  output: &mut Vec<graphics::sprite::animation::Sequence>,
-) {
-  for (i, sequence_index) in input.group_table.groups[group_index]
-    .sequence_indices
-    .iter()
-    .enumerate()
-  {
-    let sequence = &input.sequence_table.sequences[*sequence_index];
-
-    output.push(graphics::sprite::animation::Sequence {
-      name: format!("{}_{}", name, animations::DIRECTONS[i]),
-      frames: sequence
-        .frames
-        .iter()
-        .map(|f| graphics::sprite::animation::Frame {
-          cell: (f.meta_frame_group_index % 8, f.meta_frame_group_index / 8),
-          length: f.duration as f64,
-          hflip: f.hflip != 0,
-        })
-        .collect(),
-    });
-  }
 }

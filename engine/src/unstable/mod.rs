@@ -4,8 +4,6 @@
 
 use prelude::*;
 
-pub mod actor;
-
 #[derive(Component, Default)]
 #[storage(NullStorage)]
 pub struct InputControlled;
@@ -18,11 +16,12 @@ impl<'a> System<'a> for MotionInputSystem {
     Read<'a, core::Clock>,
     Read<'a, input::Input>,
     ReadStorage<'a, InputControlled>,
+    WriteStorage<'a, stage::Object>,
     WriteStorage<'a, stage::Velocity>,
   );
 
-  fn run(&mut self, (clock, input, controlled, mut velocities): Self::SystemData) {
-    for (_, velocity) in (&controlled, &mut velocities).join() {
+  fn run(&mut self, (clock, input, controlled, mut objects, mut velocities): Self::SystemData) {
+    for (_, object, velocity) in (&controlled, &mut objects, &mut velocities).join() {
       let mut vector = Vector3::<f32>::zeros();
 
       if input.is_pressed(input::Button::Up) {
@@ -43,6 +42,7 @@ impl<'a> System<'a> for MotionInputSystem {
 
       if vector != Vector3::zeros() {
         vector.normalize_mut();
+        object.facing = vector;
         vector *= (clock.delta_time * 64.0) as f32;
       }
 

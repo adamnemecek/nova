@@ -67,17 +67,20 @@ impl Renderer {
     for (entity, position) in &self.draw_queue {
       // If the entity has a sprite, draw that.
       if let Some(sprite) = sprites.get(*entity) {
-        let mut param = DrawParam::default();
+        if let Ok(image) = sprite.atlas.texture.ggez_image.read() {
+          if image.is_some() {
+            let mut param = DrawParam::default();
 
-        param = param.src(sprite.atlas.get(sprite.cell));
-        param = param.dest(Point2::new(position.x, position.y - position.z) + draw_offset);
+            param = param.src(sprite.atlas.get(sprite.cell));
+            param = param.dest(Point2::new(position.x, position.y - position.z) + draw_offset);
+            param = param.scale(sprite.scale);
 
-        if sprite.hflip {
-          param = param.scale(Vector2::new(-1.0, 1.0));
+            println!("{:?}\n{:?}\n", param, image.as_ref().unwrap());
+
+            ggez::graphics::draw(&mut core.ctx, image.as_ref().unwrap(), param)
+              .expect("could not draw sprite");
+          }
         }
-
-        ggez::graphics::draw(&mut core.ctx, &sprite.atlas.image, param)
-          .expect("could not draw sprite");
       }
     }
 

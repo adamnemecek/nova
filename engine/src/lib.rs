@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+extern crate crossbeam_channel;
 extern crate ggez;
 extern crate image;
 pub extern crate nalgebra;
@@ -22,11 +23,12 @@ pub mod unstable;
 pub use core::Core;
 
 pub mod prelude {
+  pub(crate) use crossbeam_channel;
   pub(crate) use ggez;
   pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
   pub use specs::prelude::*;
   pub use specs::storage::BTreeStorage;
-  pub use std::sync::Arc;
+  pub use std::sync::{Arc, RwLock};
 
   pub use {core, graphics, input, stage, unstable, Core};
 }
