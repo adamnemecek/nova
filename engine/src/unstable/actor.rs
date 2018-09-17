@@ -11,13 +11,15 @@ pub fn load(core: &mut Core, path: impl Into<PathBuf>) -> Result<Entity, Box<dyn
   let mut path = path.into();
 
   let atlas = {
+    let assets = core.world.read_resource::<core::fs::Assets>();
+
     path.push("atlas.png");
 
-    let image = core::fs::load_image(core, &path, ggez::graphics::FilterMode::Nearest)?;
+    let image = assets.load_image(&mut core.ctx, &path)?;
 
     path.set_extension("yml");
 
-    let data = core::fs::load_yaml(core, &path)?;
+    let data = assets.load_yaml(&path)?;
 
     path.pop();
 
@@ -26,7 +28,10 @@ pub fn load(core: &mut Core, path: impl Into<PathBuf>) -> Result<Entity, Box<dyn
 
   path.push("sequences.yml");
 
-  let sequences = core::fs::load_yaml::<Vec<graphics::sprite::animation::Sequence>>(core, &path)?;
+  let sequences = core
+    .world
+    .read_resource::<core::fs::Assets>()
+    .load_yaml::<Vec<graphics::sprite::animation::Sequence>>(&path)?;
 
   Ok(
     core

@@ -41,9 +41,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
-  let hero = unstable::actor::load(core, "/hero-f")?;
+  let hero = unstable::actor::load(core, "hero-f")?;
 
-  unstable::actor::load(core, "/004-fire-salamander")?;
+  unstable::actor::load(core, "004-fire-salamander")?;
 
   // Set the camera target to the hero actor.
   core

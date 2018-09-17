@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 extern crate ggez;
+extern crate image;
 pub extern crate nalgebra;
 extern crate serde;
 #[macro_use]
@@ -17,7 +18,6 @@ pub mod graphics;
 pub mod input;
 pub mod stage;
 pub mod unstable;
-pub mod yaml;
 
 pub use core::Core;
 
@@ -28,5 +28,5 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::Arc;
 
-  pub use {core, graphics, input, stage, unstable, yaml, Core};
+  pub use {core, graphics, input, stage, unstable, Core};
 }

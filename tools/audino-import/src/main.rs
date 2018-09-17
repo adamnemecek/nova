@@ -60,7 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Save the sprite atlas metadata.
   dest_path.set_extension("yml");
 
-  yaml::save(
+  core::fs::save_yaml(
     &dest_path,
     &graphics::sprite::atlas::Data {
       cell_width: anim_data.frame_width,
@@ -83,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Save sequences.yml.
   dest_path.push("sequences.yml");
 
-  yaml::save(&dest_path, &sequences)?;
+  core::fs::save_yaml(&dest_path, &sequences)?;
 
   Ok(())
 }

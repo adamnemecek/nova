@@ -4,31 +4,93 @@
 
 use prelude::*;
 
-use serde::Deserialize;
+use image;
+use serde::{Deserialize, Serialize};
 use serde_yaml;
+use std::env;
 use std::error::Error;
-use std::path::Path;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 
-/// Load and deserialize the YAML file at the given `path` to a value fo type
+/// Provides access to files in the `assets` directory.
+pub struct Assets {
+  pub path: PathBuf,
+}
+
+impl Assets {
+  /// Load and deserialize the YAML file at the given `path` to a value fo type
+  /// `T`.
+  pub fn load_yaml<T>(&self, path: &Path) -> Result<T, Box<dyn Error>>
+  where
+    for<'de> T: Deserialize<'de>,
+  {
+    load_yaml(&self.path.join(path))
+  }
+
+  /// Load a ggez `Image` from the given `path`.
+  pub fn load_image(
+    &self,
+    ctx: &mut ggez::Context,
+    path: &Path,
+  ) -> Result<ggez::graphics::Image, Box<dyn Error>> {
+    load_image(ctx, &self.path.join(path))
+  }
+}
+
+impl Default for Assets {
+  fn default() -> Self {
+    let mut path = env::var("CARGO_MANIFEST_DIR")
+      .map(PathBuf::from)
+      .unwrap_or_else(|_| {
+        let mut path = env::current_exe().expect("could not get current exe path");
+
+        path.pop();
+        path
+      });
+
+    path.push("assets");
+
+    Assets { path }
+  }
+}
+
+/// Load and deserialize the YAML file at the given `path` to a value of type
 /// `T`.
-pub fn load_yaml<T>(core: &mut Core, path: &Path) -> Result<T, Box<dyn Error>>
+pub fn load_yaml<T>(path: &Path) -> Result<T, Box<dyn Error>>
 where
   for<'de> T: Deserialize<'de>,
 {
-  let file = ggez::filesystem::open(&mut core.ctx, &path)?;
+  let file = File::open(path)?;
 
   Ok(serde_yaml::from_reader(file)?)
 }
 
+/// Serialize the value as YAML and save it to the file at the given `path`.
+pub fn save_yaml<T: Serialize>(path: &Path, value: &T) -> Result<(), Box<dyn Error>> {
+  let file = File::create(path)?;
+
+  Ok(serde_yaml::to_writer(file, value)?)
+}
+
 /// Load a ggez `Image` from the given `path`.
 pub fn load_image(
-  core: &mut Core,
+  ctx: &mut ggez::Context,
   path: &Path,
-  filter: ggez::graphics::FilterMode,
 ) -> Result<ggez::graphics::Image, Box<dyn Error>> {
-  let mut image = ggez::graphics::Image::new(&mut core.ctx, path)?;
+  let img = {
+    use std::io::Read;
 
-  image.set_filter(filter);
+    let mut buf = Vec::new();
+    let mut file = File::open(path)?;
+
+    file.read_to_end(&mut buf)?;
+    image::load_from_memory(&buf)?.to_rgba()
+  };
+
+  let (width, height) = img.dimensions();
+  let mut image = ggez::graphics::Image::from_rgba8(ctx, width as u16, height as u16, &img)?;
+
+  image.set_filter(ggez::graphics::FilterMode::Nearest);
 
   Ok(image)
 }

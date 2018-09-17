@@ -1052,6 +1052,7 @@ name = "nova-engine"
 version = "0.1.0"
 dependencies = [
  "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
+ "image 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",

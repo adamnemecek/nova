@@ -37,6 +37,7 @@ impl Core {
     let mut world = World::new();
 
     world.add_resource(Clock::default());
+    world.add_resource(fs::Assets::default());
     world.add_resource(keyboard::Events::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
 
