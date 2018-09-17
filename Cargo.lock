@@ -611,7 +611,7 @@ dependencies = [
 [[package]]
 name = "ggez"
 version = "0.5.0"
-source = "git+https://github.com/ggez/ggez.git?branch=devel#c0f0b2231ce24415ef7f770b6eeb2b8e16368ec0"
+source = "git+https://gitlab.com/bfrydl/ggez.git?branch=devel#53f74ea61b2e0bab9f1dd6d9129b5da3a3cea2a8"
 dependencies = [
  "app_dirs2 2.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1077,7 +1077,7 @@ name = "nova-engine"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
+ "ggez 0.5.0 (git+https://gitlab.com/bfrydl/ggez.git?branch=devel)",
  "image 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1091,7 +1091,6 @@ dependencies = [
 name = "nova-game"
 version = "0.1.0"
 dependencies = [
- "ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)",
  "nova-engine 0.1.0",
  "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2085,7 +2084,7 @@ dependencies = [
 "checksum gfx_gl 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3e8a920f8f6c1025a7ddf9dd25502bf059506fd3cd765dfbe8dba0b56b7eeecb"
 "checksum gfx_glyph 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f67e9e695ff43caeab41e68a271d3ff9609253208cdc116b86d6e75434585f63"
 "checksum gfx_window_glutin 0.26.0 (registry+https://github.com/rust-lang/crates.io-index)" = "71449967000e71a8b80390620493ffeacc5be86f14a03464137ce220dd26678a"
-"checksum ggez 0.5.0 (git+https://github.com/ggez/ggez.git?branch=devel)" = "<none>"
+"checksum ggez 0.5.0 (git+https://gitlab.com/bfrydl/ggez.git?branch=devel)" = "<none>"
 "checksum gif 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ff3414b424657317e708489d2857d9575f4403698428b040b609b9d1c1a84a2c"
 "checksum gilrs 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a9096406afa56cc93a06d68e450a829d0bc2b21751f6b451f6c3e541db4316a0"
 "checksum gl_generator 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7a795170cbd85b5a7baa58d6d7525cae6a03e486859860c220f7ebbbdd379d0a"

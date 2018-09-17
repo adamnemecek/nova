@@ -5,5 +5,4 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 
 [dependencies]
 nova-engine = { path = "../engine" }
-ggez = { git = "https://github.com/ggez/ggez.git", branch = "devel" }
 specs = "0.12.2"
