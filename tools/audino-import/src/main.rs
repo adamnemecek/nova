@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   src_path.pop();
 
   // Create an `Assets` resource to save assets with.
-  let mut assets = core::Assets {
+  let assets = core::Assets {
     path: std::env::current_dir().unwrap(),
   };
 
