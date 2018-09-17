@@ -23,18 +23,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   setup(&mut core)?;
 
   let mut dispatcher = dispatch.build();
-
   let mut stage_renderer = stage::Renderer::default();
-  let mut fps_display = ui::FpsDisplay::default();
 
   // Run the main event loop.
   while core.is_running() {
     core.tick();
-
     dispatcher.dispatch(&mut core.world.res);
-
     stage_renderer.draw(&mut core);
-    fps_display.draw(&mut core);
   }
 
   Ok(())

@@ -20,6 +20,8 @@ pub type Tick = u64;
 
 /// Provides core engine functionality.
 pub struct Core {
+  /// Name of the app.
+  pub app_name: &'static str,
   /// ECS world state.
   pub world: World,
   /// ggez context.
@@ -50,6 +52,7 @@ impl Core {
     world.add_resource(input::KeyEvents::default());
 
     Core {
+      app_name,
       world,
       ctx,
       events_loop,
@@ -68,7 +71,7 @@ impl Core {
 
     // Present the previous frame and clear the buffer.
     ggez::graphics::present(ctx).expect("could not present");
-    ggez::graphics::clear(ctx, ggez::graphics::BLACK);
+    ggez::graphics::clear(ctx, ggez::graphics::Color::new(0.53, 0.87, 0.52, 1.0));
 
     // Progress time.
     let mut clock = world.write_resource::<Clock>();
@@ -79,6 +82,12 @@ impl Core {
     clock.delta_time = ggez::timer::duration_to_f64(ggez::timer::delta(ctx));
     clock.time += clock.delta_time;
     clock.fps = ggez::timer::fps(ctx);
+
+    // Show FPS in the window title.
+    ggez::graphics::set_window_title(
+      ctx,
+      &format!("{} ({} FPS)", self.app_name, clock.fps as usize),
+    );
 
     // Process events.
     let mut key_events = world.write_resource::<input::KeyEvents>();
