@@ -6,14 +6,14 @@ pub use ggez::event::KeyCode;
 
 /// Resource that contains all keyboard events that occurred this tick.
 #[derive(Default)]
-pub struct Events {
+pub struct KeyEvents {
   /// List of all keyboard events that occured this tick.
-  pub list: Vec<Event>,
+  pub list: Vec<KeyEvent>,
 }
 
 /// Represents a single keyboard event.
 #[derive(Debug)]
-pub enum Event {
+pub enum KeyEvent {
   /// Indicates that a key was pressed, or that it was held long enough for the
   /// press to repeat.
   Pressed(KeyCode),

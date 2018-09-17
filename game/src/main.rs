@@ -11,7 +11,7 @@ use std::error::Error;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
-  let mut core = Core::new(core::context::build("nova", "bfrydl"));
+  let mut core = Core::new("nova", "bfrydl");
   let mut dispatch = DispatcherBuilder::default();
 
   input::setup(&mut core, &mut dispatch);
@@ -25,7 +25,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   let mut dispatcher = dispatch.build();
 
   let mut stage_renderer = stage::Renderer::default();
-  let mut fps_display = core::FpsDisplay::default();
+  let mut fps_display = ui::FpsDisplay::default();
 
   // Run the main event loop.
   while core.is_running() {

@@ -7,14 +7,11 @@ use ggez::event::winit_event::*;
 use prelude::*;
 
 pub mod clock;
-pub mod context;
-pub mod fps_display;
 pub mod fs;
-pub mod keyboard;
+pub mod input;
 pub mod viewport;
 
 pub use self::clock::Clock;
-pub use self::fps_display::FpsDisplay;
 pub use self::viewport::Viewport;
 
 /// Number of ticks (game loops) since launch.
@@ -31,15 +28,25 @@ pub struct Core {
 }
 
 impl Core {
-  /// Creates a new core from the given ggez context builder.
-  pub fn new(ctx_builder: ggez::ContextBuilder) -> Self {
-    let (mut ctx, events_loop) = ctx_builder.build().expect("could not create ggez::Context");
+  /// Creates a new core with the given `app_name` and `author` (for use in
+  /// path names).
+  pub fn new(app_name: &'static str, author: &'static str) -> Self {
+    let (mut ctx, events_loop) = ggez::ContextBuilder::new(app_name, author)
+      .window_mode(ggez::conf::WindowMode::default().resizable(true))
+      .window_setup(
+        ggez::conf::WindowSetup::default()
+          .title(app_name)
+          .vsync(false),
+      )
+      .build()
+      .expect("could not create ggez::Context");
+
     let mut world = World::new();
 
     world.add_resource(Clock::default());
-    world.add_resource(fs::Assets::default());
-    world.add_resource(keyboard::Events::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
+    world.add_resource(fs::Assets::default());
+    world.add_resource(input::KeyEvents::default());
 
     Core {
       world,
@@ -73,9 +80,9 @@ impl Core {
     clock.fps = ggez::timer::fps(ctx);
 
     // Process events.
-    let mut kb_events = world.write_resource::<keyboard::Events>();
+    let mut key_events = world.write_resource::<input::KeyEvents>();
 
-    kb_events.list.clear();
+    key_events.list.clear();
 
     self.events_loop.poll_events(|event| match event {
       Event::WindowEvent { event, .. } => match event {
@@ -97,9 +104,9 @@ impl Core {
 
         WindowEvent::KeyboardInput { input, .. } => {
           if let Some(key) = input.virtual_keycode {
-            kb_events.list.push(match input.state {
-              ElementState::Pressed => keyboard::Event::Pressed(key),
-              ElementState::Released => keyboard::Event::Released(key),
+            key_events.list.push(match input.state {
+              ElementState::Pressed => input::KeyEvent::Pressed(key),
+              ElementState::Released => input::KeyEvent::Released(key),
             });
           }
         }

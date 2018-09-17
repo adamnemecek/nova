@@ -6,8 +6,6 @@ use ggez::graphics::{DrawParam, Text, TextFragment};
 
 use prelude::*;
 
-use super::Clock;
-
 /// Draws the current FPS in the top-left corner of the screen.
 #[derive(Default)]
 pub struct FpsDisplay {
@@ -18,7 +16,7 @@ pub struct FpsDisplay {
 impl FpsDisplay {
   /// Updates and draws the FPS display on the screen.
   pub fn draw(&mut self, core: &mut Core) {
-    let clock = core.world.read_resource::<Clock>();
+    let clock = core.world.read_resource::<core::Clock>();
 
     self.elapsed += clock.delta_time;
 

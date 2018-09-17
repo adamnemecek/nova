@@ -17,6 +17,7 @@ pub mod core;
 pub mod graphics;
 pub mod input;
 pub mod stage;
+pub mod ui;
 pub mod unstable;
 
 pub use core::Core;
@@ -28,5 +29,5 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::Arc;
 
-  pub use {core, graphics, input, stage, unstable, Core};
+  pub use {core, graphics, input, stage, ui, unstable, Core};
 }

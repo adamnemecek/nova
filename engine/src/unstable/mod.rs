@@ -16,7 +16,7 @@ pub struct MotionInputSystem;
 impl<'a> System<'a> for MotionInputSystem {
   type SystemData = (
     Read<'a, core::Clock>,
-    Read<'a, input::State>,
+    Read<'a, input::Input>,
     ReadStorage<'a, InputControlled>,
     WriteStorage<'a, stage::Velocity>,
   );
