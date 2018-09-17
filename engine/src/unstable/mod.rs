@@ -13,14 +13,13 @@ pub struct MotionInputSystem;
 
 impl<'a> System<'a> for MotionInputSystem {
   type SystemData = (
-    Read<'a, core::Clock>,
     Read<'a, input::Input>,
     ReadStorage<'a, InputControlled>,
     WriteStorage<'a, stage::Object>,
     WriteStorage<'a, stage::Velocity>,
   );
 
-  fn run(&mut self, (clock, input, controlled, mut objects, mut velocities): Self::SystemData) {
+  fn run(&mut self, (input, controlled, mut objects, mut velocities): Self::SystemData) {
     for (_, object, velocity) in (&controlled, &mut objects, &mut velocities).join() {
       let mut vector = Vector3::<f32>::zeros();
 
@@ -43,7 +42,7 @@ impl<'a> System<'a> for MotionInputSystem {
       if vector != Vector3::zeros() {
         vector.normalize_mut();
         object.facing = vector;
-        vector *= (clock.delta_time * 64.0) as f32;
+        vector *= 64.0;
       }
 
       velocity.vector = vector;
