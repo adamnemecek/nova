@@ -8,9 +8,12 @@ use std::error::Error;
 use std::ops::Deref;
 use std::path::Path;
 
+/// Asset loaded from images for use in engine graphics.
 #[derive(Debug, Clone)]
 pub struct Texture(Arc<Data>);
 
+// Make `TextureData` directly accessible from a `Texture` so the `Arc` is
+// transparent to the user.
 impl Deref for Texture {
   type Target = Data;
 
@@ -19,8 +22,10 @@ impl Deref for Texture {
   }
 }
 
+// Support loading textures from image assets.
 impl Asset for Texture {
   fn load(assets: &Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
+    // Load an RGBA8 image from the file using the `image` crate.
     let rgba_image = {
       use std::io::Read;
 
@@ -31,8 +36,10 @@ impl Asset for Texture {
       image::load_from_memory(&buf)?.to_rgba()
     };
 
+    // Get image dimensions.
     let (width, height) = rgba_image.dimensions();
 
+    // Create a texture asset with no ggez image.
     let texture = Texture(Arc::new(Data {
       width: width as usize,
       height: height as usize,
@@ -40,16 +47,24 @@ impl Asset for Texture {
       ggez_image: RwLock::new(None),
     }));
 
+    // Queue the ggez image to be loaded next tick using the `Assets` resource.
     assets.queue_resource_load(texture.clone());
 
     Ok(texture)
   }
 }
 
+/// Actual data of a `Texture`.
 #[derive(Debug)]
 pub struct Data {
+  /// Width of the texture in pixels.
   pub width: usize,
+  /// Height of the texture in pixels.
   pub height: usize,
+  /// Raw RGBA8 image data of the texture.
   pub rgba_image: image::RgbaImage,
+  /// Low-level image loaded to the device by ggez.
+  ///
+  /// This starts empty until the image is loaded by the `Assets` resource.
   pub ggez_image: RwLock<Option<ggez::graphics::Image>>,
 }

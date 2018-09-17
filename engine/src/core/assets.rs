@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::env;

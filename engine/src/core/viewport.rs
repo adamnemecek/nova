@@ -4,7 +4,8 @@
 
 use ggez::graphics::Rect;
 
-/// Resource containing information about the viewport.
+/// Resource that stores the dimensions of the screen or window the engine is
+/// drawing to.
 pub struct Viewport {
   /// Width of the viewport in pixels.
   pub width: f32,
@@ -12,8 +13,8 @@ pub struct Viewport {
   pub height: f32,
 }
 
+// Create viewports from rectangles.
 impl From<Rect> for Viewport {
-  /// Creates a new viewport state from a ggez `Rect`.
   fn from(rect: Rect) -> Self {
     Viewport {
       width: rect.w,
