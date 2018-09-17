@@ -57,10 +57,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   src_path.pop();
 
+  // Create an `Assets` resource to save assets with.
+  let mut assets = core::Assets {
+    path: std::env::current_dir().unwrap(),
+  };
+
   // Save the sprite atlas metadata.
   dest_path.set_extension("yml");
 
-  core::fs::save_yaml(
+  assets.save(
     &dest_path,
     &graphics::sprite::atlas::Data {
       cell_width: anim_data.frame_width,
@@ -83,7 +88,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Save sequences.yml.
   dest_path.push("sequences.yml");
 
-  core::fs::save_yaml(&dest_path, &sequences)?;
+  assets.save(&dest_path, &sequences)?;
 
   Ok(())
 }

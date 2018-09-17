@@ -6,11 +6,12 @@ use ggez::event::winit_event::*;
 
 use prelude::*;
 
+pub mod assets;
 pub mod clock;
-pub mod fs;
 pub mod input;
 pub mod viewport;
 
+pub use self::assets::{Asset, Assets};
 pub use self::clock::Clock;
 pub use self::viewport::Viewport;
 
@@ -43,9 +44,9 @@ impl Core {
 
     let mut world = World::new();
 
+    world.add_resource(Assets::default());
     world.add_resource(Clock::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
-    world.add_resource(fs::Assets::default());
     world.add_resource(input::KeyEvents::default());
 
     Core {
