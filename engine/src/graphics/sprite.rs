@@ -14,6 +14,8 @@ pub struct Sprite {
   pub cell: atlas::AtlasCell,
   /// Scale of the sprite in x- and y-directions.
   pub scale: Vector2<f32>,
+  /// Offset from the atlas cell origin when drawing the sprite.
+  pub offset: Vector2<f32>,
 }
 
 impl Sprite {
@@ -22,6 +24,7 @@ impl Sprite {
       atlas,
       cell: (0, 0),
       scale: Vector2::new(1.0, 1.0),
+      offset: Vector2::zeros(),
     }
   }
 }

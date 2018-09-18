@@ -68,8 +68,10 @@ impl Renderer {
               .src(sprite.atlas.get(sprite.cell))
               .scale(sprite.scale)
               .dest(
-                Point2::new(position.x, position.y - position.z) - sprite.atlas.cell_origin
-                  + draw_offset,
+                Point2::new(position.x, position.y - position.z)
+                  + -sprite.atlas.cell_origin
+                  + draw_offset
+                  + sprite.offset,
               );
 
             ggez::graphics::draw(&mut core.ctx, image.as_ref().unwrap(), param)

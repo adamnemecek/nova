@@ -102,7 +102,18 @@ pub struct AnimFrame {
   pub meta_frame_group_index: usize,
   /// Whether the sprite is horizontally flipped during this frame.
   #[serde(rename = "HFlip")]
-  pub hflip: usize,
+  pub hflip: i32,
+  /// Sprite offset on this frame.
+  #[serde(rename = "Sprite")]
+  pub sprite: Offset,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Offset {
+  #[serde(rename = "XOffset")]
+  pub x_offset: i32,
+  #[serde(rename = "YOffset")]
+  pub y_offset: i32,
 }
 
 /// Animation types in order of index in audino data files.

@@ -71,9 +71,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for anim_frame in anim_sequence.frames.iter() {
           let cell = anim_frame.meta_frame_group_index;
 
-          frames.push(stage::objects::AnimationFrame {
+          frames.push(stage::objects::AnimationFrameData {
             length: anim_frame.duration as f64,
             cell: (cell % 8, cell / 8),
+            offset: (
+              anim_frame.sprite.x_offset as f32,
+              anim_frame.sprite.y_offset as f32,
+            ),
             hflip: anim_frame.hflip != 0,
           });
         }

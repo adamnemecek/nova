@@ -37,26 +37,26 @@ impl<'a> System<'a> for Animator {
 
       // Get the current sequence or go to the next object.
       if let Some(ref sequence) = animations[object.animation.index].sequences[direction as usize] {
-        if sequence.frames.len() == 0 {
+        if sequence.len() == 0 {
           continue;
         }
 
         // Determine total duration of the sequence for wrapping.
         let mut duration = 0.0;
 
-        for frame in &sequence.frames {
+        for frame in sequence {
           duration += frame.length;
         }
 
         // Determine current frame based on wrapped elapsed time.
-        let mut current = &sequence.frames[0];
+        let mut current = &sequence[0];
         let mut elapsed = object.animation.elapsed * 60.0;
 
         if duration > 0.0 {
           elapsed %= duration;
         }
 
-        for frame in &sequence.frames {
+        for frame in sequence {
           elapsed -= frame.length;
 
           if elapsed <= 0.0 {
@@ -73,6 +73,8 @@ impl<'a> System<'a> for Animator {
         } else {
           Vector2::new(1.0, 1.0)
         };
+
+        sprite.offset = current.offset;
       }
     }
   }
