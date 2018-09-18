@@ -5,16 +5,17 @@
 use super::*;
 use ggez::event::winit_event::*;
 
-pub mod assets;
 pub mod input;
-pub mod texture;
-pub mod time;
-pub mod viewport;
 
-pub use self::assets::{Asset, Assets};
-pub use self::texture::Texture;
-pub use self::time::{Clock, Tick};
-pub use self::viewport::Viewport;
+mod assets;
+mod texture;
+mod time;
+mod viewport;
+
+pub use self::assets::*;
+pub use self::texture::*;
+pub use self::time::*;
+pub use self::viewport::*;
 
 /// Provides core engine functionality.
 pub struct Core {

@@ -15,11 +15,11 @@
 
 use super::*;
 
-pub mod animator;
-pub mod template;
+mod animator;
+mod template;
 
-pub use self::animator::Animator;
-pub use self::template::Template;
+pub use self::animator::*;
+pub use self::template::*;
 
 /// Component that stores the state of an actor.
 #[derive(Component)]

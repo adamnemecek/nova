@@ -8,18 +8,18 @@ use super::*;
 #[derive(Default)]
 pub struct Camera {
   /// Current target of the camera.
-  pub target: Target,
+  pub target: CameraTarget,
 }
 
 impl Camera {
   /// Sets the current target of the camera.
-  pub fn set_target(&mut self, target: impl Into<Target>) {
+  pub fn set_target(&mut self, target: impl Into<CameraTarget>) {
     self.target = target.into();
   }
 }
 
 /// Target for a `Camera`.
-pub enum Target {
+pub enum CameraTarget {
   /// Fixes the camera at a particular position.
   Position(Point2<f32>),
   /// Follows an entity's position with the camera
@@ -27,22 +27,22 @@ pub enum Target {
 }
 
 // Set the default target to the origin point.
-impl Default for Target {
+impl Default for CameraTarget {
   fn default() -> Self {
-    Target::Position(Point2::new(0.0, 0.0))
+    CameraTarget::Position(Point2::new(0.0, 0.0))
   }
 }
 
 // Create targets from points.
-impl From<Point2<f32>> for Target {
+impl From<Point2<f32>> for CameraTarget {
   fn from(point: Point2<f32>) -> Self {
-    Target::Position(point)
+    CameraTarget::Position(point)
   }
 }
 
 // Create targets from entities.
-impl From<Entity> for Target {
+impl From<Entity> for CameraTarget {
   fn from(entity: Entity) -> Self {
-    Target::Entity(entity)
+    CameraTarget::Entity(entity)
   }
 }

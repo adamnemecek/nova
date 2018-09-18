@@ -15,11 +15,11 @@ pub mod actors;
 pub mod objects;
 pub mod rendering;
 
-pub mod direction;
-pub mod motion;
+mod direction;
+mod motion;
 
-pub use self::direction::CompassDirection;
-pub use self::motion::Motion;
+pub use self::direction::*;
+pub use self::motion::*;
 
 /// Component that stores the position of an entity on the stage.
 #[derive(Component)]
@@ -33,22 +33,6 @@ impl Default for Position {
   fn default() -> Self {
     Position {
       point: Point3::new(0.0, 0.0, 0.0),
-    }
-  }
-}
-
-/// Component that stores the velocity of an entity on the stage.
-#[derive(Component)]
-#[storage(BTreeStorage)]
-pub struct Velocity {
-  pub vector: Vector3<f32>,
-}
-
-// Sets the default velocity to zero.
-impl Default for Velocity {
-  fn default() -> Self {
-    Velocity {
-      vector: Vector3::zeros(),
     }
   }
 }

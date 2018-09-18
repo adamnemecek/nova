@@ -30,8 +30,8 @@ impl Renderer {
 
     // Determine position of camera.
     let camera_pos = match camera.target {
-      camera::Target::Position(pos) => pos,
-      camera::Target::Entity(entity) => {
+      CameraTarget::Position(pos) => pos,
+      CameraTarget::Entity(entity) => {
         if let Some(pos) = positions.get(entity) {
           Point2::new(pos.point.x, pos.point.y)
         } else {

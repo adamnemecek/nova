@@ -11,7 +11,7 @@ pub struct Sprite {
   /// Source `Atlas` for the sprite graphics.
   pub atlas: Arc<Atlas>,
   /// Cell of the atlas to get the sprite from.
-  pub cell: atlas::Cell,
+  pub cell: atlas::AtlasCell,
   /// Scale of the sprite in x- and y-directions.
   pub scale: Vector2<f32>,
 }

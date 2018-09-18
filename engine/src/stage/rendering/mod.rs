@@ -12,11 +12,11 @@
 
 use super::*;
 
-pub mod camera;
-pub mod renderer;
+mod camera;
+mod renderer;
 
-pub use self::camera::Camera;
-pub use self::renderer::Renderer;
+pub use self::camera::*;
+pub use self::renderer::*;
 
 #[derive(Default, Component)]
 #[storage(NullStorage)]

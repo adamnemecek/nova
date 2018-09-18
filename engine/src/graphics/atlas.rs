@@ -7,7 +7,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 
 /// Coordinates for a cell in an atlas.
-pub type Cell = (usize, usize);
+pub type AtlasCell = (usize, usize);
 
 /// Asset that divides a single texture into one or more cells.
 #[derive(Debug)]
@@ -22,7 +22,7 @@ pub struct Atlas {
 
 impl Atlas {
   /// Gets the source rectangle for a given `cell` in the atlas.
-  pub fn get(&self, cell: Cell) -> ggez::graphics::Rect {
+  pub fn get(&self, cell: AtlasCell) -> ggez::graphics::Rect {
     let w = self.cell_width as f32 / self.texture.width as f32;
     let h = self.cell_height as f32 / self.texture.height as f32;
 
@@ -39,7 +39,7 @@ impl core::Asset for Atlas {
     let mut path = path.to_owned();
 
     // Load the atlas data.
-    let data = assets.load::<Data>(&path)?;
+    let data = assets.load::<AtlasData>(&path)?;
 
     path.pop();
 
@@ -56,7 +56,7 @@ impl core::Asset for Atlas {
 
 /// Serializable data for an `Atlas` asset.
 #[derive(Serialize, Deserialize)]
-pub struct Data {
+pub struct AtlasData {
   /// Relative path to the atlas texture.
   pub texture: PathBuf,
   /// Width of a single cell in the atlas.

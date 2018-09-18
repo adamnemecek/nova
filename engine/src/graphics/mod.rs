@@ -4,11 +4,11 @@
 
 use super::*;
 
-pub mod atlas;
-pub mod sprite;
+mod atlas;
+mod sprite;
 
-pub use self::atlas::Atlas;
-pub use self::sprite::Sprite;
+pub use self::atlas::*;
+pub use self::sprite::*;
 
 /// Sets up graphics components, resources, and systems.
 pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {

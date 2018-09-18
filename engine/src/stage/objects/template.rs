@@ -38,7 +38,7 @@ impl core::Asset for Template {
   fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
     let mut path = path.to_owned();
 
-    let data = assets.load::<Data>(&path)?;
+    let data = assets.load::<TemplateData>(&path)?;
 
     path.pop();
 
@@ -54,11 +54,11 @@ impl core::Asset for Template {
 
 /// Data for an `ObjectTemplate`.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Data {
+pub struct TemplateData {
   /// Path to the atlas for the object's sprite.
   pub atlas: PathBuf,
   /// List of data for the object's animations.
-  pub animations: Vec<animation::Data>,
+  pub animations: Vec<animation::AnimationData>,
   /// Whether the object only faces cardinal directions, rather than all eight
   /// compass directions.
   #[serde(default)]

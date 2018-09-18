@@ -14,13 +14,13 @@
 
 use super::*;
 
-pub mod animation;
-pub mod animator;
-pub mod template;
+mod animation;
+mod animator;
+mod template;
 
-pub use self::animation::Animation;
-pub use self::animator::Animator;
-pub use self::template::Template;
+pub use self::animation::*;
+pub use self::animator::*;
+pub use self::template::*;
 
 /// Component that stores state for an object on the stage.
 ///

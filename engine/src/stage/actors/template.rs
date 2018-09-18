@@ -24,7 +24,7 @@ pub struct Template {
 impl core::Asset for Template {
   fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
     let mut path = path.to_owned();
-    let data = assets.load::<Data>(&path)?;
+    let data = assets.load::<TemplateData>(&path)?;
 
     path.pop();
 
@@ -46,7 +46,7 @@ impl core::Asset for Template {
 
 /// Data for an actor template.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Data {
+pub struct TemplateData {
   /// Path to the actor's object template.
   pub object: PathBuf,
   /// Speed the actor walks in pixels per second.

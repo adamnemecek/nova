@@ -43,8 +43,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Load audino AnimData.
   let anim_data = audino::AnimData::load(&src_path.join("animations.xml"))?;
 
-  // Create `graphics::atlas::Data` from the AnimData.
-  let atlas_data = graphics::atlas::Data {
+  // Create `graphics::AtlasData` from the AnimData.
+  let atlas_data = graphics::AtlasData {
     texture: "texture.png".into(),
     cell_width: anim_data.frame_width,
     cell_height: anim_data.frame_height,
@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for anim_frame in anim_sequence.frames.iter() {
           let cell = anim_frame.meta_frame_group_index;
 
-          frames.push(stage::objects::animation::Frame {
+          frames.push(stage::objects::AnimationFrame {
             length: anim_frame.duration as f64,
             cell: (cell % 8, cell / 8),
             hflip: anim_frame.hflip != 0,
@@ -77,13 +77,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         sequences.insert((*direction).to_owned(), frames);
       }
 
-      animations.push(stage::objects::animation::Data {
+      animations.push(stage::objects::AnimationData {
         name: (*name).to_owned(),
         sequences,
       });
     }
 
-    stage::objects::template::Data {
+    stage::objects::TemplateData {
       atlas: "atlas.yml".into(),
       animations,
       cardinal_dirs_only: false,

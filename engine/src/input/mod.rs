@@ -6,17 +6,17 @@ use specs::DispatcherBuilder;
 
 use prelude::*;
 
-pub mod buttons;
-pub mod system;
+mod button;
+mod system;
 
-pub use self::buttons::Button;
-pub use self::system::InputSystem;
+pub use self::button::*;
+pub use self::system::*;
 
 /// Resource that stores the current input state.
 #[derive(Default, Debug)]
 pub struct Input {
   /// State of all available input buttons.
-  pub buttons: [ButtonState; buttons::COUNT],
+  pub buttons: [ButtonState; BUTTON_COUNT],
 }
 
 impl Input {

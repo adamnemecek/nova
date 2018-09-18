@@ -20,8 +20,6 @@ pub mod input;
 pub mod stage;
 pub mod unstable;
 
-pub use core::Core;
-
 use prelude::*;
 
 pub mod prelude {
@@ -30,5 +28,6 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, RwLock};
 
-  pub use {core, graphics, input, stage, unstable, Core};
+  pub use {core, core::Core};
+  pub use {graphics, input, stage, unstable};
 }

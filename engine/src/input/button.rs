@@ -14,7 +14,7 @@ pub enum Button {
 }
 
 /// Total number of available input buttons.
-pub const COUNT: usize = Button::Right as usize + 1;
+pub const BUTTON_COUNT: usize = Button::Right as usize + 1;
 
 impl Button {
   /// Converts a given `KeyCode` to a `Button`.
