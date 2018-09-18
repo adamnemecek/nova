@@ -42,7 +42,7 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
   core.world.register::<Position>();
   core.world.register::<Velocity>();
 
-  dispatch.add(Motion, "stage::Motion", &[]);
+  dispatch.add(Mover, "stage::Mover", &[]);
 
   rendering::setup(core, dispatch);
   objects::setup(core, dispatch);

@@ -6,9 +6,9 @@ use super::*;
 
 /// System that updates the `Input` resource from core input events.
 #[derive(Default)]
-pub struct InputSystem;
+pub struct Updater;
 
-impl<'a> System<'a> for InputSystem {
+impl<'a> System<'a> for Updater {
   type SystemData = (
     Read<'a, core::Clock>,
     Read<'a, core::input::KeyEvents>,

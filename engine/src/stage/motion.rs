@@ -4,23 +4,6 @@
 
 use super::*;
 
-/// System that moves the `Position` of an entity based on its `Velocity`.
-pub struct Motion;
-
-impl<'a> System<'a> for Motion {
-  type SystemData = (
-    Read<'a, core::Clock>,
-    ReadStorage<'a, Velocity>,
-    WriteStorage<'a, Position>,
-  );
-
-  fn run(&mut self, (clock, velocities, mut positions): Self::SystemData) {
-    for (velocity, position) in (&velocities, &mut positions).join() {
-      position.point += velocity.vector * clock.delta_time as f32;
-    }
-  }
-}
-
 /// Component that stores the velocity of an entity on the stage.
 #[derive(Component)]
 #[storage(BTreeStorage)]
@@ -33,6 +16,24 @@ impl Default for Velocity {
   fn default() -> Self {
     Velocity {
       vector: Vector3::zeros(),
+    }
+  }
+}
+
+/// System that moves each entity on the stage with a `Velocity` component by
+/// adding it to its `Position` component.
+pub struct Mover;
+
+impl<'a> System<'a> for Mover {
+  type SystemData = (
+    Read<'a, core::Clock>,
+    ReadStorage<'a, Velocity>,
+    WriteStorage<'a, Position>,
+  );
+
+  fn run(&mut self, (clock, velocities, mut positions): Self::SystemData) {
+    for (velocity, position) in (&velocities, &mut positions).join() {
+      position.point += velocity.vector * clock.delta_time as f32;
     }
   }
 }

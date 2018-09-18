@@ -7,10 +7,10 @@ use specs::DispatcherBuilder;
 use prelude::*;
 
 mod button;
-mod system;
+mod updater;
 
 pub use self::button::*;
-pub use self::system::*;
+pub use self::updater::*;
 
 /// Resource that stores the current input state.
 #[derive(Default, Debug)]
@@ -50,5 +50,5 @@ pub struct ButtonState {
 pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
   core.world.add_resource(Input::default());
 
-  dispatch.add(InputSystem::default(), "input::InputSystem", &[]);
+  dispatch.add(Updater, "input::Updater", &[]);
 }
