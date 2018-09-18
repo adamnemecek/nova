@@ -64,11 +64,13 @@ impl Renderer {
       if let Some(sprite) = sprites.get(*entity) {
         if let Ok(image) = sprite.atlas.texture.ggez_image.read() {
           if image.is_some() {
-            let mut param = DrawParam::default();
-
-            param = param.src(sprite.atlas.get(sprite.cell));
-            param = param.dest(Point2::new(position.x, position.y - position.z) + draw_offset);
-            param = param.scale(sprite.scale);
+            let param = DrawParam::default()
+              .src(sprite.atlas.get(sprite.cell))
+              .scale(sprite.scale)
+              .dest(
+                Point2::new(position.x, position.y - position.z) - sprite.atlas.cell_origin
+                  + draw_offset,
+              );
 
             ggez::graphics::draw(&mut core.ctx, image.as_ref().unwrap(), param)
               .expect("could not draw sprite");

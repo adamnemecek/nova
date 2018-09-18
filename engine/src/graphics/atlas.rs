@@ -18,6 +18,9 @@ pub struct Atlas {
   pub cell_width: usize,
   /// Height of a single cell.
   pub cell_height: usize,
+  /// Center of a cell where `(0.0, 0.0)` is the top left corner and
+  /// `(cell_width, cell_height)` is the bottom right corner.
+  pub cell_origin: Vector2<f32>,
 }
 
 impl Atlas {
@@ -50,6 +53,7 @@ impl core::Asset for Atlas {
       texture,
       cell_width: data.cell_width,
       cell_height: data.cell_height,
+      cell_origin: Vector2::new(data.cell_origin.0, data.cell_origin.1),
     })
   }
 }
@@ -63,4 +67,7 @@ pub struct AtlasData {
   pub cell_width: usize,
   /// Height of a single cell in the atlas.
   pub cell_height: usize,
+  /// Center of a cell where `(0.0, 0.0)` is the top left corner and
+  /// `(cell_width, cell_height)` is the bottom right corner.
+  pub cell_origin: (f32, f32),
 }

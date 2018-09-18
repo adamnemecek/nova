@@ -48,6 +48,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     texture: "texture.png".into(),
     cell_width: anim_data.frame_width,
     cell_height: anim_data.frame_height,
+    cell_origin: (
+      anim_data.frame_width as f32 / 2.0,
+      anim_data.frame_height as f32 / 2.0,
+    ),
   };
 
   // Create `stage::object::template::Data` from the AnimData.
