@@ -1,6 +1,15 @@
 atlas: atlas.yml
 cardinal_dirs_only: true
 animations:
+  - name: static
+    north:
+      - cell: [0, 0]
+    south:
+      - cell: [0, 1]
+    west:
+      - cell: [0, 2]
+    east:
+      - cell: [0, 3]
   - name: walk
     north:
       - cell: [0, 0]

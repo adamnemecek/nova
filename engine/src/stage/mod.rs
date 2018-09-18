@@ -11,6 +11,7 @@
 
 use super::*;
 
+pub mod actors;
 pub mod objects;
 pub mod rendering;
 
@@ -61,4 +62,5 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
 
   rendering::setup(core, dispatch);
   objects::setup(core, dispatch);
+  actors::setup(core, dispatch);
 }

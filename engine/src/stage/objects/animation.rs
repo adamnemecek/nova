@@ -53,6 +53,7 @@ pub struct Sequence {
 /// Single frame in a `Sequence`.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Frame {
+  #[serde(default)]
   /// Length of this frame in 60ths of a second.
   pub length: f64,
   /// Cell in the atlas to use as the object's sprite during this frame.

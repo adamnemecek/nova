@@ -16,11 +16,17 @@ impl<'a> System<'a> for MotionInputSystem {
     Read<'a, input::Input>,
     ReadStorage<'a, InputControlled>,
     WriteStorage<'a, stage::objects::Object>,
+    WriteStorage<'a, stage::actors::Actor>,
     WriteStorage<'a, stage::Velocity>,
   );
 
-  fn run(&mut self, (input, controlled, mut objects, mut velocities): Self::SystemData) {
-    for (_, object, velocity) in (&controlled, &mut objects, &mut velocities).join() {
+  fn run(
+    &mut self,
+    (input, controlled, mut objects, mut actors, mut velocities): Self::SystemData,
+  ) {
+    for (_, object, actor, velocity) in
+      (&controlled, &mut objects, &mut actors, &mut velocities).join()
+    {
       let mut vector = Vector3::<f32>::zeros();
 
       if input.is_pressed(input::Button::Up) {
@@ -39,10 +45,14 @@ impl<'a> System<'a> for MotionInputSystem {
         vector.x += 1.0;
       }
 
-      if vector != Vector3::zeros() {
+      if vector == Vector3::zeros() {
+        actor.mode = stage::actors::Mode::Idle;
+      } else {
+        actor.mode = stage::actors::Mode::Walk;
+
         vector.normalize_mut();
         object.facing = vector;
-        vector *= 64.0;
+        vector *= actor.template.walk_speed;
       }
 
       velocity.vector = vector;

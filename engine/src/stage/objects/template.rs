@@ -18,6 +18,21 @@ pub struct Template {
   pub animations: Vec<Animation>,
 }
 
+impl Template {
+  /// Finds the index of the animation with the given `name`.
+  ///
+  /// Returns `0` if the animation was not found.
+  pub fn find_animation(&self, name: impl AsRef<str>) -> usize {
+    let name = name.as_ref();
+
+    self
+      .animations
+      .iter()
+      .position(|a| a.name == name)
+      .unwrap_or_default()
+  }
+}
+
 // Support loading object templates as assets.
 impl core::Asset for Template {
   fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
