@@ -7,7 +7,7 @@
 //!
 //! Entities “on the stage” have a `Position` component indicating where the
 //! entity is in game world coordinates. The `Motion` system will also update
-//! this component for all entities with a `Velocity` component as well.
+//! this component for all entities with a `Velocity` component.
 
 use super::*;
 
