@@ -23,7 +23,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   setup(&mut core)?;
 
   let mut dispatcher = dispatch.build();
-  let mut stage_renderer = stage::Renderer::default();
+  let mut stage_renderer = stage::rendering::Renderer::default();
 
   // Run the main event loop.
   while core.is_running() {
@@ -54,7 +54,7 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
   // Set the camera target to the hero.
   core
     .world
-    .write_resource::<stage::Camera>()
+    .write_resource::<stage::rendering::Camera>()
     .set_target(hero);
 
   // Set the hero to be input controlled.

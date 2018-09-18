@@ -6,13 +6,6 @@ use super::*;
 use ggez::graphics::DrawParam;
 use std::cmp;
 
-use super::{camera, Camera, Position};
-
-/// Component that indicates that an entity should be drawn by a `Renderer`.
-#[derive(Default, Component)]
-#[storage(NullStorage)]
-pub struct Render;
-
 /// Renders the graphics for the stage.
 pub struct Renderer {
   /// Global scale for everything the renderer draws.
@@ -32,7 +25,7 @@ impl Renderer {
     let viewport = core.world.read_resource::<core::Viewport>();
     let camera = core.world.read_resource::<Camera>();
 
-    let rendered = core.world.read_storage::<Render>();
+    let rendered = core.world.read_storage::<IsRendered>();
     let positions = core.world.read_storage::<Position>();
 
     // Determine position of camera.

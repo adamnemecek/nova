@@ -57,9 +57,9 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
 pub fn build_entity<'a>(template: Arc<Template>, builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
   builder
     .with(graphics::Sprite::new(template.atlas.clone()))
+    .with(rendering::IsRendered)
     .with(Position::default())
     .with(Velocity::default())
-    .with(Render)
     .with(Object {
       template: template.clone(),
       facing: Vector3::y(),

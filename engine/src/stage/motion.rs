@@ -5,9 +5,9 @@
 use super::*;
 
 /// System that moves the `Position` of an entity based on its `Velocity`.
-pub struct MotionSystem;
+pub struct Motion;
 
-impl<'a> System<'a> for MotionSystem {
+impl<'a> System<'a> for Motion {
   type SystemData = (
     Read<'a, core::Clock>,
     ReadStorage<'a, Velocity>,
