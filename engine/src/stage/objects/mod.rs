@@ -16,11 +16,10 @@ use super::*;
 
 mod animation;
 mod animator;
+mod renderer;
 mod template;
 
-pub use self::animation::*;
-pub use self::animator::*;
-pub use self::template::*;
+pub use self::{animation::*, animator::*, renderer::*, template::*};
 
 /// Component that stores state for an object on the stage.
 ///
@@ -57,7 +56,6 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
 pub fn build_entity<'a>(template: Arc<Template>, builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
   builder
     .with(graphics::Sprite::new(template.atlas.clone()))
-    .with(rendering::IsRendered)
     .with(Position::default())
     .with(Velocity::default())
     .with(Object {

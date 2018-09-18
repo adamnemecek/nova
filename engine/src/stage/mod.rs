@@ -13,13 +13,12 @@ use super::*;
 
 pub mod actors;
 pub mod objects;
-pub mod rendering;
 
+mod camera;
 mod direction;
 mod motion;
 
-pub use self::direction::*;
-pub use self::motion::*;
+pub use self::{camera::*, direction::*, motion::*};
 
 /// Component that stores the position of an entity on the stage.
 #[derive(Component)]
@@ -42,9 +41,10 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
   core.world.register::<Position>();
   core.world.register::<Velocity>();
 
+  core.world.add_resource(Camera::default());
+
   dispatch.add(Mover, "stage::Mover", &[]);
 
-  rendering::setup(core, dispatch);
   objects::setup(core, dispatch);
   actors::setup(core, dispatch);
 }

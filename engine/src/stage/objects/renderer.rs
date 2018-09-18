@@ -23,13 +23,11 @@ impl Renderer {
     let entities = core.world.entities();
 
     let viewport = core.world.read_resource::<core::Viewport>();
-    let camera = core.world.read_resource::<Camera>();
-
-    let rendered = core.world.read_storage::<IsRendered>();
     let positions = core.world.read_storage::<Position>();
+    let objects = core.world.read_storage::<Object>();
 
     // Determine position of camera.
-    let camera_pos = match camera.target {
+    let camera_pos = match core.world.read_resource::<Camera>().target {
       CameraTarget::Position(pos) => pos,
       CameraTarget::Entity(entity) => {
         if let Some(pos) = positions.get(entity) {
@@ -44,7 +42,7 @@ impl Renderer {
     let draw_offset = Point2::new(viewport.width, viewport.height) / self.scale / 2.0 - camera_pos;
 
     // Queue all rendered entities for drawing.
-    for (entity, _, position) in (&*entities, &rendered, &positions).join() {
+    for (entity, _, position) in (&*entities, &objects, &positions).join() {
       self.draw_queue.push((entity, position.point));
     }
 
@@ -53,7 +51,7 @@ impl Renderer {
       .draw_queue
       .sort_by(|a, b| a.1.y.partial_cmp(&b.1.y).unwrap_or(cmp::Ordering::Equal));
 
-    // Finally, draw the entities.
+    // Finally, draw the sprites.
     let sprites = core.world.read_storage::<graphics::Sprite>();
 
     ggez::graphics::push_transform(&mut core.ctx, Some(Matrix4::new_scaling(self.scale)));
