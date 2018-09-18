@@ -15,7 +15,7 @@ impl<'a> System<'a> for MotionInputSystem {
   type SystemData = (
     Read<'a, input::Input>,
     ReadStorage<'a, InputControlled>,
-    WriteStorage<'a, stage::Object>,
+    WriteStorage<'a, stage::objects::Object>,
     WriteStorage<'a, stage::Velocity>,
   );
 

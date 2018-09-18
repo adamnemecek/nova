@@ -6,14 +6,20 @@ use super::*;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
+/// Template for an object on the stage.
 #[derive(Debug)]
-pub struct ObjectTemplate {
+pub struct Template {
+  /// Atlas for the object's sprite.
   pub atlas: Arc<graphics::Atlas>,
+  /// Whether the object only faces cardinal directions, rather than all eight
+  /// compass directions.
   pub cardinal_dirs_only: bool,
+  /// List of animations supported by the object.
   pub animations: Vec<Animation>,
 }
 
-impl core::Asset for ObjectTemplate {
+// Support loading object templates as assets.
+impl core::Asset for Template {
   fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
     let mut path = path.to_owned();
 
@@ -23,7 +29,7 @@ impl core::Asset for ObjectTemplate {
 
     let atlas = assets.load(&path.join(&data.atlas))?;
 
-    Ok(ObjectTemplate {
+    Ok(Template {
       atlas: Arc::new(atlas),
       cardinal_dirs_only: data.cardinal_dirs_only,
       animations: data.animations.into_iter().map(Animation::from).collect(),
@@ -31,10 +37,15 @@ impl core::Asset for ObjectTemplate {
   }
 }
 
+/// Data for an `ObjectTemplate`.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
+  /// Path to the atlas for the object's sprite.
   pub atlas: PathBuf,
+  /// List of data for the object's animations.
   pub animations: Vec<animation::Data>,
+  /// Whether the object only faces cardinal directions, rather than all eight
+  /// compass directions.
   #[serde(default)]
   pub cardinal_dirs_only: bool,
 }

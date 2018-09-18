@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for anim_frame in anim_sequence.frames.iter() {
           let cell = anim_frame.meta_frame_group_index;
 
-          frames.push(stage::object::animation::Frame {
+          frames.push(stage::objects::animation::Frame {
             length: anim_frame.duration as f64,
             cell: (cell % 8, cell / 8),
             hflip: anim_frame.hflip != 0,
@@ -77,13 +77,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         sequences.insert((*direction).to_owned(), frames);
       }
 
-      animations.push(stage::object::animation::Data {
+      animations.push(stage::objects::animation::Data {
         name: (*name).to_owned(),
         sequences,
       });
     }
 
-    stage::object::template::Data {
+    stage::objects::template::Data {
       atlas: "atlas.yml".into(),
       animations,
       cardinal_dirs_only: false,

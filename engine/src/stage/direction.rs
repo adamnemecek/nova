@@ -16,8 +16,20 @@ pub enum CompassDirection {
   SouthEast,
 }
 
-/// Number of compass directions.
+/// Total number of compass directions.
 pub const COMPASS_DIRECTION_COUNT: usize = CompassDirection::SouthEast as usize + 1;
+
+/// Names of each of the compass directions.
+pub const COMPASS_DIRECTION_NAMES: [&'static str; COMPASS_DIRECTION_COUNT] = [
+  "south",
+  "southwest",
+  "west",
+  "northwest",
+  "north",
+  "northeast",
+  "east",
+  "southeast",
+];
 
 impl CompassDirection {
   /// Gets the nearest compass direction to the given vector.

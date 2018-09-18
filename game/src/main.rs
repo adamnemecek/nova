@@ -40,13 +40,16 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
     let assets = core.world.read_resource::<core::Assets>();
 
     (
-      assets.load::<stage::ObjectTemplate>(&PathBuf::from("hero-f/object.yml"))?,
-      assets.load::<stage::ObjectTemplate>(&PathBuf::from("004-fire-salamander/object.yml"))?,
+      assets.load::<stage::objects::Template>(&PathBuf::from("hero-f/object.yml"))?,
+      assets.load::<stage::objects::Template>(&PathBuf::from("004-fire-salamander/object.yml"))?,
     )
   };
 
-  let hero = stage::build_object(Arc::new(hero_template), core.world.create_entity()).build();
-  let monster = stage::build_object(Arc::new(monster_template), core.world.create_entity()).build();
+  let hero =
+    stage::objects::build_entity(Arc::new(hero_template), core.world.create_entity()).build();
+
+  let monster =
+    stage::objects::build_entity(Arc::new(monster_template), core.world.create_entity()).build();
 
   // Set the camera target to the hero.
   core
@@ -63,10 +66,11 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
   // Set the monter's animation to idle.
   core
     .world
-    .write_storage::<stage::object::animation::Animated>()
+    .write_storage::<stage::objects::Object>()
     .get_mut(monster)
     .unwrap()
-    .animation = 1;
+    .animation
+    .index = 1;
 
   Ok(())
 }
