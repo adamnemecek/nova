@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 
 [dependencies]
-nova-engine = { path = "../engine" }
+nova = { path = "../engine" }
 specs = "0.12.2"

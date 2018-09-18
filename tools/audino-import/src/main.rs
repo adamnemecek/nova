@@ -3,13 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 extern crate clap;
-extern crate nova_engine;
+extern crate nova;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_xml_rs;
 
 use clap::{App, Arg};
-use nova_engine::prelude::*;
+use nova::prelude::*;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;

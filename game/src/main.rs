@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-extern crate nova_engine;
+extern crate nova;
 extern crate specs;
 
-use nova_engine::prelude::*;
+use nova::prelude::*;
 use std::error::Error;
 use std::path::PathBuf;
 
