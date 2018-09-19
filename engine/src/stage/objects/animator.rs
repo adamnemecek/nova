@@ -11,7 +11,7 @@ pub struct Animator;
 
 impl<'a> System<'a> for Animator {
   type SystemData = (
-    Read<'a, core::Clock>,
+    Read<'a, time::Clock>,
     WriteStorage<'a, Object>,
     WriteStorage<'a, graphics::Sprite>,
   );
@@ -19,7 +19,7 @@ impl<'a> System<'a> for Animator {
   fn run(&mut self, (clock, mut objects, mut sprites): Self::SystemData) {
     for (object, sprite) in (&mut objects, &mut sprites).join() {
       // Progress the animation time.
-      object.animation.elapsed += clock.delta_time;
+      object.animation.elapsed += time::seconds(clock.delta_time);
 
       // Get the object's template's animations or go to the next object.
       let animations = &object.template.animations;

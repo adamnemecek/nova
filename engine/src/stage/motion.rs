@@ -26,14 +26,14 @@ pub struct Mover;
 
 impl<'a> System<'a> for Mover {
   type SystemData = (
-    Read<'a, core::Clock>,
+    Read<'a, time::Clock>,
     ReadStorage<'a, Velocity>,
     WriteStorage<'a, Position>,
   );
 
   fn run(&mut self, (clock, velocities, mut positions): Self::SystemData) {
     for (velocity, position) in (&velocities, &mut positions).join() {
-      position.point += velocity.vector * clock.delta_time as f32;
+      position.point += velocity.vector * time::seconds_f32(clock.delta_time);
     }
   }
 }

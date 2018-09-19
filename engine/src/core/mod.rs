@@ -9,12 +9,10 @@ pub mod input;
 
 mod assets;
 mod texture;
-mod time;
 mod viewport;
 
 pub use self::assets::*;
 pub use self::texture::*;
-pub use self::time::*;
 pub use self::viewport::*;
 
 /// Provides core engine functionality.
@@ -49,7 +47,6 @@ impl Core {
     let mut world = World::new();
 
     world.add_resource(Assets::default());
-    world.add_resource(Clock::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
     world.add_resource(input::KeyEvents::default());
 
@@ -79,20 +76,12 @@ impl Core {
     ggez::graphics::present(ctx).expect("could not present");
     ggez::graphics::clear(ctx, ggez::graphics::Color::new(0.53, 0.87, 0.52, 1.0));
 
-    // Update the `Clock` resource.
-    let mut clock = world.write_resource::<Clock>();
-
+    // Show FPS in the window title.
     ctx.timer_context.tick();
 
-    clock.tick += 1;
-    clock.delta_time = ggez::timer::duration_to_f64(ggez::timer::delta(ctx));
-    clock.time += clock.delta_time;
-    clock.fps = ggez::timer::fps(ctx);
-
-    // Show FPS in the window title.
     ggez::graphics::set_window_title(
       ctx,
-      &format!("{} ({} FPS)", self.app_name, clock.fps as usize),
+      &format!("{} ({} FPS)", self.app_name, ggez::timer::fps(ctx) as usize),
     );
 
     // Load queued resources for assets (e.g. images).

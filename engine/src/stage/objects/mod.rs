@@ -42,7 +42,7 @@ pub struct Object {
 pub struct AnimationState {
   /// Index in the object template's animation list of the animation to play.
   pub index: usize,
-  /// Seconds elapsed in the animation.
+  /// Time elapsed in the animation.
   pub elapsed: f64,
 }
 

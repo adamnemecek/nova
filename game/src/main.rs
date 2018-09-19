@@ -14,6 +14,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   let mut core = Core::new("nova", "bfrydl");
   let mut dispatch = DispatcherBuilder::default();
 
+  time::setup(&mut core);
   input::setup(&mut core, &mut dispatch);
   graphics::setup(&mut core, &mut dispatch);
   stage::setup(&mut core, &mut dispatch);
@@ -26,6 +27,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   // Run the main event loop.
   while core.is_running() {
+    time::tick(&mut core);
     core.tick();
     dispatcher.dispatch(&mut core.world.res);
     stage::render(&mut core);

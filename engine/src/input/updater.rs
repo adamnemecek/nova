@@ -10,7 +10,7 @@ pub struct Updater;
 
 impl<'a> System<'a> for Updater {
   type SystemData = (
-    Read<'a, core::Clock>,
+    Read<'a, time::Clock>,
     Read<'a, core::input::KeyEvents>,
     Write<'a, Input>,
   );
@@ -29,8 +29,8 @@ impl<'a> System<'a> for Updater {
             let button = &mut input.buttons[button as usize];
 
             // Set pressed time if the button was not already pressed.
-            if button.pressed_time.is_none() {
-              button.pressed_time = Some(clock.time);
+            if button.pressed_at.is_none() {
+              button.pressed_at = Some(clock.ticked_at);
             }
 
             button.repeated = true;
@@ -42,7 +42,7 @@ impl<'a> System<'a> for Updater {
           if let Some(button) = Button::from_keycode(key) {
             let button = &mut input.buttons[button as usize];
 
-            button.pressed_time = None;
+            button.pressed_at = None;
             button.repeated = false;
           }
         }

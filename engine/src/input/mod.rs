@@ -22,7 +22,7 @@ pub struct Input {
 impl Input {
   /// Returns `true` while the given `button` is held down.
   pub fn is_pressed(&self, button: Button) -> bool {
-    self.buttons[button as usize].pressed_time.is_some()
+    self.buttons[button as usize].pressed_at.is_some()
   }
 
   /// Returns `true` on the first frame the given `button` is pressed and
@@ -38,9 +38,9 @@ impl Input {
 /// Sstate of an input button.
 #[derive(Default, Debug)]
 pub struct ButtonState {
-  /// Time the button was first pressed or `None` if the button is not pressed.
-  /// `None`.
-  pub pressed_time: Option<f64>,
+  /// Instant the button was first pressed or `None` if the button is not
+  /// pressed.
+  pub pressed_at: Option<time::Instant>,
   /// Whether the press was repeated, which is `true` periodically while the
   /// button is held down.
   pub repeated: bool,

@@ -18,6 +18,7 @@ pub mod core;
 pub mod graphics;
 pub mod input;
 pub mod stage;
+pub mod time;
 pub mod unstable;
 
 use prelude::*;
@@ -29,5 +30,5 @@ pub mod prelude {
   pub use std::sync::{Arc, RwLock};
 
   pub use {core, core::Core};
-  pub use {graphics, input, stage, unstable};
+  pub use {graphics, input, stage, time, unstable};
 }
