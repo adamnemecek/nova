@@ -95,6 +95,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
       atlas: "atlas.yml".into(),
       animations,
       cardinal_dirs_only: false,
+      shadow_size: (14.0, 9.0),
     }
   };
 
