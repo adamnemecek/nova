@@ -1,5 +1,6 @@
 ---
 atlas: atlas.yml
+shadow_size: [14, 9]
 animations:
   - name: static
     northwest:

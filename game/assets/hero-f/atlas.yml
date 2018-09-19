@@ -1,4 +1,4 @@
 texture: texture.png
 cell_width: 32
 cell_height: 32
-cell_origin: [16, 32]
+cell_origin: [16, 30]

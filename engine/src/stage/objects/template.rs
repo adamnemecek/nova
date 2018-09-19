@@ -14,6 +14,8 @@ pub struct Template {
   /// Whether the object only faces cardinal directions, rather than all eight
   /// compass directions.
   pub cardinal_dirs_only: bool,
+  /// Size of the object's shadow.
+  pub shadow_size: (f32, f32),
   /// List of animations supported by the object.
   pub animations: Vec<Animation>,
 }
@@ -47,6 +49,7 @@ impl core::Asset for Template {
     Ok(Template {
       atlas: Arc::new(atlas),
       cardinal_dirs_only: data.cardinal_dirs_only,
+      shadow_size: data.shadow_size,
       animations: data.animations.into_iter().map(Animation::from).collect(),
     })
   }
@@ -63,4 +66,7 @@ pub struct TemplateData {
   /// compass directions.
   #[serde(default)]
   pub cardinal_dirs_only: bool,
+  /// Size of the object's shadow in pixels.
+  #[serde(default)]
+  pub shadow_size: (f32, f32),
 }

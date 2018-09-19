@@ -1,5 +1,6 @@
 atlas: atlas.yml
 cardinal_dirs_only: true
+shadow_size: [14, 9]
 animations:
   - name: static
     north:

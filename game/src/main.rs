@@ -23,7 +23,13 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   setup(&mut core)?;
 
   let mut dispatcher = dispatch.build();
-  let mut object_renderer = stage::objects::Renderer::default();
+
+  let mut object_renderer = stage::objects::Renderer::new(Arc::new(
+    core
+      .world
+      .read_resource::<core::Assets>()
+      .load(&PathBuf::from("circle.png"))?,
+  ));
 
   // Run the main event loop.
   while core.is_running() {
@@ -48,7 +54,12 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
   let hero =
     stage::actors::build_entity(Arc::new(hero_template), core.world.create_entity()).build();
 
-  stage::actors::build_entity(Arc::new(monster_template), core.world.create_entity()).build();
+  let _monster =
+    stage::actors::build_entity(Arc::new(monster_template), core.world.create_entity())
+      .with(stage::Position {
+        point: Point3::new(32.0, 24.0, 0.0),
+      })
+      .build();
 
   // Set the camera target to the hero.
   core

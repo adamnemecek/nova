@@ -41,8 +41,8 @@ impl Asset for Texture {
 
     // Create a texture asset with no ggez image.
     let texture = Texture(Arc::new(Data {
-      width: width as usize,
-      height: height as usize,
+      width: width as f32,
+      height: height as f32,
       rgba_image,
       ggez_image: RwLock::new(None),
     }));
@@ -58,9 +58,9 @@ impl Asset for Texture {
 #[derive(Debug)]
 pub struct Data {
   /// Width of the texture in pixels.
-  pub width: usize,
+  pub width: f32,
   /// Height of the texture in pixels.
-  pub height: usize,
+  pub height: f32,
   /// Raw RGBA8 image data of the texture.
   pub rgba_image: image::RgbaImage,
   /// Low-level image loaded to the device by ggez.
