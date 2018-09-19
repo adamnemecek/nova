@@ -14,12 +14,13 @@
 
 use super::*;
 
+pub mod render;
+
 mod animation;
 mod animator;
-mod renderer;
 mod template;
 
-pub use self::{animation::*, animator::*, renderer::*, template::*};
+pub use self::{animation::*, animator::*, render::render, template::*};
 
 /// Component that stores state for an object on the stage.
 ///
@@ -50,6 +51,8 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
   core.world.register::<Object>();
 
   dispatch.add(Animator, "stage::objects::Animator", &[]);
+
+  render::setup(core, dispatch);
 }
 
 /// Adds components to the entity for an object with the given `template`.

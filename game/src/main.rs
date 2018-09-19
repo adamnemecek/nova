@@ -24,18 +24,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   let mut dispatcher = dispatch.build();
 
-  let mut object_renderer = stage::objects::Renderer::new(Arc::new(
-    core
-      .world
-      .read_resource::<core::Assets>()
-      .load(&PathBuf::from("circle.png"))?,
-  ));
-
   // Run the main event loop.
   while core.is_running() {
     core.tick();
     dispatcher.dispatch(&mut core.world.res);
-    object_renderer.draw(&mut core);
+    stage::render(&mut core);
   }
 
   Ok(())
@@ -72,6 +65,17 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
     .world
     .write_storage()
     .insert(hero, unstable::InputControlled)?;
+
+  // Set the object shadow texture.
+  core
+    .world
+    .write_resource::<stage::objects::render::Settings>()
+    .shadow_texture = core
+    .world
+    .read_resource::<core::Assets>()
+    .load(&PathBuf::from("circle.png"))
+    .ok()
+    .map(Arc::new);
 
   Ok(())
 }

@@ -48,3 +48,8 @@ pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) 
   objects::setup(core, dispatch);
   actors::setup(core, dispatch);
 }
+
+/// Renders the stage.
+pub fn render(core: &mut Core) {
+  objects::render(core);
+}
