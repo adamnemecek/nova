@@ -15,6 +15,7 @@ struct Game {
 }
 
 impl Application for Game {
+  // Set up world and systems.
   fn setup<'a, 'b>(&mut self, world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
     assets::setup(world);
     graphics::setup(world);
@@ -29,6 +30,7 @@ impl Application for Game {
     setup(world).expect("setup failed");
   }
 
+  // Perform early update logic before systems are run.
   fn before_update(&mut self, world: &mut World) {
     self.window.update();
 
@@ -40,6 +42,7 @@ impl Application for Game {
     input::update(world, &mut self.window);
   }
 
+  // Perform update logic after systems are run.
   fn update(&mut self, world: &mut World) {
     self
       .canvas
@@ -50,6 +53,7 @@ impl Application for Game {
     self.canvas.present();
   }
 
+  // Return `false` to exit the game.
   fn is_running(&self) -> bool {
     !self.window.is_closing()
   }
