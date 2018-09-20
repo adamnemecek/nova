@@ -15,7 +15,7 @@ impl Application for Game {
     time::setup(world);
 
     stage::setup(world, systems);
-    stage::drawing::setup(world, systems);
+    stage::visuals::setup(world, systems);
 
     unstable::setup(world, systems);
 
@@ -40,7 +40,7 @@ impl Application for Game {
       .canvas
       .clear(graphics::Color::new(0.53, 0.87, 0.52, 1.0));
 
-    stage::drawing::draw(world, &mut self.canvas);
+    stage::visuals::draw(world, &mut self.canvas);
 
     self.canvas.present();
   }
@@ -72,12 +72,17 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   )?;
 
   // Create actor entities.
-  let hero = stage::actors::build_entity(Arc::new(hero_template), world.create_entity()).build();
+  let hero = stage::actors::build_entity(
+    Arc::new(hero_template),
+    stage::visuals::actors::build_entity(world.create_entity()),
+  ).build();
 
-  let _monster = stage::actors::build_entity(Arc::new(monster_template), world.create_entity())
-    .with(stage::Position {
-      point: Point3::new(32.0, 24.0, 0.0),
-    })
+  let _monster = stage::actors::build_entity(
+    Arc::new(monster_template),
+    stage::visuals::actors::build_entity(world.create_entity()),
+  ).with(stage::Position {
+    point: Point3::new(32.0, 24.0, 0.0),
+  })
     .build();
 
   // Set the camera target to the hero.
@@ -92,7 +97,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   let circle = assets::load(world, &assets::PathBuf::from("circle.png")).ok();
 
   world
-    .write_resource::<stage::objects::drawing::Settings>()
+    .write_resource::<stage::visuals::objects::DrawSettings>()
     .shadow_texture = circle;
 
   // Load custom input mapping.

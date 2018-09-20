@@ -2,55 +2,33 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `drawing` module draws stage objects onto the screen.
-//!
-//! The `Sorter` system sorts all objects on the stage into draw order, so
-//! that the closest object to the camera is drawn last. Sorted entities are
-//! stored in the `State` resource which is used along with the `Settings`
-//! resource when rendering.
-
 use super::*;
 use graphics::DrawParams;
 
-mod sorter;
-
-pub use self::sorter::*;
-
-/// State of object rendering.
+/// State of object drawing.
 #[derive(Default)]
-pub struct State {
+pub struct DrawState {
   /// Entities on the stage that have an `Object` component, in order from
   /// background to foreground.
   pub entities: Vec<Entity>,
 }
 
-/// Settings for object rendering.
-pub struct Settings {
+/// Settings for object drawing.
+pub struct DrawSettings {
   /// Global scale for drawing objects.
   pub scale: f32,
   /// Texture to use for drawing shadows. Not provided by default.
   pub shadow_texture: Option<graphics::Image>,
 }
 
-/// Sets up object rendering for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  world.add_resource(State::default());
-
-  world.add_resource(Settings {
-    scale: 2.0,
-    shadow_texture: None,
-  });
-
-  systems.add(Sorter, "stage::objects::draw::Sorter", &[]);
-}
-
 /// Draws all the objects on the stage.
 pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
-  let state = world.read_resource::<State>();
-  let settings = world.read_resource::<Settings>();
+  let state = world.read_resource::<DrawState>();
+  let settings = world.read_resource::<DrawSettings>();
 
   let positions = world.read_storage::<Position>();
   let objects = world.read_storage::<Object>();
+  let sprites = world.read_storage::<Sprite>();
 
   // Determine position of camera.
   let camera_pos = match world.read_resource::<Camera>().target {
@@ -94,50 +72,37 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
     }
   }
 
-  // Draw objects.
+  // Draw object sprites.
   for entity in &state.entities {
     let position = positions.get(*entity).unwrap();
     let object = objects.get(*entity).unwrap();
+    let sprite = sprites.get(*entity).unwrap();
 
-    if let Some(frame) = get_animation_frame(&object) {
-      let atlas = &object.template.atlas;
+    let atlas = &object.template.atlas;
 
-      let scale = if frame.hflip {
-        Vector2::new(-1.0, 1.0)
-      } else {
-        Vector2::new(1.0, 1.0)
-      };
+    let scale = if sprite.hflip {
+      Vector2::new(-1.0, 1.0)
+    } else {
+      Vector2::new(1.0, 1.0)
+    };
 
-      let mut offset = frame.offset - atlas.cell_origin;
+    let mut offset = sprite.offset - atlas.cell_origin;
 
-      offset.x *= scale.x;
-      offset.y *= scale.y;
+    offset.x *= scale.x;
+    offset.y *= scale.y;
 
-      let src = atlas.get(frame.cell);
+    let src = atlas.get(sprite.cell);
 
-      let dest =
-        Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
+    let dest =
+      Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
 
-      canvas
-        .draw(
-          &atlas.image,
-          DrawParams::default().src(src).scale(scale).dest(dest),
-        )
-        .expect("could not draw sprite");
-    }
+    canvas
+      .draw(
+        &atlas.image,
+        DrawParams::default().src(src).scale(scale).dest(dest),
+      )
+      .expect("could not draw sprite");
   }
 
   canvas.pop_transform();
-}
-
-pub fn get_animation_frame<'a>(object: &'a Object) -> Option<&'a AnimationFrame> {
-  let state = &object.animation;
-
-  if let Some(animation) = object.template.animations.get(state.index) {
-    if let Some(Some(sequence)) = animation.sequences.get(state.sequence) {
-      return sequence.get(state.frame);
-    }
-  }
-
-  None
 }

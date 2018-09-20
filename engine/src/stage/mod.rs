@@ -13,8 +13,7 @@ use super::*;
 
 pub mod actors;
 pub mod objects;
-
-pub use self::objects::drawing;
+pub mod visuals;
 
 mod camera;
 mod direction;
@@ -49,6 +48,6 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
 
   systems.add(Mover, "stage::Mover", &[]);
 
-  objects::setup(world, systems);
-  actors::setup(world, systems);
+  objects::setup(world);
+  actors::setup(world);
 }

@@ -15,10 +15,8 @@
 
 use super::*;
 
-mod animator;
 mod template;
 
-pub use self::animator::*;
 pub use self::template::*;
 
 /// Component that stores the state of an actor.
@@ -43,10 +41,8 @@ pub enum Mode {
 pub const MODE_COUNT: usize = Mode::Walk as usize + 1;
 
 /// Sets up actors for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(world: &mut World) {
   world.register::<Actor>();
-
-  systems.add(Animator, "stage::actors::Animator", &[]);
 }
 
 /// Adds components to the entity for an actor with the given `template`.

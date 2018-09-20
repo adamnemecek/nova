@@ -14,14 +14,10 @@
 
 use super::*;
 
-pub mod drawing;
-
 mod animation;
-mod animator;
 mod template;
 
 pub use self::animation::*;
-pub use self::animator::*;
 pub use self::template::*;
 
 /// Component that stores state for an object on the stage.
@@ -35,28 +31,11 @@ pub struct Object {
   pub template: Arc<Template>,
   /// Direction the object is facing.
   pub facing: Vector3<f32>,
-  /// State of the object's animation.
-  pub animation: AnimationState,
-}
-
-/// Animation state of an object on the stage.
-#[derive(Default)]
-pub struct AnimationState {
-  /// Index in the object template's animation list of the animation to play.
-  pub index: usize,
-  /// Index of the sequence in the animation to play.
-  pub sequence: usize,
-  /// Index of the frame in the sequence to show.
-  pub frame: usize,
-  /// Time elapsed in the animation.
-  pub elapsed: f64,
 }
 
 /// Sets up objects for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(world: &mut World) {
   world.register::<Object>();
-
-  systems.add(Animator, "stage::objects::Animator", &[]);
 }
 
 /// Adds components to the entity for an object with the given `template`.
@@ -67,6 +46,5 @@ pub fn build_entity<'a>(template: Arc<Template>, builder: EntityBuilder<'a>) -> 
     .with(Object {
       template: template.clone(),
       facing: Vector3::y(),
-      animation: AnimationState::default(),
     })
 }
