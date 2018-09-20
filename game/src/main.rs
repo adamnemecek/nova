@@ -6,8 +6,6 @@ extern crate nova;
 extern crate specs;
 
 use nova::prelude::*;
-use std::error::Error;
-use std::path::PathBuf;
 
 struct Game {
   window: platform::Window,
@@ -27,7 +25,7 @@ impl Application for Game {
 
     unstable::setup(world, systems);
 
-    setup(world).expect("setup failed");
+    setup(world).expect("could not load assets");
   }
 
   // Perform early update logic before systems are run.
@@ -70,14 +68,14 @@ pub fn main() {
 }
 
 /// Set up program test world.
-fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
+fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   // Load actor templates.
   let (hero_template, monster_template) = {
     let fs = world.read_resource::<assets::OverlayFs>();
 
     (
-      fs.load::<stage::actors::Template>(&PathBuf::from("hero-f/actor.yml"))?,
-      fs.load::<stage::actors::Template>(&PathBuf::from("004-fire-salamander/actor.yml"))?,
+      fs.load::<stage::actors::Template>(&assets::PathBuf::from("hero-f/actor.yml"))?,
+      fs.load::<stage::actors::Template>(&assets::PathBuf::from("004-fire-salamander/actor.yml"))?,
     )
   };
 
@@ -101,7 +99,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
   // Set the object shadow texture.
   let circle = world
     .read_resource::<assets::OverlayFs>()
-    .load(&PathBuf::from("circle.png"))
+    .load(&assets::PathBuf::from("circle.png"))
     .ok();
 
   world
