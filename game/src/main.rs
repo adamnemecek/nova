@@ -69,14 +69,12 @@ pub fn main() {
 /// Set up program test world.
 fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   // Load actor templates.
-  let (hero_template, monster_template) = {
-    let fs = world.read_resource::<assets::OverlayFs>();
+  let hero_template = assets::load(world, &assets::PathBuf::from("hero-f/actor.yml"))?;
 
-    (
-      fs.load::<stage::actors::Template>(&assets::PathBuf::from("hero-f/actor.yml"))?,
-      fs.load::<stage::actors::Template>(&assets::PathBuf::from("004-fire-salamander/actor.yml"))?,
-    )
-  };
+  let monster_template = assets::load(
+    world,
+    &assets::PathBuf::from("004-fire-salamander/actor.yml"),
+  )?;
 
   // Create actor entities.
   let hero = stage::actors::build_entity(Arc::new(hero_template), world.create_entity()).build();
@@ -96,10 +94,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
     .insert(hero, unstable::InputControlled)?;
 
   // Set the object shadow texture.
-  let circle = world
-    .read_resource::<assets::OverlayFs>()
-    .load(&assets::PathBuf::from("circle.png"))
-    .ok();
+  let circle = assets::load(world, &assets::PathBuf::from("circle.png")).ok();
 
   world
     .write_resource::<stage::objects::draw::Settings>()
