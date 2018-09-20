@@ -21,7 +21,7 @@ pub fn update(world: &mut World, window: &platform::Window) {
     match event {
       platform::WindowEvent::KeyboardInput { input, .. } => {
         if let Some(key) = input.virtual_keycode {
-          for button in mapping.get(key) {
+          for button in mapping.get_buttons_for(key) {
             let button = &mut state.buttons[*button as usize];
 
             if input.state == platform::InputState::Pressed {

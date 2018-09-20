@@ -7,37 +7,37 @@ use std::collections::HashMap;
 
 pub const KEY_CODE_COUNT: usize = KeyCode::Cut as usize + 1;
 
-/// Asset and resource that stores bindings from `KeyCode` to `Button`.
+/// Asset and resource that stores bindings from `Button` to `KeyCode`.
 ///
-/// Each key can be assigned to zero or more buttons.
+/// Each button can be assigned zero or more key codes.
 #[derive(Debug)]
 pub struct Mapping {
-  /// List of key bindngs in order of `KeyCode`.
-  keys: Vec<Vec<Button>>,
+  mappings: Vec<Vec<KeyCode>>,
+  reverse: Vec<Vec<Button>>,
 }
 
 impl Mapping {
   /// Creates a new, empty `Mapping`.
   pub fn new() -> Mapping {
-    let mut mapping = Mapping {
-      keys: Vec::with_capacity(KEY_CODE_COUNT),
-    };
-
-    for _ in 0..KEY_CODE_COUNT {
-      mapping.keys.push(Vec::with_capacity(2));
+    Mapping {
+      mappings: std::iter::repeat_with(Vec::new)
+        .take(BUTTON_COUNT)
+        .collect(),
+      reverse: std::iter::repeat_with(Vec::new)
+        .take(KEY_CODE_COUNT)
+        .collect(),
     }
+  }
 
-    mapping
+  /// Adds a mapping from `button` to `key`.
+  pub fn add(&mut self, button: Button, key: KeyCode) {
+    self.mappings[button as usize].push(key);
+    self.reverse[key as usize].push(button);
   }
 
   /// Gets the buttons bound to the given key code.
-  pub fn get(&self, key_code: KeyCode) -> &Vec<Button> {
-    &self.keys[key_code as usize]
-  }
-
-  /// Get a mutable reference to the buttons bound to the given key code.
-  pub fn get_mut(&mut self, key_code: KeyCode) -> &mut Vec<Button> {
-    &mut self.keys[key_code as usize]
+  pub fn get_buttons_for(&self, key_code: KeyCode) -> &Vec<Button> {
+    &self.reverse[key_code as usize]
   }
 }
 
@@ -46,15 +46,14 @@ impl Default for Mapping {
   fn default() -> Self {
     let mut mapping = Mapping::new();
 
-    mapping.get_mut(KeyCode::W).push(Button::Up);
-    mapping.get_mut(KeyCode::A).push(Button::Left);
-    mapping.get_mut(KeyCode::S).push(Button::Down);
-    mapping.get_mut(KeyCode::D).push(Button::Right);
-
-    mapping.get_mut(KeyCode::Up).push(Button::Up);
-    mapping.get_mut(KeyCode::Left).push(Button::Left);
-    mapping.get_mut(KeyCode::Down).push(Button::Down);
-    mapping.get_mut(KeyCode::Right).push(Button::Right);
+    mapping.add(Button::Up, KeyCode::W);
+    mapping.add(Button::Up, KeyCode::Up);
+    mapping.add(Button::Left, KeyCode::A);
+    mapping.add(Button::Left, KeyCode::Left);
+    mapping.add(Button::Down, KeyCode::S);
+    mapping.add(Button::Down, KeyCode::Down);
+    mapping.add(Button::Right, KeyCode::D);
+    mapping.add(Button::Right, KeyCode::Right);
 
     mapping
   }
@@ -72,9 +71,11 @@ impl From<MappingData> for Mapping {
   fn from(data: MappingData) -> Mapping {
     let mut mapping = Mapping::new();
 
-    for (key, buttons) in data.keys {
-      if let Some(key) = parse_key_code(&key) {
-        mapping.keys[key as usize] = buttons;
+    for (button, keys) in data.mappings {
+      for key in keys {
+        if let Some(key) = parse_key_code(&key) {
+          mapping.add(button, key);
+        }
       }
     }
 
@@ -86,7 +87,7 @@ impl From<MappingData> for Mapping {
 #[derive(Serialize, Deserialize)]
 pub struct MappingData {
   #[serde(flatten)]
-  pub keys: HashMap<String, Vec<Button>>,
+  pub mappings: HashMap<Button, Vec<String>>,
 }
 
 /// Returns the key code referred to by the given string or `None` if it does
