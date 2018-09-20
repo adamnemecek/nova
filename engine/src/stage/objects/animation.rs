@@ -39,7 +39,7 @@ pub struct AnimationFrame {
   /// Length of this frame in 60ths of a second.
   pub length: f64,
   /// Cell in the atlas to use as the object's sprite during this frame.
-  pub cell: graphics::AtlasCell,
+  pub cell: Vector2<u16>,
   /// Visual offset to apply to the sprite during this frame.
   pub offset: Vector2<f32>,
   /// Whether the object's sprite is flipped during this frame.

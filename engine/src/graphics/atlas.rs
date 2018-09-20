@@ -4,9 +4,6 @@
 
 use super::*;
 
-/// Coordinates for a cell in an atlas.
-pub type AtlasCell = Vector2<u16>;
-
 /// Asset that divides a single texture into one or more cells.
 #[derive(Debug)]
 pub struct Atlas {
@@ -21,7 +18,7 @@ pub struct Atlas {
 
 impl Atlas {
   /// Gets the source rectangle for a given `cell` in the atlas.
-  pub fn get(&self, cell: AtlasCell) -> ggez::graphics::Rect {
+  pub fn get(&self, cell: Vector2<u16>) -> ggez::graphics::Rect {
     let size = self.image.size();
 
     let w = self.cell_size.x as f32 / size.x as f32;
