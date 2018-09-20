@@ -10,7 +10,7 @@
 //! resource when rendering.
 
 use super::*;
-use ggez::graphics::DrawParam;
+use graphics::DrawParams;
 
 mod sorter;
 
@@ -81,7 +81,7 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
       canvas
         .draw(
           shadow_image,
-          DrawParam::default()
+          DrawParams::default()
             .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
             .scale(Vector2::new(size.0 / image_size.x, size.1 / image_size.y))
             .dest(
@@ -122,7 +122,7 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
       canvas
         .draw(
           &atlas.image,
-          DrawParam::default().src(src).scale(scale).dest(dest),
+          DrawParams::default().src(src).scale(scale).dest(dest),
         )
         .expect("could not draw sprite");
     }
