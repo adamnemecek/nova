@@ -97,11 +97,8 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
     let position = positions.get(*entity).unwrap();
     let object = objects.get(*entity).unwrap();
 
-    let animation = &object.template.animations[object.animation.index];
-
-    if let Some(ref sequence) = animation.sequences[object.animation.sequence] {
+    if let Some(frame) = get_animation_frame(&object) {
       let atlas = &object.template.atlas;
-      let frame = &sequence[object.animation.frame];
 
       let scale = if frame.hflip {
         Vector2::new(-1.0, 1.0)
@@ -129,4 +126,16 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
   }
 
   canvas.pop_transform();
+}
+
+pub fn get_animation_frame<'a>(object: &'a Object) -> Option<&'a AnimationFrame> {
+  let state = &object.animation;
+
+  if let Some(animation) = object.template.animations.get(state.index) {
+    if let Some(Some(sequence)) = animation.sequences.get(state.sequence) {
+      return sequence.get(state.frame);
+    }
+  }
+
+  None
 }

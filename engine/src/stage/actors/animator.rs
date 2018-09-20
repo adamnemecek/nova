@@ -18,6 +18,7 @@ impl<'a> System<'a> for Animator {
       if object.animation.index != index {
         object.animation.index = index;
         object.animation.elapsed = 0.0;
+        object.animation.frame = 0;
       }
     }
   }
