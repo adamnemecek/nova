@@ -1,6 +1,7 @@
 # nova-game
 
-Pokémon fan game implemented with the nova engine.
+Project “nova-game” is a Pokémon fan game implemented in Rust with the Nova
+engine.
 
 ## Running
 
