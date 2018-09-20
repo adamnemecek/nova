@@ -22,7 +22,9 @@ pub mod stage;
 pub mod time;
 pub mod unstable;
 
-use prelude::*;
+mod application;
+
+pub use self::application::*;
 
 pub mod prelude {
   pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
@@ -30,5 +32,7 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, Mutex, RwLock};
 
-  pub use {assets, graphics, input, platform, stage, time, unstable};
+  pub use {assets, graphics, input, platform, stage, time, unstable, Application};
 }
+
+use prelude::*;
