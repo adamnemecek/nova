@@ -8,11 +8,9 @@ use ggez::event::winit_event::*;
 pub mod input;
 
 mod assets;
-mod texture;
 mod viewport;
 
 pub use self::assets::*;
-pub use self::texture::*;
 pub use self::viewport::*;
 
 /// Provides core engine functionality.
@@ -76,9 +74,6 @@ impl Core {
       ctx,
       &format!("{} ({} FPS)", self.app_name, ggez::timer::fps(ctx) as usize),
     );
-
-    // Load queued resources for assets (e.g. images).
-    world.read_resource::<Assets>().load_queued_resources(ctx);
 
     // Clear the `KeyEvents` resource of events from the previous tick.
     let mut key_events = world.write_resource::<input::KeyEvents>();

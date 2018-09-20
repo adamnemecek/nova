@@ -69,8 +69,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
   let circle = world
     .read_resource::<core::Assets>()
     .load(&PathBuf::from("circle.png"))
-    .ok()
-    .map(Arc::new);
+    .ok();
 
   world
     .write_resource::<stage::objects::render::Settings>()

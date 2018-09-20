@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::env;
@@ -16,24 +15,12 @@ use std::path::{Path, PathBuf};
 pub struct Assets {
   /// Path to the assets directory..
   pub path: PathBuf,
-  /// Sender for queueing resources to load on the main thread with access to
-  /// the `ggez::Context`.
-  send_resource_load: crossbeam_channel::Sender<Texture>,
-  /// Receiver for queued resources to load on the main thread with access to
-  /// the `ggez::Context`.
-  recv_resource_load: crossbeam_channel::Receiver<Texture>,
 }
 
 impl Assets {
   /// Creates a new `Assets` for the asset directory at the given `path`.
   pub fn new(path: impl Into<PathBuf>) -> Self {
-    let (send_resource_load, recv_resource_load) = crossbeam_channel::unbounded();
-
-    Assets {
-      path: path.into(),
-      send_resource_load,
-      recv_resource_load,
-    }
+    Assets { path: path.into() }
   }
 
   /// Opens the file at the given `path` relative to the asset directory.
@@ -49,38 +36,6 @@ impl Assets {
   /// Saves an asset to the given `path` relative to the asset directory.
   pub fn save<T: SaveableAsset>(&self, path: &Path, asset: &T) -> Result<(), Box<dyn Error>> {
     asset.save(self, path)
-  }
-
-  /// Queues a resource to load on the main thread with access to the
-  /// `ggez::Context``.
-  pub fn queue_resource_load(&self, texture: Texture) {
-    self.send_resource_load.send(texture);
-  }
-
-  /// Loads queued resources that need access to the `ggez::Context`.
-  pub fn load_queued_resources(&self, ctx: &mut ggez::Context) {
-    // For each queued texture…
-    while let Some(texture) = self.recv_resource_load.try_recv() {
-      // Create a ggez image from the RGBA8 image data.
-      let mut image = ggez::graphics::Image::from_rgba8(
-        ctx,
-        texture.width as u16,
-        texture.height as u16,
-        &texture.rgba_image,
-      ).expect("could not create image from rgba");
-
-      // Set filter to nearest to scale sprites cleanly and prevent artifacts
-      // when scaling PNGs with an alpha channel.
-      image.set_filter(ggez::graphics::FilterMode::Nearest);
-
-      // Update the texture with the image by acquiring a write lock.
-      let mut ggez_image = texture
-        .ggez_image
-        .write()
-        .expect("could not lock ggez_image");
-
-      *ggez_image = Some(image);
-    }
   }
 
   /// Creates a file at the given `path` relative to the asset directory.

@@ -12,8 +12,8 @@ pub type AtlasCell = (usize, usize);
 /// Asset that divides a single texture into one or more cells.
 #[derive(Debug)]
 pub struct Atlas {
-  /// Texture of the atlas.
-  pub texture: core::Texture,
+  /// Image of the atlas.
+  pub image: Image,
   /// Width of a single cell.
   pub cell_width: usize,
   /// Height of a single cell.
@@ -26,8 +26,10 @@ pub struct Atlas {
 impl Atlas {
   /// Gets the source rectangle for a given `cell` in the atlas.
   pub fn get(&self, cell: AtlasCell) -> ggez::graphics::Rect {
-    let w = self.cell_width as f32 / self.texture.width as f32;
-    let h = self.cell_height as f32 / self.texture.height as f32;
+    let size = self.image.size();
+
+    let w = self.cell_width as f32 / size.x;
+    let h = self.cell_height as f32 / size.y;
 
     let x = cell.0 as f32 * w;
     let y = cell.1 as f32 * h;
@@ -46,11 +48,11 @@ impl core::Asset for Atlas {
 
     path.pop();
 
-    // Load the texture referenced in the data.
-    let texture = assets.load(&path.join(data.texture))?;
+    // Load the image referenced in the data.
+    let image = assets.load(&path.join(data.image))?;
 
     Ok(Atlas {
-      texture,
+      image,
       cell_width: data.cell_width,
       cell_height: data.cell_height,
       cell_origin: Vector2::new(data.cell_origin.0, data.cell_origin.1),
@@ -61,8 +63,8 @@ impl core::Asset for Atlas {
 /// Serializable data for an `Atlas` asset.
 #[derive(Serialize, Deserialize)]
 pub struct AtlasData {
-  /// Relative path to the atlas texture.
-  pub texture: PathBuf,
+  /// Relative path to the atlas image.
+  pub image: PathBuf,
   /// Width of a single cell in the atlas.
   pub cell_width: usize,
   /// Height of a single cell in the atlas.

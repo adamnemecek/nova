@@ -29,7 +29,7 @@ pub struct Settings {
   /// Global scale for drawing objects.
   pub scale: f32,
   /// Texture to use for drawing shadows. Not provided by default.
-  pub shadow_texture: Option<Arc<core::Texture>>,
+  pub shadow_texture: Option<graphics::Image>,
 }
 
 /// Sets up object rendering for the given world.
@@ -75,32 +75,23 @@ pub fn render(world: &mut World, core: &mut Core) {
   ggez::graphics::apply_transformations(&mut core.ctx).expect("could not scale for stage draw");
 
   // Draw object shadows.
-  if let Some(ref shadow_texture) = settings.shadow_texture {
-    // Get a reference to the underlying shadow image.
-    let shadow_image = shadow_texture
-      .ggez_image
-      .read()
-      .expect("could not lock ggez_image");
+  if let Some(ref shadow_image) = settings.shadow_texture {
+    for entity in &state.entities {
+      let position = &positions.get(*entity).unwrap().point;
+      let size = &objects.get(*entity).unwrap().template.shadow_size;
+      let image_size = shadow_image.size();
 
-    if let Some(shadow_image) = shadow_image.as_ref() {
-      for entity in &state.entities {
-        let position = &positions.get(*entity).unwrap().point;
-        let size = &objects.get(*entity).unwrap().template.shadow_size;
-
-        ggez::graphics::draw(
-          &mut core.ctx,
-          shadow_image,
+      shadow_image
+        .draw(
+          core,
           DrawParam::default()
             .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
-            .scale(Vector2::new(
-              size.0 / shadow_texture.width,
-              size.1 / shadow_texture.height,
-            ))
+            .scale(Vector2::new(size.0 / image_size.x, size.1 / image_size.y))
             .dest(
               Point2::new(position.x - size.0 / 2.0, position.y - size.1 / 2.0) + global_offset,
             ),
-        ).expect("could not draw sprite");
-      }
+        )
+        .expect("could not draw sprite");
     }
   }
 
@@ -109,33 +100,22 @@ pub fn render(world: &mut World, core: &mut Core) {
     let sprite = sprites.get(*entity).unwrap();
     let position = positions.get(*entity).unwrap();
 
-    let image = sprite
-      .atlas
-      .texture
-      .ggez_image
-      .read()
-      .expect("could not lock ggez_image");
-
     let scale = sprite.scale;
     let mut offset = sprite.offset - sprite.atlas.cell_origin;
 
     offset.x *= scale.x;
     offset.y *= scale.y;
 
-    if let Some(image) = image.as_ref() {
-      ggez::graphics::draw(
-        &mut core.ctx,
-        image,
-        DrawParam::default()
-          .src(sprite.atlas.get(sprite.cell))
-          .scale(scale)
-          .dest(
-            Point2::new(position.point.x, position.point.y - position.point.z)
-              + offset
-              + global_offset,
-          ),
-      ).expect("could not draw sprite");
-    }
+    let params = DrawParam::default()
+      .src(sprite.atlas.get(sprite.cell))
+      .scale(scale)
+      .dest(
+        Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset,
+      );
+
+    let image = &sprite.atlas.image;
+
+    image.draw(core, params).expect("could not draw sprite");
   }
 
   ggez::graphics::pop_transform(&mut core.ctx);

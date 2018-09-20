@@ -1,5 +1,5 @@
 ---
-texture: texture.png
+image: image.png
 cell_width: 48
 cell_height: 64
 cell_origin:

@@ -5,9 +5,11 @@
 use super::*;
 
 mod atlas;
+mod image;
 mod sprite;
 
 pub use self::atlas::*;
+pub use self::image::*;
 pub use self::sprite::*;
 
 /// Sets up graphics for the given world.

@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Create `graphics::AtlasData` from the AnimData.
   let atlas_data = graphics::AtlasData {
-    texture: "texture.png".into(),
+    image: "image.png".into(),
     cell_width: anim_data.frame_width,
     cell_height: anim_data.frame_height,
     cell_origin: (
@@ -103,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   fs::create_dir_all(&dest_path)?;
 
   // Copy the monster's sprite sheet.
-  fs::copy(&src_path.join("sheet.png"), &dest_path.join("texture.png"))?;
+  fs::copy(&src_path.join("sheet.png"), &dest_path.join("image.png"))?;
 
   // Create an `Assets` resource to save assets.
   let assets = core::Assets::new(std::env::current_dir().unwrap());
