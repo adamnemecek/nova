@@ -20,14 +20,7 @@ pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
 mod atlas;
 mod canvas;
 mod image;
-mod sprite;
 
 pub use self::atlas::*;
 pub use self::canvas::*;
 pub use self::image::*;
-pub use self::sprite::*;
-
-/// Sets up graphics for the given world.
-pub fn setup<'a, 'b>(world: &mut World) {
-  world.register::<sprite::Sprite>();
-}

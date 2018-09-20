@@ -15,7 +15,6 @@ impl Application for Game {
   // Set up world and systems.
   fn setup<'a, 'b>(&mut self, world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
     assets::setup(world);
-    graphics::setup(world);
     input::setup(world);
     time::setup(world);
 

@@ -42,6 +42,10 @@ pub struct Object {
 pub struct AnimationState {
   /// Index in the object template's animation list of the animation to play.
   pub index: usize,
+  /// Index of the sequence in the animation to play.
+  pub sequence: usize,
+  /// Index of the frame in the sequence to show.
+  pub frame: usize,
   /// Time elapsed in the animation.
   pub elapsed: f64,
 }
@@ -56,7 +60,6 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
 /// Adds components to the entity for an object with the given `template`.
 pub fn build_entity<'a>(template: Arc<Template>, builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
   builder
-    .with(graphics::Sprite::new(template.atlas.clone()))
     .with(Position::default())
     .with(Velocity::default())
     .with(Object {

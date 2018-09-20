@@ -10,33 +10,35 @@ use super::*;
 pub struct Animator;
 
 impl<'a> System<'a> for Animator {
-  type SystemData = (
-    Read<'a, time::Clock>,
-    WriteStorage<'a, Object>,
-    WriteStorage<'a, graphics::Sprite>,
-  );
+  type SystemData = (Read<'a, time::Clock>, WriteStorage<'a, Object>);
 
-  fn run(&mut self, (clock, mut objects, mut sprites): Self::SystemData) {
-    for (object, sprite) in (&mut objects, &mut sprites).join() {
+  fn run(&mut self, (clock, mut objects): Self::SystemData) {
+    for object in (&mut objects).join() {
       // Progress the animation time.
       object.animation.elapsed += time::seconds(clock.delta_time);
 
-      // Get the object's template's animations or go to the next object.
+      // Get the object's template's animations.
       let animations = &object.template.animations;
 
+      // Skip objects with no animations.
       if object.animation.index >= animations.len() {
         continue;
       }
 
-      // Get the compass direction the object is facing.
+      // Get the current animation.
+      let animation = &animations[object.animation.index];
+
+      // Determine the direction index of the current sequence in the animation.
       let direction = if object.template.cardinal_dirs_only {
         stage::CompassDirection::nearest_cardinal(object.facing.remove_row(2))
       } else {
         stage::CompassDirection::nearest(object.facing.remove_row(2))
-      };
+      } as usize;
+
+      object.animation.sequence = direction;
 
       // Get the current sequence or go to the next object.
-      if let Some(ref sequence) = animations[object.animation.index].sequences[direction as usize] {
+      if let Some(ref sequence) = animation.sequences[direction] {
         if sequence.len() == 0 {
           continue;
         }
@@ -49,32 +51,22 @@ impl<'a> System<'a> for Animator {
         }
 
         // Determine current frame based on wrapped elapsed time.
-        let mut current = &sequence[0];
         let mut elapsed = object.animation.elapsed * 60.0;
 
         if duration > 0.0 {
           elapsed %= duration;
         }
 
-        for frame in sequence {
+        object.animation.frame = 0;
+
+        for (i, frame) in sequence.iter().enumerate() {
           elapsed -= frame.length;
 
           if elapsed <= 0.0 {
-            current = frame;
+            object.animation.frame = i;
             break;
           }
         }
-
-        // Update the sprite with the current frame data.
-        sprite.cell = current.cell;
-
-        sprite.scale = if current.hflip {
-          Vector2::new(-1.0, 1.0)
-        } else {
-          Vector2::new(1.0, 1.0)
-        };
-
-        sprite.offset = current.offset;
       }
     }
   }

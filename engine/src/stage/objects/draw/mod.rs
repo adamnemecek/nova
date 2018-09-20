@@ -51,7 +51,6 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
 
   let positions = world.read_storage::<Position>();
   let objects = world.read_storage::<Object>();
-  let sprites = world.read_storage::<graphics::Sprite>();
 
   // Determine position of camera.
   let camera_pos = match world.read_resource::<Camera>().target {
@@ -93,27 +92,40 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
     }
   }
 
-  // Draw object sprites.
+  // Draw objects.
   for entity in &state.entities {
-    let sprite = sprites.get(*entity).unwrap();
     let position = positions.get(*entity).unwrap();
+    let object = objects.get(*entity).unwrap();
 
-    let scale = sprite.scale;
-    let mut offset = sprite.offset - sprite.atlas.cell_origin;
+    let animation = &object.template.animations[object.animation.index];
 
-    offset.x *= scale.x;
-    offset.y *= scale.y;
+    if let Some(ref sequence) = animation.sequences[object.animation.sequence] {
+      let atlas = &object.template.atlas;
+      let frame = &sequence[object.animation.frame];
 
-    let src = sprite.atlas.get(sprite.cell);
-    let dest =
-      Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
+      let scale = if frame.hflip {
+        Vector2::new(-1.0, 1.0)
+      } else {
+        Vector2::new(1.0, 1.0)
+      };
 
-    canvas
-      .draw(
-        &sprite.atlas.image,
-        DrawParam::default().src(src).scale(scale).dest(dest),
-      )
-      .expect("could not draw sprite");
+      let mut offset = frame.offset - atlas.cell_origin;
+
+      offset.x *= scale.x;
+      offset.y *= scale.y;
+
+      let src = atlas.get(frame.cell);
+
+      let dest =
+        Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
+
+      canvas
+        .draw(
+          &atlas.image,
+          DrawParam::default().src(src).scale(scale).dest(dest),
+        )
+        .expect("could not draw sprite");
+    }
   }
 
   canvas.pop_transform();

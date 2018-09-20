@@ -16,6 +16,12 @@ pub enum CompassDirection {
   SouthEast,
 }
 
+impl Default for CompassDirection {
+  fn default() -> Self {
+    CompassDirection::South
+  }
+}
+
 /// Total number of compass directions.
 pub const COMPASS_DIRECTION_COUNT: usize = CompassDirection::SouthEast as usize + 1;
 
