@@ -5,7 +5,8 @@
 //! The `input` module provides simple input functionality.
 //!
 //! Keyboard keys are mapped to virtual buttons in the `Button` enum
-//! representing the available basic actions in the game.
+//! representing the available basic actions in the game. This mapping is
+//! controlled by the `Mapping` resource which can be loaded from an asset file.
 //!
 //! The state of input buttons is stored in the `Input` resource, which must be
 //! updated with the `update` function once per frame.
@@ -14,9 +15,11 @@ use super::*;
 pub use ggez::event::KeyCode;
 
 mod button;
+mod mapping;
 mod update;
 
 pub use self::button::*;
+pub use self::mapping::*;
 pub use self::update::*;
 
 /// Resource that stores the current input state.
@@ -56,4 +59,5 @@ pub struct ButtonState {
 /// Sets up input for the given world.
 pub fn setup<'a, 'b>(world: &mut World) {
   world.add_resource(Input::default());
+  world.add_resource(Mapping::default());
 }

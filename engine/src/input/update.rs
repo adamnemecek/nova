@@ -8,6 +8,7 @@ use super::*;
 /// window.
 pub fn update(world: &mut World, window: &platform::Window) {
   let clock = world.read_resource::<time::Clock>();
+  let mapping = world.read_resource::<Mapping>();
   let mut state = world.write_resource::<Input>();
 
   // Unset `repeated` flag on every button.
@@ -19,19 +20,21 @@ pub fn update(world: &mut World, window: &platform::Window) {
   for event in window.events() {
     match event {
       platform::WindowEvent::KeyboardInput { input, .. } => {
-        if let Some(button) = input.virtual_keycode.and_then(Button::from_key_code) {
-          let button = &mut state.buttons[button as usize];
+        if let Some(key) = input.virtual_keycode {
+          for button in mapping.get(key) {
+            let button = &mut state.buttons[*button as usize];
 
-          if input.state == platform::InputState::Pressed {
-            // Set pressed time if the button was not already pressed.
-            if button.pressed_at.is_none() {
-              button.pressed_at = Some(clock.ticked_at);
+            if input.state == platform::InputState::Pressed {
+              // Set pressed time if the button was not already pressed.
+              if button.pressed_at.is_none() {
+                button.pressed_at = Some(clock.ticked_at);
+              }
+
+              button.repeated = true;
+            } else {
+              button.pressed_at = None;
+              button.repeated = false;
             }
-
-            button.repeated = true;
-          } else {
-            button.pressed_at = None;
-            button.repeated = false;
           }
         }
       }

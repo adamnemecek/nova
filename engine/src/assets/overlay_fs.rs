@@ -85,25 +85,32 @@ impl OverlayFs {
   }
 }
 
+// Sets the default overlay file system to load files from the `assets`
+// directory.
 impl Default for OverlayFs {
   fn default() -> Self {
-    // If `CARGO_MANIFEST_DIR` is set, use the `assets` directory from the
-    // project's directory.
-    let mut path = env::var("CARGO_MANIFEST_DIR")
-      .map(PathBuf::from)
-      .unwrap_or_else(|_| {
-        // Otherwise use the `assets` directory in the exe's directory.
-        let mut path = env::current_exe().expect("could not get current exe path");
+    let mut root_paths = Vec::new();
 
-        path.pop();
-        path
-      });
+    // Otherwise use the `assets` directory in the exe's directory.
+    let mut path = env::current_exe().expect("could not get current exe path");
 
     path.push("assets");
 
-    OverlayFs {
-      root_paths: vec![path],
+    root_paths.push(path);
+
+    // If `CARGO_MANIFEST_DIR` is set, use both the `assets` directory and the
+    // `assets-local` directory from the directory containing `Cargo.toml`.
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+      let mut path = PathBuf::from(manifest_dir);
+
+      path.push("assets");
+      root_paths.insert(0, path.clone());
+      path.pop();
+      path.push("assets-local");
+      root_paths.insert(0, path);
     }
+
+    OverlayFs { root_paths }
   }
 }
 
