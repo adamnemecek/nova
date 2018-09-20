@@ -19,7 +19,7 @@ impl Application for Game {
     time::setup(world);
 
     stage::setup(world, systems);
-    stage::draw::setup(world, systems);
+    stage::drawing::setup(world, systems);
 
     unstable::setup(world, systems);
 
@@ -44,7 +44,7 @@ impl Application for Game {
       .canvas
       .clear(graphics::Color::new(0.53, 0.87, 0.52, 1.0));
 
-    stage::draw(world, &mut self.canvas);
+    stage::drawing::draw(world, &mut self.canvas);
 
     self.canvas.present();
   }
@@ -96,7 +96,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   let circle = assets::load(world, &assets::PathBuf::from("circle.png")).ok();
 
   world
-    .write_resource::<stage::objects::draw::Settings>()
+    .write_resource::<stage::objects::drawing::Settings>()
     .shadow_texture = circle;
 
   Ok(())

@@ -14,13 +14,15 @@
 
 use super::*;
 
-pub mod draw;
+pub mod drawing;
 
 mod animation;
 mod animator;
 mod template;
 
-pub use self::{animation::*, animator::*, draw::draw, template::*};
+pub use self::animation::*;
+pub use self::animator::*;
+pub use self::template::*;
 
 /// Component that stores state for an object on the stage.
 ///

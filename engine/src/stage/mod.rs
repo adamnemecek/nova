@@ -14,7 +14,7 @@ use super::*;
 pub mod actors;
 pub mod objects;
 
-pub use self::objects::draw;
+pub use self::objects::drawing;
 
 mod camera;
 mod direction;

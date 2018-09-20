@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `draw` module draws objects onto the screen.
+//! The `drawing` module draws stage objects onto the screen.
 //!
 //! The `Sorter` system sorts all objects on the stage into draw order, so
 //! that the closest object to the camera is drawn last. Sorted entities are
