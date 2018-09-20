@@ -14,6 +14,7 @@ pub extern crate specs;
 #[macro_use]
 extern crate specs_derive;
 
+pub mod assets;
 pub mod core;
 pub mod graphics;
 pub mod input;
@@ -29,6 +30,6 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, Mutex, RwLock};
 
-  pub use {core, core::Core};
-  pub use {graphics, input, stage, time, unstable};
+  pub use core::{self, Core};
+  pub use {assets, graphics, input, stage, time, unstable};
 }

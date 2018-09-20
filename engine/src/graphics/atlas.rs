@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use std::error::Error;
-use std::path::{Path, PathBuf};
 
 /// Coordinates for a cell in an atlas.
 pub type AtlasCell = (usize, usize);
@@ -40,16 +38,16 @@ impl Atlas {
 
 // Support loading atlases from YAML files that reference image files.
 impl core::Asset for Atlas {
-  fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
+  fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let mut path = path.to_owned();
 
     // Load the atlas data.
-    let data = assets.load::<AtlasData>(&path)?;
+    let data = fs.load::<AtlasData>(&path)?;
 
     path.pop();
 
     // Load the image referenced in the data.
-    let image = assets.load(&path.join(data.image))?;
+    let image = fs.load(&path.join(data.image))?;
 
     Ok(Atlas {
       image,
@@ -64,7 +62,7 @@ impl core::Asset for Atlas {
 #[derive(Serialize, Deserialize)]
 pub struct AtlasData {
   /// Relative path to the atlas image.
-  pub image: PathBuf,
+  pub image: assets::PathBuf,
   /// Width of a single cell in the atlas.
   pub cell_width: usize,
   /// Height of a single cell in the atlas.

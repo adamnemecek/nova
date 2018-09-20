@@ -7,7 +7,6 @@ use ggez::event::winit_event::*;
 
 pub mod input;
 
-mod assets;
 mod viewport;
 
 pub use self::assets::*;
@@ -39,7 +38,6 @@ impl Core {
       .build()
       .expect("could not create ggez::Context");
 
-    world.add_resource(Assets::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
     world.add_resource(input::KeyEvents::default());
 

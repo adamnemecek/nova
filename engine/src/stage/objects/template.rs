@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use std::error::Error;
-use std::path::{Path, PathBuf};
 
 /// Template for an object on the stage.
 #[derive(Debug)]
@@ -37,7 +35,7 @@ impl Template {
 
 // Support loading object templates as assets.
 impl core::Asset for Template {
-  fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
+  fn load(assets: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let mut path = path.to_owned();
 
     let data = assets.load::<TemplateData>(&path)?;
@@ -59,7 +57,7 @@ impl core::Asset for Template {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TemplateData {
   /// Path to the atlas for the object's sprite.
-  pub atlas: PathBuf,
+  pub atlas: assets::PathBuf,
   /// List of data for the object's animations.
   pub animations: Vec<animation::AnimationData>,
   /// Whether the object only faces cardinal directions, rather than all eight

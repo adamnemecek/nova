@@ -4,8 +4,6 @@
 
 use super::*;
 use image::{load_from_memory, RgbaImage};
-use std::error::Error;
-use std::path::Path;
 
 /// Image that can be drawn on the screen.
 #[derive(Debug)]
@@ -46,12 +44,12 @@ impl Image {
 
 // Support loading images from files.
 impl core::Asset for Image {
-  fn load(assets: &core::Assets, path: &Path) -> Result<Self, Box<dyn Error>> {
+  fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let rgba_image = {
       use std::io::Read;
 
       let mut buf = Vec::new();
-      let mut file = assets.open_file(path)?;
+      let mut file = fs.open(path)?;
 
       file.read_to_end(&mut buf)?;
 

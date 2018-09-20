@@ -106,13 +106,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   fs::copy(&src_path.join("sheet.png"), &dest_path.join("image.png"))?;
 
   // Create an `Assets` resource to save assets.
-  let assets = core::Assets::new(std::env::current_dir().unwrap());
+  let fs = assets::OverlayFs {
+    root_paths: vec![std::env::current_dir().unwrap()],
+  };
 
   // Save the sprite atlas metadata.
-  assets.save(&dest_path.join("atlas.yml"), &atlas_data)?;
+  fs.save(&dest_path.join("atlas.yml"), &atlas_data)?;
 
   // Save the sprite atlas metadata.
-  assets.save(&dest_path.join("object.yml"), &object_template_data)?;
+  fs.save(&dest_path.join("object.yml"), &object_template_data)?;
 
   Ok(())
 }

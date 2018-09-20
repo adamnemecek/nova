@@ -14,6 +14,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   let mut world = World::new();
   let mut systems = DispatcherBuilder::default();
 
+  assets::setup(&mut world);
   time::setup(&mut world);
   graphics::setup(&mut world);
 
@@ -41,11 +42,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
 fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
   let (hero_template, monster_template) = {
-    let assets = world.read_resource::<core::Assets>();
+    let fs = world.read_resource::<assets::OverlayFs>();
 
     (
-      assets.load::<stage::actors::Template>(&PathBuf::from("hero-f/actor.yml"))?,
-      assets.load::<stage::actors::Template>(&PathBuf::from("004-fire-salamander/actor.yml"))?,
+      fs.load::<stage::actors::Template>(&PathBuf::from("hero-f/actor.yml"))?,
+      fs.load::<stage::actors::Template>(&PathBuf::from("004-fire-salamander/actor.yml"))?,
     )
   };
 
@@ -67,7 +68,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
 
   // Set the object shadow texture.
   let circle = world
-    .read_resource::<core::Assets>()
+    .read_resource::<assets::OverlayFs>()
     .load(&PathBuf::from("circle.png"))
     .ok();
 
