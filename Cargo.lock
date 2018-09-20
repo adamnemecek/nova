@@ -1092,7 +1092,6 @@ name = "nova-game"
 version = "0.1.0"
 dependencies = [
  "nova 0.1.0",
- "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

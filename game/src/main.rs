@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 extern crate nova;
-extern crate specs;
 
 use nova::prelude::*;
 

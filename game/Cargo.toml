@@ -5,4 +5,3 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 
 [dependencies]
 nova = { path = "../engine" }
-specs = "0.12.2"
