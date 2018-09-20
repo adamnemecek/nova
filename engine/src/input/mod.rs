@@ -2,15 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use specs::DispatcherBuilder;
+//! The `input` module provides simple input functionality.
+//!
+//! Keyboard keys are mapped to virtual buttons in the `Button` enum
+//! representing the available basic actions in the game.
+//!
+//! The state of input buttons is stored in the `Input` resource, which must be
+//! updated with the `update` function once per frame.
 
-use prelude::*;
+use super::*;
+pub use ggez::event::KeyCode;
 
 mod button;
-mod updater;
+mod update;
 
 pub use self::button::*;
-pub use self::updater::*;
+pub use self::update::*;
 
 /// Resource that stores the current input state.
 #[derive(Default, Debug)]
@@ -47,8 +54,6 @@ pub struct ButtonState {
 }
 
 /// Sets up input for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+pub fn setup<'a, 'b>(world: &mut World) {
   world.add_resource(Input::default());
-
-  systems.add(Updater, "input::Updater", &[]);
 }

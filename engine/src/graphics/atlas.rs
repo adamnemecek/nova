@@ -37,7 +37,7 @@ impl Atlas {
 }
 
 // Support loading atlases from YAML files that reference image files.
-impl core::Asset for Atlas {
+impl assets::Asset for Atlas {
   fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let mut path = path.to_owned();
 

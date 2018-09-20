@@ -9,41 +9,21 @@ use image::{load_from_memory, RgbaImage};
 #[derive(Debug)]
 pub struct Image {
   size: Vector2<f32>,
-  rgba_image: RgbaImage,
-  ggez_image: Mutex<Option<ggez::graphics::Image>>,
+  /// Image data loaded to memory.
+  pub(crate) rgba_image: RgbaImage,
+  /// Underlying ggez image if it is loaded.
+  pub(crate) ggez_image: Mutex<Option<ggez::graphics::Image>>,
 }
 
 impl Image {
-  /// Gets the size of the image.
+  /// Gets the size of the image in pixels.
   pub fn size(&self) -> Vector2<f32> {
     self.size
-  }
-
-  /// Draws the image on the screen.
-  pub fn draw(&self, core: &mut Core, params: ggez::graphics::DrawParam) -> ggez::GameResult<()> {
-    let mut ggez_image = self.ggez_image.lock().expect("could not lock Image::ggez");
-
-    // Create the ggez image from the loaded image data if it has not yet been
-    // created.
-    if !ggez_image.is_some() {
-      let mut image = ggez::graphics::Image::from_rgba8(
-        &mut core.ctx,
-        self.size.x as u16,
-        self.size.y as u16,
-        &self.rgba_image,
-      )?;
-
-      image.set_filter(ggez::graphics::FilterMode::Nearest);
-
-      *ggez_image = Some(image);
-    }
-
-    ggez::graphics::draw(&mut core.ctx, ggez_image.as_ref().unwrap(), params)
   }
 }
 
 // Support loading images from files.
-impl core::Asset for Image {
+impl assets::Asset for Image {
   fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let rgba_image = {
       use std::io::Read;

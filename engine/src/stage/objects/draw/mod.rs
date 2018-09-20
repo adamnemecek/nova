@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `render` module renders objects onto the screen.
+//! The `draw` module draws objects onto the screen.
 //!
 //! The `Sorter` system sorts all objects on the stage into draw order, so
 //! that the closest object to the camera is drawn last. Sorted entities are
@@ -41,15 +41,14 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
     shadow_texture: None,
   });
 
-  systems.add(Sorter, "stage::objects::render::Sorter", &[]);
+  systems.add(Sorter, "stage::objects::draw::Sorter", &[]);
 }
 
-/// Renders all the objects on the stage.
-pub fn render(world: &mut World, core: &mut Core) {
+/// Draws all the objects on the stage.
+pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
   let state = world.read_resource::<State>();
   let settings = world.read_resource::<Settings>();
 
-  let viewport = world.read_resource::<core::Viewport>();
   let positions = world.read_storage::<Position>();
   let objects = world.read_storage::<Object>();
   let sprites = world.read_storage::<graphics::Sprite>();
@@ -68,11 +67,10 @@ pub fn render(world: &mut World, core: &mut Core) {
 
   // Calculate the offset in drawing needed for the camera's position.
   let global_offset =
-    Point2::new(viewport.width, viewport.height) / settings.scale / 2.0 - camera_pos;
+    Point2::new(canvas.width(), canvas.height()) / settings.scale / 2.0 - camera_pos;
 
   // Apply scale transform.
-  ggez::graphics::push_transform(&mut core.ctx, Some(Matrix4::new_scaling(settings.scale)));
-  ggez::graphics::apply_transformations(&mut core.ctx).expect("could not scale for stage draw");
+  canvas.push_transform(Matrix4::new_scaling(settings.scale));
 
   // Draw object shadows.
   if let Some(ref shadow_image) = settings.shadow_texture {
@@ -81,9 +79,9 @@ pub fn render(world: &mut World, core: &mut Core) {
       let size = &objects.get(*entity).unwrap().template.shadow_size;
       let image_size = shadow_image.size();
 
-      shadow_image
+      canvas
         .draw(
-          core,
+          shadow_image,
           DrawParam::default()
             .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
             .scale(Vector2::new(size.0 / image_size.x, size.1 / image_size.y))
@@ -106,19 +104,17 @@ pub fn render(world: &mut World, core: &mut Core) {
     offset.x *= scale.x;
     offset.y *= scale.y;
 
-    let params = DrawParam::default()
-      .src(sprite.atlas.get(sprite.cell))
-      .scale(scale)
-      .dest(
-        Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset,
-      );
+    let src = sprite.atlas.get(sprite.cell);
+    let dest =
+      Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
 
-    let image = &sprite.atlas.image;
-
-    image.draw(core, params).expect("could not draw sprite");
+    canvas
+      .draw(
+        &sprite.atlas.image,
+        DrawParam::default().src(src).scale(scale).dest(dest),
+      )
+      .expect("could not draw sprite");
   }
 
-  ggez::graphics::pop_transform(&mut core.ctx);
-  ggez::graphics::apply_transformations(&mut core.ctx)
-    .expect("could not restore scale after stage draw");
+  canvas.pop_transform();
 }

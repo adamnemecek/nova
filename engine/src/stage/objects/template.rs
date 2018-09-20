@@ -34,7 +34,7 @@ impl Template {
 }
 
 // Support loading object templates as assets.
-impl core::Asset for Template {
+impl assets::Asset for Template {
   fn load(assets: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let mut path = path.to_owned();
 

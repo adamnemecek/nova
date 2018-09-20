@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use core::input::KeyCode;
+use super::*;
 
 /// One of the available input buttons.
 #[derive(Debug)]
@@ -20,7 +20,7 @@ impl Button {
   /// Converts a given `KeyCode` to a `Button`.
   ///
   /// Currently hard-coded for Neo2 keyboard layout. Sorry!
-  pub fn from_keycode(key: &KeyCode) -> Option<Button> {
+  pub fn from_key_code(key: KeyCode) -> Option<Button> {
     match key {
       KeyCode::V => Some(Button::Up),
       KeyCode::U => Some(Button::Left),

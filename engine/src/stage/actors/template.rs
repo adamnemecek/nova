@@ -19,7 +19,7 @@ pub struct Template {
 }
 
 // Support loading templates from asset files.
-impl core::Asset for Template {
+impl assets::Asset for Template {
   fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
     let mut path = path.to_owned();
     let data = fs.load::<TemplateData>(&path)?;

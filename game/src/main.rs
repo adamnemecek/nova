@@ -11,30 +11,47 @@ use std::path::PathBuf;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
+  let mut window = platform::Window::new("nova-game");
+  let mut canvas = graphics::Canvas::new(&mut window);
+
+  canvas.clear(graphics::Color::new(0.0, 0.0, 0.0, 1.0));
+
   let mut world = World::new();
-  let mut systems = DispatcherBuilder::default();
 
   assets::setup(&mut world);
-  time::setup(&mut world);
   graphics::setup(&mut world);
+  input::setup(&mut world);
+  time::setup(&mut world);
 
-  input::setup(&mut world, &mut systems);
+  let mut systems = DispatcherBuilder::default();
+
   stage::setup(&mut world, &mut systems);
+  stage::draw::setup(&mut world, &mut systems);
 
   unstable::setup(&mut world, &mut systems);
 
-  let mut core = Core::new(&mut world, "nova", "bfrydl");
   let mut systems = systems.build();
 
   setup(&mut world)?;
 
   // Run the main event loop.
-  while core.is_running() {
+  while !window.is_closing() {
+    window.update();
+
+    if window.was_resized() {
+      canvas.resize(window.size());
+    }
+
     time::tick(&mut world);
-    core.tick(&mut world);
+    input::update(&mut world, &mut window);
+
     systems.dispatch(&mut world.res);
 
-    stage::render(&mut world, &mut core);
+    canvas.clear(graphics::Color::new(0.53, 0.87, 0.52, 1.0));
+
+    stage::draw(&mut world, &mut canvas);
+
+    canvas.present();
   }
 
   Ok(())
@@ -73,7 +90,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
     .ok();
 
   world
-    .write_resource::<stage::objects::render::Settings>()
+    .write_resource::<stage::objects::draw::Settings>()
     .shadow_texture = circle;
 
   Ok(())

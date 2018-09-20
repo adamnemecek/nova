@@ -14,11 +14,15 @@ use super::*;
 pub mod actors;
 pub mod objects;
 
+pub use self::objects::draw;
+
 mod camera;
 mod direction;
 mod motion;
 
-pub use self::{camera::*, direction::*, motion::*};
+pub use self::camera::*;
+pub use self::direction::*;
+pub use self::motion::*;
 
 /// Component that stores the position of an entity on the stage.
 #[derive(Component)]
@@ -47,9 +51,4 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
 
   objects::setup(world, systems);
   actors::setup(world, systems);
-}
-
-/// Renders the stage.
-pub fn render(world: &mut World, core: &mut Core) {
-  objects::render(world, core);
 }
