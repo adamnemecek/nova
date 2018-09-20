@@ -42,11 +42,11 @@ pub enum Mode {
 /// Total number of possible actor modes.
 pub const MODE_COUNT: usize = Mode::Walk as usize + 1;
 
-/// Sets up actor components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<Actor>();
+/// Sets up actors for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.register::<Actor>();
 
-  dispatch.add(Animator, "stage::actors::Animator", &[]);
+  systems.add(Animator, "stage::actors::Animator", &[]);
 }
 
 /// Adds components to the entity for an actor with the given `template`.

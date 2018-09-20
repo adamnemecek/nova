@@ -19,8 +19,6 @@ pub use self::viewport::*;
 pub struct Core {
   /// Application name, used in the window title and in directory names.
   pub app_name: &'static str,
-  /// ECS world.
-  pub world: World,
   /// Low-level engine context.
   pub(crate) ctx: ggez::Context,
   /// Low-level window events loop.
@@ -32,7 +30,7 @@ impl Core {
   ///
   /// Application name is used in the window title, while application name and
   /// author are used in directory names.
-  pub fn new(app_name: &'static str, author: &'static str) -> Self {
+  pub fn new(world: &mut World, app_name: &'static str, author: &'static str) -> Self {
     let (mut ctx, events_loop) = ggez::ContextBuilder::new(app_name, author)
       .window_mode(ggez::conf::WindowMode::default().resizable(true))
       .window_setup(
@@ -43,16 +41,12 @@ impl Core {
       .build()
       .expect("could not create ggez::Context");
 
-    // Initialize ECS world with core resources.
-    let mut world = World::new();
-
     world.add_resource(Assets::default());
     world.add_resource(Viewport::from(ggez::graphics::screen_coordinates(&mut ctx)));
     world.add_resource(input::KeyEvents::default());
 
     Core {
       app_name,
-      world,
       ctx,
       events_loop,
     }
@@ -66,9 +60,8 @@ impl Core {
   /// Updates core engine resources.
   ///
   /// This method should be called once per game loop.
-  pub fn tick(&mut self) {
+  pub fn tick(&mut self, world: &mut World) {
     let ctx = &mut self.ctx;
-    let world = &mut self.world;
 
     // Present the previous frame and clear the buffer for the next one.
     //

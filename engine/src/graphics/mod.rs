@@ -10,7 +10,7 @@ mod sprite;
 pub use self::atlas::*;
 pub use self::sprite::*;
 
-/// Sets up graphics components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, _dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<sprite::Sprite>();
+/// Sets up graphics for the given world.
+pub fn setup<'a, 'b>(world: &mut World) {
+  world.register::<sprite::Sprite>();
 }

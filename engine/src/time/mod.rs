@@ -27,25 +27,29 @@ impl Default for Clock {
   }
 }
 
-pub fn setup(core: &mut Core) {
-  core.world.add_resource(Clock::default());
+/// Sets up time for the given world.
+pub fn setup(world: &mut World) {
+  world.add_resource(Clock::default());
 }
 
-pub fn tick(core: &mut Core) {
+/// Updates time for the given world.
+pub fn tick(world: &mut World) {
   let now = Instant::now();
-  let mut clock = core.world.write_resource::<Clock>();
+  let mut clock = world.write_resource::<Clock>();
 
   clock.ticks += 1;
   clock.delta_time = now - clock.ticked_at;
   clock.ticked_at = now;
 }
 
+/// Converts the given duration to seconds.
 pub fn seconds(duration: Duration) -> f64 {
   let secs = duration.as_secs() as f64;
 
   secs + duration.subsec_nanos() as f64 / 1_000_000_000.0
 }
 
+/// Converts the given duration to seconds with single precision.
 pub fn seconds_f32(duration: Duration) -> f32 {
   let secs = duration.as_secs() as f32;
 

@@ -11,34 +11,37 @@ use std::path::PathBuf;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), Box<dyn Error>> {
-  let mut core = Core::new("nova", "bfrydl");
-  let mut dispatch = DispatcherBuilder::default();
+  let mut world = World::new();
+  let mut systems = DispatcherBuilder::default();
 
-  time::setup(&mut core);
-  input::setup(&mut core, &mut dispatch);
-  graphics::setup(&mut core, &mut dispatch);
-  stage::setup(&mut core, &mut dispatch);
+  time::setup(&mut world);
+  graphics::setup(&mut world);
 
-  unstable::setup(&mut core, &mut dispatch);
+  input::setup(&mut world, &mut systems);
+  stage::setup(&mut world, &mut systems);
 
-  setup(&mut core)?;
+  unstable::setup(&mut world, &mut systems);
 
-  let mut dispatcher = dispatch.build();
+  let mut core = Core::new(&mut world, "nova", "bfrydl");
+  let mut systems = systems.build();
+
+  setup(&mut world)?;
 
   // Run the main event loop.
   while core.is_running() {
-    time::tick(&mut core);
-    core.tick();
-    dispatcher.dispatch(&mut core.world.res);
-    stage::render(&mut core);
+    time::tick(&mut world);
+    core.tick(&mut world);
+    systems.dispatch(&mut world.res);
+
+    stage::render(&mut world, &mut core);
   }
 
   Ok(())
 }
 
-fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
+fn setup<'a, 'b>(world: &mut World) -> Result<(), Box<dyn Error>> {
   let (hero_template, monster_template) = {
-    let assets = core.world.read_resource::<core::Assets>();
+    let assets = world.read_resource::<core::Assets>();
 
     (
       assets.load::<stage::actors::Template>(&PathBuf::from("hero-f/actor.yml"))?,
@@ -46,38 +49,32 @@ fn setup<'a, 'b>(core: &mut Core) -> Result<(), Box<dyn Error>> {
     )
   };
 
-  let hero =
-    stage::actors::build_entity(Arc::new(hero_template), core.world.create_entity()).build();
+  let hero = stage::actors::build_entity(Arc::new(hero_template), world.create_entity()).build();
 
-  let _monster =
-    stage::actors::build_entity(Arc::new(monster_template), core.world.create_entity())
-      .with(stage::Position {
-        point: Point3::new(32.0, 24.0, 0.0),
-      })
-      .build();
+  let _monster = stage::actors::build_entity(Arc::new(monster_template), world.create_entity())
+    .with(stage::Position {
+      point: Point3::new(32.0, 24.0, 0.0),
+    })
+    .build();
 
   // Set the camera target to the hero.
-  core
-    .world
-    .write_resource::<stage::Camera>()
-    .set_target(hero);
+  world.write_resource::<stage::Camera>().set_target(hero);
 
   // Set the hero to be input controlled.
-  core
-    .world
+  world
     .write_storage()
     .insert(hero, unstable::InputControlled)?;
 
   // Set the object shadow texture.
-  core
-    .world
-    .write_resource::<stage::objects::render::Settings>()
-    .shadow_texture = core
-    .world
+  let circle = world
     .read_resource::<core::Assets>()
     .load(&PathBuf::from("circle.png"))
     .ok()
     .map(Arc::new);
+
+  world
+    .write_resource::<stage::objects::render::Settings>()
+    .shadow_texture = circle;
 
   Ok(())
 }

@@ -46,13 +46,13 @@ pub struct AnimationState {
   pub elapsed: f64,
 }
 
-/// Sets up components, resources, and systems needed for objects.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<Object>();
+/// Sets up objects for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.register::<Object>();
 
-  dispatch.add(Animator, "stage::objects::Animator", &[]);
+  systems.add(Animator, "stage::objects::Animator", &[]);
 
-  render::setup(core, dispatch);
+  render::setup(world, systems);
 }
 
 /// Adds components to the entity for an object with the given `template`.

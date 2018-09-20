@@ -36,20 +36,20 @@ impl Default for Position {
   }
 }
 
-/// Sets up stage components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<Position>();
-  core.world.register::<Velocity>();
+/// Sets up the stage for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.register::<Position>();
+  world.register::<Velocity>();
 
-  core.world.add_resource(Camera::default());
+  world.add_resource(Camera::default());
 
-  dispatch.add(Mover, "stage::Mover", &[]);
+  systems.add(Mover, "stage::Mover", &[]);
 
-  objects::setup(core, dispatch);
-  actors::setup(core, dispatch);
+  objects::setup(world, systems);
+  actors::setup(world, systems);
 }
 
 /// Renders the stage.
-pub fn render(core: &mut Core) {
-  objects::render(core);
+pub fn render(world: &mut World, core: &mut Core) {
+  objects::render(world, core);
 }

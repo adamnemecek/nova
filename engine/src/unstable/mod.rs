@@ -60,9 +60,9 @@ impl<'a> System<'a> for MotionInputSystem {
   }
 }
 
-/// Sets up unstable components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.register::<InputControlled>();
+/// Sets up unstable features for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.register::<InputControlled>();
 
-  dispatch.add(MotionInputSystem, "unstable::MotionInputSystem", &[]);
+  systems.add(MotionInputSystem, "unstable::MotionInputSystem", &[]);
 }

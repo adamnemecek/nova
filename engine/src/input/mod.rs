@@ -46,9 +46,9 @@ pub struct ButtonState {
   pub repeated: bool,
 }
 
-/// Sets up input components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.add_resource(Input::default());
+/// Sets up input for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.add_resource(Input::default());
 
-  dispatch.add(Updater, "input::Updater", &[]);
+  systems.add(Updater, "input::Updater", &[]);
 }

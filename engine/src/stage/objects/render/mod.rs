@@ -32,30 +32,30 @@ pub struct Settings {
   pub shadow_texture: Option<Arc<core::Texture>>,
 }
 
-/// Sets up rendering components, resources, and systems.
-pub fn setup<'a, 'b>(core: &mut Core, dispatch: &mut DispatcherBuilder<'a, 'b>) {
-  core.world.add_resource(State::default());
+/// Sets up object rendering for the given world.
+pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
+  world.add_resource(State::default());
 
-  core.world.add_resource(Settings {
+  world.add_resource(Settings {
     scale: 2.0,
     shadow_texture: None,
   });
 
-  dispatch.add(Sorter, "stage::objects::render::Sorter", &[]);
+  systems.add(Sorter, "stage::objects::render::Sorter", &[]);
 }
 
 /// Renders all the objects on the stage.
-pub fn render(core: &mut Core) {
-  let state = core.world.read_resource::<State>();
-  let settings = core.world.read_resource::<Settings>();
+pub fn render(world: &mut World, core: &mut Core) {
+  let state = world.read_resource::<State>();
+  let settings = world.read_resource::<Settings>();
 
-  let viewport = core.world.read_resource::<core::Viewport>();
-  let positions = core.world.read_storage::<Position>();
-  let objects = core.world.read_storage::<Object>();
-  let sprites = core.world.read_storage::<graphics::Sprite>();
+  let viewport = world.read_resource::<core::Viewport>();
+  let positions = world.read_storage::<Position>();
+  let objects = world.read_storage::<Object>();
+  let sprites = world.read_storage::<graphics::Sprite>();
 
   // Determine position of camera.
-  let camera_pos = match core.world.read_resource::<Camera>().target {
+  let camera_pos = match world.read_resource::<Camera>().target {
     CameraTarget::Position(pos) => pos,
     CameraTarget::Entity(entity) => {
       if let Some(pos) = positions.get(entity) {
