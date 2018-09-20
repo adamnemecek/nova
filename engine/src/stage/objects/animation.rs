@@ -51,7 +51,7 @@ impl From<AnimationFrameData> for AnimationFrame {
   fn from(data: AnimationFrameData) -> AnimationFrame {
     AnimationFrame {
       length: data.length,
-      cell: data.cell,
+      cell: Vector2::new(data.cell.0, data.cell.1),
       offset: Vector2::new(data.offset.0, data.offset.1),
       hflip: data.hflip,
     }
@@ -71,7 +71,7 @@ pub struct AnimationData {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AnimationFrameData {
   /// Cell in the atlas to use as the object's sprite during this frame.
-  pub cell: graphics::AtlasCell,
+  pub cell: (u16, u16),
   /// Length of this frame in 60ths of a second.
   #[serde(default)]
   pub length: f64,

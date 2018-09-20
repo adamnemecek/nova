@@ -27,7 +27,7 @@ pub fn update(world: &mut World, window: &platform::Window) {
             if input.state == platform::InputState::Pressed {
               // Set pressed time if the button was not already pressed.
               if button.pressed_at.is_none() {
-                button.pressed_at = Some(clock.ticked_at);
+                button.pressed_at = Some(clock.time);
               }
 
               button.repeated = true;

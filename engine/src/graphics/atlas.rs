@@ -5,17 +5,15 @@
 use super::*;
 
 /// Coordinates for a cell in an atlas.
-pub type AtlasCell = (usize, usize);
+pub type AtlasCell = Vector2<u16>;
 
 /// Asset that divides a single texture into one or more cells.
 #[derive(Debug)]
 pub struct Atlas {
   /// Image of the atlas.
   pub image: Image,
-  /// Width of a single cell.
-  pub cell_width: usize,
-  /// Height of a single cell.
-  pub cell_height: usize,
+  /// Size of a single cell.
+  pub cell_size: Vector2<u16>,
   /// Center of a cell where `(0.0, 0.0)` is the top left corner and
   /// `(cell_width, cell_height)` is the bottom right corner.
   pub cell_origin: Vector2<f32>,
@@ -26,11 +24,11 @@ impl Atlas {
   pub fn get(&self, cell: AtlasCell) -> ggez::graphics::Rect {
     let size = self.image.size();
 
-    let w = self.cell_width as f32 / size.x;
-    let h = self.cell_height as f32 / size.y;
+    let w = self.cell_size.x as f32 / size.x as f32;
+    let h = self.cell_size.y as f32 / size.y as f32;
 
-    let x = cell.0 as f32 * w;
-    let y = cell.1 as f32 * h;
+    let x = cell.x as f32 * w;
+    let y = cell.y as f32 * h;
 
     ggez::graphics::Rect::new(x, y, w, h)
   }
@@ -51,8 +49,7 @@ impl assets::Asset for Atlas {
 
     Ok(Atlas {
       image,
-      cell_width: data.cell_width,
-      cell_height: data.cell_height,
+      cell_size: Vector2::new(data.cell_size.0, data.cell_size.1),
       cell_origin: Vector2::new(data.cell_origin.0, data.cell_origin.1),
     })
   }
@@ -63,10 +60,8 @@ impl assets::Asset for Atlas {
 pub struct AtlasData {
   /// Relative path to the atlas image.
   pub image: assets::PathBuf,
-  /// Width of a single cell in the atlas.
-  pub cell_width: usize,
-  /// Height of a single cell in the atlas.
-  pub cell_height: usize,
+  /// Size of a single cell in the atlas.
+  pub cell_size: (u16, u16),
   /// Center of a cell where `(0.0, 0.0)` is the top left corner and
   /// `(cell_width, cell_height)` is the bottom right corner.
   pub cell_origin: (f32, f32),

@@ -7,10 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_yaml;
 
 /// Trait for types that can be loaded from a file.
-pub trait Asset
-where
-  Self: Sized,
-{
+pub trait Asset: Sized {
   /// Loads an asset from the given path in the given VFS.
   fn load(fs: &OverlayFs, path: &Path) -> Result<Self, Error>;
 }

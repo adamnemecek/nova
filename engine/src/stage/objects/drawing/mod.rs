@@ -65,8 +65,7 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
   };
 
   // Calculate the offset in drawing needed for the camera's position.
-  let global_offset =
-    Point2::new(canvas.width(), canvas.height()) / settings.scale / 2.0 - camera_pos;
+  let global_offset = Point2::from_coordinates(canvas.size() / settings.scale / 2.0) - camera_pos;
 
   // Apply scale transform.
   canvas.push_transform(Matrix4::new_scaling(settings.scale));
@@ -83,9 +82,12 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
           shadow_image,
           DrawParams::default()
             .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
-            .scale(Vector2::new(size.0 / image_size.x, size.1 / image_size.y))
+            .scale(Vector2::new(
+              size.x / image_size.x as f32,
+              size.y / image_size.y as f32,
+            ))
             .dest(
-              Point2::new(position.x - size.0 / 2.0, position.y - size.1 / 2.0) + global_offset,
+              Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset,
             ),
         )
         .expect("could not draw sprite");

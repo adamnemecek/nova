@@ -48,9 +48,8 @@ impl Input {
 /// Sstate of an input button.
 #[derive(Default, Debug)]
 pub struct ButtonState {
-  /// Instant the button was first pressed or `None` if the button is not
-  /// pressed.
-  pub pressed_at: Option<time::Instant>,
+  /// Time the button was first pressed or `None` if the button is not pressed.
+  pub pressed_at: Option<f64>,
   /// Whether the press was repeated, which is `true` periodically while the
   /// button is held down.
   pub repeated: bool,

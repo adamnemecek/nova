@@ -7,8 +7,7 @@ use super::*;
 /// Struct for drawing to a `Window`.
 pub struct Canvas {
   ctx: ggez::Context,
-  width: f32,
-  height: f32,
+  size: Vector2<f32>,
 }
 
 impl Canvas {
@@ -19,25 +18,21 @@ impl Canvas {
 
     Canvas {
       ctx,
-      width: rect.w,
-      height: rect.h,
+      size: Vector2::new(rect.w, rect.h),
     }
   }
 
-  /// Gets the width of the canvas in pixels.
-  pub fn width(&self) -> f32 {
-    self.width
-  }
-
-  /// Gets the height of the canvas in pixels.
-  pub fn height(&self) -> f32 {
-    self.height
+  /// Gets the size of the canvas in pixels.
+  pub fn size(&self) -> Vector2<f32> {
+    self.size
   }
 
   /// Resizes the canvas to the given size in pixels.
   pub fn resize(&mut self, size: Vector2<f32>) {
     ggez::graphics::set_screen_coordinates(&mut self.ctx, Rect::new(0.0, 0.0, size.x, size.y))
       .expect("could not set screen coordinates");
+
+    self.size = size;
   }
 
   /// Clear the canvas with the given color.

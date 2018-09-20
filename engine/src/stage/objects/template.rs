@@ -13,7 +13,7 @@ pub struct Template {
   /// compass directions.
   pub cardinal_dirs_only: bool,
   /// Size of the object's shadow.
-  pub shadow_size: (f32, f32),
+  pub shadow_size: Vector2<f32>,
   /// List of animations supported by the object.
   pub animations: Vec<Animation>,
 }
@@ -47,7 +47,7 @@ impl assets::Asset for Template {
     Ok(Template {
       atlas: Arc::new(atlas),
       cardinal_dirs_only: data.cardinal_dirs_only,
-      shadow_size: data.shadow_size,
+      shadow_size: Vector2::new(data.shadow_size.0, data.shadow_size.1),
       animations: data.animations.into_iter().map(Animation::from).collect(),
     })
   }

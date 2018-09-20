@@ -28,7 +28,7 @@ impl<'a> System<'a> for Animator {
         .or_else(|| get_animation_sequence(template, 0, sequence_index));
 
       if let Some(sequence) = sequence {
-        state.elapsed += time::seconds(clock.delta_time);
+        state.elapsed += clock.delta_time;
         state.sequence = sequence_index;
 
         // Determine total duration of the sequence for wrapping.

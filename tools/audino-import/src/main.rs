@@ -46,8 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Create `graphics::AtlasData` from the AnimData.
   let atlas_data = graphics::AtlasData {
     image: "image.png".into(),
-    cell_width: anim_data.frame_width,
-    cell_height: anim_data.frame_height,
+    cell_size: (anim_data.frame_width as u16, anim_data.frame_height as u16),
     cell_origin: (
       anim_data.frame_width as f32 / 2.0,
       anim_data.frame_height as f32 / 2.0,
@@ -73,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
           frames.push(stage::objects::AnimationFrameData {
             length: anim_frame.duration as f64,
-            cell: (cell % 8, cell / 8),
+            cell: (cell as u16 % 8, cell as u16 / 8),
             offset: (
               anim_frame.sprite.x_offset as f32,
               anim_frame.sprite.y_offset as f32,

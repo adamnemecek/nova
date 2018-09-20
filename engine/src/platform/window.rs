@@ -40,7 +40,7 @@ impl Window {
       ctx: Cell::new(Some(ctx)),
       events_loop,
       events: Vec::new(),
-      size: Vector2::new(screen.w, screen.h),
+      size: Vector2::new(screen.w as f32, screen.h as f32),
       was_resized: false,
       is_closing: false,
     }
@@ -82,6 +82,7 @@ impl Window {
         match event {
           WindowEvent::Resized(new_size) => {
             size = Vector2::new(new_size.width as f32, new_size.height as f32);
+
             was_resized = true;
           }
 

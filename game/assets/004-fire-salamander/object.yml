@@ -1,6 +1,5 @@
 ---
 atlas: atlas.yml
-shadow_size: [14, 9]
 animations:
   - name: static
     northwest:
@@ -21,15 +20,6 @@ animations:
           - 0.0
           - 0.0
         hflip: false
-    south:
-      - cell:
-          - 0
-          - 0
-        length: 18.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
     southwest:
       - cell:
           - 3
@@ -39,10 +29,28 @@ animations:
           - 1.0
           - 0.0
         hflip: true
-    southeast:
+    east:
       - cell:
-          - 3
+          - 6
           - 0
+        length: 18.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+    south:
+      - cell:
+          - 0
+          - 0
+        length: 18.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+    north:
+      - cell:
+          - 4
+          - 1
         length: 18.0
         offset:
           - 0.0
@@ -57,18 +65,9 @@ animations:
           - 1.0
           - 0.0
         hflip: true
-    north:
+    southeast:
       - cell:
-          - 4
-          - 1
-        length: 18.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-    east:
-      - cell:
-          - 6
+          - 3
           - 0
         length: 18.0
         offset:
@@ -109,171 +108,6 @@ animations:
           - 0.0
           - -3.0
         hflip: true
-    east:
-      - cell:
-          - 6
-          - 0
-        length: 12.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 7
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 6
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 0
-          - 1
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-    south:
-      - cell:
-          - 0
-          - 0
-        length: 12.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 1
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 0
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 2
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-    west:
-      - cell:
-          - 6
-          - 0
-        length: 12.0
-        offset:
-          - 1.0
-          - 0.0
-        hflip: true
-      - cell:
-          - 7
-          - 0
-        length: 8.0
-        offset:
-          - 1.0
-          - -3.0
-        hflip: true
-      - cell:
-          - 6
-          - 0
-        length: 8.0
-        offset:
-          - 1.0
-          - -3.0
-        hflip: true
-      - cell:
-          - 0
-          - 1
-        length: 8.0
-        offset:
-          - 1.0
-          - -3.0
-        hflip: true
-    southeast:
-      - cell:
-          - 3
-          - 0
-        length: 12.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 4
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 3
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 5
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-    northeast:
-      - cell:
-          - 1
-          - 1
-        length: 12.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 2
-          - 1
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 1
-          - 1
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
-      - cell:
-          - 3
-          - 1
-        length: 8.0
-        offset:
-          - 0.0
-          - -3.0
-        hflip: false
     southwest:
       - cell:
           - 3
@@ -335,6 +169,171 @@ animations:
       - cell:
           - 6
           - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+    east:
+      - cell:
+          - 6
+          - 0
+        length: 12.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+      - cell:
+          - 7
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 6
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 0
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+    west:
+      - cell:
+          - 6
+          - 0
+        length: 12.0
+        offset:
+          - 1.0
+          - 0.0
+        hflip: true
+      - cell:
+          - 7
+          - 0
+        length: 8.0
+        offset:
+          - 1.0
+          - -3.0
+        hflip: true
+      - cell:
+          - 6
+          - 0
+        length: 8.0
+        offset:
+          - 1.0
+          - -3.0
+        hflip: true
+      - cell:
+          - 0
+          - 1
+        length: 8.0
+        offset:
+          - 1.0
+          - -3.0
+        hflip: true
+    northeast:
+      - cell:
+          - 1
+          - 1
+        length: 12.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+      - cell:
+          - 2
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 1
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 3
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+    southeast:
+      - cell:
+          - 3
+          - 0
+        length: 12.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+      - cell:
+          - 4
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 3
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 5
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+    south:
+      - cell:
+          - 0
+          - 0
+        length: 12.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+      - cell:
+          - 1
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 0
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - -3.0
+        hflip: false
+      - cell:
+          - 2
+          - 0
         length: 8.0
         offset:
           - 0.0
@@ -374,39 +373,72 @@ animations:
           - 1.0
           - 0.0
         hflip: true
-    east:
+    west:
       - cell:
           - 6
           - 0
         length: 6.0
         offset:
+          - 1.0
           - 0.0
-          - 0.0
-        hflip: false
+        hflip: true
       - cell:
           - 7
           - 0
         length: 8.0
         offset:
+          - 1.0
           - 0.0
-          - 0.0
-        hflip: false
+        hflip: true
       - cell:
           - 6
           - 0
         length: 6.0
         offset:
+          - 1.0
           - 0.0
-          - 0.0
-        hflip: false
+        hflip: true
       - cell:
           - 0
           - 1
         length: 8.0
         offset:
+          - 1.0
+          - 0.0
+        hflip: true
+    northwest:
+      - cell:
+          - 1
+          - 1
+        length: 6.0
+        offset:
           - 0.0
           - 0.0
-        hflip: false
+        hflip: true
+      - cell:
+          - 2
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: true
+      - cell:
+          - 1
+          - 1
+        length: 6.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: true
+      - cell:
+          - 3
+          - 1
+        length: 8.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: true
     southeast:
       - cell:
           - 3
@@ -473,39 +505,6 @@ animations:
           - 0.0
           - 0.0
         hflip: false
-    south:
-      - cell:
-          - 0
-          - 0
-        length: 6.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 1
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 0
-          - 0
-        length: 6.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
-      - cell:
-          - 2
-          - 0
-        length: 8.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: false
     northeast:
       - cell:
           - 1
@@ -539,70 +538,73 @@ animations:
           - 0.0
           - 0.0
         hflip: false
-    northwest:
+    south:
       - cell:
-          - 1
-          - 1
+          - 0
+          - 0
         length: 6.0
         offset:
           - 0.0
           - 0.0
-        hflip: true
+        hflip: false
+      - cell:
+          - 1
+          - 0
+        length: 8.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
+      - cell:
+          - 0
+          - 0
+        length: 6.0
+        offset:
+          - 0.0
+          - 0.0
+        hflip: false
       - cell:
           - 2
-          - 1
+          - 0
         length: 8.0
         offset:
           - 0.0
           - 0.0
-        hflip: true
-      - cell:
-          - 1
-          - 1
-        length: 6.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: true
-      - cell:
-          - 3
-          - 1
-        length: 8.0
-        offset:
-          - 0.0
-          - 0.0
-        hflip: true
-    west:
+        hflip: false
+    east:
       - cell:
           - 6
           - 0
         length: 6.0
         offset:
-          - 1.0
           - 0.0
-        hflip: true
+          - 0.0
+        hflip: false
       - cell:
           - 7
           - 0
         length: 8.0
         offset:
-          - 1.0
           - 0.0
-        hflip: true
+          - 0.0
+        hflip: false
       - cell:
           - 6
           - 0
         length: 6.0
         offset:
-          - 1.0
           - 0.0
-        hflip: true
+          - 0.0
+        hflip: false
       - cell:
           - 0
           - 1
         length: 8.0
         offset:
-          - 1.0
           - 0.0
-        hflip: true
+          - 0.0
+        hflip: false
 cardinal_dirs_only: false
+shadow_size:
+  - 14.0
+  - 9.0

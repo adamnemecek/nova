@@ -8,7 +8,8 @@ use image::{load_from_memory, RgbaImage};
 /// Image that can be drawn on the screen.
 #[derive(Debug)]
 pub struct Image {
-  size: Vector2<f32>,
+  /// Size of the image in pixels.
+  size: Vector2<u16>,
   /// Image data loaded to memory.
   pub(crate) rgba_image: RgbaImage,
   /// Underlying ggez image if it is loaded.
@@ -17,7 +18,7 @@ pub struct Image {
 
 impl Image {
   /// Gets the size of the image in pixels.
-  pub fn size(&self) -> Vector2<f32> {
+  pub fn size(&self) -> Vector2<u16> {
     self.size
   }
 }
@@ -39,7 +40,7 @@ impl assets::Asset for Image {
     let (width, height) = rgba_image.dimensions();
 
     Ok(Image {
-      size: Vector2::new(width as f32, height as f32),
+      size: Vector2::new(width as u16, height as u16),
       rgba_image: rgba_image,
       ggez_image: Mutex::new(None),
     })

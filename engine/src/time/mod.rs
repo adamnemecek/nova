@@ -14,20 +14,21 @@ pub use std::time::{Duration, Instant};
 /// Resource that stores engine time info.
 #[derive(Debug)]
 pub struct Clock {
-  /// Number of times the clock has been ticked.
-  pub ticks: u64,
-  /// Instant of time the clock was last ticked.
-  pub ticked_at: Instant,
-  /// Time between the latest tick and the previous tick.
-  pub delta_time: Duration,
+  /// Total time elapsed on the clock.
+  pub time: f64,
+  /// Time elapsed between the latest tick and the previous tick.
+  pub delta_time: f64,
+  /// Instant the clock was last ticked.
+  ticked_at: Instant,
 }
 
+// Sets up the default clock up for the first tick.
 impl Default for Clock {
   fn default() -> Self {
     Clock {
-      ticks: 0,
+      time: 0.0,
+      delta_time: 0.0,
       ticked_at: Instant::now(),
-      delta_time: time::Duration::default(),
     }
   }
 }
@@ -42,21 +43,7 @@ pub fn tick(world: &mut World) {
   let now = Instant::now();
   let mut clock = world.write_resource::<Clock>();
 
-  clock.ticks += 1;
-  clock.delta_time = now - clock.ticked_at;
+  clock.delta_time = ggez::timer::duration_to_f64(now - clock.ticked_at);
+  clock.time += clock.delta_time;
   clock.ticked_at = now;
-}
-
-/// Converts the given duration to seconds.
-pub fn seconds(duration: Duration) -> f64 {
-  let secs = duration.as_secs() as f64;
-
-  secs + duration.subsec_nanos() as f64 / 1_000_000_000.0
-}
-
-/// Converts the given duration to seconds with single precision.
-pub fn seconds_f32(duration: Duration) -> f32 {
-  let secs = duration.as_secs() as f32;
-
-  secs + duration.subsec_nanos() as f32 / 1_000_000_000.0
 }
