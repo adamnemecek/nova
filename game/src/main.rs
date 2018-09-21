@@ -16,7 +16,7 @@ impl Application for Game {
 
     stage::setup(world, systems);
     stage::actors::driving::setup(world, systems);
-    stage::visuals::setup(world, systems);
+    stage::graphics::setup(world, systems);
 
     setup(world).expect("could not load assets");
   }
@@ -39,7 +39,7 @@ impl Application for Game {
       .canvas
       .clear(graphics::Color::new(0.53, 0.87, 0.52, 1.0));
 
-    stage::visuals::draw(world, &mut self.canvas);
+    stage::graphics::draw(world, &mut self.canvas);
 
     self.canvas.present();
   }
@@ -73,19 +73,19 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   // Create actor entities.
   let hero = stage::actors::build_entity(
     Arc::new(hero_template),
-    stage::visuals::actors::build_entity(world.create_entity()),
+    stage::graphics::actors::build_entity(world.create_entity()),
   ).build();
 
   let _monster = stage::actors::build_entity(
     Arc::new(monster_template),
-    stage::visuals::actors::build_entity(world.create_entity()),
+    stage::graphics::actors::build_entity(world.create_entity()),
   ).with(stage::Position {
     point: Point3::new(32.0, 24.0, 0.0),
   })
     .build();
 
   // Set the camera target to the hero.
-  stage::set_camera_target(world, hero);
+  stage::graphics::set_camera_target(world, hero);
 
   // Set the hero to be input controlled.
   stage::actors::driving::drive(world, hero);

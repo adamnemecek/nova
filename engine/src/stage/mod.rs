@@ -12,14 +12,12 @@
 use super::*;
 
 pub mod actors;
+pub mod graphics;
 pub mod objects;
-pub mod visuals;
 
-mod camera;
 mod direction;
 mod motion;
 
-pub use self::camera::*;
 pub use self::direction::*;
 pub use self::motion::*;
 
@@ -43,8 +41,6 @@ impl Default for Position {
 pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
   world.register::<Position>();
   world.register::<Velocity>();
-
-  world.add_resource(Camera::default());
 
   systems.add(Mover, "stage::Mover", &[]);
 
