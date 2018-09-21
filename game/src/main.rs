@@ -15,9 +15,8 @@ impl Application for Game {
     time::setup(world);
 
     stage::setup(world, systems);
+    stage::actors::driving::setup(world, systems);
     stage::visuals::setup(world, systems);
-
-    unstable::setup(world, systems);
 
     setup(world).expect("could not load assets");
   }
@@ -89,9 +88,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
   world.write_resource::<stage::Camera>().set_target(hero);
 
   // Set the hero to be input controlled.
-  world
-    .write_storage()
-    .insert(hero, unstable::InputControlled)?;
+  stage::actors::driving::drive(world, hero);
 
   // Load custom input mapping.
   if let Ok(mapping) = assets::load(world, &assets::PathBuf::from("input-mapping.yml")) {

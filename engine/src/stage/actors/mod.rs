@@ -15,6 +15,8 @@
 
 use super::*;
 
+pub mod driving;
+
 mod template;
 
 pub use self::template::*;

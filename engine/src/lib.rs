@@ -20,7 +20,6 @@ pub mod input;
 pub mod platform;
 pub mod stage;
 pub mod time;
-pub mod unstable;
 
 mod application;
 
@@ -32,7 +31,7 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, Mutex, RwLock};
 
-  pub use {assets, graphics, input, platform, stage, time, unstable, Application};
+  pub use {assets, graphics, input, platform, stage, time, Application};
 }
 
 use prelude::*;
