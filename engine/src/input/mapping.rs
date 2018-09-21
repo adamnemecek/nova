@@ -90,6 +90,11 @@ pub struct MappingData {
   pub mappings: HashMap<Button, Vec<String>>,
 }
 
+/// Sets the input mapping. Discards the current mapping.
+pub fn set_mapping(world: &mut World, mapping: Mapping) {
+  world.add_resource(mapping);
+}
+
 /// Returns the key code referred to by the given string or `None` if it does
 /// not match a key code.
 fn parse_key_code(value: &str) -> Option<KeyCode> {

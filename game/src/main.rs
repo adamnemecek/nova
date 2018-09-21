@@ -92,7 +92,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
 
   // Load custom input mapping.
   if let Ok(mapping) = assets::load(world, &assets::PathBuf::from("input-mapping.yml")) {
-    *world.write_resource::<input::Mapping>() = mapping;
+    input::set_mapping(world, mapping);
   }
 
   Ok(())

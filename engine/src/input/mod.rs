@@ -58,5 +58,6 @@ pub struct ButtonState {
 /// Sets up input for the given world.
 pub fn setup(world: &mut World) {
   world.add_resource(Input::default());
-  world.add_resource(Mapping::default());
+
+  set_mapping(world, Mapping::default());
 }
