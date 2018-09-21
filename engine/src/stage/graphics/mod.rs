@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-pub use graphics::*;
+pub(crate) use graphics::*;
 
 pub mod actors;
 pub mod objects;
