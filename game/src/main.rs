@@ -85,7 +85,7 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
     .build();
 
   // Set the camera target to the hero.
-  world.write_resource::<stage::Camera>().set_target(hero);
+  stage::set_camera_target(world, hero);
 
   // Set the hero to be input controlled.
   stage::actors::driving::drive(world, hero);

@@ -46,3 +46,8 @@ impl From<Entity> for CameraTarget {
     CameraTarget::Entity(entity)
   }
 }
+
+/// Sets the target of the given world's stage camera.
+pub fn set_camera_target(world: &mut World, target: impl Into<CameraTarget>) {
+  world.write_resource::<Camera>().set_target(target);
+}
