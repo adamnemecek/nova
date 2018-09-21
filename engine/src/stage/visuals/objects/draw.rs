@@ -17,8 +17,8 @@ pub struct DrawState {
 pub struct DrawSettings {
   /// Global scale for drawing objects.
   pub scale: f32,
-  /// Texture to use for drawing shadows. Not provided by default.
-  pub shadow_texture: Option<graphics::Image>,
+  /// Image to use for drawing shadows.
+  pub shadow_image: graphics::Image,
 }
 
 /// Draws all the objects on the stage.
@@ -49,27 +49,23 @@ pub fn draw(world: &mut World, canvas: &mut graphics::Canvas) {
   canvas.push_transform(Matrix4::new_scaling(settings.scale));
 
   // Draw object shadows.
-  if let Some(ref shadow_image) = settings.shadow_texture {
-    for entity in &state.entities {
-      let position = &positions.get(*entity).unwrap().point;
-      let size = &objects.get(*entity).unwrap().template.shadow_size;
-      let image_size = shadow_image.size();
+  for entity in &state.entities {
+    let position = &positions.get(*entity).unwrap().point;
+    let size = &objects.get(*entity).unwrap().template.shadow_size;
+    let image_size = settings.shadow_image.size();
 
-      canvas
-        .draw(
-          shadow_image,
-          DrawParams::default()
-            .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
-            .scale(Vector2::new(
-              size.x / image_size.x as f32,
-              size.y / image_size.y as f32,
-            ))
-            .dest(
-              Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset,
-            ),
-        )
-        .expect("could not draw sprite");
-    }
+    canvas
+      .draw(
+        &settings.shadow_image,
+        DrawParams::default()
+          .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
+          .scale(Vector2::new(
+            size.x / image_size.x as f32,
+            size.y / image_size.y as f32,
+          ))
+          .dest(Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset),
+      )
+      .expect("could not draw sprite");
   }
 
   // Draw object sprites.

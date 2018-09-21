@@ -72,6 +72,9 @@ pub struct AnimationState {
   pub frame_elapsed: f64,
 }
 
+/// Raw bytes of `circle.png`.
+const CIRCLE_PNG: &[u8] = include_bytes!("circle.png");
+
 /// Sets up object rendering for the given world.
 pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
   world.register::<Sprite>();
@@ -82,7 +85,7 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
 
   world.add_resource(DrawSettings {
     scale: 2.0,
-    shadow_texture: None,
+    shadow_image: graphics::Image::new(CIRCLE_PNG).expect("could not load circle.png"),
   });
 
   systems.add(Animator, "stage::visuals::objects::Animator", &[]);

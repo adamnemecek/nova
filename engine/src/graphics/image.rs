@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use image::{load_from_memory, RgbaImage};
 
 /// Image that can be drawn on the screen.
 #[derive(Debug)]
@@ -11,12 +10,23 @@ pub struct Image {
   /// Size of the image in pixels.
   size: Vector2<u16>,
   /// Image data loaded to memory.
-  pub(crate) rgba_image: RgbaImage,
+  pub(crate) rgba_image: ::image::RgbaImage,
   /// Underlying ggez image if it is loaded.
   pub(crate) ggez_image: Mutex<Option<ggez::graphics::Image>>,
 }
 
 impl Image {
+  pub fn new(bytes: &[u8]) -> Result<Self, assets::Error> {
+    let rgba_image = ::image::load_from_memory(bytes)?.to_rgba();
+    let (width, height) = rgba_image.dimensions();
+
+    Ok(Image {
+      size: Vector2::new(width as u16, height as u16),
+      rgba_image: rgba_image,
+      ggez_image: Mutex::new(None),
+    })
+  }
+
   /// Gets the size of the image in pixels.
   pub fn size(&self) -> Vector2<u16> {
     self.size
@@ -26,23 +36,16 @@ impl Image {
 // Support loading images from files.
 impl assets::Asset for Image {
   fn load(fs: &assets::OverlayFs, path: &assets::Path) -> Result<Self, assets::Error> {
-    let rgba_image = {
-      use std::io::Read;
+    use std::io::Read;
 
-      let mut buf = Vec::new();
+    let mut buffer = Vec::new();
+
+    {
       let mut file = fs.open(path)?;
 
-      file.read_to_end(&mut buf)?;
+      file.read_to_end(&mut buffer)?;
+    }
 
-      load_from_memory(&buf)?.to_rgba()
-    };
-
-    let (width, height) = rgba_image.dimensions();
-
-    Ok(Image {
-      size: Vector2::new(width as u16, height as u16),
-      rgba_image: rgba_image,
-      ggez_image: Mutex::new(None),
-    })
+    Image::new(&buffer)
   }
 }

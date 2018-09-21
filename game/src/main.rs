@@ -93,13 +93,6 @@ fn setup<'a, 'b>(world: &mut World) -> Result<(), assets::Error> {
     .write_storage()
     .insert(hero, unstable::InputControlled)?;
 
-  // Set the object shadow texture.
-  let circle = assets::load(world, &assets::PathBuf::from("circle.png")).ok();
-
-  world
-    .write_resource::<stage::visuals::objects::DrawSettings>()
-    .shadow_texture = circle;
-
   // Load custom input mapping.
   if let Ok(mapping) = assets::load(world, &assets::PathBuf::from("input-mapping.yml")) {
     *world.write_resource::<input::Mapping>() = mapping;
