@@ -42,22 +42,6 @@ impl Default for Sprite {
   }
 }
 
-/// Component that stores data about an object's shadow.
-#[derive(Component)]
-#[storage(BTreeStorage)]
-pub struct Shadow {
-  /// Size of the shadow in pixels.
-  pub size: Vector2<f32>,
-}
-
-impl Default for Shadow {
-  fn default() -> Self {
-    Shadow {
-      size: Vector2::zeros(),
-    }
-  }
-}
-
 /// Component storing the animation state of an object on the stage.
 #[derive(Default, Component, Debug)]
 #[storage(BTreeStorage)]
@@ -78,7 +62,6 @@ const CIRCLE_PNG: &[u8] = include_bytes!("circle.png");
 /// Sets up object rendering for the given world.
 pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
   world.register::<Sprite>();
-  world.register::<Shadow>();
   world.register::<AnimationState>();
 
   world.add_resource(DrawState::default());
@@ -96,6 +79,5 @@ pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>)
 pub fn build_entity<'a>(builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
   builder
     .with(Sprite::default())
-    .with(Shadow::default())
     .with(AnimationState::default())
 }
