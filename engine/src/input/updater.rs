@@ -9,10 +9,10 @@ pub struct Updater;
 
 impl<'a> System<'a> for Updater {
   type SystemData = (
-    Read<'a, engine::Window>,
-    Read<'a, time::Clock>,
-    Read<'a, Mapping>,
-    Write<'a, Input>,
+    ReadResource<'a, engine::Window>,
+    ReadResource<'a, time::Clock>,
+    ReadResource<'a, Mapping>,
+    WriteResource<'a, Input>,
   );
 
   fn run(&mut self, (window, clock, mapping, mut state): Self::SystemData) {

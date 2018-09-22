@@ -13,7 +13,7 @@ impl<'a> System<'a> for Sorter {
     Entities<'a>,
     ReadStorage<'a, Object>,
     ReadStorage<'a, Position>,
-    Write<'a, DrawState>,
+    WriteResource<'a, DrawState>,
   );
 
   fn run(&mut self, (entities, objects, positions, mut state): Self::SystemData) {

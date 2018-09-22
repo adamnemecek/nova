@@ -10,11 +10,11 @@ pub(super) struct State<'a> {
   /// List of processes to run during the game loop.
   pub(super) processes: Vec<Box<dyn Process>>,
   /// Systems to dispatch early in the game loop.
-  pub(super) early_systems: DispatcherBuilder<'a, 'a>,
+  pub(super) early_systems: specs::DispatcherBuilder<'a, 'a>,
   /// Systems to dispatch in the game loop.
-  pub(super) systems: DispatcherBuilder<'a, 'a>,
+  pub(super) systems: specs::DispatcherBuilder<'a, 'a>,
   /// Systems to dispatch late in the game loop.
-  pub(super) late_systems: DispatcherBuilder<'a, 'a>,
+  pub(super) late_systems: specs::DispatcherBuilder<'a, 'a>,
 }
 
 /// Adds a process to the engine that will be run during the game loop.

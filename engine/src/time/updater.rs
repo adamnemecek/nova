@@ -12,7 +12,7 @@ pub struct Updater {
 }
 
 impl<'a> System<'a> for Updater {
-  type SystemData = Write<'a, Clock>;
+  type SystemData = WriteResource<'a, Clock>;
 
   fn run(&mut self, mut clock: Self::SystemData) {
     let now = Instant::now();

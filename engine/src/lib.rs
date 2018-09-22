@@ -22,12 +22,16 @@ pub mod stage;
 pub mod time;
 
 pub mod prelude {
-  pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
-  pub use specs::prelude::*;
-  pub use specs::storage::BTreeStorage;
+  pub use nalgebra::{Matrix4, Point2, Point3, Vector2, Vector3};
+  pub use specs;
   pub use std::sync::{Arc, Mutex, RwLock};
 
   pub use {assets, engine, graphics, input, stage, time};
+
+  pub use engine::{
+    storages::*, Component, Entities, Entity, EntityBuilder, EntityBuilderExt, ParStorageJoin,
+    ReadResource, ReadStorage, StorageJoin, System, WriteResource, WriteStorage,
+  };
 }
 
 use prelude::*;

@@ -26,7 +26,7 @@ pub struct Mover;
 
 impl<'a> System<'a> for Mover {
   type SystemData = (
-    Read<'a, time::Clock>,
+    ReadResource<'a, time::Clock>,
     ReadStorage<'a, Velocity>,
     WriteStorage<'a, Position>,
   );

@@ -19,7 +19,7 @@ pub struct Driver;
 
 impl<'a> System<'a> for Driver {
   type SystemData = (
-    Read<'a, input::Input>,
+    ReadResource<'a, input::Input>,
     ReadStorage<'a, Driven>,
     WriteStorage<'a, Actor>,
     WriteStorage<'a, objects::Object>,

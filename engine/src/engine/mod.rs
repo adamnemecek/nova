@@ -18,7 +18,11 @@
 
 use super::*;
 
-pub use specs::{Component, ReadStorage, System, WriteStorage};
+use specs::World;
+pub use specs::{
+  Builder as EntityBuilderExt, Component, Entities, Entity, EntityBuilder, Join as StorageJoin,
+  ParJoin as ParStorageJoin, ReadStorage, System, WriteStorage,
+};
 
 pub use specs::shred::{
   Fetch as FetchResource, FetchMut as FetchResourceMut, Read as ReadResource, Resource,

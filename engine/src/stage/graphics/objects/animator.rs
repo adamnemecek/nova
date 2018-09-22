@@ -11,7 +11,7 @@ pub struct Animator;
 
 impl<'a> System<'a> for Animator {
   type SystemData = (
-    Read<'a, time::Clock>,
+    ReadResource<'a, time::Clock>,
     ReadStorage<'a, Object>,
     WriteStorage<'a, AnimationState>,
     WriteStorage<'a, Sprite>,
