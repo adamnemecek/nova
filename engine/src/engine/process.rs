@@ -4,13 +4,13 @@
 
 use super::*;
 
-/// Trait describing a _process_, something that runs each iteration of the
+/// Trait describing a _process_ that is updated during each iteration of an
 /// engine loop.
 pub trait Process {
-  /// Invoked after early ECS systems are dispatched.
+  /// Invoked after early systems are dispatched.
   fn early_update(&mut self, _ctx: &mut Context) {}
-  /// Invoked after ECS systems are dispatched.
+  /// Invoked after systems are dispatched.
   fn update(&mut self, _ctx: &mut Context) {}
-  /// Invoked after late ECS systems are dispatched.
+  /// Invoked after late systems are dispatched.
   fn late_update(&mut self, _ctx: &mut Context) {}
 }

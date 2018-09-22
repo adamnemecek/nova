@@ -4,15 +4,18 @@
 
 //! The `graphics` module handles basic drawing and image data.
 //!
-//! The `Canvas` struct is built from a `platform::Window` and can be used to
-//! draw grahpics with hardware acceleration. The canvas can draw `Image` assets
-//! loaded from standard image files.
+//! This module requires an engine context with an `engine::Window`, which it
+//! uses to create a `Canvas` for drawing to the window. The canvas can be used
+//! to draw graphics primitives such as an `Image`, which can be loaded from an
+//! image asset file.
+//!
+//! This module also creates a `DrawLayers` resource which stores `DrawLayer`
+//! implementations and a `LayerDrawer` engine process which draws the layers
+//! in that resource. Other modules can add draw layers to receive access to the
+//! `Canvas` once a frame to draw.
 //!
 //! The `Atlas` struct provides a wrapper around an `Image` asset that slices
-//! it into cells. An atlas is also known as a sprite sheet.
-//!
-//! The `Sprite` component stores state for drawing a cell from an `Atlas` for
-//! the entity it is attached to.
+//! it into cells, for use with tile sets or sprite sheets.
 
 use super::*;
 pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};

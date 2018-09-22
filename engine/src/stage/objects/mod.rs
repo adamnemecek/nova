@@ -2,15 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `objects` module defines systems and components for “objects” on the
-//! stage.
+//! The `objects` module implements _stage objects_.
 //!
-//! Objects are entities represented by a sprite that have a physical presence
-//! on the stage. Objects are animated by the `Animator` system, supporting
-//! animations that vary in either four or eight directions.
-//!
-//! An object entity can be built from a `Template`, which can be loaded from a
-//! YAML asset file.
+//! An object is an entity that represents a single physical object on the
+//! stage. Each object is created from a `Template` which can be loaded from a
+//! YAML file.
 
 use super::*;
 

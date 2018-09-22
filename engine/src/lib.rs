@@ -21,17 +21,13 @@ pub mod input;
 pub mod stage;
 pub mod time;
 
-mod application;
-
-pub use self::application::*;
-
 pub mod prelude {
   pub use nalgebra::{self, Matrix4, Point2, Point3, Vector2, Vector3};
   pub use specs::prelude::*;
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, Mutex, RwLock};
 
-  pub use {assets, engine, graphics, input, stage, time, Application};
+  pub use {assets, engine, graphics, input, stage, time};
 }
 
 use prelude::*;

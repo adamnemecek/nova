@@ -2,11 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `input` module provides simple input functionality.
+//! The `input` module abstracts keyboard input, mapping it to virtual input
+//! buttons.
 //!
-//! Keyboard keys are mapped to virtual buttons in the `Button` enum
-//! representing the available basic actions in the game. This mapping is
-//! controlled by the `Mapping` resource which can be loaded from an asset file.
+//! This module creates a `Mapping` resource which maps keyboard `KeyCode` to
+//! virtual input `Button`. The resource can be modified to change key bindings
+//! and can be loaded from and saved to a file.
+//!
+//! This module also creates an `Input` resource which stores the state of
+//! virtual input buttons and an `Updater` system which updates that resource
+//! using input from the `engine::Window`. If the engine context has no window,
+//! the system will run but no input will occur.
 
 use super::*;
 pub use ggez::event::KeyCode;

@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `time` module provides shared time state.
+//! The `time` module provides shared engine time state.
 //!
-//! The `Clock` resource stores time information and must be updated once per
-//! frame with the `tick` function.
+//! This module adds the `Clock` resource which stores time state and an
+//! `Updater` system that updates that resource every engine loop.
 
 use super::*;
 

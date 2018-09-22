@@ -2,12 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `stage` module provides functionality for the _stage_, which is the
-//! physical world of the game.
+//! The `stage` module implements the _stage_, a physical world intended for
+//! top-down 2D games.
 //!
-//! Entities “on the stage” have a `Position` component indicating where the
-//! entity is in game world coordinates. The `Motion` system will also update
-//! this component for all entities with a `Velocity` component.
+//! An entity “on the stage” has a `Position` component that stores its position
+//! in game world coordinates. Coordinates are three-dimensional: the x-axis is
+//! from “west” to “east” or left to right on the screen, the y-axis is from
+//! “north” to “south” or top to bottom on the screen, and the z-axis is from
+//! “down” to “up” which indicates altitude.
+//!
+//! The `motion` module adds the `Velocity` component and a `Mover` system that
+//! moves entities' positions each run according to their velocities.
+//!
+//! For sprites that can only face four or eight directions, the `direction`
+//! module implements `CompassDirection` with conversion from vectors.
 
 use super::*;
 
