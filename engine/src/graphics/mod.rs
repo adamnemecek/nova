@@ -20,7 +20,22 @@ pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
 mod atlas;
 mod canvas;
 mod image;
+mod layers;
 
 pub use self::atlas::*;
 pub use self::canvas::*;
 pub use self::image::*;
+pub use self::layers::*;
+
+/// Initialize graphics for the given engine context. Requires a window.
+pub fn init(ctx: &mut engine::Context) {
+  let canvas = Canvas::new(
+    ctx
+      .window
+      .borrow()
+      .as_ref()
+      .expect("graphics module requires a window"),
+  );
+
+  engine::add_process(ctx, LayerDrawer::new(canvas));
+}

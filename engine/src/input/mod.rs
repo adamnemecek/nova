@@ -7,20 +7,17 @@
 //! Keyboard keys are mapped to virtual buttons in the `Button` enum
 //! representing the available basic actions in the game. This mapping is
 //! controlled by the `Mapping` resource which can be loaded from an asset file.
-//!
-//! The state of input buttons is stored in the `Input` resource, which must be
-//! updated with the `update` function once per frame.
 
 use super::*;
 pub use ggez::event::KeyCode;
 
 mod button;
 mod mapping;
-mod update;
+mod updater;
 
 pub use self::button::*;
 pub use self::mapping::*;
-pub use self::update::*;
+pub use self::updater::*;
 
 /// Resource that stores the current input state.
 #[derive(Default, Debug)]
@@ -55,9 +52,9 @@ pub struct ButtonState {
   pub repeated: bool,
 }
 
-/// Sets up input for the given world.
-pub fn setup(world: &mut World) {
-  world.add_resource(Input::default());
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_resource(ctx, Input::default());
+  engine::add_process(ctx, Updater);
 
-  set_mapping(world, Mapping::default());
+  set_mapping(ctx, Mapping::default());
 }

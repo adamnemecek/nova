@@ -13,11 +13,11 @@ use super::*;
 use stage::objects::*;
 
 mod animator;
-mod draw;
+mod drawing;
 mod sorter;
 
 pub use self::animator::*;
-pub use self::draw::*;
+pub use self::drawing::*;
 pub use self::sorter::*;
 
 /// Animation state of an object on the stage.
@@ -59,20 +59,24 @@ pub struct AnimationState {
 /// Raw bytes of `circle.png`.
 const CIRCLE_PNG: &[u8] = include_bytes!("circle.png");
 
-/// Sets up object rendering for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  world.register::<Sprite>();
-  world.register::<AnimationState>();
+/// Initializes object drawing for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_storage::<AnimationState>(ctx);
+  engine::add_storage::<Sprite>(ctx);
 
-  world.add_resource(DrawState::default());
+  engine::add_resource(ctx, DrawState::default());
+  engine::add_resource(
+    ctx,
+    DrawSettings {
+      scale: 2.0,
+      shadow_image: graphics::Image::new(CIRCLE_PNG).expect("could not load circle.png"),
+    },
+  );
 
-  world.add_resource(DrawSettings {
-    scale: 2.0,
-    shadow_image: graphics::Image::new(CIRCLE_PNG).expect("could not load circle.png"),
-  });
+  engine::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
+  engine::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
 
-  systems.add(Animator, "stage::visuals::objects::Animator", &[]);
-  systems.add(Sorter, "stage::visuals::objects::Sorter", &[]);
+  graphics::add_draw_layer(ctx, DrawLayer);
 }
 
 /// Adds components to the entity for object visuals.

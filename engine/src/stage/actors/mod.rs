@@ -42,9 +42,9 @@ pub enum Mode {
 /// Total number of possible actor modes.
 pub const MODE_COUNT: usize = Mode::Walk as usize + 1;
 
-/// Sets up actors for the given world.
-pub fn setup<'a, 'b>(world: &mut World) {
-  world.register::<Actor>();
+/// Initializes actors for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_storage::<Actor>(ctx);
 }
 
 /// Adds components to the entity for an actor with the given `template`.

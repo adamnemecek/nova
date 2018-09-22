@@ -24,7 +24,13 @@ pub use self::{asset::*, overlay_fs::*};
 /// Error returned from asset operations.
 pub type Error = Box<dyn std::error::Error>;
 
-/// Sets up asset handling for the given world.
-pub fn setup(world: &mut World) {
-  world.add_resource(OverlayFs::default());
+/// Initialize the assets module for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_resource(ctx, OverlayFs::default());
+}
+
+/// Loads an asset from a file at the given path in the overlay file system of
+/// the given engine context.
+pub fn load<T: Asset>(ctx: &mut engine::Context, path: &Path) -> Result<T, assets::Error> {
+  engine::fetch_resource::<OverlayFs>(ctx).load(path)
 }

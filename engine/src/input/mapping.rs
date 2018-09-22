@@ -91,8 +91,8 @@ pub struct MappingData {
 }
 
 /// Sets the input mapping. Discards the current mapping.
-pub fn set_mapping(world: &mut World, mapping: Mapping) {
-  world.add_resource(mapping);
+pub fn set_mapping(ctx: &mut engine::Context, mapping: Mapping) {
+  engine::add_resource(ctx, mapping);
 }
 
 /// Returns the key code referred to by the given string or `None` if it does

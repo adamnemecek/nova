@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use ggez::event::winit_event::Event;
+use ggez::event::winit_event::Event as WinitEvent;
+pub use ggez::event::winit_event::{ElementState, KeyboardInput, WindowEvent as Event};
 use std::cell::Cell;
 
 /// Struct that represents a platform-specific window.
@@ -11,14 +12,14 @@ pub struct Window {
   /// Cell initially containing the ggez context. Taken by `graphics::Canvas`.
   pub(crate) ctx: Cell<Option<ggez::Context>>,
   events_loop: ggez::event::EventsLoop,
-  events: Vec<WindowEvent>,
+  events: Vec<Event>,
   size: Vector2<f32>,
   was_resized: bool,
   is_closing: bool,
 }
 
 impl Window {
-  /// Creates a new window with the given title.ü
+  /// Creates a new window with the given title.
   pub fn new(title: &str) -> Window {
     let (mut ctx, events_loop) = ggez::ContextBuilder::new("nova", "bfrydl")
       .window_mode(ggez::conf::WindowMode::default().resizable(true))
@@ -47,7 +48,7 @@ impl Window {
   }
 
   /// Gets the events that ocurred during the previous update.
-  pub fn events(&self) -> &[WindowEvent] {
+  pub fn events(&self) -> &[Event] {
     &self.events
   }
 
@@ -78,15 +79,15 @@ impl Window {
     events.clear();
 
     self.events_loop.poll_events(|event| match event {
-      Event::WindowEvent { event, .. } => {
+      WinitEvent::WindowEvent { event, .. } => {
         match event {
-          WindowEvent::Resized(new_size) => {
+          Event::Resized(new_size) => {
             size = Vector2::new(new_size.width as f32, new_size.height as f32);
 
             was_resized = true;
           }
 
-          WindowEvent::CloseRequested => {
+          Event::CloseRequested => {
             is_closing = true;
           }
 

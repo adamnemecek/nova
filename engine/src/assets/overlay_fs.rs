@@ -113,9 +113,3 @@ impl Default for OverlayFs {
     OverlayFs { root_paths }
   }
 }
-
-/// Loads an asset from a file at the given path in the overlay file system of
-/// the given world.
-pub fn load<T: Asset>(world: &mut World, path: &Path) -> Result<T, assets::Error> {
-  world.read_resource::<OverlayFs>().load(path)
-}

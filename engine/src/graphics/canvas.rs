@@ -12,7 +12,7 @@ pub struct Canvas {
 
 impl Canvas {
   /// Creates a new canvas from the given window.
-  pub fn new(window: &platform::Window) -> Canvas {
+  pub fn new(window: &engine::Window) -> Canvas {
     let mut ctx = window.ctx.take().expect("window already has a canvas");
     let rect = ggez::graphics::screen_coordinates(&mut ctx);
 

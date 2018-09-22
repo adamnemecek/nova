@@ -8,16 +8,14 @@ pub(crate) use graphics::*;
 pub mod actors;
 pub mod objects;
 
-pub use self::objects::draw;
-
 mod camera;
 
 pub use self::camera::*;
 
-/// Sets up the given world for stage visuals.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  world.add_resource(Camera::default());
+/// Initializes stage graphics for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_resource(ctx, Camera::default());
 
-  objects::setup(world, systems);
-  actors::setup(world, systems);
+  objects::init(ctx);
+  actors::init(ctx);
 }

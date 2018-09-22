@@ -30,7 +30,7 @@ impl<'a> System<'a> for Animator {
   }
 }
 
-/// Sets up visuals for actors in the given world.
-pub fn setup<'a, 'b>(_world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  systems.add(Animator, "stage::visuals::actors::Animator", &[]);
+/// Initializes visuals for actors in the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_system(ctx, Animator, "stage::visuals::actors::Animator", &[]);
 }

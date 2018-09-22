@@ -15,9 +15,9 @@ pub extern crate specs;
 extern crate specs_derive;
 
 pub mod assets;
+pub mod engine;
 pub mod graphics;
 pub mod input;
-pub mod platform;
 pub mod stage;
 pub mod time;
 
@@ -31,7 +31,7 @@ pub mod prelude {
   pub use specs::storage::BTreeStorage;
   pub use std::sync::{Arc, Mutex, RwLock};
 
-  pub use {assets, graphics, input, platform, stage, time, Application};
+  pub use {assets, engine, graphics, input, stage, time, Application};
 }
 
 use prelude::*;

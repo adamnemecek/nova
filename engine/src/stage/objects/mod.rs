@@ -33,9 +33,9 @@ pub struct Object {
   pub facing: Vector3<f32>,
 }
 
-/// Sets up objects for the given world.
-pub fn setup<'a, 'b>(world: &mut World) {
-  world.register::<Object>();
+/// Initializes objects for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_storage::<Object>(ctx);
 }
 
 /// Adds components to the entity for an object with the given `template`.

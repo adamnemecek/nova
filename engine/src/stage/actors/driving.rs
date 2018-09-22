@@ -62,16 +62,15 @@ impl<'a> System<'a> for Driver {
   }
 }
 
-/// Sets up actor driving for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  world.register::<Driven>();
-
-  systems.add(Driver, "stage::actors::driving::Driver", &[]);
+/// Initializes actor driving for the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_storage::<Driven>(ctx);
+  engine::add_system_early(ctx, Driver, "stage::actors::driving::Driver", &[]);
 }
 
 /// Sets the given entity to be driven by input.
-pub fn drive(world: &mut World, entity: Entity) {
-  let mut driven = world.write_storage::<Driven>();
+pub fn drive(ctx: &mut engine::Context, entity: Entity) {
+  let mut driven = engine::fetch_storage_mut::<Driven>(ctx);
 
   driven
     .insert(entity, Driven)

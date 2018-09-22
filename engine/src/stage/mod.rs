@@ -37,13 +37,13 @@ impl Default for Position {
   }
 }
 
-/// Sets up the stage for the given world.
-pub fn setup<'a, 'b>(world: &mut World, systems: &mut DispatcherBuilder<'a, 'b>) {
-  world.register::<Position>();
-  world.register::<Velocity>();
+/// Initializes the stage in the given engine context.
+pub fn init(ctx: &mut engine::Context) {
+  engine::add_storage::<Position>(ctx);
+  engine::add_storage::<Velocity>(ctx);
 
-  systems.add(Mover, "stage::Mover", &[]);
+  engine::add_system(ctx, Mover, "stage::Mover", &[]);
 
-  objects::setup(world);
-  actors::setup(world);
+  objects::init(ctx);
+  actors::init(ctx);
 }
