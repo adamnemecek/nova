@@ -26,15 +26,15 @@ use super::*;
 pub mod init;
 pub mod window;
 
-mod component;
+mod components;
 mod context;
-mod process;
-mod resource;
+mod processes;
+mod resources;
 
-pub use self::component::*;
+pub use self::components::*;
 pub use self::context::*;
-pub use self::process::*;
-pub use self::resource::*;
+pub use self::processes::*;
+pub use self::resources::*;
 pub use self::window::*;
 
 /// Runs the engine loop until `engine::exit` is called.
