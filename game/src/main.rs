@@ -4,8 +4,9 @@ use nova::prelude::*;
 
 /// Main entry point of the program.
 pub fn main() {
-  let window = engine::Window::new("nova-game");
-  let ctx = &mut engine::Context::from(window);
+  let ctx = &mut engine::Context::new();
+
+  engine::create_window(ctx, "nova-game");
 
   assets::init(ctx);
   graphics::init(ctx);

@@ -5,8 +5,8 @@
 //! The `engine` module contains core engine functionality such as setting up
 //! the window and running ECS.
 //!
-//! The `window` module defines the `Window`, a cross-platform abstraction
-//! around a GUI window which is needed for input events and for graphics.
+//! The `window` module can create a platform-specific window for graphics and
+//! input events. The state of the window is stored in the `Window` resource.
 //!
 //! The `context` module defines the `engine::Context`, the global state for the
 //! engine. A context can be created from a `Window` or without one.
@@ -23,11 +23,8 @@
 
 use super::*;
 
-pub mod window;
-
-pub use self::window::Window;
-
 pub mod init;
+pub mod window;
 
 mod component;
 mod context;
@@ -38,6 +35,7 @@ pub use self::component::*;
 pub use self::context::*;
 pub use self::process::*;
 pub use self::resource::*;
+pub use self::window::*;
 
 /// Runs the engine loop until `engine::exit` is called.
 ///
@@ -71,13 +69,9 @@ pub fn run(ctx: &mut Context) {
 
   // Run the engine loop.
   while !ctx.exiting {
-    // Update the window each tick if there is one.
-    if let Some(window) = ctx.window.borrow_mut().as_mut() {
-      window.update();
-
-      if window.is_closing() {
-        ctx.exiting = true;
-      }
+    // Update the window each loop if there is one.
+    if ctx.window_handle.borrow().is_some() {
+      update_window(ctx);
     }
 
     // Run all systems and processes.

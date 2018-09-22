@@ -7,43 +7,44 @@ use super::*;
 /// Engine process that updates `Input` state.
 pub struct Updater;
 
-impl engine::Process for Updater {
-  fn early_update(&mut self, ctx: &mut engine::Context) {
-    if let Some(window) = ctx.window.borrow().as_ref() {
-      let clock = engine::fetch_resource::<time::Clock>(ctx);
-      let mapping = engine::fetch_resource::<Mapping>(ctx);
-      let mut state = engine::fetch_resource_mut::<Input>(ctx);
+impl<'a> System<'a> for Updater {
+  type SystemData = (
+    Read<'a, engine::Window>,
+    Read<'a, time::Clock>,
+    Read<'a, Mapping>,
+    Write<'a, Input>,
+  );
 
-      // Unset `repeated` flag on every button.
-      for button in &mut state.buttons {
-        button.repeated = false;
-      }
+  fn run(&mut self, (window, clock, mapping, mut state): Self::SystemData) {
+    // Unset `repeated` flag on every button.
+    for button in &mut state.buttons {
+      button.repeated = false;
+    }
 
-      // Loop through window events.
-      for event in window.events() {
-        match event {
-          engine::window::Event::KeyboardInput { input, .. } => {
-            if let Some(key) = input.virtual_keycode {
-              for button in mapping.get_buttons_for(key) {
-                let button = &mut state.buttons[*button as usize];
+    // Loop through window events.
+    for event in window.events() {
+      match event {
+        engine::WindowEvent::KeyboardInput { input, .. } => {
+          if let Some(key) = input.virtual_keycode {
+            for button in mapping.get_buttons_for(key) {
+              let button = &mut state.buttons[*button as usize];
 
-                if input.state == engine::window::ElementState::Pressed {
-                  // Set pressed time if the button was not already pressed.
-                  if button.pressed_at.is_none() {
-                    button.pressed_at = Some(clock.time);
-                  }
-
-                  button.repeated = true;
-                } else {
-                  button.pressed_at = None;
-                  button.repeated = false;
+              if input.state == engine::winit_event::ElementState::Pressed {
+                // Set pressed time if the button was not already pressed.
+                if button.pressed_at.is_none() {
+                  button.pressed_at = Some(clock.time);
                 }
+
+                button.repeated = true;
+              } else {
+                button.pressed_at = None;
+                button.repeated = false;
               }
             }
           }
-
-          _ => {}
         }
+
+        _ => {}
       }
     }
   }

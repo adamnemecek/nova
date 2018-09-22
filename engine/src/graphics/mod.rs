@@ -32,13 +32,7 @@ pub use self::layers::*;
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {
-  let canvas = Canvas::new(
-    ctx
-      .window
-      .borrow()
-      .as_ref()
-      .expect("graphics module requires a window"),
-  );
+  let canvas = Canvas::new(ctx);
 
   engine::init::add_process(ctx, LayerDrawer::new(canvas));
 }

@@ -34,8 +34,7 @@ impl engine::Process for LayerDrawer {
   fn late_update(&mut self, ctx: &mut engine::Context) {
     // Resize canvas to match window size.
     {
-      let window = ctx.window.borrow();
-      let window = window.as_ref().unwrap();
+      let window = engine::fetch_resource::<engine::Window>(ctx);
 
       if window.was_resized() {
         self.canvas.resize(window.size());

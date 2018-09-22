@@ -9,10 +9,10 @@ use std::cell::RefCell;
 pub struct Context<'a> {
   /// ECS world of the engine.
   pub(super) world: World,
-  /// Window of the engine or `None` if it was not created from one.
-  pub(crate) window: RefCell<Option<Window>>,
   /// State used during initial setup of the engine, then set to `None`.
   pub(super) init_state: Option<init::State<'a>>,
+  /// Handle to the window created with `window::create_window`.
+  pub(crate) window_handle: RefCell<Option<WindowHandle>>,
   /// Whether the engine will exit.
   pub(super) exiting: bool,
 }
@@ -21,19 +21,9 @@ impl<'a> Context<'a> {
   pub fn new() -> Self {
     Context {
       world: World::new(),
-      window: RefCell::new(None),
+      window_handle: RefCell::new(None),
       init_state: Some(init::State::default()),
       exiting: false,
     }
-  }
-}
-
-// Create an engine context from a window for an engine with graphics support.
-impl<'a> From<Window> for Context<'a> {
-  fn from(window: Window) -> Self {
-    let context = Context::new();
-
-    context.window.replace(Some(window));
-    context
   }
 }
