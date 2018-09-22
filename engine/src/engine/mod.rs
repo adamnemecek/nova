@@ -11,17 +11,18 @@
 //! The `context` module defines the `engine::Context`, the global state for the
 //! engine. A context can be created from a `Window` or without one.
 //!
-//! The `setup` module defines structures and functions that are used in the
-//! initial setup of an engine context. Until `engine::run` is called, the
-//! context is still in “set up” mode and can have new systems and processes
+//! The `init` module defines structures and functions that are used in the
+//! initialization of an engine context. Until `engine::run` is called, the
+//! context is still in init mode and can have new systems and processes
 //! added.
 //!
-//! The `process` module defines the `Process` trait, which describes an
+//! The `processes` module defines the `Process` trait, which describes an
 //! _engine process_, a custom part of the main engine loop.
 //!
-//! The `resource` and `component` modules support ECS.
+//! The `resources` and `components` modules support ECS.
 
 use super::*;
+pub use specs::System;
 
 pub mod init;
 pub mod window;

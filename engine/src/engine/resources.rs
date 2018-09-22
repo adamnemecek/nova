@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-pub use specs::shred::{Fetch, FetchMut, Resource};
+pub use specs::shred::{Fetch, FetchMut, Read as ReadResource, Resource, Write as WriteResource};
 
 /// Adds a resource to the engine context.
 pub fn add_resource(ctx: &mut Context, resource: impl Resource) {

@@ -6,7 +6,7 @@ use super::*;
 
 pub use specs::{
   storage::BTreeStorage, Component, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage,
-  ReadStorage, Storage, WriteStorage,
+  ReadStorage, WriteStorage,
 };
 
 /// Adds storage for components of type `T` to the engine context.
