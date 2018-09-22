@@ -20,5 +20,6 @@ pub use self::updater::*;
 /// Initializes time in the given engine context.
 pub fn init(ctx: &mut engine::Context) {
   engine::add_resource(ctx, Clock::default());
-  engine::add_system_early(ctx, Updater::default(), "time::Updater", &[]);
+
+  engine::init::add_system_early(ctx, Updater::default(), "time::Updater", &[]);
 }

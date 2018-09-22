@@ -73,8 +73,8 @@ pub fn init(ctx: &mut engine::Context) {
     },
   );
 
-  engine::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
-  engine::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
+  engine::init::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
+  engine::init::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
 
   graphics::add_draw_layer(ctx, DrawLayer);
 }

@@ -32,5 +32,5 @@ impl<'a> System<'a> for Animator {
 
 /// Initializes visuals for actors in the given engine context.
 pub fn init(ctx: &mut engine::Context) {
-  engine::add_system(ctx, Animator, "stage::visuals::actors::Animator", &[]);
+  engine::init::add_system(ctx, Animator, "stage::visuals::actors::Animator", &[]);
 }

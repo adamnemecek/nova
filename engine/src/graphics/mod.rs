@@ -40,5 +40,5 @@ pub fn init(ctx: &mut engine::Context) {
       .expect("graphics module requires a window"),
   );
 
-  engine::add_process(ctx, LayerDrawer::new(canvas));
+  engine::init::add_process(ctx, LayerDrawer::new(canvas));
 }

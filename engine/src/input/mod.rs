@@ -59,8 +59,9 @@ pub struct ButtonState {
 }
 
 pub fn init(ctx: &mut engine::Context) {
+  engine::init::add_process(ctx, Updater);
+
   engine::add_resource(ctx, Input::default());
-  engine::add_process(ctx, Updater);
 
   set_mapping(ctx, Mapping::default());
 }

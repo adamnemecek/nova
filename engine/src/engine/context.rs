@@ -12,7 +12,7 @@ pub struct Context<'a> {
   /// Window of the engine or `None` if it was not created from one.
   pub(crate) window: RefCell<Option<Window>>,
   /// State used during initial setup of the engine, then set to `None`.
-  pub(super) setup: Option<Setup<'a>>,
+  pub(super) init_state: Option<init::State<'a>>,
   /// Whether the engine will exit.
   pub(super) exiting: bool,
 }
@@ -22,7 +22,7 @@ impl<'a> Context<'a> {
     Context {
       world: World::new(),
       window: RefCell::new(None),
-      setup: Some(Setup::default()),
+      init_state: Some(init::State::default()),
       exiting: false,
     }
   }

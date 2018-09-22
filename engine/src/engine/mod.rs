@@ -27,17 +27,17 @@ pub mod window;
 
 pub use self::window::Window;
 
+pub mod init;
+
 mod component;
 mod context;
 mod process;
 mod resource;
-mod setup;
 
 pub use self::component::*;
 pub use self::context::*;
 pub use self::process::*;
 pub use self::resource::*;
-pub use self::setup::*;
 
 /// Runs the engine loop until `engine::exit` is called.
 ///
@@ -59,7 +59,10 @@ pub use self::setup::*;
 /// Systems are run in parallel in each of the three phases. After the systems
 /// run in each phase, all processes are updated in sequence.
 pub fn run(ctx: &mut Context) {
-  let setup = ctx.setup.take().expect("engine context is already running");
+  let setup = ctx
+    .init_state
+    .take()
+    .expect("engine context is already running");
 
   let mut processes = setup.processes;
   let mut early_systems = setup.early_systems.build();
