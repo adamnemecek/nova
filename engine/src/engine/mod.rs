@@ -27,13 +27,6 @@ pub use specs::shred::{
 
 pub mod init;
 
-pub mod storages {
-  pub use specs::storage::{
-    BTreeStorage, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage, ReadStorage,
-    WriteStorage,
-  };
-}
-
 mod context;
 mod running;
 mod window;
@@ -44,7 +37,7 @@ pub use self::window::*;
 
 /// Creates a new entity builder that will build an entity in the engine
 /// context.
-pub fn create_entity<'a>(ctx: &'a mut Context) -> EntityBuilder<'a> {
+pub fn build_entity<'a>(ctx: &'a mut Context) -> EntityBuilder<'a> {
   ctx.world.create_entity()
 }
 
@@ -70,6 +63,15 @@ pub fn has_resource<T: Resource + Send>(ctx: &Context) -> bool {
   ctx.world.res.has_value::<T>()
 }
 
+pub mod storages {
+  pub use specs::storage::{
+    BTreeStorage, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage, ReadStorage,
+    VecStorage, WriteStorage,
+  };
+
+  pub type FlaggedBTreeStorage<T> = FlaggedStorage<T, VecStorage<T>>;
+}
+
 /// Adds storage for components of type `T` to the engine context.
 pub fn add_storage<T>(ctx: &mut Context)
 where
@@ -88,4 +90,21 @@ pub fn fetch_storage<'a, T: Component>(ctx: &'a Context) -> ReadStorage<'a, T> {
 /// context.
 pub fn fetch_storage_mut<'a, T: Component>(ctx: &'a Context) -> WriteStorage<'a, T> {
   ctx.world.write_storage::<T>()
+}
+
+/// Fetches the component for the entity in the given engine context and passes
+/// it by mutable reference to the given `editor` function. Returns the result
+/// of that function.
+pub fn edit_component<'a, T: Component, R>(
+  ctx: &'a Context,
+  entity: Entity,
+  editor: impl FnOnce(&mut T) -> R,
+) -> R {
+  let mut storage = fetch_storage_mut::<T>(ctx);
+
+  let component = storage
+    .get_mut(entity)
+    .expect("entity does not have that component");
+
+  editor(component)
 }
