@@ -2,19 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use prelude::*;
-
 use super::{Hierarchy, Layout, Rect, Root};
-use graphics::{Canvas, Color};
+use crate::graphics::{Canvas, Color, DrawParams, Image};
+use crate::prelude::*;
+use std::sync::{Arc, Mutex};
 
 /// Component that stores the style of a panel.
-#[derive(Component)]
-#[storage(BTreeStorage)]
 pub struct Style {
   /// Multiplicative color of the panel.
   pub color: Color,
   /// Background image of the panel.
-  pub background: Option<Arc<graphics::Image>>,
+  pub background: Option<Arc<Image>>,
   /// Custom draw implementation used to draw panel content.
   pub custom_draw: Option<Arc<Mutex<dyn CustomDraw>>>,
 }
@@ -24,6 +22,10 @@ impl Style {
   pub fn set_custom_draw(&mut self, custom_draw: impl CustomDraw) {
     self.custom_draw = Some(Arc::new(Mutex::new(custom_draw)));
   }
+}
+
+impl Component for Style {
+  type Storage = BTreeStorage<Self>;
 }
 
 impl Default for Style {
@@ -38,22 +40,22 @@ impl Default for Style {
 
 /// Trait for types that implement custom drawing for panel content.
 pub trait CustomDraw: Send + 'static {
-  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut graphics::Canvas, rect: &Rect);
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect);
 }
 
 // Implements custom draw for functions with the correct arguments.
 impl<T> CustomDraw for T
 where
-  T: Fn(&mut engine::Context, &mut graphics::Canvas, &Rect) + Send + 'static,
+  T: Fn(&mut engine::Context, &mut Canvas, &Rect) + Send + 'static,
 {
-  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut graphics::Canvas, rect: &Rect) {
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
     self(ctx, canvas, rect);
   }
 }
 
 /// Engine process that draws the root panel to the canvas.
 pub struct RootDrawer {
-  pub canvas: graphics::Canvas,
+  pub canvas: Canvas,
 }
 
 impl engine::Process for RootDrawer {
@@ -149,14 +151,13 @@ pub fn draw_panel(canvas: &mut Canvas, rect: &Rect, style: &Style) {
     canvas
       .draw(
         background,
-        graphics::DrawParams::default()
+        DrawParams::default()
           .color(style.color)
           .dest(rect.position)
           .scale(Vector2::new(
             rect.size.x / bg_size.x as f32,
             rect.size.y / bg_size.y as f32,
           )),
-      )
-      .expect("could not draw panel background");
+      ).expect("could not draw panel background");
   }
 }

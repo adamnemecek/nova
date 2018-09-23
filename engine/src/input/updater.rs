@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::{Input, Mapping};
+use crate::prelude::*;
+use crate::time::Clock;
 
 /// Engine process that updates `Input` state.
 pub struct Updater;
@@ -10,7 +12,7 @@ pub struct Updater;
 impl<'a> System<'a> for Updater {
   type SystemData = (
     ReadResource<'a, engine::Window>,
-    ReadResource<'a, time::Clock>,
+    ReadResource<'a, Clock>,
     ReadResource<'a, Mapping>,
     WriteResource<'a, Input>,
   );

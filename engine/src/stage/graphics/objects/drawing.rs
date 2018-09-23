@@ -2,8 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
-use graphics::DrawParams;
+use super::Sprite;
+use crate::graphics::panels::Rect;
+use crate::graphics::{Canvas, DrawParams, Image};
+use crate::prelude::*;
+use crate::stage::graphics::{Camera, CameraTarget};
+use crate::stage::objects::Object;
+use crate::stage::Position;
 
 /// State of object drawing.
 #[derive(Default)]
@@ -18,15 +23,11 @@ pub struct DrawSettings {
   /// Global scale for drawing objects.
   pub scale: f32,
   /// Image to use for drawing shadows.
-  pub shadow_image: graphics::Image,
+  pub shadow_image: Image,
 }
 
 /// Draws all of the objects on the stage and their shadows.
-pub fn draw(
-  ctx: &mut engine::Context,
-  canvas: &mut graphics::Canvas,
-  rect: &graphics::panels::Rect,
-) {
+pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
   let state = engine::fetch_resource::<DrawState>(ctx);
   let settings = engine::fetch_resource::<DrawSettings>(ctx);
 
@@ -100,8 +101,7 @@ pub fn draw(
       .draw(
         &atlas.image,
         DrawParams::default().src(src).scale(scale).dest(dest),
-      )
-      .expect("could not draw sprite");
+      ).expect("could not draw sprite");
   }
 
   canvas.pop_transform();

@@ -2,7 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::{AnimationState, Sprite};
+use crate::prelude::*;
+use crate::stage::objects::{AnimationFrame, Object, Template};
+use crate::stage::CompassDirection;
+use crate::time::Clock;
 
 /// System that animates an object by changing its sprite based on animation
 /// sequences in the object's template.
@@ -11,7 +15,7 @@ pub struct Animator;
 
 impl<'a> System<'a> for Animator {
   type SystemData = (
-    ReadResource<'a, time::Clock>,
+    ReadResource<'a, Clock>,
     ReadStorage<'a, Object>,
     WriteStorage<'a, AnimationState>,
     WriteStorage<'a, Sprite>,
@@ -21,9 +25,9 @@ impl<'a> System<'a> for Animator {
     for (object, state, sprite) in (&objects, &mut states, &mut sprites).join() {
       // Determine the sequence direction index.
       let direction = if object.template.cardinal_dirs_only {
-        stage::CompassDirection::nearest_cardinal(object.facing.remove_row(2))
+        CompassDirection::nearest_cardinal(object.facing.remove_row(2))
       } else {
-        stage::CompassDirection::nearest(object.facing.remove_row(2))
+        CompassDirection::nearest(object.facing.remove_row(2))
       } as usize;
 
       let sequence = get_animation_sequence(&object.template, state.animation, direction)

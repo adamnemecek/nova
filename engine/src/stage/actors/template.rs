@@ -2,7 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::MODE_COUNT;
+use crate::assets;
+use crate::prelude::*;
+use crate::stage::objects::Template as ObjectTemplate;
+use std::sync::Arc;
 
 /// Names of the object animations to use for each `Mode` in order.
 pub const MODE_ANIMATION_NAMES: [&'static str; MODE_COUNT] = ["none", "idle", "walk"];
@@ -11,7 +15,7 @@ pub const MODE_ANIMATION_NAMES: [&'static str; MODE_COUNT] = ["none", "idle", "w
 #[derive(Debug)]
 pub struct Template {
   /// Template for the actor's object.
-  pub object: Arc<objects::Template>,
+  pub object: Arc<ObjectTemplate>,
   /// Speed the actor walks in pixels per second.
   pub walk_speed: f32,
   /// List of object animation indices for each `Mode` in order.

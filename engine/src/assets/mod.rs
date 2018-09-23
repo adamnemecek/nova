@@ -13,13 +13,14 @@
 //! using an overlay file system. Structs and types representing game data or
 //! resources can implement these traits for easy loading and saving.
 
-use super::*;
-pub use std::path::{Path, PathBuf};
+use crate::prelude::*;
 
 mod asset;
 mod overlay_fs;
 
-pub use self::{asset::*, overlay_fs::*};
+pub use self::asset::*;
+pub use self::overlay_fs::*;
+pub use std::path::{Path, PathBuf};
 
 /// Error returned from asset operations.
 pub type Error = Box<dyn std::error::Error>;
@@ -31,6 +32,6 @@ pub fn init(ctx: &mut engine::Context) {
 
 /// Loads an asset from a file at the given path in the overlay file system of
 /// the given engine context.
-pub fn load<T: Asset>(ctx: &mut engine::Context, path: &Path) -> Result<T, assets::Error> {
+pub fn load<T: Asset>(ctx: &mut engine::Context, path: &Path) -> Result<T, Error> {
   engine::fetch_resource::<OverlayFs>(ctx).load(path)
 }

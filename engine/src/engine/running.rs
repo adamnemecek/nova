@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::Context;
 
 /// Trait describing a _process_ that is updated during each iteration of an
 /// engine loop.
@@ -49,7 +49,7 @@ pub fn run(ctx: &mut Context) {
   while !ctx.exiting {
     // Update the window each loop if there is one.
     if ctx.window_handle.borrow().is_some() {
-      update_window(ctx);
+      super::update_window(ctx);
     }
 
     // Run all systems and processes.

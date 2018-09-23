@@ -1,11 +1,8 @@
-extern crate clap;
-extern crate nova;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde_xml_rs;
-
 use clap::{App, Arg};
+use nova::assets::OverlayFs;
+use nova::graphics::AtlasData;
 use nova::prelude::*;
+use nova::stage::objects::{AnimationData, AnimationFrameData, TemplateData};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -22,8 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .help("Path to a directory containing source files for a monster.")
         .index(1)
         .required(true),
-    )
-    .arg(
+    ).arg(
       Arg::with_name("dest")
         .help("Path to save imported Nova assets to.")
         .index(2)
@@ -40,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let anim_data = audino::AnimData::load(&src_path.join("animations.xml"))?;
 
   // Create `graphics::AtlasData` from the AnimData.
-  let atlas_data = graphics::AtlasData {
+  let atlas_data = AtlasData {
     image: "image.png".into(),
     cell_size: (anim_data.frame_width as u16, anim_data.frame_height as u16),
     cell_origin: (
@@ -66,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for anim_frame in anim_sequence.frames.iter() {
           let cell = anim_frame.meta_frame_group_index;
 
-          frames.push(stage::objects::AnimationFrameData {
+          frames.push(AnimationFrameData {
             length: anim_frame.duration as f64,
             cell: (cell as u16 % 8, cell as u16 / 8),
             offset: (
@@ -80,13 +76,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         sequences.insert((*direction).to_owned(), frames);
       }
 
-      animations.push(stage::objects::AnimationData {
+      animations.push(AnimationData {
         name: (*name).to_owned(),
         sequences,
       });
     }
 
-    stage::objects::TemplateData {
+    TemplateData {
       atlas: "atlas.yml".into(),
       animations,
       cardinal_dirs_only: false,
@@ -100,8 +96,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Copy the monster's sprite sheet.
   fs::copy(&src_path.join("sheet.png"), &dest_path.join("image.png"))?;
 
-  // Create an `Assets` resource to save assets.
-  let fs = assets::OverlayFs {
+  // Create an `OverlayFs` to save assets with.
+  let fs = OverlayFs {
     root_paths: vec![std::env::current_dir().unwrap()],
   };
 

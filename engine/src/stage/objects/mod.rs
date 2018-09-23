@@ -8,7 +8,9 @@
 //! stage. Each object is created from a `Template` which can be loaded from a
 //! YAML file.
 
-use super::*;
+use super::{Position, Velocity};
+use crate::prelude::*;
+use std::sync::Arc;
 
 mod animation;
 mod template;

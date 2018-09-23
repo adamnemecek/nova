@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use crate::prelude::*;
+use crate::stage::{COMPASS_DIRECTION_COUNT, COMPASS_DIRECTION_NAMES};
 use std::collections::HashMap;
 
 /// Animation for an object.
@@ -11,7 +12,7 @@ pub struct Animation {
   /// Name of the animation.
   pub name: String,
   /// Array of optional sequences, one sequence per compass direction.
-  pub sequences: [Option<Vec<AnimationFrame>>; stage::direction::COMPASS_DIRECTION_COUNT],
+  pub sequences: [Option<Vec<AnimationFrame>>; COMPASS_DIRECTION_COUNT],
 }
 
 // Create animations from loaded data.
@@ -23,7 +24,7 @@ impl From<AnimationData> for Animation {
     animation.name = data.name;
 
     // Get a sequence from the data for each compass direction by name.
-    for (i, direction) in direction::COMPASS_DIRECTION_NAMES.iter().enumerate() {
+    for (i, direction) in COMPASS_DIRECTION_NAMES.iter().enumerate() {
       animation.sequences[i] = data
         .sequences
         .remove(*direction)

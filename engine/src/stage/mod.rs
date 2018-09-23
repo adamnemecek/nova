@@ -17,7 +17,7 @@
 //! For sprites that can only face four or eight directions, the `direction`
 //! module implements `CompassDirection` with conversion from vectors.
 
-use super::*;
+use crate::prelude::*;
 
 pub mod actors;
 pub mod graphics;

@@ -13,7 +13,9 @@
 //! An actor entity can be built from a `Template` loaded from a YAML asset
 //! file.
 
-use super::*;
+use super::objects;
+use crate::prelude::*;
+use std::sync::Arc;
 
 pub mod driving;
 

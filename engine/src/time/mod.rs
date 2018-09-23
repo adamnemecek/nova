@@ -7,9 +7,7 @@
 //! This module adds the `Clock` resource which stores time state and an
 //! `Updater` system that updates that resource every engine loop.
 
-use super::*;
-
-pub use std::time::{Duration, Instant};
+use crate::prelude::*;
 
 mod clock;
 mod updater;

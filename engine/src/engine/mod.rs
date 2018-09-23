@@ -16,19 +16,6 @@
 //! context is still in init mode and can have new systems and processes
 //! added.
 
-use super::*;
-
-use specs::World;
-pub use specs::{
-  Builder as EntityBuilderExt, Component, Entities, Entity, EntityBuilder, Join as StorageJoin,
-  ParJoin as ParStorageJoin, ReadStorage, System, WriteStorage,
-};
-
-pub use specs::shred::{
-  Fetch as FetchResource, FetchMut as FetchResourceMut, Read as ReadResource, Resource,
-  Write as WriteResource,
-};
-
 pub mod init;
 
 mod context;
@@ -38,6 +25,16 @@ mod window;
 pub use self::context::*;
 pub use self::running::*;
 pub use self::window::*;
+
+pub use specs::{
+  Builder as EntityBuilderExt, Component, Entities, Entity, EntityBuilder, Join as StorageJoin,
+  ParJoin as ParStorageJoin, ReadStorage, System, WriteStorage,
+};
+
+pub use specs::shred::{
+  Fetch as FetchResource, FetchMut as FetchResourceMut, Read as ReadResource, Resource,
+  Write as WriteResource,
+};
 
 /// Creates a new entity builder that will build an entity in the engine
 /// context.

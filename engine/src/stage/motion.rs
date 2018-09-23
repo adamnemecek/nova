@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use crate::prelude::*;
+use crate::stage::Position;
+use crate::time::Clock;
 
 /// Component that stores the velocity of an entity on the stage.
 #[derive(Component)]
@@ -26,7 +28,7 @@ pub struct Mover;
 
 impl<'a> System<'a> for Mover {
   type SystemData = (
-    ReadResource<'a, time::Clock>,
+    ReadResource<'a, Clock>,
     ReadStorage<'a, Velocity>,
     WriteStorage<'a, Position>,
   );

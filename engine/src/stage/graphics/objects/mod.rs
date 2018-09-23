@@ -9,8 +9,9 @@
 //! stored in the `State` resource which is used along with the `Settings`
 //! resource when rendering.
 
-use super::*;
-use stage::objects::*;
+use crate::graphics::panels;
+use crate::graphics::Image;
+use crate::prelude::*;
 
 mod animator;
 mod drawing;
@@ -69,17 +70,17 @@ pub fn init(ctx: &mut engine::Context) {
     ctx,
     DrawSettings {
       scale: 2.0,
-      shadow_image: graphics::Image::new(CIRCLE_PNG).expect("could not load circle.png"),
+      shadow_image: Image::new(CIRCLE_PNG).expect("could not load circle.png"),
     },
   );
 
-  let panel = graphics::panels::create_panel(ctx);
+  let panel = panels::create_panel(ctx);
 
-  engine::edit_component(ctx, panel, |style: &mut graphics::panels::Style| {
+  engine::edit_component(ctx, panel, |style: &mut panels::Style| {
     style.set_custom_draw(draw);
   });
 
-  graphics::panels::add_to_root(ctx, panel);
+  panels::add_to_root(ctx, panel);
 
   engine::init::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
   engine::init::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);

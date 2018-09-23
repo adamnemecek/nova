@@ -2,9 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::{Button, BUTTON_COUNT};
+use crate::assets;
+use crate::prelude::*;
 use std::collections::HashMap;
 
+pub use ggez::event::KeyCode;
+
+/// Number of possible `KeyCode` values.
 pub const KEY_CODE_COUNT: usize = KeyCode::Cut as usize + 1;
 
 /// Asset and resource that stores bindings from `Button` to `KeyCode`.

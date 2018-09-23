@@ -1,3 +1,4 @@
+use serde_derive::Deserialize;
 use serde_xml_rs;
 use std::error::Error;
 use std::fs::File;

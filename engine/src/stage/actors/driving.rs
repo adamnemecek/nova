@@ -7,11 +7,15 @@
 //! It is currently the simplest possible solution and will likely need to be
 //! completely changed in the near future.
 
-use super::*;
+use super::{Actor, Mode};
+use crate::input::{Button, Input};
+use crate::prelude::*;
+use crate::stage::objects::Object;
+use crate::stage::Velocity;
 
 /// Component that indicates an actor is being driven.
-#[derive(Component)]
-#[storage(BTreeStorage)]
+#[derive(Component, Default)]
+#[storage(NullStorage)]
 pub struct Driven;
 
 /// System that moves actors and adjusts their animation accordingly.
@@ -19,10 +23,10 @@ pub struct Driver;
 
 impl<'a> System<'a> for Driver {
   type SystemData = (
-    ReadResource<'a, input::Input>,
+    ReadResource<'a, Input>,
     ReadStorage<'a, Driven>,
     WriteStorage<'a, Actor>,
-    WriteStorage<'a, objects::Object>,
+    WriteStorage<'a, Object>,
     WriteStorage<'a, Velocity>,
   );
 
@@ -31,26 +35,26 @@ impl<'a> System<'a> for Driver {
     {
       let mut vector = Vector3::<f32>::zeros();
 
-      if input.is_pressed(input::Button::Up) {
+      if input.is_pressed(Button::Up) {
         vector.y -= 1.0;
       }
 
-      if input.is_pressed(input::Button::Left) {
+      if input.is_pressed(Button::Left) {
         vector.x -= 1.0;
       }
 
-      if input.is_pressed(input::Button::Down) {
+      if input.is_pressed(Button::Down) {
         vector.y += 1.0;
       }
 
-      if input.is_pressed(input::Button::Right) {
+      if input.is_pressed(Button::Right) {
         vector.x += 1.0;
       }
 
       if vector == Vector3::zeros() {
-        actor.mode = stage::actors::Mode::Idle;
+        actor.mode = Mode::Idle;
       } else {
-        actor.mode = stage::actors::Mode::Walk;
+        actor.mode = Mode::Walk;
 
         vector.normalize_mut();
         object.facing = vector;

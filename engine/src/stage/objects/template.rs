@@ -2,13 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::{Animation, AnimationData};
+use crate::assets;
+use crate::graphics::Atlas;
+use crate::prelude::*;
+use std::sync::Arc;
 
 /// Template for an object on the stage.
 #[derive(Debug)]
 pub struct Template {
   /// Atlas for the object's sprite.
-  pub atlas: Arc<graphics::Atlas>,
+  pub atlas: Arc<Atlas>,
   /// Whether the object only faces cardinal directions, rather than all eight
   /// compass directions.
   pub cardinal_dirs_only: bool,
@@ -59,7 +63,7 @@ pub struct TemplateData {
   /// Path to the atlas for the object's sprite.
   pub atlas: assets::PathBuf,
   /// List of data for the object's animations.
-  pub animations: Vec<animation::AnimationData>,
+  pub animations: Vec<AnimationData>,
   /// Whether the object only faces cardinal directions, rather than all eight
   /// compass directions.
   #[serde(default)]

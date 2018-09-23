@@ -2,7 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use super::DrawState;
+use crate::prelude::*;
+use crate::stage::objects::Object;
+use crate::stage::Position;
 
 /// Sorts objects on the stage by y-position and stores them in
 /// the `State` resource.

@@ -14,8 +14,7 @@
 //! using input from the `engine::Window`. If the engine context has no window,
 //! the system will run but no input will occur.
 
-use super::*;
-pub use ggez::event::KeyCode;
+use crate::prelude::*;
 
 mod button;
 mod mapping;

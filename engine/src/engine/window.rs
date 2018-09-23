@@ -2,11 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
-pub use ggez::event::winit_event;
+use super::Context;
+use crate::prelude::*;
 use ggez::event::winit_event::Event;
-pub use ggez::event::winit_event::WindowEvent;
 use std::cell::Cell;
+
+pub use ggez::event::winit_event;
+pub use ggez::event::winit_event::WindowEvent;
 
 /// Resource that stores the state of the engine window.
 pub struct Window {
@@ -52,7 +54,7 @@ pub struct WindowHandle {
 }
 
 pub fn create_window(ctx: &mut Context, title: &str) {
-  if has_resource::<Window>(ctx) {
+  if super::has_resource::<Window>(ctx) {
     panic!("engine context already has a window");
   }
 
@@ -73,7 +75,7 @@ pub fn create_window(ctx: &mut Context, title: &str) {
   ggez::graphics::present(&mut ggez).expect("could not do initial present");
 
   // Register a resource with info about the window.
-  add_resource(
+  super::add_resource(
     ctx,
     Window {
       size: Vector2::new(screen.w as f32, screen.h as f32),
@@ -97,7 +99,7 @@ pub(super) fn update_window(ctx: &mut Context) {
       .as_mut()
       .expect("engine context does not have a window");
 
-    let mut window = fetch_resource_mut::<Window>(ctx);
+    let mut window = super::fetch_resource_mut::<Window>(ctx);
 
     window.was_resized = false;
     window.events.clear();
@@ -125,6 +127,6 @@ pub(super) fn update_window(ctx: &mut Context) {
   }
 
   if closing {
-    exit(ctx);
+    super::exit(ctx);
   }
 }

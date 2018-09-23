@@ -2,6 +2,7 @@
 name = "nova"
 version = "0.1.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
 
 [dependencies]
 ggez = { git = "https://gitlab.com/bfrydl/ggez.git", branch = "devel" }

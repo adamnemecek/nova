@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use prelude::*;
+use crate::prelude::*;
 
 /// Component that stores a panel entity's parent and children.
-#[derive(Component, Default)]
-#[storage(BTreeStorage)]
+#[derive(Default)]
 pub struct Hierarchy {
   parent: Option<Entity>,
   children: Vec<Entity>,
@@ -17,6 +16,10 @@ impl Hierarchy {
   pub fn children(&self) -> &[Entity] {
     &self.children
   }
+}
+
+impl Component for Hierarchy {
+  type Storage = BTreeStorage<Self>;
 }
 
 /// Resource that stores the global root panel entity.

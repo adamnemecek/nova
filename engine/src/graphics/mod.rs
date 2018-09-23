@@ -17,8 +17,7 @@
 //! The `Atlas` struct provides a wrapper around an `Image` asset that slices
 //! it into cells, for use with tile sets or sprite sheets.
 
-use super::*;
-pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
+use crate::prelude::*;
 
 pub mod panels;
 
@@ -29,6 +28,7 @@ mod image;
 pub use self::atlas::*;
 pub use self::canvas::*;
 pub use self::image::*;
+pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {

@@ -1,8 +1,10 @@
-extern crate nova;
-#[macro_use]
-extern crate specs_derive;
-
+use nova::assets;
+use nova::graphics;
 use nova::graphics::panels;
+use nova::input;
+use nova::stage;
+use nova::time;
+use std::sync::Arc;
 
 mod prelude;
 
@@ -47,8 +49,7 @@ fn init(ctx: &mut engine::Context) {
     stage::graphics::actors::build_entity(engine::build_entity(ctx)),
   ).with(stage::Position {
     point: Point3::new(32.0, 24.0, 0.0),
-  })
-    .build();
+  }).build();
 
   // Set the camera target to the hero.
   stage::graphics::set_camera_target(ctx, hero);
