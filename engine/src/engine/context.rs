@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::init;
+use super::processes::ContextProcesses;
 use super::WindowHandle;
 use std::cell::RefCell;
 
@@ -14,6 +15,8 @@ pub struct Context<'a> {
   pub(super) init_state: Option<init::State<'a>>,
   /// Handle to the window created with `window::create_window`.
   pub(crate) window_handle: RefCell<Option<WindowHandle>>,
+  /// Processes running in the engine loop.
+  pub(super) processes: ContextProcesses,
   /// Whether the engine will exit.
   pub(super) exiting: bool,
 }
@@ -24,6 +27,7 @@ impl<'a> Context<'a> {
       world: specs::World::new(),
       window_handle: RefCell::new(None),
       init_state: Some(init::State::default()),
+      processes: ContextProcesses::default(),
       exiting: false,
     }
   }

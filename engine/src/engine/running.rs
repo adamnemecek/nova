@@ -2,17 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::processes;
 use super::Context;
 
-/// Trait describing a _process_ that is updated during each iteration of an
-/// engine loop.
-pub trait Process {
-  /// Invoked after early systems are dispatched.
-  fn early_update(&mut self, _ctx: &mut Context) {}
-  /// Invoked after systems are dispatched.
-  fn update(&mut self, _ctx: &mut Context) {}
-  /// Invoked after late systems are dispatched.
-  fn late_update(&mut self, _ctx: &mut Context) {}
+/// One of the phases of the engine loop.
+#[derive(Eq, PartialEq)]
+pub enum LoopPhase {
+  Early,
+  Normal,
+  Late,
 }
 
 /// Runs the engine loop until `engine::exit` is called.
@@ -40,7 +38,6 @@ pub fn run(ctx: &mut Context) {
     .take()
     .expect("engine context is already running");
 
-  let mut processes = init_state.processes;
   let mut early_systems = init_state.early_systems.build();
   let mut systems = init_state.systems.build();
   let mut late_systems = init_state.late_systems.build();
@@ -53,23 +50,15 @@ pub fn run(ctx: &mut Context) {
     }
 
     // Run all systems and processes.
-    early_systems.dispatch(&mut ctx.world.res);
 
-    for process in &mut processes {
-      process.early_update(ctx);
-    }
+    early_systems.dispatch(&mut ctx.world.res);
+    processes::run_phase(ctx, LoopPhase::Early);
 
     systems.dispatch(&mut ctx.world.res);
-
-    for process in &mut processes {
-      process.update(ctx);
-    }
+    processes::run_phase(ctx, LoopPhase::Normal);
 
     late_systems.dispatch(&mut ctx.world.res);
-
-    for process in &mut processes {
-      process.late_update(ctx);
-    }
+    processes::run_phase(ctx, LoopPhase::Late);
   }
 }
 

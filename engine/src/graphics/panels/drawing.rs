@@ -59,7 +59,7 @@ pub struct RootDrawer {
 }
 
 impl engine::Process for RootDrawer {
-  fn late_update(&mut self, ctx: &mut engine::Context) {
+  fn run(&mut self, ctx: &mut engine::Context) {
     // Resize canvas to match window size.
     {
       let window = engine::fetch_resource::<engine::Window>(ctx);
