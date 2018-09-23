@@ -4,6 +4,8 @@
 
 use prelude::*;
 
+use super::Canvas;
+
 mod drawing;
 mod hierarchy;
 mod layout;
@@ -15,7 +17,7 @@ pub use self::layout::*;
 pub use self::rect::*;
 
 /// Initializes panels for the given engine context.
-pub fn init(ctx: &mut engine::Context) {
+pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
   engine::add_storage::<Hierarchy>(ctx);
   engine::add_storage::<Layout>(ctx);
   engine::add_storage::<Style>(ctx);
@@ -23,7 +25,6 @@ pub fn init(ctx: &mut engine::Context) {
   let root = create_panel(ctx);
 
   engine::add_resource(ctx, Root { entity: Some(root) });
-  graphics::add_draw_layer(ctx, PanelLayer { root });
 
   engine::init::add_system_late(
     ctx,
@@ -31,6 +32,8 @@ pub fn init(ctx: &mut engine::Context) {
     "graphics::panels::LayoutSolver",
     &[],
   );
+
+  engine::init::add_process(ctx, RootDrawer { canvas });
 }
 
 /// Creates a new panel entity in the given engine context.

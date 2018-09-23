@@ -25,18 +25,14 @@ pub mod panels;
 mod atlas;
 mod canvas;
 mod image;
-mod layers;
 
 pub use self::atlas::*;
 pub use self::canvas::*;
 pub use self::image::*;
-pub use self::layers::*;
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {
   let canvas = Canvas::new(ctx);
 
-  engine::init::add_process(ctx, LayerDrawer::new(canvas));
-
-  panels::init(ctx);
+  panels::init(ctx, canvas);
 }

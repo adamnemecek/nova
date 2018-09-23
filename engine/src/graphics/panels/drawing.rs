@@ -4,8 +4,8 @@
 
 use prelude::*;
 
-use super::{Hierarchy, Layout, Rect};
-use graphics::{Canvas, Color, DrawLayer};
+use super::{Hierarchy, Layout, Rect, Root};
+use graphics::{Canvas, Color};
 
 /// Component that stores the style of a panel.
 #[derive(Component)]
@@ -48,6 +48,34 @@ where
 {
   fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut graphics::Canvas, rect: &Rect) {
     self(ctx, canvas, rect);
+  }
+}
+
+/// Engine process that draws the root panel to the canvas.
+pub struct RootDrawer {
+  pub canvas: graphics::Canvas,
+}
+
+impl engine::Process for RootDrawer {
+  fn late_update(&mut self, ctx: &mut engine::Context) {
+    // Resize canvas to match window size.
+    {
+      let window = engine::fetch_resource::<engine::Window>(ctx);
+
+      if window.was_resized() {
+        self.canvas.resize(window.size());
+      }
+    }
+
+    let root = engine::fetch_resource::<Root>(ctx).entity;
+
+    if let Some(root) = root {
+      self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
+
+      draw(ctx, &mut self.canvas, root);
+
+      self.canvas.present();
+    }
   }
 }
 
@@ -130,17 +158,5 @@ pub fn draw_panel(canvas: &mut Canvas, rect: &Rect, style: &Style) {
           )),
       )
       .expect("could not draw panel background");
-  }
-}
-
-/// Draw layer that draws a hierarchy of panels.
-pub struct PanelLayer {
-  /// Root panel entity to draw.
-  pub root: Entity,
-}
-
-impl DrawLayer for PanelLayer {
-  fn draw(&self, ctx: &mut engine::Context, canvas: &mut Canvas) {
-    draw(ctx, canvas, self.root);
   }
 }

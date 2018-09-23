@@ -73,10 +73,16 @@ pub fn init(ctx: &mut engine::Context) {
     },
   );
 
+  let panel = graphics::panels::create_panel(ctx);
+
+  engine::edit_component(ctx, panel, |style: &mut graphics::panels::Style| {
+    style.set_custom_draw(draw);
+  });
+
+  graphics::panels::add_to_root(ctx, panel);
+
   engine::init::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
   engine::init::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
-
-  graphics::add_draw_layer(ctx, DrawLayer);
 }
 
 /// Adds components to the entity for object visuals.
