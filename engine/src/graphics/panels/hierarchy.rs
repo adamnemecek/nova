@@ -5,7 +5,8 @@
 use crate::prelude::*;
 
 /// Component that stores a panel entity's parent and children.
-#[derive(Default)]
+#[derive(Default, Component)]
+#[storage(BTreeMapStorage)]
 pub struct Hierarchy {
   parent: Option<Entity>,
   children: Vec<Entity>,
@@ -16,10 +17,6 @@ impl Hierarchy {
   pub fn children(&self) -> &[Entity] {
     &self.children
   }
-}
-
-impl Component for Hierarchy {
-  type Storage = BTreeStorage<Self>;
 }
 
 /// Resource that stores the global root panel entity.

@@ -8,6 +8,8 @@ use crate::prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// Component that stores the style of a panel.
+#[derive(Component)]
+#[storage(BTreeStorage)]
 pub struct Style {
   /// Multiplicative color of the panel.
   pub color: Color,
@@ -22,10 +24,6 @@ impl Style {
   pub fn set_custom_draw(&mut self, custom_draw: impl CustomDraw) {
     self.custom_draw = Some(Arc::new(Mutex::new(custom_draw)));
   }
-}
-
-impl Component for Style {
-  type Storage = BTreeStorage<Self>;
 }
 
 impl Default for Style {
