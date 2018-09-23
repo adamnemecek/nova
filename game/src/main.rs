@@ -1,10 +1,9 @@
 extern crate nova;
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate specs_derive;
 
-mod panels;
+use nova::graphics::panels;
+
 mod prelude;
 
 use self::prelude::*;
@@ -23,8 +22,6 @@ pub fn main() {
   stage::init(ctx);
   stage::actors::driving::init(ctx);
   stage::graphics::init(ctx);
-
-  panels::init(ctx);
 
   init(ctx);
 
@@ -64,15 +61,42 @@ fn init(ctx: &mut engine::Context) {
     input::set_mapping(ctx, mapping);
   }
 
-  let image =
-    assets::load(ctx, &assets::PathBuf::from("solid-white.png")).expect("could not load image");
+  {
+    let image = Arc::new(
+      assets::load::<graphics::Image>(ctx, &assets::PathBuf::from("solid-white.png"))
+        .expect("could not load image"),
+    );
 
-  let panel = panels::create_panel(ctx);
+    let parent = panels::create_panel(ctx);
 
-  engine::edit_component(ctx, panel, |style: &mut panels::Style| {
-    style.background = Some(Arc::new(image));
-    style.color = graphics::Color::new(1.0, 0.8, 0.8, 0.8);
-  });
+    engine::edit_component(ctx, parent, |style: &mut panels::Style| {
+      style.background = Some(image.clone());
+      style.color = graphics::Color::new(0.8, 0.2, 0.2, 1.0);
+    });
 
-  panels::add_to_root(ctx, panel);
+    panels::add_to_root(ctx, parent);
+
+    let child = panels::create_panel(ctx);
+
+    engine::edit_component(ctx, child, |style: &mut panels::Style| {
+      style.background = Some(image.clone());
+      style.color = graphics::Color::new(0.2, 0.2, 0.8, 1.0);
+
+      style.set_custom_draw(
+        move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &panels::Rect| {
+          canvas
+            .draw(&image, graphics::DrawParams::default())
+            .expect("could not draw image");
+        },
+      );
+    });
+
+    engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
+      layout.width = panels::Dimension::Fixed(100.0);
+      layout.left = panels::Dimension::Auto;
+      layout.right = panels::Dimension::Fixed(0.0);
+    });
+
+    panels::set_parent(ctx, child, Some(parent));
+  }
 }
