@@ -4,7 +4,7 @@
 
 use prelude::*;
 
-use super::{Hierarchy, Layout};
+use super::{Hierarchy, Layout, Rect};
 use graphics::{Canvas, Color, DrawLayer};
 
 /// Component that stores the style of a panel.
@@ -15,6 +15,15 @@ pub struct Style {
   pub color: Color,
   /// Background image of the panel.
   pub background: Option<Arc<graphics::Image>>,
+  /// Custom draw implementation used to draw panel content.
+  pub custom_draw: Option<Arc<Mutex<dyn CustomDraw>>>,
+}
+
+impl Style {
+  /// Sets a `CustomDraw` for drawing custom content.
+  pub fn set_custom_draw(&mut self, custom_draw: impl CustomDraw) {
+    self.custom_draw = Some(Arc::new(Mutex::new(custom_draw)));
+  }
 }
 
 impl Default for Style {
@@ -22,26 +31,60 @@ impl Default for Style {
     Style {
       color: Color::new(1.0, 1.0, 1.0, 1.0),
       background: None,
+      custom_draw: None,
     }
   }
 }
 
-/// Draw layer that draws a hierarchy of panels.
-pub struct PanelLayer {
-  /// Root panel entity to draw.
-  pub root: Entity,
+/// Trait for types that implement custom drawing for panel content.
+pub trait CustomDraw: Send + 'static {
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut graphics::Canvas, rect: &Rect);
 }
 
-impl DrawLayer for PanelLayer {
-  fn draw(&self, ctx: &mut engine::Context, canvas: &mut Canvas) {
+// Implements custom draw for functions with the correct arguments.
+impl<T> CustomDraw for T
+where
+  T: Fn(&mut engine::Context, &mut graphics::Canvas, &Rect) + Send + 'static,
+{
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut graphics::Canvas, rect: &Rect) {
+    self(ctx, canvas, rect);
+  }
+}
+
+/// Draws the given `panel` and its children.
+fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
+  // Begin with a stack containing the given panel.
+  let mut stack = Vec::new();
+
+  stack.push(panel);
+
+  // Repeatedly re-enter the `draw_stack` function with the stack as it
+  // “yields” tuples describing custom draw functions.
+  //
+  // Because custom draws need mutable access to the engine context, it is not
+  // possible to keep a reference to a component storage alive when performing
+  // one. This re-entrant behaviour fetches component storages once for every
+  // “stretch” of panels that do not custom render.
+  while let Some(custom) = draw_stack(ctx, canvas, &mut stack) {
+    let (custom, rect) = custom;
+
+    custom
+      .lock()
+      .expect("could not lock CustomDraw")
+      .draw(ctx, canvas, &rect);
+  }
+
+  /// Local function that draws the stack until it finds an entity with a custom
+  /// draw implementation, at which point it “yields” by returning information
+  /// on the custom draw.
+  fn draw_stack(
+    ctx: &mut engine::Context,
+    canvas: &mut Canvas,
+    stack: &mut Vec<Entity>,
+  ) -> Option<(Arc<Mutex<CustomDraw>>, Rect)> {
     let hierarchy = engine::fetch_storage::<Hierarchy>(ctx);
     let layouts = engine::fetch_storage::<Layout>(ctx);
     let styles = engine::fetch_storage::<Style>(ctx);
-
-    // Begin with a stack containing the root element.
-    let mut stack = Vec::new();
-
-    stack.push(self.root);
 
     // Pop elements off of the stack until it is empty.
     while let Some(entity) = stack.pop() {
@@ -55,20 +98,25 @@ impl DrawLayer for PanelLayer {
       // If this entity has layout and style, draw it.
       if let Some(layout) = layouts.get(entity) {
         if let Some(style) = styles.get(entity) {
-          draw_panel(canvas, layout, style);
+          draw_panel(canvas, layout.absolute_rect(), style);
+
+          if let Some(ref custom_draw) = style.custom_draw {
+            return Some((custom_draw.clone(), layout.absolute_rect().clone()));
+          }
         }
       }
     }
+
+    None
   }
 }
 
-/// Draws a panel with the given `layout` and `style`.
-fn draw_panel(canvas: &mut Canvas, layout: &Layout, style: &Style) {
+/// Draws a panel with the given `rect` and `style`.
+pub fn draw_panel(canvas: &mut Canvas, rect: &Rect, style: &Style) {
   // If the panel has a background image, draw it covering the entire rect of
   // the panel.
   if let Some(ref background) = style.background {
     let bg_size = background.size();
-    let rect = layout.absolute_rect();
 
     canvas
       .draw(
@@ -82,5 +130,17 @@ fn draw_panel(canvas: &mut Canvas, layout: &Layout, style: &Style) {
           )),
       )
       .expect("could not draw panel background");
+  }
+}
+
+/// Draw layer that draws a hierarchy of panels.
+pub struct PanelLayer {
+  /// Root panel entity to draw.
+  pub root: Entity,
+}
+
+impl DrawLayer for PanelLayer {
+  fn draw(&self, ctx: &mut engine::Context, canvas: &mut Canvas) {
+    draw(ctx, canvas, self.root);
   }
 }

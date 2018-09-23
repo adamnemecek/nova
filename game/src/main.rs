@@ -82,6 +82,14 @@ fn init(ctx: &mut engine::Context) {
     engine::edit_component(ctx, child, |style: &mut panels::Style| {
       style.background = Some(image.clone());
       style.color = graphics::Color::new(0.2, 0.2, 0.8, 1.0);
+
+      style.set_custom_draw(
+        move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &panels::Rect| {
+          canvas
+            .draw(&image, graphics::DrawParams::default())
+            .expect("could not draw image");
+        },
+      );
     });
 
     engine::edit_component(ctx, child, |layout: &mut panels::Layout| {

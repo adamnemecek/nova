@@ -4,7 +4,7 @@
 
 use prelude::*;
 
-use super::Hierarchy;
+use super::{Hierarchy, Rect};
 
 /// Component that stores layout state for a panel entity.
 #[derive(Component)]
@@ -60,24 +60,6 @@ pub enum Dimension {
   Auto,
   /// Dimension is fixed to a specific value.
   Fixed(f32),
-}
-
-/// Struct describing a rectangle in 2D space.
-#[derive(Clone, Copy)]
-pub struct Rect {
-  /// Position of the rectangle's top left corner.
-  pub position: Point2<f32>,
-  /// Size of the rectangle.
-  pub size: Vector2<f32>,
-}
-
-impl Default for Rect {
-  fn default() -> Rect {
-    Rect {
-      position: Point2::origin(),
-      size: Vector2::zeros(),
-    }
-  }
 }
 
 /// System that computes absolute location and size of every panel based on
@@ -143,11 +125,9 @@ impl<'a> System<'a> for LayoutSolver {
           size: Vector2::new(x.1, y.1),
         };
 
-        // Set the absolute rect to the parent rect + the local rect.
-        layout.absolute_rect = Rect {
-          position: parent_rect.position + layout.rect.position.coords,
-          size: layout.rect.size,
-        };
+        // Offset the local rect by the parent's position to get the absolute
+        // rect.
+        layout.absolute_rect = layout.rect.offset(parent_rect.position.coords);
 
         // If this element has children, push them each onto the stack with that
         // absolute rect.
