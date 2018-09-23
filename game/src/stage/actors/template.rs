@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::MODE_COUNT;
-use crate::assets;
 use crate::prelude::*;
 use crate::stage::objects::Template as ObjectTemplate;
+use nova::assets;
 use std::sync::Arc;
 
 /// Names of the object animations to use for each `Mode` in order.

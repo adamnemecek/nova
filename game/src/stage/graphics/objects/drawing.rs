@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Sprite;
-use crate::graphics::panels::Rect;
-use crate::graphics::{Canvas, DrawParams, Image};
 use crate::prelude::*;
 use crate::stage::graphics::{Camera, CameraTarget};
 use crate::stage::objects::Object;
 use crate::stage::Position;
+use nova::graphics::panels::Rect;
+use nova::graphics::{Canvas, Color, DrawParams, Image};
 
 /// State of object drawing.
 #[derive(Default)]
@@ -63,7 +63,7 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
       .draw(
         &settings.shadow_image,
         DrawParams::default()
-          .color(ggez::graphics::Color::new(0.0, 0.0, 0.0, 0.2))
+          .color(Color::new(0.0, 0.0, 0.0, 0.2))
           .scale(Vector2::new(
             size.x / image_size.x as f32,
             size.y / image_size.y as f32,

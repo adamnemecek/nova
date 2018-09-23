@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Animation, AnimationData};
-use crate::assets;
-use crate::graphics::Atlas;
 use crate::prelude::*;
+use nova::assets;
+use nova::graphics::Atlas;
 use std::sync::Arc;
 
 /// Template for an object on the stage.

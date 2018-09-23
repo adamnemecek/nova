@@ -6,7 +6,7 @@ use super::{AnimationState, Sprite};
 use crate::prelude::*;
 use crate::stage::objects::{AnimationFrame, Object, Template};
 use crate::stage::CompassDirection;
-use crate::time::Clock;
+use nova::time::Clock;
 
 /// System that animates an object by changing its sprite based on animation
 /// sequences in the object's template.

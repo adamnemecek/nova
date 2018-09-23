@@ -8,10 +8,10 @@
 //! completely changed in the near future.
 
 use super::{Actor, Mode};
-use crate::input::{Button, Input};
 use crate::prelude::*;
 use crate::stage::objects::Object;
 use crate::stage::Velocity;
+use nova::input::{Button, Input};
 
 /// Component that indicates an actor is being driven.
 #[derive(Component, Default)]

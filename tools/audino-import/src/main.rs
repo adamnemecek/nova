@@ -1,8 +1,8 @@
 use clap::{App, Arg};
 use nova::assets::OverlayFs;
 use nova::graphics::AtlasData;
-use nova::prelude::*;
-use nova::stage::objects::{AnimationData, AnimationFrameData, TemplateData};
+use nova_game::prelude::*;
+use nova_game::stage::objects::{AnimationData, AnimationFrameData, TemplateData};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;

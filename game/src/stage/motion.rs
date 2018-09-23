@@ -4,7 +4,7 @@
 
 use crate::prelude::*;
 use crate::stage::Position;
-use crate::time::Clock;
+use nova::time::Clock;
 
 /// Component that stores the velocity of an entity on the stage.
 #[derive(Component)]

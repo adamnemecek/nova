@@ -2,11 +2,11 @@ use nova::assets;
 use nova::graphics;
 use nova::graphics::panels;
 use nova::input;
-use nova::stage;
 use nova::time;
 use std::sync::Arc;
 
 mod prelude;
+mod stage;
 
 use self::prelude::*;
 

@@ -9,9 +9,9 @@
 //! stored in the `State` resource which is used along with the `Settings`
 //! resource when rendering.
 
-use crate::graphics::panels;
-use crate::graphics::Image;
 use crate::prelude::*;
+use nova::graphics::panels;
+use nova::graphics::Image;
 
 mod animator;
 mod drawing;
