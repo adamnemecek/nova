@@ -85,8 +85,9 @@ fn init(ctx: &mut engine::Context) {
     });
 
     engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
-      layout.width = panels::LayoutDimension::Fixed(100.0);
-      layout.left = panels::LayoutDimension::Auto;
+      layout.width = panels::Dimension::Fixed(100.0);
+      layout.left = panels::Dimension::Auto;
+      layout.right = panels::Dimension::Fixed(0.0);
     });
 
     panels::set_parent(ctx, child, Some(parent));

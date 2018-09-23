@@ -12,12 +12,11 @@ pub use self::drawing::*;
 pub use self::hierarchy::*;
 pub use self::layout::*;
 
+/// Initializes panels for the given engine context.
 pub fn init(ctx: &mut engine::Context) {
   engine::add_storage::<Hierarchy>(ctx);
   engine::add_storage::<Layout>(ctx);
   engine::add_storage::<Style>(ctx);
-
-  engine::add_resource(ctx, PanelLayerState::default());
 
   let root = create_panel(ctx);
 
@@ -32,6 +31,7 @@ pub fn init(ctx: &mut engine::Context) {
   graphics::add_draw_layer(ctx, PanelLayer { root });
 }
 
+/// Creates a new panel entity in the given engine context.
 pub fn create_panel(ctx: &mut engine::Context) -> Entity {
   engine::build_entity(ctx)
     .with(Layout::default())
