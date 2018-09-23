@@ -22,15 +22,15 @@ pub fn init(ctx: &mut engine::Context) {
 
   let root = create_panel(ctx);
 
+  engine::add_resource(ctx, Root { entity: Some(root) });
+  graphics::add_draw_layer(ctx, PanelLayer { root });
+
   engine::init::add_system_late(
     ctx,
     LayoutSolver::new(root),
     "graphics::panels::LayoutSolver",
     &[],
   );
-
-  engine::add_resource(ctx, Root { entity: Some(root) });
-  graphics::add_draw_layer(ctx, PanelLayer { root });
 }
 
 /// Creates a new panel entity in the given engine context.

@@ -20,6 +20,8 @@
 use super::*;
 pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
 
+pub mod panels;
+
 mod atlas;
 mod canvas;
 mod image;
@@ -35,4 +37,6 @@ pub fn init(ctx: &mut engine::Context) {
   let canvas = Canvas::new(ctx);
 
   engine::init::add_process(ctx, LayerDrawer::new(canvas));
+
+  panels::init(ctx);
 }

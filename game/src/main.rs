@@ -2,7 +2,8 @@ extern crate nova;
 #[macro_use]
 extern crate specs_derive;
 
-mod panels;
+use nova::graphics::panels;
+
 mod prelude;
 
 use self::prelude::*;
@@ -21,8 +22,6 @@ pub fn main() {
   stage::init(ctx);
   stage::actors::driving::init(ctx);
   stage::graphics::init(ctx);
-
-  panels::init(ctx);
 
   init(ctx);
 
