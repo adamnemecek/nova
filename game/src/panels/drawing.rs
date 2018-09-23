@@ -63,7 +63,7 @@ fn draw_panel(canvas: &mut Canvas, layout: &Layout, style: &Style) {
   if let Some(ref background) = style.background {
     let bg_size = background.size();
 
-    let rect = layout.root_rect();
+    let rect = layout.absolute_rect();
 
     canvas
       .draw(

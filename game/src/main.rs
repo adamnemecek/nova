@@ -72,7 +72,7 @@ fn init(ctx: &mut engine::Context) {
 
     engine::edit_component(ctx, parent, |style: &mut panels::Style| {
       style.background = Some(image.clone());
-      style.color = graphics::Color::new(1.0, 0.8, 0.8, 0.8);
+      style.color = graphics::Color::new(0.8, 0.2, 0.2, 1.0);
     });
 
     panels::add_to_root(ctx, parent);
@@ -81,7 +81,12 @@ fn init(ctx: &mut engine::Context) {
 
     engine::edit_component(ctx, child, |style: &mut panels::Style| {
       style.background = Some(image.clone());
-      style.color = graphics::Color::new(0.8, 0.8, 1.0, 0.8);
+      style.color = graphics::Color::new(0.2, 0.2, 0.8, 1.0);
+    });
+
+    engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
+      layout.width = panels::LayoutDimension::Fixed(100.0);
+      layout.left = panels::LayoutDimension::Auto;
     });
 
     panels::set_parent(ctx, child, Some(parent));
