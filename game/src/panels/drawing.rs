@@ -63,15 +63,17 @@ fn draw_panel(canvas: &mut Canvas, layout: &Layout, style: &Style) {
   if let Some(ref background) = style.background {
     let bg_size = background.size();
 
+    let rect = layout.root_rect();
+
     canvas
       .draw(
         background,
         graphics::DrawParams::default()
           .color(style.color)
-          .dest(Point2::from_coordinates(layout.root_offset()))
+          .dest(Point2::from_coordinates(rect.offset))
           .scale(Vector2::new(
-            layout.size.x / bg_size.x as f32,
-            layout.size.y / bg_size.y as f32,
+            rect.size.x / bg_size.x as f32,
+            rect.size.y / bg_size.y as f32,
           )),
       )
       .expect("could not draw panel background");

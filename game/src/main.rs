@@ -1,7 +1,5 @@
 extern crate nova;
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate specs_derive;
 
 mod panels;
@@ -64,15 +62,28 @@ fn init(ctx: &mut engine::Context) {
     input::set_mapping(ctx, mapping);
   }
 
-  let image =
-    assets::load(ctx, &assets::PathBuf::from("solid-white.png")).expect("could not load image");
+  {
+    let image = Arc::new(
+      assets::load::<graphics::Image>(ctx, &assets::PathBuf::from("solid-white.png"))
+        .expect("could not load image"),
+    );
 
-  let panel = panels::create_panel(ctx);
+    let parent = panels::create_panel(ctx);
 
-  engine::edit_component(ctx, panel, |style: &mut panels::Style| {
-    style.background = Some(Arc::new(image));
-    style.color = graphics::Color::new(1.0, 0.8, 0.8, 0.8);
-  });
+    engine::edit_component(ctx, parent, |style: &mut panels::Style| {
+      style.background = Some(image.clone());
+      style.color = graphics::Color::new(1.0, 0.8, 0.8, 0.8);
+    });
 
-  panels::add_to_root(ctx, panel);
+    panels::add_to_root(ctx, parent);
+
+    let child = panels::create_panel(ctx);
+
+    engine::edit_component(ctx, child, |style: &mut panels::Style| {
+      style.background = Some(image.clone());
+      style.color = graphics::Color::new(0.8, 0.8, 1.0, 0.8);
+    });
+
+    panels::set_parent(ctx, child, Some(parent));
+  }
 }
