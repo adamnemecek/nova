@@ -1,8 +1,6 @@
 [workspace]
 members = [
-  "engine",
-  "game",
-  "tools/audino-import",
+  "gfx-test",
 ]
 
 [profile.dev]

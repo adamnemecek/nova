@@ -1,0 +1,18 @@
+[package]
+name = "gfx-test"
+version = "0.1.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
+
+[dependencies]
+gfx-hal = { git = "https://github.com/gfx-rs/gfx" }
+winit = "0.17"
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx" }
+
+[target.'cfg(windows)'.dependencies]
+gfx-backend-dx12 = { git = "https://github.com/gfx-rs/gfx"}
+
+[target.'cfg(target_os = "macos")'.dependencies]
+gfx-backend-metal = { git = "https://github.com/gfx-rs/gfx"}
