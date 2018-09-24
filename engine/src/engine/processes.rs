@@ -35,7 +35,7 @@ impl Default for ContextProcesses {
 // Implement `Process` for functions that take a context.
 impl<T> Process for T
 where
-  T: Fn(&mut Context),
+  T: FnMut(&mut Context),
 {
   fn run(&mut self, ctx: &mut Context) {
     self(ctx);
