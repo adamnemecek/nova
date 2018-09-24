@@ -52,13 +52,13 @@ pub fn run(ctx: &mut Context) {
     // Run all systems and processes.
 
     early_systems.dispatch(&mut ctx.world.res);
-    processes::run_phase(ctx, LoopPhase::Early);
+    processes::run_processes(ctx, LoopPhase::Early);
 
     systems.dispatch(&mut ctx.world.res);
-    processes::run_phase(ctx, LoopPhase::Normal);
+    processes::run_processes(ctx, LoopPhase::Normal);
 
     late_systems.dispatch(&mut ctx.world.res);
-    processes::run_phase(ctx, LoopPhase::Late);
+    processes::run_processes(ctx, LoopPhase::Late);
   }
 }
 

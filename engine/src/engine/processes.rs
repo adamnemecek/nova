@@ -67,7 +67,7 @@ pub fn add_process_late(ctx: &mut Context, process: impl Process + 'static) {
 }
 
 /// Runs the given phase of processes.
-pub(super) fn run_phase(ctx: &mut Context, phase: LoopPhase) {
+pub(super) fn run_processes(ctx: &mut Context, phase: LoopPhase) {
   // Take the list of processes out of the `Option` for the given phase.
   let option = match phase {
     LoopPhase::Early => &mut ctx.processes.early,
