@@ -30,7 +30,7 @@ pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
     &[],
   );
 
-  engine::add_process_late(ctx, RootDrawer { canvas });
+  drawing::init(ctx, canvas);
 }
 
 /// Creates a new panel entity in the given engine context.

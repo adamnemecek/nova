@@ -51,32 +51,29 @@ where
   }
 }
 
-/// Engine process that draws the root panel to the canvas.
-pub struct RootDrawer {
-  pub canvas: Canvas,
-}
-
-impl engine::Process for RootDrawer {
-  fn run(&mut self, ctx: &mut engine::Context) {
+/// Initializes panel drawing for the given engine context and canvas.
+pub fn init(ctx: &mut engine::Context, mut canvas: Canvas) {
+  // Adds a late process that updates the canvas and draws the root panel.
+  engine::add_process_late(ctx, move |ctx: &mut engine::Context| {
     // Resize canvas to match window size.
     {
       let window = engine::fetch_resource::<engine::Window>(ctx);
 
       if window.was_resized() {
-        self.canvas.resize(window.size());
+        canvas.resize(window.size());
       }
     }
 
     let root = engine::fetch_resource::<Root>(ctx).entity;
 
     if let Some(root) = root {
-      self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
+      canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
 
-      draw(ctx, &mut self.canvas, root);
+      draw(ctx, &mut canvas, root);
 
-      self.canvas.present();
+      canvas.present();
     }
-  }
+  });
 }
 
 /// Draws the given `panel` and its children.
@@ -123,8 +120,8 @@ fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
         }
       }
 
-      // If this entity has layout and style, draw it.
       if let Some(layout) = layouts.get(entity) {
+        // If this entity has layout and style, draw it.
         if let Some(style) = styles.get(entity) {
           draw_panel(canvas, layout.absolute_rect(), style);
 
