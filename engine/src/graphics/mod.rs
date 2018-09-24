@@ -28,7 +28,7 @@ mod image;
 pub use self::atlas::*;
 pub use self::canvas::*;
 pub use self::image::*;
-pub use ggez::graphics::{Color, DrawParam as DrawParams, Rect};
+pub use ggez::graphics::{Color, DrawParam as DrawParams};
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {

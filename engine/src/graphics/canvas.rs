@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Color, DrawParams, Image, Rect};
+use super::{Color, DrawParams, Image};
 use crate::prelude::*;
 
 /// Struct for drawing to a `Window`.
@@ -38,8 +38,10 @@ impl Canvas {
 
   /// Resizes the canvas to the given size in pixels.
   pub fn resize(&mut self, size: Vector2<f32>) {
-    ggez::graphics::set_screen_coordinates(&mut self.ctx, Rect::new(0.0, 0.0, size.x, size.y))
-      .expect("could not set screen coordinates");
+    ggez::graphics::set_screen_coordinates(
+      &mut self.ctx,
+      ggez::graphics::Rect::new(0.0, 0.0, size.x, size.y),
+    ).expect("could not set screen coordinates");
 
     self.size = size;
   }

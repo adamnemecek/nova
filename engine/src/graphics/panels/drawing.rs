@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Hierarchy, Layout, Rect, Root};
+use super::{Hierarchy, Layout, Root};
 use crate::graphics::{Canvas, Color, DrawParams, Image};
 use crate::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -38,15 +38,15 @@ impl Default for Style {
 
 /// Trait for types that implement custom drawing for panel content.
 pub trait CustomDraw: Send + 'static {
-  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect);
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>);
 }
 
 // Implements custom draw for functions with the correct arguments.
 impl<T> CustomDraw for T
 where
-  T: Fn(&mut engine::Context, &mut Canvas, &Rect) + Send + 'static,
+  T: Fn(&mut engine::Context, &mut Canvas, &Rect<f32>) + Send + 'static,
 {
-  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
+  fn draw(&mut self, ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
     self(ctx, canvas, rect);
   }
 }
@@ -109,7 +109,7 @@ fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
     ctx: &mut engine::Context,
     canvas: &mut Canvas,
     stack: &mut Vec<Entity>,
-  ) -> Option<(Arc<Mutex<CustomDraw>>, Rect)> {
+  ) -> Option<(Arc<Mutex<CustomDraw>>, Rect<f32>)> {
     let hierarchy = engine::fetch_storage::<Hierarchy>(ctx);
     let layouts = engine::fetch_storage::<Layout>(ctx);
     let styles = engine::fetch_storage::<Style>(ctx);
@@ -140,7 +140,7 @@ fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
 }
 
 /// Draws a panel with the given `rect` and `style`.
-pub fn draw_panel(canvas: &mut Canvas, rect: &Rect, style: &Style) {
+pub fn draw_panel(canvas: &mut Canvas, rect: &Rect<f32>, style: &Style) {
   // If the panel has a background image, draw it covering the entire rect of
   // the panel.
   if let Some(ref background) = style.background {
@@ -151,7 +151,7 @@ pub fn draw_panel(canvas: &mut Canvas, rect: &Rect, style: &Style) {
         background,
         DrawParams::default()
           .color(style.color)
-          .dest(rect.position)
+          .dest(rect.pos)
           .scale(Vector2::new(
             rect.size.x / bg_size.x as f32,
             rect.size.y / bg_size.y as f32,

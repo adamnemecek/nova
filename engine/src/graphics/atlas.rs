@@ -20,7 +20,7 @@ pub struct Atlas {
 
 impl Atlas {
   /// Gets the source rectangle for a given `cell` in the atlas.
-  pub fn get(&self, cell: Vector2<u16>) -> ggez::graphics::Rect {
+  pub fn get(&self, cell: Vector2<u16>) -> Rect<f32> {
     let size = self.image.size();
 
     let w = self.cell_size.x as f32 / size.x as f32;
@@ -29,7 +29,7 @@ impl Atlas {
     let x = cell.x as f32 * w;
     let y = cell.y as f32 * h;
 
-    ggez::graphics::Rect::new(x, y, w, h)
+    Rect::new(x, y, w, h)
   }
 }
 

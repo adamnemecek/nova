@@ -2,10 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod assets;
-pub mod engine;
-pub mod graphics;
-pub mod input;
-pub mod math;
-pub mod prelude;
-pub mod time;
+mod rect;
+
+pub use self::rect::*;
+pub use nalgebra::{Matrix4, Point2, Point3, Vector2, Vector3};

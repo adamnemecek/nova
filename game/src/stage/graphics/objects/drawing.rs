@@ -7,7 +7,6 @@ use crate::prelude::*;
 use crate::stage::graphics::{Camera, CameraTarget};
 use crate::stage::objects::Object;
 use crate::stage::Position;
-use nova::graphics::panels::Rect;
 use nova::graphics::{Canvas, Color, DrawParams, Image};
 
 /// State of object drawing.
@@ -27,7 +26,7 @@ pub struct DrawSettings {
 }
 
 /// Draws all of the objects on the stage and their shadows.
-pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
+pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
   let state = engine::fetch_resource::<DrawState>(ctx);
   let settings = engine::fetch_resource::<DrawSettings>(ctx);
 
@@ -48,7 +47,7 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
   };
 
   // Calculate the offset in drawing needed for the camera's position.
-  let global_offset = rect.position + rect.size / settings.scale / 2.0 - camera_pos;
+  let global_offset = rect.pos + rect.size / settings.scale / 2.0 - camera_pos;
 
   // Apply scale transform.
   canvas.push_transform(Matrix4::new_scaling(settings.scale));
@@ -92,7 +91,7 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect) {
     offset.x *= scale.x;
     offset.y *= scale.y;
 
-    let src = atlas.get(sprite.cell);
+    let src = atlas.get(sprite.cell).into();
 
     let dest =
       Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;

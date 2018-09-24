@@ -26,14 +26,14 @@ pub struct Layout {
   /// Dimension indicating the size of the entity in the y direction.
   pub height: Dimension,
   /// Rect describing the location of the entity relative to its parent's rect.
-  rect: Rect,
+  rect: Rect<f32>,
   /// Rect describing the absolute location of the entity.
-  absolute_rect: Rect,
+  absolute_rect: Rect<f32>,
 }
 
 impl Layout {
   /// Gets the rect describing the absolute location of the entity.
-  pub fn absolute_rect(&self) -> &Rect {
+  pub fn absolute_rect(&self) -> &Rect<f32> {
     &self.absolute_rect
   }
 }
@@ -67,7 +67,7 @@ pub struct LayoutSolver {
   /// Root entity to solve from.
   pub root: Entity,
   /// Stack used in traversing the hierarchy.
-  stack: Vec<(Entity, Rect)>,
+  stack: Vec<(Entity, Rect<f32>)>,
 }
 
 impl LayoutSolver {
@@ -94,7 +94,7 @@ impl<'a> System<'a> for LayoutSolver {
     self.stack.push((
       self.root,
       Rect {
-        position: Point2::origin(),
+        pos: Point2::origin(),
         size: window.size(),
       },
     ));
@@ -120,13 +120,13 @@ impl<'a> System<'a> for LayoutSolver {
 
         // Set its local rect with those dimensions.
         layout.rect = Rect {
-          position: Point2::new(x.0, y.0),
+          pos: Point2::new(x.0, y.0),
           size: Vector2::new(x.1, y.1),
         };
 
         // Offset the local rect by the parent's position to get the absolute
         // rect.
-        layout.absolute_rect = layout.rect.offset(parent_rect.position.coords);
+        layout.absolute_rect = layout.rect.offset(parent_rect.pos.coords);
 
         // If this element has children, push them each onto the stack with that
         // absolute rect.

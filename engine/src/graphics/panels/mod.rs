@@ -8,12 +8,10 @@ use crate::prelude::*;
 mod drawing;
 mod hierarchy;
 mod layout;
-mod rect;
 
 pub use self::drawing::*;
 pub use self::hierarchy::*;
 pub use self::layout::*;
-pub use self::rect::*;
 
 /// Initializes panels for the given engine context.
 pub fn init(ctx: &mut engine::Context, canvas: Canvas) {

@@ -84,7 +84,7 @@ fn init(ctx: &mut engine::Context) {
       style.color = graphics::Color::new(0.2, 0.2, 0.8, 1.0);
 
       style.set_custom_draw(
-        move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &panels::Rect| {
+        move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &Rect<f32>| {
           canvas
             .draw(&image, graphics::DrawParams::default())
             .expect("could not draw image");
