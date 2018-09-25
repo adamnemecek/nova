@@ -127,6 +127,6 @@ pub(super) fn update_window(ctx: &mut Context) {
   }
 
   if closing {
-    super::exit(ctx);
+    super::exit_loop(ctx);
   }
 }

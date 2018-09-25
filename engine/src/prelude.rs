@@ -4,9 +4,9 @@
 
 pub use crate::engine;
 pub use crate::engine::storages::*;
-pub use crate::engine::{Component, System};
-pub use crate::engine::{Entities, Entity, EntityBuilder, EntityBuilderExt};
-pub use crate::engine::{ParStorageJoin, ReadStorage, StorageJoin, WriteStorage};
+pub use crate::engine::System;
+pub use crate::engine::{Component, ComponentJoin, ParComponentJoin, ReadStorage, WriteStorage};
+pub use crate::engine::{Entities, Entity, EntityBuilder};
 pub use crate::engine::{ReadResource, WriteResource};
 pub use crate::math::{Matrix4, Point2, Point3, Rect, Vector2, Vector3};
 pub use serde_derive::*;

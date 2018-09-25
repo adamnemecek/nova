@@ -22,7 +22,7 @@ pub fn init(ctx: &mut engine::Context) {
 
   engine::add_resource(ctx, Root { entity: Some(root) });
 
-  engine::init::add_system(
+  engine::add_system(
     ctx,
     LayoutSolver::new(root),
     "graphics::panels::LayoutSolver",

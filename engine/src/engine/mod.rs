@@ -16,98 +16,113 @@
 //! context is still in init mode and can have new systems and processes
 //! added.
 
-pub mod init;
-
-mod context;
-mod extensions;
-mod running;
+mod components;
+mod entities;
+mod init;
+mod resources;
 mod window;
 
-pub use self::context::*;
-pub use self::extensions::*;
-pub use self::running::*;
+pub use self::components::*;
+pub use self::entities::*;
+pub use self::init::*;
+pub use self::resources::*;
 pub use self::window::*;
 
-pub use specs::{
-  Builder as EntityBuilderExt, Component, Entities, Entity, EntityBuilder, Join as StorageJoin,
-  ParJoin as ParStorageJoin, ReadStorage, System, WriteStorage,
-};
+pub use specs::System;
 
-pub use specs::shred::{
-  Fetch as FetchResource, FetchMut as FetchResourceMut, Read as ReadResource, Resource,
-  Write as WriteResource,
-};
+use std::cell::RefCell;
 
-/// Creates a new entity builder that will build an entity in the engine
-/// context.
-pub fn build_entity<'a>(ctx: &'a mut Context) -> EntityBuilder<'a> {
-  ctx.world.create_entity()
+pub struct Context<'a, 'b> {
+  /// Specs world of the engine.
+  world: specs::World,
+  /// Current tick state of the engine.
+  tick_state: Option<TickState<'a, 'b>>,
+  /// Handle to the window created with `window::create_window`.
+  pub(crate) window_handle: RefCell<Option<WindowHandle>>,
+  /// Whether the engine will exit.
+  exiting: bool,
 }
 
-/// Adds a resource to the engine context.
-pub fn add_resource(ctx: &mut Context, resource: impl Resource) {
-  ctx.world.add_resource(resource)
+struct TickState<'a, 'b> {
+  /// Extensions added to the engine.
+  extensions: Vec<Box<dyn Extension>>,
+  /// Systems to dispatch each engine tick.
+  systems: SystemDispatcher<'a, 'b>,
 }
 
-/// Fetches a resource from the engine context.
-pub fn fetch_resource<'a, T: Resource + Send + 'a>(ctx: &'a Context) -> FetchResource<'a, T> {
-  ctx.world.read_resource::<T>()
+enum SystemDispatcher<'a, 'b> {
+  Building(specs::DispatcherBuilder<'a, 'b>),
+  Built(specs::Dispatcher<'a, 'b>),
 }
 
-/// Mutably fetches a resource from the engine context.
-pub fn fetch_resource_mut<'a, T: Resource + Send + 'a>(
-  ctx: &'a Context,
-) -> FetchResourceMut<'a, T> {
-  ctx.world.write_resource::<T>()
+pub trait Extension {
+  // Invoked before an engine tick.
+  fn before_tick(&mut self, _ctx: &mut Context) {}
+  // Invoked during an engine tick before systems are dispatched.
+  fn before_systems(&mut self, _ctx: &mut Context) {}
+  // Invoked during an engine tick after systems are dispatched.
+  fn after_systems(&mut self, _ctx: &mut Context) {}
+  // Invoked after an engine tick.
+  fn after_tick(&mut self, _ctx: &mut Context) {}
 }
 
-/// Checks whether the engine context has a resource of type `T`.
-pub fn has_resource<T: Resource + Send>(ctx: &Context) -> bool {
-  ctx.world.res.has_value::<T>()
+impl<'a, 'b> Context<'a, 'b> {
+  pub fn new() -> Self {
+    Context {
+      world: specs::World::new(),
+      window_handle: RefCell::new(None),
+      tick_state: Some(TickState {
+        extensions: Vec::new(),
+        systems: SystemDispatcher::Building(specs::DispatcherBuilder::new()),
+      }),
+      exiting: false,
+    }
+  }
 }
 
-pub mod storages {
-  pub use specs::storage::{
-    BTreeStorage, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage, ReadStorage,
-    VecStorage, WriteStorage,
-  };
-
-  pub type FlaggedBTreeStorage<T> = FlaggedStorage<T, VecStorage<T>>;
+pub fn run_loop(ctx: &mut Context) {
+  while !ctx.exiting {
+    tick(ctx);
+  }
 }
 
-/// Adds storage for components of type `T` to the engine context.
-pub fn add_storage<T>(ctx: &mut Context)
-where
-  T: Component,
-  T::Storage: Default,
-{
-  ctx.world.register::<T>();
+/// Exits the engine tick loop started with `engine::run`.
+pub fn exit_loop(ctx: &mut Context) {
+  ctx.exiting = true;
 }
 
-/// Fetches the storage for components of type `T` to the engine context.
-pub fn fetch_storage<'a, T: Component>(ctx: &'a Context) -> ReadStorage<'a, T> {
-  ctx.world.read_storage::<T>()
-}
+pub fn tick(ctx: &mut Context) {
+  let mut state = ctx
+    .tick_state
+    .take()
+    .expect("engine::tick is already running");
 
-/// Mutably fetches the storage for components of type `T` to the engine
-/// context.
-pub fn fetch_storage_mut<'a, T: Component>(ctx: &'a Context) -> WriteStorage<'a, T> {
-  ctx.world.write_storage::<T>()
-}
+  if let SystemDispatcher::Built(ref mut systems) = state.systems {
+    for extension in &mut state.extensions {
+      extension.before_tick(ctx);
+    }
 
-/// Fetches the component for the entity in the given engine context and passes
-/// it by mutable reference to the given `editor` function. Returns the result
-/// of that function.
-pub fn edit_component<'a, T: Component, R>(
-  ctx: &'a Context,
-  entity: Entity,
-  editor: impl FnOnce(&mut T) -> R,
-) -> R {
-  let mut storage = fetch_storage_mut::<T>(ctx);
+    // Update the window each tick if there is one.
+    if ctx.window_handle.borrow().is_some() {
+      update_window(ctx);
+    }
 
-  let component = storage
-    .get_mut(entity)
-    .expect("entity does not have that component");
+    for extension in &mut state.extensions {
+      extension.before_systems(ctx);
+    }
 
-  editor(component)
+    systems.dispatch(&mut ctx.world.res);
+
+    for extension in &mut state.extensions {
+      extension.after_systems(ctx);
+    }
+
+    for extension in &mut state.extensions {
+      extension.after_tick(ctx);
+    }
+  } else {
+    panic!("cannot call engine::tick before engine::init");
+  }
+
+  ctx.tick_state = Some(state);
 }

@@ -63,7 +63,7 @@ impl engine::Extension for Extension {
 pub fn init(ctx: &mut engine::Context) {
   let canvas = Canvas::new(ctx);
 
-  engine::init::add_extension(ctx, Extension { canvas });
+  engine::add_extension(ctx, Extension { canvas });
 
   panels::init(ctx);
 }
