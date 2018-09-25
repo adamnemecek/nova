@@ -4,12 +4,12 @@ fn main() -> Result<(), Box<Error>> {
   use glsl_to_spirv::ShaderType;
 
   // Tell the build script to only run again if we change our source shaders
-  println!("cargo:rerun-if-changed=src/assets");
+  println!("cargo:rerun-if-changed=src/shaders");
 
   // Create destination path if necessary
-  std::fs::create_dir_all("assets")?;
+  std::fs::create_dir_all("spirv")?;
 
-  for entry in std::fs::read_dir("src/assets")? {
+  for entry in std::fs::read_dir("src/shaders")? {
     let entry = entry?;
 
     if entry.file_type()?.is_file() {
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<Error>> {
         compiled_file.read_to_end(&mut compiled_bytes)?;
 
         let out_path = format!(
-          "assets/{}.spv",
+          "spirv/{}.spv",
           in_path.file_name().unwrap().to_string_lossy()
         );
 
