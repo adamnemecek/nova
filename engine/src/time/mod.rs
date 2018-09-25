@@ -19,5 +19,5 @@ pub use self::updater::*;
 pub fn init(ctx: &mut engine::Context) {
   engine::add_resource(ctx, Clock::default());
 
-  engine::init::add_system_early(ctx, Updater::default(), "time::Updater", &[]);
+  engine::init::add_system(ctx, Updater::default(), "time::Updater", &[]);
 }

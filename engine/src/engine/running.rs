@@ -13,24 +13,6 @@ pub enum LoopPhase {
 }
 
 /// Runs the engine loop until `engine::exit` is called.
-///
-/// Each iteration of the main engine loop is split into three sequential
-/// phases: early, regular, and late. In each phase, first the systems for that
-/// phase are dispatched, then processes are updated in the order they were
-/// added.
-///
-/// “Early” systems and processes implement “inputs” to the engine. For example:
-/// time, player input, or updates from a multiplayer server.
-///
-/// “Late” systems and processes implement “outputs” from the engine. For
-/// example: sending updates _to_ a multiplayer server, calculating UI layout,
-/// or drawing graphics on the screen.
-///
-/// The majority of systems and processes are neither early nor late, and they
-/// implement most game logic.
-///
-/// Systems are run in parallel in each of the three phases. After the systems
-/// run in each phase, all processes are updated in sequence.
 pub fn run(ctx: &mut Context) {
   let init_state = ctx
     .init_state
@@ -38,9 +20,7 @@ pub fn run(ctx: &mut Context) {
     .expect("engine context is already running");
 
   let mut extensions = init_state.extensions;
-  let mut early_systems = init_state.early_systems.build();
   let mut systems = init_state.systems.build();
-  let mut late_systems = init_state.late_systems.build();
 
   // Run the engine loop.
   while !ctx.exiting {
@@ -53,15 +33,11 @@ pub fn run(ctx: &mut Context) {
       super::update_window(ctx);
     }
 
-    // Run all systems and processes.
-
     for extension in &mut extensions {
       extension.before_systems(ctx);
     }
 
-    early_systems.dispatch(&mut ctx.world.res);
     systems.dispatch(&mut ctx.world.res);
-    late_systems.dispatch(&mut ctx.world.res);
 
     for extension in &mut extensions {
       extension.after_systems(ctx);
