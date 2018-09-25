@@ -2,14 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Context, Extension, TickState};
+use super::{Context, EngineState, Extension};
 use crate::prelude::*;
 use std::mem;
 
 /// Adds an extension to the engine.
 pub fn add_extension(ctx: &mut Context, extension: impl Extension + 'static) {
-  match ctx.tick_state {
-    TickState::PreInit {
+  match ctx.state {
+    EngineState::PreInit {
       ref mut extensions, ..
     } => {
       extensions.push(Box::new(extension));
@@ -30,8 +30,8 @@ pub fn add_system<T>(
 ) where
   for<'a> T: System<'a> + Send + 'static,
 {
-  match ctx.tick_state {
-    TickState::PreInit {
+  match ctx.state {
+    EngineState::PreInit {
       ref mut systems, ..
     } => {
       systems.add(system, name, dependencies);
@@ -44,16 +44,16 @@ pub fn add_system<T>(
 }
 
 pub fn init(ctx: &mut Context) {
-  let mut state = mem::replace(&mut ctx.tick_state, TickState::Init);
+  let mut state = mem::replace(&mut ctx.state, EngineState::Init);
 
   match state {
-    TickState::PreInit {
+    EngineState::PreInit {
       systems,
       extensions,
     } => {
       let systems = systems.build();
 
-      state = TickState::Ready {
+      state = EngineState::Ready {
         extensions,
         systems,
       };
@@ -64,5 +64,5 @@ pub fn init(ctx: &mut Context) {
     }
   };
 
-  mem::replace(&mut ctx.tick_state, state);
+  mem::replace(&mut ctx.state, state);
 }

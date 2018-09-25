@@ -36,15 +36,15 @@ pub use specs::System;
 pub struct Context<'a, 'b> {
   /// Specs world of the engine.
   world: specs::World,
-  /// Current tick state of the engine.
-  tick_state: TickState<'a, 'b>,
+  /// Current basic state of the engine.
+  state: EngineState<'a, 'b>,
   /// Handle to the window created with `window::create_window`.
   pub(crate) window_handle: RefCell<Option<WindowHandle>>,
   /// Whether the engine will exit.
   exiting: bool,
 }
 
-enum TickState<'a, 'b> {
+enum EngineState<'a, 'b> {
   PreInit {
     extensions: Vec<Box<dyn Extension>>,
     systems: specs::DispatcherBuilder<'a, 'b>,
@@ -73,7 +73,7 @@ impl<'a, 'b> Context<'a, 'b> {
     Context {
       world: specs::World::new(),
       window_handle: RefCell::new(None),
-      tick_state: TickState::PreInit {
+      state: EngineState::PreInit {
         extensions: Vec::new(),
         systems: specs::DispatcherBuilder::new(),
       },
@@ -94,10 +94,10 @@ pub fn exit_loop(ctx: &mut Context) {
 }
 
 pub fn tick(ctx: &mut Context) {
-  let mut state = mem::replace(&mut ctx.tick_state, TickState::Ticking);
+  let mut state = mem::replace(&mut ctx.state, EngineState::Ticking);
 
   match state {
-    TickState::Ready {
+    EngineState::Ready {
       ref mut extensions,
       ref mut systems,
     } => {
@@ -125,14 +125,14 @@ pub fn tick(ctx: &mut Context) {
       }
     }
 
-    TickState::Init { .. } | TickState::PreInit { .. } => {
+    EngineState::Init { .. } | EngineState::PreInit { .. } => {
       panic!("cannot call engine::tick before engine::init");
     }
 
-    TickState::Ticking => {
+    EngineState::Ticking => {
       panic!("engine is already ticking");
     }
   };
 
-  mem::replace(&mut ctx.tick_state, state);
+  mem::replace(&mut ctx.state, state);
 }
