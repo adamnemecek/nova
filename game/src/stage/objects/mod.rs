@@ -37,7 +37,10 @@ pub fn init(ctx: &mut engine::Context) {
 }
 
 /// Adds components to the entity for an object with the given `template`.
-pub fn build_entity<'a>(template: Arc<Template>, builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
+pub fn build_entity<'a>(
+  template: Arc<Template>,
+  builder: impl EntityBuilder + 'a,
+) -> impl EntityBuilder + 'a {
   builder
     .with(Position::default())
     .with(Velocity::default())

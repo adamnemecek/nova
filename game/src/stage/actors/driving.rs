@@ -69,7 +69,7 @@ impl<'a> System<'a> for Driver {
 /// Initializes actor driving for the given engine context.
 pub fn init(ctx: &mut engine::Context) {
   engine::add_storage::<Driven>(ctx);
-  engine::init::add_system_early(ctx, Driver, "stage::actors::driving::Driver", &[]);
+  engine::add_system(ctx, Driver, "stage::actors::driving::Driver", &[]);
 }
 
 /// Sets the given entity to be driven by input.

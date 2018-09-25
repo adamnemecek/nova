@@ -22,9 +22,9 @@ use crate::prelude::*;
 pub mod panels;
 
 mod atlas;
-mod backend;
+//mod backend;
 mod canvas;
-mod device;
+//mod device;
 mod image;
 
 pub use self::atlas::*;
@@ -32,7 +32,40 @@ pub use self::canvas::*;
 pub use self::image::*;
 pub use ggez::graphics::{Color, DrawParam as DrawParams};
 
-/// Initialize graphics for the given engine context.
-pub fn init(ctx: &mut engine::Context, window: &winit::Window) {
-  let device = device::Context::new(window);
+pub struct Extension {
+  canvas: Canvas,
+}
+
+impl engine::Extension for Extension {
+  fn after_tick(&mut self, ctx: &mut engine::Context) {
+    // Resize canvas to match window size.
+    {
+      let window = engine::fetch_resource::<engine::Window>(ctx);
+
+      if window.was_resized() {
+        self.canvas.resize(window.size());
+      }
+    }
+
+    // Clear canvas to eigengrau.
+    self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
+
+    // Draw root panel and its children.
+    let root = panels::get_root(ctx);
+
+    if let Some(root) = root {
+      panels::draw(ctx, &mut self.canvas, root);
+    }
+
+    self.canvas.present();
+  }
+}
+
+/// Initialize graphics for the given engine context. Requires a window.
+pub fn init(ctx: &mut engine::Context) {
+  let canvas = Canvas::new(ctx);
+
+  engine::add_extension(ctx, Extension { canvas });
+
+  panels::init(ctx);
 }

@@ -82,12 +82,12 @@ pub fn init(ctx: &mut engine::Context) {
 
   panels::add_to_root(ctx, panel);
 
-  engine::init::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
-  engine::init::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
+  engine::add_system(ctx, Animator, "stage::visuals::objects::Animator", &[]);
+  engine::add_system(ctx, Sorter, "stage::visuals::objects::Sorter", &[]);
 }
 
 /// Adds components to the entity for object visuals.
-pub fn build_entity<'a>(builder: EntityBuilder<'a>) -> EntityBuilder<'a> {
+pub fn build_entity<'a>(builder: impl EntityBuilder + 'a) -> impl EntityBuilder + 'a {
   builder
     .with(Sprite::default())
     .with(AnimationState::default())

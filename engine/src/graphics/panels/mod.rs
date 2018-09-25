@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Canvas;
 use crate::prelude::*;
 
 mod drawing;
@@ -14,7 +13,7 @@ pub use self::hierarchy::*;
 pub use self::layout::*;
 
 /// Initializes panels for the given engine context.
-pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
+pub fn init(ctx: &mut engine::Context) {
   engine::add_storage::<Hierarchy>(ctx);
   engine::add_storage::<Layout>(ctx);
   engine::add_storage::<Style>(ctx);
@@ -23,14 +22,12 @@ pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
 
   engine::add_resource(ctx, Root { entity: Some(root) });
 
-  engine::init::add_system_late(
+  engine::add_system(
     ctx,
     LayoutSolver::new(root),
     "graphics::panels::LayoutSolver",
     &[],
   );
-
-  drawing::init(ctx, canvas);
 }
 
 /// Creates a new panel entity in the given engine context.

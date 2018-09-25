@@ -27,7 +27,8 @@ pub fn main() {
 
   init(ctx);
 
-  engine::run(ctx);
+  engine::init(ctx);
+  engine::run_loop(ctx);
 }
 
 fn init(ctx: &mut engine::Context) {

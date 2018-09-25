@@ -50,7 +50,7 @@ pub fn init(ctx: &mut engine::Context) {
   engine::add_storage::<Position>(ctx);
   engine::add_storage::<Velocity>(ctx);
 
-  engine::init::add_system(ctx, Mover, "stage::Mover", &[]);
+  engine::add_system(ctx, Mover, "stage::Mover", &[]);
 
   objects::init(ctx);
   actors::init(ctx);
