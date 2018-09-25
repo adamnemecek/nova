@@ -7,7 +7,7 @@ use crate::prelude::*;
 
 /// Adds an extension to the engine.
 pub fn add_extension(ctx: &mut Context, extension: impl Extension + 'static) {
-  let mut tick_state = ctx
+  let tick_state = ctx
     .tick_state
     .as_mut()
     .expect("cannot add extensions during engine::tick");
