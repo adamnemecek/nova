@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::processes;
 use super::Context;
 
 /// One of the phases of the engine loop.
@@ -38,12 +37,17 @@ pub fn run(ctx: &mut Context) {
     .take()
     .expect("engine context is already running");
 
+  let mut extensions = init_state.extensions;
   let mut early_systems = init_state.early_systems.build();
   let mut systems = init_state.systems.build();
   let mut late_systems = init_state.late_systems.build();
 
   // Run the engine loop.
   while !ctx.exiting {
+    for extension in &mut extensions {
+      extension.before_tick(ctx);
+    }
+
     // Update the window each loop if there is one.
     if ctx.window_handle.borrow().is_some() {
       super::update_window(ctx);
@@ -51,14 +55,21 @@ pub fn run(ctx: &mut Context) {
 
     // Run all systems and processes.
 
+    for extension in &mut extensions {
+      extension.before_systems(ctx);
+    }
+
     early_systems.dispatch(&mut ctx.world.res);
-    processes::run_processes(ctx, LoopPhase::Early);
-
     systems.dispatch(&mut ctx.world.res);
-    processes::run_processes(ctx, LoopPhase::Normal);
-
     late_systems.dispatch(&mut ctx.world.res);
-    processes::run_processes(ctx, LoopPhase::Late);
+
+    for extension in &mut extensions {
+      extension.after_systems(ctx);
+    }
+
+    for extension in &mut extensions {
+      extension.after_tick(ctx);
+    }
   }
 }
 

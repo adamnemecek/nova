@@ -26,9 +26,15 @@ pub struct Root {
   pub entity: Option<Entity>,
 }
 
-/// Adds an entity to the children of the root panel.
+/// Gets the root panel of the given engine context.
+pub fn get_root(ctx: &mut engine::Context) -> Option<Entity> {
+  engine::fetch_resource::<Root>(ctx).entity
+}
+
+/// Adds an entity to the children of the root panel of the given engine
+/// context.
 pub fn add_to_root(ctx: &mut engine::Context, child: Entity) {
-  let root = engine::fetch_resource::<Root>(ctx).entity;
+  let root = get_root(ctx);
 
   set_parent(ctx, child, root);
 }

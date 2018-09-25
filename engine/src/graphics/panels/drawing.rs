@@ -51,33 +51,8 @@ where
   }
 }
 
-/// Initializes panel drawing for the given engine context and canvas.
-pub fn init(ctx: &mut engine::Context, mut canvas: Canvas) {
-  // Adds a late process that updates the canvas and draws the root panel.
-  engine::add_process_late(ctx, move |ctx: &mut engine::Context| {
-    // Resize canvas to match window size.
-    {
-      let window = engine::fetch_resource::<engine::Window>(ctx);
-
-      if window.was_resized() {
-        canvas.resize(window.size());
-      }
-    }
-
-    let root = engine::fetch_resource::<Root>(ctx).entity;
-
-    if let Some(root) = root {
-      canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
-
-      draw(ctx, &mut canvas, root);
-
-      canvas.present();
-    }
-  });
-}
-
-/// Draws the given `panel` and its children.
-fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
+/// Draws a panel and its children to the canvas.
+pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
   // Begin with a stack containing the given panel.
   let mut stack = Vec::new();
 

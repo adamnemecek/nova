@@ -19,12 +19,12 @@
 pub mod init;
 
 mod context;
-mod processes;
+mod extensions;
 mod running;
 mod window;
 
 pub use self::context::*;
-pub use self::processes::*;
+pub use self::extensions::*;
 pub use self::running::*;
 pub use self::window::*;
 

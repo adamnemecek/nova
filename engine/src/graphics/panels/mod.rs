@@ -14,7 +14,7 @@ pub use self::hierarchy::*;
 pub use self::layout::*;
 
 /// Initializes panels for the given engine context.
-pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
+pub fn init(ctx: &mut engine::Context) {
   engine::add_storage::<Hierarchy>(ctx);
   engine::add_storage::<Layout>(ctx);
   engine::add_storage::<Style>(ctx);
@@ -29,8 +29,6 @@ pub fn init(ctx: &mut engine::Context, canvas: Canvas) {
     "graphics::panels::LayoutSolver",
     &[],
   );
-
-  drawing::init(ctx, canvas);
 }
 
 /// Creates a new panel entity in the given engine context.
