@@ -4,7 +4,7 @@ use super::Context;
 use gfx_hal;
 use gfx_hal::format::{Aspects, ChannelType, Format, Swizzle};
 use gfx_hal::image::{Extent, SubresourceRange, ViewKind};
-use gfx_hal::window::{PresentMode, SurfaceCapabilities};
+use gfx_hal::window::{Extent2D, PresentMode, SurfaceCapabilities};
 use gfx_hal::{Backbuffer, CommandQueue, Device, FrameSync, Graphics, Surface, Swapchain};
 
 pub use gfx_hal::SwapchainConfig;
@@ -17,7 +17,7 @@ const COLOR_RANGE: SubresourceRange = SubresourceRange {
 
 pub struct SwapchainContext {
   pub swapchain: gfx_back::Swapchain,
-  pub extent: Extent,
+  pub extent: Extent2D,
   pub frame_views: Vec<(Image, ImageView)>,
   pub framebuffers: Vec<Framebuffer>,
 }
@@ -27,14 +27,20 @@ pub fn create(
   surface: &mut gfx_back::Surface,
   surface_caps: &SurfaceCapabilities,
   surface_format: Format,
+  size: (u32, u32),
   render_pass: &RenderPass,
 ) -> SwapchainContext {
   // Create a swapchain config from the caps and selected color format and
   // store its extent.
-  //
-  // TODO: Can I control the size? Is it based on the window size?
   let mut config = gfx_hal::SwapchainConfig::from_caps(&surface_caps, surface_format);
-  let extent = config.extent.to_extent();
+
+  // TODO: Does it already by default size the swapchain to fit the window?
+  config.extent = Extent2D {
+    width: size.0,
+    height: size.1,
+  };
+
+  let extent = config.extent;
 
   // If there's space, add one extra image to the swapchain config for
   // triple-buffering.
@@ -66,7 +72,7 @@ pub fn create(
         .iter()
         .map(|&(_, ref rtv)| {
           device
-            .create_framebuffer(render_pass, Some(rtv), extent)
+            .create_framebuffer(render_pass, Some(rtv), extent.to_extent())
             .unwrap()
         }).collect();
 

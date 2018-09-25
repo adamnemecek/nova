@@ -152,7 +152,7 @@ impl Drop for Context {
 }
 
 impl RenderContext {
-  pub fn new(ctx: &mut Context) -> RenderContext {
+  pub fn new(ctx: &mut Context, size: (u32, u32)) -> RenderContext {
     // Get the available capabilities, color formats, and present modes.
     let (surface_caps, surface_formats, present_modes) =
       ctx.surface.compatibility(&ctx.adapter.physical_device);
@@ -173,6 +173,7 @@ impl RenderContext {
       &mut ctx.surface,
       &surface_caps,
       surface_format,
+      size,
       &render_pass,
     );
 
@@ -208,16 +209,29 @@ pub fn main() {
   let mut ctx = Context::new(&window);
 
   // Create the initial render context.
-  ctx.render = Some(RenderContext::new(&mut ctx));
+  ctx.render = {
+    let size = window
+      .get_inner_size()
+      .expect("window closed")
+      .to_physical(window.get_hidpi_factor());
+
+    Some(RenderContext::new(&mut ctx, size.into()))
+  };
 
   // Run until close is requested.
   let mut running = true;
 
   while running {
+    let mut new_size = None;
+
     events_loop.poll_events(|event| match event {
       winit::Event::WindowEvent { event, .. } => match event {
         winit::WindowEvent::CloseRequested => {
           running = false;
+        }
+
+        winit::WindowEvent::Resized(size) => {
+          new_size = Some(size);
         }
 
         _ => {}
@@ -226,10 +240,16 @@ pub fn main() {
       _ => {}
     });
 
+    let mut render = ctx.render.take().expect("render ctx went missing");
+
+    if let Some(size) = new_size {
+      render.destroy(&mut ctx);
+      render = RenderContext::new(&mut ctx, size.to_physical(window.get_hidpi_factor()).into());
+    }
+
     let frame_fence = ctx.frame_fence.as_ref().expect("frame fence vanished");
     let frame_semaphore = ctx.frame_semaphore.as_ref().expect("frame fence vanished");
     let command_pool = ctx.command_pool.as_mut().expect("command pool vanished");
-    let render = ctx.render.as_mut().expect("render_ctx vanished");
 
     ctx.device.reset_fence(frame_fence);
     command_pool.reset();
@@ -308,6 +328,8 @@ pub fn main() {
       &mut ctx.queue_group.queues[0],
       frame_index,
     );
+
+    ctx.render = Some(render);
   }
 }
 
