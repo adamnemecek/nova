@@ -1,10 +1,10 @@
 [workspace]
 members = [
-  "gfx-test",
+  "engine",
 ]
 
 [profile.dev]
-opt-level = 2
+opt-level = 1
 
 [profile.release]
 lto = true

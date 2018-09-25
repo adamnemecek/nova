@@ -22,7 +22,9 @@ use crate::prelude::*;
 pub mod panels;
 
 mod atlas;
+mod backend;
 mod canvas;
+mod device;
 mod image;
 
 pub use self::atlas::*;
@@ -30,9 +32,7 @@ pub use self::canvas::*;
 pub use self::image::*;
 pub use ggez::graphics::{Color, DrawParam as DrawParams};
 
-/// Initialize graphics for the given engine context. Requires a window.
-pub fn init(ctx: &mut engine::Context) {
-  let canvas = Canvas::new(ctx);
-
-  panels::init(ctx, canvas);
+/// Initialize graphics for the given engine context.
+pub fn init(ctx: &mut engine::Context, window: &winit::Window) {
+  let device = device::Context::new(window);
 }
