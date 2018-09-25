@@ -2,21 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Context, Extension, SystemDispatcher};
+use super::{Context, Extension, TickState};
 use crate::prelude::*;
+use std::mem;
 
 /// Adds an extension to the engine.
 pub fn add_extension(ctx: &mut Context, extension: impl Extension + 'static) {
-  let tick_state = ctx
-    .tick_state
-    .as_mut()
-    .expect("cannot add extensions during engine::tick");
+  match ctx.tick_state {
+    TickState::PreInit {
+      ref mut extensions, ..
+    } => {
+      extensions.push(Box::new(extension));
+    }
 
-  if let SystemDispatcher::Built(_) = tick_state.systems {
-    panic!("cannot add extensions after engine::init");
+    _ => {
+      panic!("cannot add extensions after engine::init");
+    }
   }
-
-  tick_state.extensions.push(Box::new(extension));
 }
 
 /// Adds a system to the engine that is dispatched each engine tick.
@@ -28,29 +30,39 @@ pub fn add_system<T>(
 ) where
   for<'a> T: System<'a> + Send + 'static,
 {
-  let tick_state = ctx
-    .tick_state
-    .as_mut()
-    .expect("cannot add systems during engine::tick");
+  match ctx.tick_state {
+    TickState::PreInit {
+      ref mut systems, ..
+    } => {
+      systems.add(system, name, dependencies);
+    }
 
-  if let SystemDispatcher::Building(ref mut systems) = tick_state.systems {
-    systems.add(system, name, dependencies);
-  } else {
-    panic!("cannot add systems after engine::init");
+    _ => {
+      panic!("cannot add systems after engine::init");
+    }
   }
 }
 
 pub fn init(ctx: &mut Context) {
-  let mut tick_state = ctx
-    .tick_state
-    .take()
-    .expect("engine is already initialized");
+  let mut state = mem::replace(&mut ctx.tick_state, TickState::Init);
 
-  if let SystemDispatcher::Building(systems) = tick_state.systems {
-    tick_state.systems = SystemDispatcher::Built(systems.build());
-  } else {
-    panic!("engine is already initialized");
-  }
+  match state {
+    TickState::PreInit {
+      systems,
+      extensions,
+    } => {
+      let systems = systems.build();
 
-  ctx.tick_state = Some(tick_state);
+      state = TickState::Ready {
+        extensions,
+        systems,
+      };
+    }
+
+    _ => {
+      panic!("engine::init has already been called");
+    }
+  };
+
+  mem::replace(&mut ctx.tick_state, state);
 }

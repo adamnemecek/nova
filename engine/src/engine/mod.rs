@@ -16,6 +16,9 @@
 //! context is still in init mode and can have new systems and processes
 //! added.
 
+use std::cell::RefCell;
+use std::mem;
+
 mod components;
 mod entities;
 mod init;
@@ -30,29 +33,28 @@ pub use self::window::*;
 
 pub use specs::System;
 
-use std::cell::RefCell;
-
 pub struct Context<'a, 'b> {
   /// Specs world of the engine.
   world: specs::World,
   /// Current tick state of the engine.
-  tick_state: Option<TickState<'a, 'b>>,
+  tick_state: TickState<'a, 'b>,
   /// Handle to the window created with `window::create_window`.
   pub(crate) window_handle: RefCell<Option<WindowHandle>>,
   /// Whether the engine will exit.
   exiting: bool,
 }
 
-struct TickState<'a, 'b> {
-  /// Extensions added to the engine.
-  extensions: Vec<Box<dyn Extension>>,
-  /// Systems to dispatch each engine tick.
-  systems: SystemDispatcher<'a, 'b>,
-}
-
-enum SystemDispatcher<'a, 'b> {
-  Building(specs::DispatcherBuilder<'a, 'b>),
-  Built(specs::Dispatcher<'a, 'b>),
+enum TickState<'a, 'b> {
+  PreInit {
+    extensions: Vec<Box<dyn Extension>>,
+    systems: specs::DispatcherBuilder<'a, 'b>,
+  },
+  Init,
+  Ready {
+    extensions: Vec<Box<dyn Extension>>,
+    systems: specs::Dispatcher<'a, 'b>,
+  },
+  Ticking,
 }
 
 pub trait Extension {
@@ -71,10 +73,10 @@ impl<'a, 'b> Context<'a, 'b> {
     Context {
       world: specs::World::new(),
       window_handle: RefCell::new(None),
-      tick_state: Some(TickState {
+      tick_state: TickState::PreInit {
         extensions: Vec::new(),
-        systems: SystemDispatcher::Building(specs::DispatcherBuilder::new()),
-      }),
+        systems: specs::DispatcherBuilder::new(),
+      },
       exiting: false,
     }
   }
@@ -92,37 +94,45 @@ pub fn exit_loop(ctx: &mut Context) {
 }
 
 pub fn tick(ctx: &mut Context) {
-  let mut state = ctx
-    .tick_state
-    .take()
-    .expect("engine::tick is already running");
+  let mut state = mem::replace(&mut ctx.tick_state, TickState::Ticking);
 
-  if let SystemDispatcher::Built(ref mut systems) = state.systems {
-    for extension in &mut state.extensions {
-      extension.before_tick(ctx);
+  match state {
+    TickState::Ready {
+      ref mut extensions,
+      ref mut systems,
+    } => {
+      for extension in extensions.iter_mut() {
+        extension.before_tick(ctx);
+      }
+
+      // Update the window each tick if there is one.
+      if ctx.window_handle.borrow().is_some() {
+        update_window(ctx);
+      }
+
+      for extension in extensions.iter_mut() {
+        extension.before_systems(ctx);
+      }
+
+      systems.dispatch(&mut ctx.world.res);
+
+      for extension in extensions.iter_mut() {
+        extension.after_systems(ctx);
+      }
+
+      for extension in extensions.iter_mut() {
+        extension.after_tick(ctx);
+      }
     }
 
-    // Update the window each tick if there is one.
-    if ctx.window_handle.borrow().is_some() {
-      update_window(ctx);
+    TickState::Init { .. } | TickState::PreInit { .. } => {
+      panic!("cannot call engine::tick before engine::init");
     }
 
-    for extension in &mut state.extensions {
-      extension.before_systems(ctx);
+    TickState::Ticking => {
+      panic!("engine is already ticking");
     }
+  };
 
-    systems.dispatch(&mut ctx.world.res);
-
-    for extension in &mut state.extensions {
-      extension.after_systems(ctx);
-    }
-
-    for extension in &mut state.extensions {
-      extension.after_tick(ctx);
-    }
-  } else {
-    panic!("cannot call engine::tick before engine::init");
-  }
-
-  ctx.tick_state = Some(state);
+  mem::replace(&mut ctx.tick_state, state);
 }
