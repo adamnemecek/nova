@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Hierarchy, Layout, Root};
+use super::{Hierarchy, Layout};
 use crate::graphics::{Canvas, Color, DrawParams, Image};
 use crate::prelude::*;
 use std::sync::{Arc, Mutex};
