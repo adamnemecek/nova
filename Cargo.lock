@@ -1288,6 +1288,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "nova-game"
+version = "0.1.0"
+dependencies = [
+ "nova 0.1.0",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs-derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "num-complex"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

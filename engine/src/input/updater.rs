@@ -5,13 +5,15 @@
 use super::{Input, Mapping};
 use crate::prelude::*;
 use crate::time::Clock;
+use crate::window::events::{ElementState, WindowEvent};
+use crate::window::Window;
 
 /// Engine process that updates `Input` state.
 pub struct Updater;
 
 impl<'a> System<'a> for Updater {
   type SystemData = (
-    ReadResource<'a, engine::Window>,
+    ReadResource<'a, Window>,
     ReadResource<'a, Clock>,
     ReadResource<'a, Mapping>,
     WriteResource<'a, Input>,
@@ -26,12 +28,12 @@ impl<'a> System<'a> for Updater {
     // Loop through window events.
     for event in window.events() {
       match event {
-        engine::WindowEvent::KeyboardInput { input, .. } => {
+        WindowEvent::KeyboardInput { input, .. } => {
           if let Some(key) = input.virtual_keycode {
             for button in mapping.get_buttons_for(key) {
               let button = &mut state.buttons[*button as usize];
 
-              if input.state == engine::winit_event::ElementState::Pressed {
+              if input.state == ElementState::Pressed {
                 // Set pressed time if the button was not already pressed.
                 if button.pressed_at.is_none() {
                   button.pressed_at = Some(clock.time);

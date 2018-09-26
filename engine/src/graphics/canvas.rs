@@ -12,25 +12,6 @@ pub struct Canvas {
 }
 
 impl Canvas {
-  /// Creates a new canvas from the given window.
-  pub fn new(ctx: &engine::Context) -> Canvas {
-    let mut ctx = ctx
-      .window_handle
-      .borrow()
-      .as_ref()
-      .expect("engine context does not have a window")
-      .ggez
-      .take()
-      .expect("engine context already has a Canvas");
-
-    let rect = ggez::graphics::screen_coordinates(&mut ctx);
-
-    Canvas {
-      ctx,
-      size: Vector2::new(rect.w, rect.h),
-    }
-  }
-
   /// Gets the size of the canvas in pixels.
   pub fn size(&self) -> Vector2<f32> {
     self.size

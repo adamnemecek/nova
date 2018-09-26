@@ -4,6 +4,7 @@
 
 use super::{Hierarchy, Rect};
 use crate::prelude::*;
+use crate::window::Window;
 
 /// Component that stores layout state for a panel entity.
 #[derive(Component)]
@@ -82,7 +83,7 @@ impl LayoutSolver {
 
 impl<'a> System<'a> for LayoutSolver {
   type SystemData = (
-    ReadResource<'a, engine::Window>,
+    ReadResource<'a, Window>,
     ReadStorage<'a, Hierarchy>,
     WriteStorage<'a, Layout>,
   );

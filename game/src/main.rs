@@ -3,6 +3,7 @@ use nova::graphics;
 use nova::graphics::panels;
 use nova::input;
 use nova::time;
+use nova::window;
 use std::sync::Arc;
 
 mod prelude;
@@ -14,18 +15,16 @@ use self::prelude::*;
 pub fn main() {
   let ctx = &mut engine::Context::new();
 
-  engine::create_window(ctx, "nova-game");
-
-  assets::init(ctx);
-  graphics::init(ctx);
-  input::init(ctx);
   time::init(ctx);
+  assets::init(ctx);
+  window::init(ctx);
+  graphics::init(ctx);
 
-  stage::init(ctx);
-  stage::actors::driving::init(ctx);
-  stage::graphics::init(ctx);
+  //stage::init(ctx);
+  //stage::actors::driving::init(ctx);
+  //stage::graphics::init(ctx);
 
-  init(ctx);
+  //init(ctx);
 
   engine::init(ctx);
   engine::run_loop(ctx);

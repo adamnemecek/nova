@@ -16,20 +16,17 @@
 //! context is still in init mode and can have new systems and processes
 //! added.
 
-use std::cell::RefCell;
 use std::mem;
 
 mod components;
 mod entities;
 mod init;
 mod resources;
-mod window;
 
 pub use self::components::*;
 pub use self::entities::*;
 pub use self::init::*;
 pub use self::resources::*;
-pub use self::window::*;
 
 pub use specs::System;
 
@@ -38,8 +35,6 @@ pub struct Context<'a, 'b> {
   world: specs::World,
   /// Current basic state of the engine.
   state: EngineState<'a, 'b>,
-  /// Handle to the window created with `window::create_window`.
-  pub(crate) window_handle: RefCell<Option<WindowHandle>>,
   /// Whether the engine will exit.
   exiting: bool,
 }
@@ -55,6 +50,8 @@ enum EngineState<'a, 'b> {
     systems: specs::Dispatcher<'a, 'b>,
   },
   Ticking,
+  Exiting,
+  Exited,
 }
 
 pub trait Extension {
@@ -66,13 +63,14 @@ pub trait Extension {
   fn after_systems(&mut self, _ctx: &mut Context) {}
   // Invoked after an engine tick.
   fn after_tick(&mut self, _ctx: &mut Context) {}
+  // Invoked when the engine is shutting down.
+  fn on_exit(&mut self, _ctx: &mut Context) {}
 }
 
 impl<'a, 'b> Context<'a, 'b> {
   pub fn new() -> Self {
     Context {
       world: specs::World::new(),
-      window_handle: RefCell::new(None),
       state: EngineState::PreInit {
         extensions: Vec::new(),
         systems: specs::DispatcherBuilder::new(),
@@ -86,6 +84,22 @@ pub fn run_loop(ctx: &mut Context) {
   while !ctx.exiting {
     tick(ctx);
   }
+
+  let state = mem::replace(&mut ctx.state, EngineState::Exiting);
+
+  match state {
+    EngineState::Ready { extensions, .. } => {
+      for mut extension in extensions {
+        extension.on_exit(ctx);
+      }
+    }
+
+    _ => {
+      panic!("exiting when engine state isn't Ready");
+    }
+  }
+
+  ctx.state = EngineState::Exited;
 }
 
 /// Exits the engine tick loop started with `engine::run`.
@@ -93,7 +107,7 @@ pub fn exit_loop(ctx: &mut Context) {
   ctx.exiting = true;
 }
 
-pub fn tick(ctx: &mut Context) {
+fn tick(ctx: &mut Context) {
   let mut state = mem::replace(&mut ctx.state, EngineState::Ticking);
 
   match state {
@@ -103,11 +117,6 @@ pub fn tick(ctx: &mut Context) {
     } => {
       for extension in extensions.iter_mut() {
         extension.before_tick(ctx);
-      }
-
-      // Update the window each tick if there is one.
-      if ctx.window_handle.borrow().is_some() {
-        update_window(ctx);
       }
 
       for extension in extensions.iter_mut() {
@@ -131,6 +140,10 @@ pub fn tick(ctx: &mut Context) {
 
     EngineState::Ticking => {
       panic!("engine is already ticking");
+    }
+
+    EngineState::Exiting | EngineState::Exited => {
+      panic!("cannot call engine::tick after exiting");
     }
   };
 

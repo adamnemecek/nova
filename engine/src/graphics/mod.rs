@@ -18,13 +18,14 @@
 //! it into cells, for use with tile sets or sprite sheets.
 
 use crate::prelude::*;
+use crate::window::Window;
 
 pub mod panels;
 
 mod atlas;
-//mod backend;
+mod backend;
 mod canvas;
-//mod device;
+mod device;
 mod image;
 
 pub use self::atlas::*;
@@ -33,12 +34,13 @@ pub use self::image::*;
 pub use ggez::graphics::{Color, DrawParam as DrawParams};
 
 pub struct Extension {
-  canvas: Canvas,
+  device: Option<device::Context>,
 }
 
 impl engine::Extension for Extension {
-  fn after_tick(&mut self, ctx: &mut engine::Context) {
+  fn after_tick(&mut self, _ctx: &mut engine::Context) {
     // Resize canvas to match window size.
+    /*
     {
       let window = engine::fetch_resource::<engine::Window>(ctx);
 
@@ -46,11 +48,13 @@ impl engine::Extension for Extension {
         self.canvas.resize(window.size());
       }
     }
+    */
 
     // Clear canvas to eigengrau.
-    self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
+    // self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
 
     // Draw root panel and its children.
+    /*
     let root = panels::get_root(ctx);
 
     if let Some(root) = root {
@@ -58,14 +62,28 @@ impl engine::Extension for Extension {
     }
 
     self.canvas.present();
+    */
+  }
+
+  fn on_exit(&mut self, _ctx: &mut engine::Context) {
+    self.device.take().expect("no device to destroy").destroy();
   }
 }
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {
-  let canvas = Canvas::new(ctx);
+  let device = {
+    let window = engine::fetch_resource::<Window>(ctx);
 
-  engine::add_extension(ctx, Extension { canvas });
+    device::Context::new(window.as_winit())
+  };
+
+  engine::add_extension(
+    ctx,
+    Extension {
+      device: Some(device),
+    },
+  );
 
   panels::init(ctx);
 }
