@@ -20,70 +20,93 @@
 use crate::prelude::*;
 use crate::window::Window;
 
+pub use ggez::graphics::{Color, DrawParam as DrawParams};
+
 pub mod panels;
 
 mod atlas;
-mod backend;
-mod canvas;
-mod device;
 mod image;
+mod rendering;
 
 pub use self::atlas::*;
-pub use self::canvas::*;
 pub use self::image::*;
-pub use ggez::graphics::{Color, DrawParam as DrawParams};
+pub use self::rendering::Canvas;
+
+use self::rendering::{RenderTarget, Renderer};
 
 pub struct Extension {
-  device: Option<device::Context>,
+  renderer: Option<Box<Renderer>>,
+  render_target: Option<Box<RenderTarget>>,
 }
 
 impl engine::Extension for Extension {
-  fn after_tick(&mut self, _ctx: &mut engine::Context) {
-    // Resize canvas to match window size.
-    /*
+  fn after_tick(&mut self, ctx: &mut engine::Context) {
+    let mut renderer = self.renderer.take().unwrap();
+    let mut render_target = self.render_target.take().unwrap();
+
+    // Resize render target to match window size.
     {
-      let window = engine::fetch_resource::<engine::Window>(ctx);
+      let window = engine::fetch_resource::<Window>(ctx);
+
+      let size = window.size();
+      let size = Vector2::new(size.x.round() as u32, size.y.round() as u32);
 
       if window.was_resized() {
-        self.canvas.resize(window.size());
+        render_target.destroy(&renderer);
+        render_target = Box::new(RenderTarget::new(&mut renderer, size));
       }
     }
-    */
+
+    rendering::render(&mut renderer, &mut render_target, |canvas| {
+      println!("gottem");
+
+      let root = panels::get_root(ctx);
+
+      if let Some(root) = root {
+        panels::draw(ctx, canvas, root);
+      }
+    });
 
     // Clear canvas to eigengrau.
     // self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
 
     // Draw root panel and its children.
     /*
-    let root = panels::get_root(ctx);
-
-    if let Some(root) = root {
-      panels::draw(ctx, &mut self.canvas, root);
-    }
 
     self.canvas.present();
     */
+
+    self.renderer = Some(renderer);
+    self.render_target = Some(render_target);
   }
 
   fn on_exit(&mut self, _ctx: &mut engine::Context) {
-    self.device.take().expect("no device to destroy").destroy();
+    let mut renderer = self.renderer.take().unwrap();
+    let mut render_target = self.render_target.take().unwrap();
+
+    render_target.destroy(&renderer);
+    renderer.destroy();
   }
 }
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {
-  let device = {
+  let extension = {
     let window = engine::fetch_resource::<Window>(ctx);
 
-    device::Context::new(window.as_winit())
+    let size = window.size();
+    let size = Vector2::new(size.x.round() as u32, size.y.round() as u32);
+
+    let mut renderer = Renderer::new(window.as_winit());
+    let render_target = RenderTarget::new(&mut renderer, size);
+
+    Extension {
+      renderer: Some(Box::new(renderer)),
+      render_target: Some(Box::new(render_target)),
+    }
   };
 
-  engine::add_extension(
-    ctx,
-    Extension {
-      device: Some(device),
-    },
-  );
+  engine::add_extension(ctx, extension);
 
   panels::init(ctx);
 }

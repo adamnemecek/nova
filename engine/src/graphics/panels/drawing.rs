@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Hierarchy, Layout};
-use crate::graphics::{Canvas, Color, DrawParams, Image};
+use crate::graphics::rendering::Canvas;
+use crate::graphics::{Color, Image};
 use crate::prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -118,16 +119,17 @@ pub fn draw_panel(canvas: &mut Canvas, rect: &Rect<f32>, style: &Style) {
   if let Some(ref background) = style.background {
     let bg_size = background.size();
 
-    canvas
-      .draw(
-        background,
-        DrawParams::default()
-          .color(style.color)
-          .dest(rect.pos)
-          .scale(Vector2::new(
-            rect.size.x / bg_size.x as f32,
-            rect.size.y / bg_size.y as f32,
-          )),
-      ).expect("could not draw panel background");
+    /*
+    canvas.draw(
+      background,
+      DrawParams::default()
+        .color(style.color)
+        .dest(rect.pos)
+        .scale(Vector2::new(
+          rect.size.x / bg_size.x as f32,
+          rect.size.y / bg_size.y as f32,
+        )),
+    );
+    */
   }
 }

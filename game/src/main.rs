@@ -7,7 +7,7 @@ use nova::window;
 use std::sync::Arc;
 
 mod prelude;
-mod stage;
+//mod stage;
 
 use self::prelude::*;
 
@@ -30,6 +30,7 @@ pub fn main() {
   engine::run_loop(ctx);
 }
 
+/*
 fn init(ctx: &mut engine::Context) {
   // Load actor templates.
   let hero_template =
@@ -85,9 +86,7 @@ fn init(ctx: &mut engine::Context) {
 
       style.set_custom_draw(
         move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &Rect<f32>| {
-          canvas
-            .draw(&image, graphics::DrawParams::default())
-            .expect("could not draw image");
+          canvas.draw(&image, graphics::DrawParams::default());
         },
       );
     });
@@ -101,3 +100,4 @@ fn init(ctx: &mut engine::Context) {
     panels::set_parent(ctx, child, Some(parent));
   }
 }
+*/
