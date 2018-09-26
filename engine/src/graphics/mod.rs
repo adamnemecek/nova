@@ -81,8 +81,8 @@ impl engine::Extension for Extension {
   }
 
   fn on_exit(&mut self, _ctx: &mut engine::Context) {
-    let mut renderer = self.renderer.take().unwrap();
-    let mut render_target = self.render_target.take().unwrap();
+    let renderer = self.renderer.take().unwrap();
+    let render_target = self.render_target.take().unwrap();
 
     render_target.destroy(&renderer);
     renderer.destroy();

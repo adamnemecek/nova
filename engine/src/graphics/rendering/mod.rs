@@ -13,11 +13,7 @@ pub use self::canvas::*;
 pub use self::renderer::*;
 pub use self::target::*;
 
-pub fn render<'a>(
-  renderer: &'a mut Renderer,
-  target: &'a mut RenderTarget,
-  draw: impl FnOnce(&mut Canvas),
-) {
+pub fn render(renderer: &mut Renderer, target: &mut RenderTarget, draw: impl FnOnce(&mut Canvas)) {
   renderer.device.reset_fence(&target.frame_fence);
   renderer.command_pool.reset();
 
@@ -96,5 +92,6 @@ pub fn render<'a>(
   // ...and then present the image on screen!
   target
     .swapchain
-    .present(&mut renderer.queue_group.queues[0], frame_index, &[]);
+    .present(&mut renderer.queue_group.queues[0], frame_index, &[])
+    .expect("could not present image");
 }

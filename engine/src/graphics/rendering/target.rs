@@ -40,9 +40,6 @@ impl RenderTarget {
     // first available format.
     let surface_format = select_surface_format(surface_formats);
 
-    // Select best available present mode.
-    let mode = select_present_mode(present_modes);
-
     // Create a render pass.
     let render_pass = create_render_pass(renderer, surface_format);
 
@@ -50,13 +47,16 @@ impl RenderTarget {
     // store its extent.
     let mut swapchain_config = hal::SwapchainConfig::from_caps(&surface_caps, surface_format);
 
-    // Set extent based on size parameter.
+    // Select best available present mode.
+    swapchain_config.present_mode = select_present_mode(present_modes);
+
+    // Set extent based on `size` parameter.
     swapchain_config.extent = hal::window::Extent2D {
       width: size.x,
       height: size.y,
     };
 
-    // Store extent.
+    // Store extent for reference while rendering.
     let extent = swapchain_config.extent;
 
     // If there's space, add one extra image to the swapchain config for
