@@ -4,6 +4,7 @@ use gfx_hal::{Device, Swapchain};
 
 mod backend;
 mod canvas;
+mod mesh;
 mod renderer;
 mod shaders;
 mod target;

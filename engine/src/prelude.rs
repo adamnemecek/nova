@@ -8,6 +8,6 @@ pub use crate::engine::System;
 pub use crate::engine::{Component, ComponentJoin, ParComponentJoin, ReadStorage, WriteStorage};
 pub use crate::engine::{Entities, Entity, EntityBuilder};
 pub use crate::engine::{ReadResource, WriteResource};
-pub use crate::math::{Matrix4, Point2, Point3, Rect, Vector2, Vector3};
+pub use crate::math::{Matrix4, Point2, Point3, Rect, Vector2, Vector3, Vector4};
 pub use serde_derive::*;
 pub use specs_derive::*;

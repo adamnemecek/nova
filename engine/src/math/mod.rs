@@ -5,4 +5,4 @@
 mod rect;
 
 pub use self::rect::*;
-pub use nalgebra::{Matrix4, Point2, Point3, Vector2, Vector3};
+pub use nalgebra::{Matrix4, Point2, Point3, Vector2, Vector3, Vector4};

@@ -4,10 +4,12 @@
 
 use super::backend;
 use super::backend::Backend;
+use super::mesh::Vertex;
 use super::Renderer;
 use crate::prelude::*;
 use gfx_hal as hal;
 use gfx_hal::{Device, Surface};
+use std::mem;
 
 const COLOR_RANGE: hal::image::SubresourceRange = hal::image::SubresourceRange {
   aspects: hal::format::Aspects::COLOR,
@@ -269,6 +271,37 @@ pub fn create_pipeline(
     hal::pso::ColorMask::ALL,
     hal::pso::BlendState::ALPHA,
   ));
+
+  // Add descriptor for vertex buffer.
+  pipeline_desc
+    .vertex_buffers
+    .push(hal::pso::VertexBufferDesc {
+      binding: 0,
+      stride: mem::size_of::<Vertex>() as u32,
+      rate: 0,
+    });
+
+  // Add descriptor for vertex pos.
+  pipeline_desc.attributes.push(hal::pso::AttributeDesc {
+    location: 0,
+    binding: 0,
+    element: hal::pso::Element {
+      // Two f32s.
+      format: hal::format::Format::Rg32Float,
+      offset: 0,
+    },
+  });
+
+  // Add descriptor for vertex color.
+  pipeline_desc.attributes.push(hal::pso::AttributeDesc {
+    location: 1,
+    binding: 0,
+    element: hal::pso::Element {
+      // Four f32s.
+      format: hal::format::Format::Rgba32Float,
+      offset: 8,
+    },
+  });
 
   renderer
     .device

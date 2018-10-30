@@ -25,3 +25,4 @@ pub type ShaderModule = <Backend as gfx_hal::Backend>::ShaderModule;
 pub type GraphicsPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
 pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
 pub type Fence = <Backend as gfx_hal::Backend>::Fence;
+pub type UnboundBuffer = <Backend as gfx_hal::Backend>::UnboundBuffer;

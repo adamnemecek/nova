@@ -1,12 +1,15 @@
 [package]
-name = "gfx-test"
+name = "nova-graphics"
 version = "0.1.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
-gfx-hal = { git = "https://github.com/gfx-rs/gfx" }
+bflog = "0.2.2"
+gfx-hal = { git = "https://github.com/gfx-rs/gfx", features = ["serde"] }
 winit = "0.17"
+smallvec = "0.6.5"
+parking_lot = "0.6.4"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx" }

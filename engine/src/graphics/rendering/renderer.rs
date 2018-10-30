@@ -73,6 +73,8 @@ impl Renderer {
 
     let default_shaders = shaders::create_default(&device);
 
+    device.map_memory();
+
     // Return the completed context.
     Renderer {
       instance,
