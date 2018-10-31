@@ -8,10 +8,7 @@ const ENGINE_VERSION: u32 = 1;
 
 pub struct Context {
   // Fields in reverse order of allocation so they are dropped in that order.
-  graphics_queue_family: gfx_hal::queue::QueueFamilyId,
-  graphics_queue: Mutex<backend::CommandQueue>,
-  present_queue_family: gfx_hal::queue::QueueFamilyId,
-  present_queue: Mutex<backend::CommandQueue>,
+  format: gfx_hal::format::Format,
   device: backend::Device,
   adapter: gfx_hal::Adapter<Backend>,
   instance: backend::Instance,
@@ -29,6 +26,10 @@ impl Context {
       .with("backend", &backend::NAME)
       .with("engine_name", &ENGINE_NAME)
       .with("engine_version", &ENGINE_VERSION);
+
+    let surface = instance.create_surface(&window);
+
+    log.trace("Created window surface.");
 
     let mut scored_adapters = Vec::new();
 
@@ -88,7 +89,8 @@ impl Context {
       .open(&[
         (graphics_queue_family, &[1.0]),
         (present_queue_family, &[1.0]),
-      ]).expect("device creation error");
+      ])
+      .expect("device creation error");
 
     let device = gpu.device;
 
@@ -122,18 +124,19 @@ impl Context {
       .with("device_name", &adapter.info.name)
       .with("format", &format);
 
-    Arc::new(Context {
+    let context = Arc::new(Context {
       log,
-      instance: instance,
-      surface: Mutex::new(surface),
+      instance,
       adapter,
-      format,
       device,
-      graphics_queue_family,
-      present_queue_family,
-      graphics_queue: Mutex::new(graphics_queue),
-      present_queue: Mutex::new(present_queue),
-    })
+      format,
+    });
+
+    let renderer = Renderer {
+      context: context.clone(),
+    };
+
+    context
   }
 
   pub(super) fn instance(&self) -> &backend::Instance {

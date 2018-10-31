@@ -8,29 +8,30 @@ use std::sync::Arc;
 use std::rc::Rc;
 
 pub struct Renderer {
-  state: Option<State>,
-  surface: backend::Surface,
   context: Arc<Context>,
-  format: gfx_hal::format::Format,
-}
-
-struct State {
-  swapchain: backend::Swapchain,
+  surface: backend::Surface,
+  graphics_queue_family: gfx_hal::queue::QueueFamilyId,
+  graphics_queue: backend::CommandQueue,
+  present_queue_family: gfx_hal::queue::QueueFamilyId,
+  present_queue: backend::CommandQueue,
+  command_pool: Option<backend::CommandPool>,
+  render_pass: Option<backend::RenderPass>,
+  swapchain: Option<backend::Swapchain>,
   frames: SmallVec<[Frame; 3]>,
 }
 
 struct Frame {
-  command_buffer: backend::CommandBuffer,
   image: backend::Image,
-  image_view: backend::ImageView,
-  framebuffer: backend::Framebuffer,
+  view: backend::ImageView,
+  buffer: backend::Framebuffer,
   fence: backend::Fence,
-  image_semaphore: backend::Semaphore,
+  acquire_semaphore: backend::Semaphore,
   render_semaphore: backend::Semaphore,
+  command_buffer: backend::CommandBuffer,
 }
 
 impl Renderer {
-  pub fn new(context: &Arc<Context>, window: &winit::Window) -> Renderer {
+  pub fn new(context: &Arc<Context>) -> Renderer {
     let device = context.device();
     let mut log = context.log().with_src("graphics::Renderer");
 
