@@ -25,7 +25,7 @@ pub struct Context {
 pub struct RenderTarget {
   images: SmallVec<[RenderImage; swapchain::MAX_IMAGE_COUNT]>,
   swapchain: Option<backend::Swapchain>,
-  frames: SmallVec<[RenderFrame; swapchain::MAX_IMAGE_COUNT]>,
+  states: SmallVec<[RenderState; swapchain::MAX_IMAGE_COUNT]>,
   command_pool: Option<backend::CommandPool>,
   render_pass: Arc<RenderPass>,
   format: gfx_hal::format::Format,
@@ -38,7 +38,7 @@ pub struct RenderTarget {
   log: bflog::Logger,
 }
 
-struct RenderFrame {
+struct RenderState {
   acquire_semaphore: backend::Semaphore,
   fence: backend::Fence,
   render_semaphore: backend::Semaphore,
@@ -63,7 +63,7 @@ impl Drop for RenderTarget {
 
     let device = &self.context.device;
 
-    for frame in self.frames.drain() {
+    for frame in self.states.drain() {
       device.destroy_fence(frame.fence);
       device.destroy_semaphore(frame.acquire_semaphore);
       device.destroy_semaphore(frame.render_semaphore);

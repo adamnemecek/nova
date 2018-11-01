@@ -1,6 +1,6 @@
 use super::backend;
 use super::swapchain;
-use super::{Context, RenderFrame, RenderPass, RenderTarget};
+use super::{Context, RenderPass, RenderState, RenderTarget};
 use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool};
 use gfx_hal::{Device, Instance, PhysicalDevice, QueueFamily, Surface};
 use smallvec::SmallVec;
@@ -138,10 +138,10 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     gfx_hal::command::RawLevel::Primary,
   );
 
-  let mut frames = SmallVec::new();
+  let mut states = SmallVec::new();
 
   for command_buffer in command_buffers {
-    frames.push(RenderFrame {
+    states.push(RenderState {
       command_buffer,
       fence: context.device.create_fence(true),
       acquire_semaphore: context.device.create_semaphore(),
@@ -159,7 +159,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     format,
     render_pass,
     command_pool: Some(command_pool),
-    frames,
+    states,
     swapchain: None,
     images: SmallVec::new(),
     log: log.with_src("graphics::RenderTarget"),
