@@ -4,14 +4,14 @@ use gfx_hal::Device;
 use std::sync::Arc;
 
 pub struct Shader {
-  context: Arc<Context>,
   module: Option<backend::ShaderModule>,
+  context: Arc<Context>,
 }
 
 impl Shader {
   pub fn new(context: &Arc<Context>, bytes: &[u8]) -> Self {
     let module = context
-      .device()
+      .device
       .create_shader_module(bytes)
       .expect("could not create shader module");
 
@@ -29,7 +29,7 @@ impl Shader {
 impl Drop for Shader {
   fn drop(&mut self) {
     if let Some(module) = self.module.take() {
-      self.context.device().destroy_shader_module(module);
+      self.context.device.destroy_shader_module(module);
     }
   }
 }

@@ -1,27 +1,23 @@
 use super::backend;
-use super::{Backend, RenderPass, Shader};
+use super::{Backend, RenderPass, RenderTarget, Shader};
 use gfx_hal::Device;
 use std::sync::Arc;
 
 pub struct Pipeline {
-  render_pass: Arc<RenderPass>,
-  _shaders: PipelineShaders,
+  _shaders: ShaderSet,
   pipeline: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
-  log: bflog::Logger,
+  render_pass: Arc<RenderPass>,
 }
 
-pub struct PipelineShaders {
+pub struct ShaderSet {
   pub vertex: Shader,
   pub fragment: Shader,
 }
 
 impl Pipeline {
-  pub fn new(render_pass: &Arc<RenderPass>, shaders: PipelineShaders) -> Self {
-    let context = render_pass.context();
-    let mut log = context.log().with_src("graphics::Pipeline");
-
-    let layout = context.device().create_pipeline_layout(&[], &[]);
+  pub fn new(render_target: &RenderTarget, shaders: ShaderSet) -> Self {
+    let device = &render_target.context.device;
 
     let vert_entry = gfx_hal::pso::EntryPoint::<Backend> {
       entry: "main",
@@ -45,8 +41,10 @@ impl Pipeline {
 
     let subpass = gfx_hal::pass::Subpass {
       index: 0,
-      main_pass: render_pass.pass(),
+      main_pass: render_target.render_pass.raw(),
     };
+
+    let layout = device.create_pipeline_layout(&[], &[]);
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       shader_entries,
@@ -64,35 +62,29 @@ impl Pipeline {
         gfx_hal::pso::BlendState::ALPHA,
       ));
 
-    let pipeline = context
-      .device()
+    let pipeline = device
       .create_graphics_pipeline(&pipeline_desc, None)
       .expect("could not create graphics pipeline");
 
-    log.trace("Created.");
-
     Pipeline {
-      render_pass: render_pass.clone(),
+      render_pass: render_target.render_pass.clone(),
       _shaders: shaders,
-      pipeline: Some(pipeline),
       layout: Some(layout),
-      log,
+      pipeline: Some(pipeline),
     }
   }
 }
 
 impl Drop for Pipeline {
   fn drop(&mut self) {
-    let device = self.render_pass.context().device();
-
-    if let Some(pipeline) = self.pipeline.take() {
-      device.destroy_graphics_pipeline(pipeline);
-    }
+    let device = &self.render_pass.context().device;
 
     if let Some(layout) = self.layout.take() {
       device.destroy_pipeline_layout(layout);
     }
 
-    self.log.trace("Destroyed.");
+    if let Some(pipeline) = self.pipeline.take() {
+      device.destroy_graphics_pipeline(pipeline);
+    }
   }
 }

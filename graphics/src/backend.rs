@@ -19,6 +19,8 @@ pub const NAME: &str = "Metal";
 #[cfg(all(unix, not(target_os = "macos")))]
 pub const NAME: &str = "Vulkan";
 
+pub type Adapter = gfx_hal::Adapter<Backend>;
+
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
 pub type Device = <Backend as gfx_hal::Backend>::Device;
 pub type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;

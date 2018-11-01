@@ -4,17 +4,14 @@ use gfx_hal::Device;
 use std::sync::Arc;
 
 pub struct RenderPass {
-  pub context: Arc<Context>,
-  pub pass: Option<backend::RenderPass>,
-  pub log: bflog::Logger,
+  raw: Option<backend::RenderPass>,
+  context: Arc<Context>,
 }
 
 impl RenderPass {
-  pub fn new(context: &Arc<Context>) -> Arc<Self> {
-    let mut log = context.log().with_src("graphics::RenderPass");
-
+  pub fn new(context: &Arc<Context>, format: gfx_hal::format::Format) -> Arc<Self> {
     let color_attachment = gfx_hal::pass::Attachment {
-      format: Some(context.format()),
+      format: Some(format),
       samples: 1,
       ops: gfx_hal::pass::AttachmentOps::new(
         gfx_hal::pass::AttachmentLoadOp::Clear,
@@ -41,16 +38,13 @@ impl RenderPass {
           | gfx_hal::image::Access::COLOR_ATTACHMENT_WRITE),
     };
 
-    let pass = context
-      .device()
+    let raw = context
+      .device
       .create_render_pass(&[color_attachment], &[subpass], &[dependency]);
-
-    log.trace("Created.");
 
     Arc::new(RenderPass {
       context: context.clone(),
-      pass: Some(pass),
-      log,
+      raw: Some(raw),
     })
   }
 
@@ -58,16 +52,15 @@ impl RenderPass {
     &self.context
   }
 
-  pub fn pass(&self) -> &backend::RenderPass {
-    self.pass.as_ref().expect("render pass was destroyed")
+  pub fn raw(&self) -> &backend::RenderPass {
+    self.raw.as_ref().expect("render pass was destroyed")
   }
 }
 
 impl Drop for RenderPass {
   fn drop(&mut self) {
-    if let Some(pass) = self.pass.take() {
-      self.context.device().destroy_render_pass(pass);
-      self.log.trace("Destroyed.");
+    if let Some(pass) = self.raw.take() {
+      self.context.device.destroy_render_pass(pass);
     }
   }
 }

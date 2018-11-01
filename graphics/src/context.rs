@@ -8,7 +8,6 @@ const ENGINE_VERSION: u32 = 1;
 
 pub struct Context {
   // Fields in reverse order of allocation so they are dropped in that order.
-  format: gfx_hal::format::Format,
   device: backend::Device,
   adapter: gfx_hal::Adapter<Backend>,
   instance: backend::Instance,
@@ -89,8 +88,7 @@ impl Context {
       .open(&[
         (graphics_queue_family, &[1.0]),
         (present_queue_family, &[1.0]),
-      ])
-      .expect("device creation error");
+      ]).expect("device creation error");
 
     let device = gpu.device;
 
