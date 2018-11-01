@@ -1,5 +1,4 @@
 use super::{RenderImage, RenderTarget};
-use gfx_hal::pool::RawCommandPool;
 use gfx_hal::{Device, Surface};
 use std::cmp;
 
@@ -10,9 +9,33 @@ pub fn create(target: &mut RenderTarget, width: u32, height: u32) {
   let surface = &mut target.surface;
   let log = &mut target.log;
 
-  let compatibility = surface.compatibility(&target.context.adapter.physical_device);
-  let config = configure(target.format, width, height, compatibility);
-  let extent = config.extent;
+  let (caps, _, modes) = surface.compatibility(&target.context.adapter.physical_device);
+
+  let image_count = cmp::max(
+    caps.image_count.start,
+    cmp::min(MAX_IMAGE_COUNT as u32, caps.image_count.end),
+  );
+
+  let extent = gfx_hal::window::Extent2D {
+    width: cmp::max(
+      caps.extents.start.width,
+      cmp::min(width, caps.extents.end.width),
+    ),
+    height: cmp::max(
+      caps.extents.start.height,
+      cmp::min(height, caps.extents.end.height),
+    ),
+  };
+
+  let config = gfx_hal::SwapchainConfig {
+    present_mode: select_present_mode(modes),
+    format: target.format,
+    extent,
+    image_count,
+    image_layers: 1,
+    image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
+  };
+
   let (swapchain, backbuffer) = device.create_swapchain(surface, config, None);
 
   target.swapchain = Some(swapchain);
@@ -67,44 +90,6 @@ pub fn destroy(target: &mut RenderTarget) {
     device.destroy_swapchain(swapchain);
 
     log.trace("Destroyed swapchain.");
-  }
-}
-
-fn configure(
-  format: gfx_hal::format::Format,
-  width: u32,
-  height: u32,
-  compatibility: (
-    gfx_hal::window::SurfaceCapabilities,
-    Option<Vec<gfx_hal::format::Format>>,
-    Vec<gfx_hal::window::PresentMode>,
-  ),
-) -> gfx_hal::SwapchainConfig {
-  let (caps, _, modes) = compatibility;
-
-  let image_count = cmp::max(
-    caps.image_count.start,
-    cmp::min(MAX_IMAGE_COUNT as u32, caps.image_count.end),
-  );
-
-  let extent = gfx_hal::window::Extent2D {
-    width: cmp::max(
-      caps.extents.start.width,
-      cmp::min(width, caps.extents.end.width),
-    ),
-    height: cmp::max(
-      caps.extents.start.height,
-      cmp::min(height, caps.extents.end.height),
-    ),
-  };
-
-  gfx_hal::SwapchainConfig {
-    present_mode: select_present_mode(modes),
-    format,
-    extent,
-    image_count,
-    image_layers: 1,
-    image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
   }
 }
 
