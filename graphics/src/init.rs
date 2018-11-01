@@ -1,7 +1,7 @@
 use super::backend;
 use super::swapchain;
-use super::{Context, RenderPass, RenderTarget};
-use gfx_hal::pool::CommandPoolCreateFlags;
+use super::{Context, RenderFrame, RenderPass, RenderTarget};
+use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool};
 use gfx_hal::{Device, Instance, PhysicalDevice, QueueFamily, Surface};
 use smallvec::SmallVec;
 use std::sync::Arc;
@@ -128,10 +128,26 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
 
   log.trace("Created render pass.");
 
-  let command_pool = context.device.create_command_pool(
+  let mut command_pool = context.device.create_command_pool(
     graphics_queue_family,
     CommandPoolCreateFlags::TRANSIENT | CommandPoolCreateFlags::RESET_INDIVIDUAL,
-  );;
+  );
+
+  let command_buffers = command_pool.allocate(
+    swapchain::MAX_IMAGE_COUNT,
+    gfx_hal::command::RawLevel::Primary,
+  );
+
+  let mut frames = SmallVec::new();
+
+  for command_buffer in command_buffers {
+    frames.push(RenderFrame {
+      command_buffer,
+      fence: context.device.create_fence(true),
+      acquire_semaphore: context.device.create_semaphore(),
+      render_semaphore: context.device.create_semaphore(),
+    });
+  }
 
   let mut render_target = RenderTarget {
     context: context.clone(),
@@ -143,8 +159,9 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     format,
     render_pass,
     command_pool: Some(command_pool),
+    frames,
     swapchain: None,
-    frames: SmallVec::new(),
+    images: SmallVec::new(),
     log: log.with_src("graphics::RenderTarget"),
   };
 
