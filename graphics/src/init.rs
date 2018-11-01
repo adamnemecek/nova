@@ -83,7 +83,8 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     .open(&[
       (graphics_queue_family, &[1.0]),
       (present_queue_family, &[1.0]),
-    ]).expect("device creation error");
+    ])
+    .expect("device creation error");
 
   let device = gpu.device;
 
@@ -109,6 +110,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     _instance: instance,
     adapter,
     device,
+    log: log.with_src("graphics"),
   });
 
   log

@@ -19,6 +19,7 @@ pub struct Context {
   device: backend::Device,
   adapter: backend::Adapter,
   _instance: backend::Instance,
+  log: bflog::Logger,
 }
 
 pub struct RenderTarget {
@@ -44,6 +45,12 @@ struct RenderFrame {
   acquire_semaphore: backend::Semaphore,
   render_semaphore: backend::Semaphore,
   command_buffer: backend::CommandBuffer,
+}
+
+impl Drop for Context {
+  fn drop(&mut self) {
+    self.log.trace("Dropped context.");
+  }
 }
 
 impl Drop for RenderTarget {
