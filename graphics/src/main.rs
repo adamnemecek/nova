@@ -162,7 +162,11 @@ fn main() {
 
     rendering::bind_pipeline(&mut render_target, &pipeline);
     rendering::draw(&mut render_target);
-    rendering::end(&mut render_target).expect("could not complete frame");
+
+    if let Err(_) = rendering::end(&mut render_target) {
+      swapchain::destroy(&mut render_target);
+      continue;
+    }
 
     std::thread::yield_now();
   }
