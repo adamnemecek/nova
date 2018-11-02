@@ -40,8 +40,12 @@ pub fn begin(target: &mut RenderTarget) -> Result<(), BeginError> {
     viewport.rect,
     &[
       gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
-        0.1, 0.1, 0.1, 1.0,
-      ])).into(),
+        // TODO: This color should probably just be black, but using an
+        //       off-black makes it more obvious when rendering is totally
+        //       failing.
+        0.008, 0.008, 0.012, 1.0, // “eigengrau”
+      ]))
+      .into(),
     ],
     gfx_hal::command::SubpassContents::Inline,
   );
