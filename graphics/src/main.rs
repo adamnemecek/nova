@@ -6,6 +6,7 @@ mod backend;
 mod init;
 mod pass;
 mod pipeline;
+mod rendering;
 mod shader;
 mod swapchain;
 
@@ -23,15 +24,16 @@ pub struct Context {
 }
 
 pub struct RenderTarget {
+  width: u32,
+  height: u32,
   images: SmallVec<[RenderImage; swapchain::MAX_IMAGE_COUNT]>,
   swapchain: Option<backend::Swapchain>,
+  current_state: usize,
   states: SmallVec<[RenderState; swapchain::MAX_IMAGE_COUNT]>,
   command_pool: Option<backend::CommandPool>,
   render_pass: Arc<RenderPass>,
   format: gfx_hal::format::Format,
-  graphics_queue_family: gfx_hal::queue::QueueFamilyId,
   graphics_queue: backend::CommandQueue,
-  present_queue_family: gfx_hal::queue::QueueFamilyId,
   present_queue: backend::CommandQueue,
   surface: backend::Surface,
   context: Arc<Context>,
@@ -39,10 +41,11 @@ pub struct RenderTarget {
 }
 
 struct RenderState {
-  acquire_semaphore: backend::Semaphore,
   fence: backend::Fence,
-  render_semaphore: backend::Semaphore,
+  acquire_semaphore: backend::Semaphore,
+  image: u32,
   command_buffer: backend::CommandBuffer,
+  render_semaphore: backend::Semaphore,
 }
 
 struct RenderImage {
@@ -93,7 +96,7 @@ fn main() {
 
   let (context, mut render_target) = init(&window, &log);
 
-  let _pipeline = Pipeline::new(
+  let pipeline = Pipeline::new(
     &render_target,
     ShaderSet {
       vertex: Shader::new(&context, include_bytes!("shaders/spirv/default.vert.spv")),
@@ -103,38 +106,64 @@ fn main() {
 
   log.trace("Created main pipeline.");
 
-  events_loop.run_forever(|event| {
-    match event {
-      winit::Event::WindowEvent { event, .. } => match event {
-        winit::WindowEvent::CloseRequested => {
-          log.info("Close requested.");
+  let mut exiting = false;
 
-          return winit::ControlFlow::Break;
-        }
+  while !exiting {
+    events_loop.poll_events(|event| {
+      match event {
+        winit::Event::WindowEvent { event, .. } => match event {
+          winit::WindowEvent::CloseRequested => {
+            log.info("Close requested.");
 
-        winit::WindowEvent::Resized(size) => {
-          let size = size.to_physical(window.get_hidpi_factor());
+            exiting = true;
+          }
 
-          log
-            .trace("Window resized.")
-            .with("width", &size.width)
-            .with("height", &size.height);
+          winit::WindowEvent::Resized(size) => {
+            let size = size.to_physical(window.get_hidpi_factor());
 
-          swapchain::destroy(&mut render_target);
+            log
+              .trace("Window resized.")
+              .with("width", &size.width)
+              .with("height", &size.height);
 
-          swapchain::create(
-            &mut render_target,
-            size.width.round() as u32,
-            size.height.round() as u32,
-          );
-        }
+            swapchain::destroy(&mut render_target);
+
+            swapchain::create(
+              &mut render_target,
+              size.width.round() as u32,
+              size.height.round() as u32,
+            );
+          }
+
+          _ => {}
+        },
 
         _ => {}
-      },
+      };
+    });
 
-      _ => {}
-    };
+    if !render_target.swapchain.is_some() {
+      let size = window
+        .get_inner_size()
+        .unwrap()
+        .to_physical(window.get_hidpi_factor());
 
-    winit::ControlFlow::Continue
-  });
+      swapchain::create(
+        &mut render_target,
+        size.width.round() as u32,
+        size.height.round() as u32,
+      );
+    }
+
+    if let Err(_) = rendering::begin(&mut render_target) {
+      swapchain::destroy(&mut render_target);
+      continue;
+    }
+
+    rendering::bind_pipeline(&mut render_target, &pipeline);
+    rendering::draw(&mut render_target);
+    rendering::end(&mut render_target).expect("could not complete frame");
+
+    std::thread::yield_now();
+  }
 }

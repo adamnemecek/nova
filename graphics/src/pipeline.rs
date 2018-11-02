@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 pub struct Pipeline {
   _shaders: ShaderSet,
-  pipeline: Option<backend::GraphicsPipeline>,
+  raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
   render_pass: Arc<RenderPass>,
 }
@@ -70,8 +70,12 @@ impl Pipeline {
       render_pass: render_target.render_pass.clone(),
       _shaders: shaders,
       layout: Some(layout),
-      pipeline: Some(pipeline),
+      raw: Some(pipeline),
     }
+  }
+
+  pub fn raw(&self) -> &backend::GraphicsPipeline {
+    self.raw.as_ref().expect("pipeline was destroyed")
   }
 }
 
@@ -83,7 +87,7 @@ impl Drop for Pipeline {
       device.destroy_pipeline_layout(layout);
     }
 
-    if let Some(pipeline) = self.pipeline.take() {
+    if let Some(pipeline) = self.raw.take() {
       device.destroy_graphics_pipeline(pipeline);
     }
   }

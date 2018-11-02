@@ -83,8 +83,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     .open(&[
       (graphics_queue_family, &[1.0]),
       (present_queue_family, &[1.0]),
-    ])
-    .expect("device creation error");
+    ]).expect("device creation error");
 
   let device = gpu.device;
 
@@ -142,39 +141,40 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
 
   for command_buffer in command_buffers {
     states.push(RenderState {
-      command_buffer,
       fence: context.device.create_fence(true),
       acquire_semaphore: context.device.create_semaphore(),
+      image: 0,
+      command_buffer,
       render_semaphore: context.device.create_semaphore(),
     });
   }
-
-  let mut render_target = RenderTarget {
-    context: context.clone(),
-    surface,
-    graphics_queue_family,
-    graphics_queue,
-    present_queue_family,
-    present_queue,
-    format,
-    render_pass,
-    command_pool: Some(command_pool),
-    states,
-    swapchain: None,
-    images: SmallVec::new(),
-    log: log.with_src("graphics::RenderTarget"),
-  };
 
   let window_size = window
     .get_inner_size()
     .expect("window was destroyed")
     .to_physical(window.get_hidpi_factor());
 
-  swapchain::create(
-    &mut render_target,
-    window_size.width.round() as u32,
-    window_size.height.round() as u32,
-  );
+  let width = window_size.width.round() as u32;
+  let height = window_size.height.round() as u32;
+
+  let mut render_target = RenderTarget {
+    log: log.with_src("graphics::RenderTarget"),
+    context: context.clone(),
+    surface,
+    graphics_queue,
+    present_queue,
+    format,
+    render_pass,
+    command_pool: Some(command_pool),
+    states,
+    current_state: 0,
+    swapchain: None,
+    images: SmallVec::new(),
+    width,
+    height,
+  };
+
+  swapchain::create(&mut render_target, width, height);
 
   (context, render_target)
 }

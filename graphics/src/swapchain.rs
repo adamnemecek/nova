@@ -39,6 +39,8 @@ pub fn create(target: &mut RenderTarget, width: u32, height: u32) {
   let (swapchain, backbuffer) = device.create_swapchain(surface, config, None);
 
   target.swapchain = Some(swapchain);
+  target.width = extent.width;
+  target.height = extent.height;
 
   let images = match backbuffer {
     gfx_hal::Backbuffer::Images(images) => images,
@@ -57,8 +59,7 @@ pub fn create(target: &mut RenderTarget, width: u32, height: u32) {
           levels: 0..1,
           layers: 0..1,
         },
-      )
-      .expect("could not create image view");
+      ).expect("could not create image view");
 
     let framebuffer = device
       .create_framebuffer(target.render_pass.raw(), Some(&view), extent.to_extent())
