@@ -1,31 +1,45 @@
-use super::buffers::Buffer;
+use super::buffers::{Buffer, BufferUsage};
 use super::{Backend, Context};
 use nalgebra::{Vector2, Vector4};
 use std::sync::Arc;
 
 pub struct Mesh {
-  vertices: Vec<Vertex>,
+  vertices: u32,
+  indices: u32,
   vertex_buffer: Buffer<Vertex>,
+  index_buffer: Buffer<u16>,
 }
 
 impl Mesh {
-  pub fn new(context: &Arc<Context>, vertices: Vec<Vertex>) -> Mesh {
-    let vertex_buffer = Buffer::new(context, vertices.len());
+  pub fn new(context: &Arc<Context>, vertices: Vec<Vertex>, indices: Vec<u16>) -> Mesh {
+    let vertex_buffer = Buffer::new(context, vertices.len(), BufferUsage::VERTEX);
+    let index_buffer = Buffer::new(context, indices.len(), BufferUsage::INDEX);
 
     vertex_buffer.write(&vertices);
+    index_buffer.write(&indices);
 
     Mesh {
-      vertices,
+      vertices: vertices.len() as u32,
+      indices: indices.len() as u32,
       vertex_buffer,
+      index_buffer,
     }
   }
 
-  pub fn vertices(&self) -> &[Vertex] {
-    &self.vertices
+  pub fn vertices(&self) -> u32 {
+    self.vertices
+  }
+
+  pub fn indices(&self) -> u32 {
+    self.indices
   }
 
   pub fn vertex_buffer(&self) -> &Buffer<Vertex> {
     &self.vertex_buffer
+  }
+
+  pub fn index_buffer(&self) -> &Buffer<u16> {
+    &self.index_buffer
   }
 }
 
@@ -66,5 +80,12 @@ impl Vertex {
         offset: 8,
       },
     });
+  }
+
+  pub fn new(pos: [f32; 2], color: [f32; 4]) -> Self {
+    Vertex {
+      pos: Vector2::new(pos[0], pos[1]),
+      color: Vector4::new(color[0], color[1], color[2], color[3]),
+    }
   }
 }

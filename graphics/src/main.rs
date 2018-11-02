@@ -1,5 +1,4 @@
 use gfx_hal::Device;
-use nalgebra::{Vector2, Vector4};
 use smallvec::SmallVec;
 use std::sync::Arc;
 
@@ -113,19 +112,12 @@ fn main() {
   let mesh = Mesh::new(
     &context,
     vec![
-      Vertex {
-        pos: Vector2::new(0.0, -0.5),
-        color: Vector4::new(1.0, 0.0, 0.0, 1.0),
-      },
-      Vertex {
-        pos: Vector2::new(0.5, 0.5),
-        color: Vector4::new(0.0, 1.0, 0.0, 1.0),
-      },
-      Vertex {
-        pos: Vector2::new(-0.5, 0.5),
-        color: Vector4::new(0.0, 0.0, 1.0, 1.0),
-      },
+      Vertex::new([-0.5, -0.5], [1.0, 0.0, 0.0, 1.0]),
+      Vertex::new([0.5, -0.5], [0.0, 1.0, 0.0, 1.0]),
+      Vertex::new([0.5, 0.5], [0.0, 0.0, 1.0, 1.0]),
+      Vertex::new([-0.5, 0.5], [1.0, 1.0, 1.0, 1.0]),
     ],
+    vec![0, 1, 2, 2, 3, 0],
   );
 
   let mut exiting = false;

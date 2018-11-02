@@ -65,7 +65,15 @@ pub fn draw(target: &mut RenderTarget, mesh: &Mesh) {
 
   state
     .command_buffer
-    .draw(0..mesh.vertices().len() as u32, 0..1);
+    .bind_index_buffer(gfx_hal::buffer::IndexBufferView {
+      buffer: mesh.index_buffer().raw(),
+      offset: 0,
+      index_type: gfx_hal::IndexType::U16,
+    });
+
+  state
+    .command_buffer
+    .draw_indexed(0..mesh.indices(), 0, 0..1);
 }
 
 pub fn end(target: &mut RenderTarget) -> Result<(), ()> {

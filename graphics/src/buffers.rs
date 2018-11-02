@@ -1,5 +1,6 @@
 use super::backend;
 use super::Context;
+pub use gfx_hal::buffer::Usage as BufferUsage;
 use gfx_hal::Device;
 use std::sync::Arc;
 
@@ -16,13 +17,13 @@ struct Inner {
 }
 
 impl<T: Copy> Buffer<T> {
-  pub fn new(context: &Arc<Context>, size: usize) -> Self {
+  pub fn new(context: &Arc<Context>, size: usize, usage: BufferUsage) -> Self {
     let device = &context.device;
 
     let size = std::mem::size_of::<T>() as u64 * size as u64;
 
     let unbound = device
-      .create_buffer(size, gfx_hal::buffer::Usage::VERTEX)
+      .create_buffer(size, usage)
       .expect("could not create buffer");
 
     let requirements = device.get_buffer_requirements(&unbound);
