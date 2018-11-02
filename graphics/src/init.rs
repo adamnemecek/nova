@@ -157,7 +157,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
   let width = window_size.width.round() as u32;
   let height = window_size.height.round() as u32;
 
-  let mut render_target = RenderTarget {
+  let render_target = RenderTarget {
     log: log.with_src("graphics::RenderTarget"),
     context: context.clone(),
     surface,
@@ -173,8 +173,6 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     width,
     height,
   };
-
-  swapchain::create(&mut render_target, width, height);
 
   (context, render_target)
 }
