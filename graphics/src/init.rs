@@ -53,57 +53,35 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     .with("id", &adapter.info.device)
     .with("name", &adapter.info.name);
 
-  let (graphics_queue_family, present_queue_family) = {
-    let mut graphics_family = None;
-    let mut present_family = None;
+  let (device, command_queue, command_queue_id) = {
+    let family = adapter
+      .queue_families
+      .iter()
+      .filter(|f| f.supports_graphics() && surface.supports_queue_family(f))
+      .next()
+      .expect("no supported command queue");
 
-    for family in &adapter.queue_families {
-      if family.supports_graphics() {
-        graphics_family = Some(family);
-      }
+    log
+      .trace("Selected command queue.")
+      .with("id", &family.id().0);
 
-      if surface.supports_queue_family(family) {
-        present_family = Some(family);
-      }
-    }
+    let mut gpu = adapter
+      .physical_device
+      .open(&[(family, &[1.0])])
+      .expect("device creation error");
 
-    (
-      graphics_family.expect("no graphics queue"),
-      present_family.expect("no present queue"),
-    )
+    let device = gpu.device;
+
+    let command_queue = gpu
+      .queues
+      .take_raw(family.id())
+      .expect("queue not found")
+      .into_iter()
+      .next()
+      .expect("empty list of queues");
+
+    (device, command_queue, family.id())
   };
-
-  log
-    .trace("Selected command queues.")
-    .with("graphics", &graphics_queue_family.id().0)
-    .with("present", &present_queue_family.id().0);
-
-  let mut gpu = adapter
-    .physical_device
-    .open(&[
-      (graphics_queue_family, &[1.0]),
-      (present_queue_family, &[1.0]),
-    ]).expect("device creation error");
-
-  let device = gpu.device;
-
-  let graphics_queue_family = graphics_queue_family.id();
-  let graphics_queue = gpu
-    .queues
-    .take_raw(graphics_queue_family)
-    .expect("no graphics queues")
-    .into_iter()
-    .next()
-    .expect("empty list of graphics queues");
-
-  let present_queue_family = present_queue_family.id();
-  let present_queue = gpu
-    .queues
-    .take_raw(present_queue_family)
-    .expect("no present queues")
-    .into_iter()
-    .next()
-    .expect("empty list of present queues");;
 
   let context = Arc::new(Context {
     _instance: instance,
@@ -128,7 +106,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
   log.trace("Created render pass.");
 
   let mut command_pool = context.device.create_command_pool(
-    graphics_queue_family,
+    command_queue_id,
     CommandPoolCreateFlags::TRANSIENT | CommandPoolCreateFlags::RESET_INDIVIDUAL,
   );
 
@@ -161,8 +139,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     log: log.with_src("graphics::RenderTarget"),
     context: context.clone(),
     surface,
-    graphics_queue,
-    present_queue,
+    command_queue,
     format,
     render_pass,
     command_pool: Some(command_pool),

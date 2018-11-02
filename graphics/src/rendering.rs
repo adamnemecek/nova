@@ -75,7 +75,7 @@ pub fn end(target: &mut RenderTarget) -> Result<(), ()> {
   cmd_buffers.push(&state.command_buffer);
 
   unsafe {
-    target.graphics_queue.submit_raw(
+    target.command_queue.submit_raw(
       gfx_hal::queue::RawSubmission {
         cmd_buffers,
         wait_semaphores: &[(
@@ -96,7 +96,7 @@ pub fn end(target: &mut RenderTarget) -> Result<(), ()> {
   swapchains.push((swapchain, state.image));
   wait_semaphores.push(&state.render_semaphore);
 
-  let result = target.present_queue.present(swapchains, wait_semaphores);
+  let result = target.command_queue.present(swapchains, wait_semaphores);
 
   result
 }
