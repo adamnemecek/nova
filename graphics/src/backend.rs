@@ -33,5 +33,6 @@ pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 pub type GraphicsPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
 pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
 pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+pub type CommandQueue = <Backend as gfx_hal::Backend>::CommandQueue;
 pub type Fence = <Backend as gfx_hal::Backend>::Fence;
 pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
