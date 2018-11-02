@@ -1,4 +1,5 @@
 use super::backend;
+use super::mesh::Vertex;
 use super::{Backend, RenderPass, RenderTarget, Shader};
 use gfx_hal::Device;
 use std::sync::Arc;
@@ -61,6 +62,8 @@ impl Pipeline {
         gfx_hal::pso::ColorMask::ALL,
         gfx_hal::pso::BlendState::ALPHA,
       ));
+
+    Vertex::add_pipeline_binding(&mut pipeline_desc, 0);
 
     let pipeline = device
       .create_graphics_pipeline(&pipeline_desc, None)

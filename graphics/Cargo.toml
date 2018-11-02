@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 bflog = "0.2.2"
 gfx-hal = { git = "https://github.com/gfx-rs/gfx", features = ["serde"] }
+nalgebra = "0.16"
 winit = "0.17"
 smallvec = "0.6.5"
 parking_lot = "0.6.4"

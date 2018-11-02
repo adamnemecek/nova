@@ -36,3 +36,5 @@ pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub type CommandQueue = <Backend as gfx_hal::Backend>::CommandQueue;
 pub type Fence = <Backend as gfx_hal::Backend>::Fence;
 pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
+pub type Buffer = <Backend as gfx_hal::Backend>::Buffer;
+pub type Memory = <Backend as gfx_hal::Backend>::Memory;

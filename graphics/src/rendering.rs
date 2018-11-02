@@ -1,4 +1,4 @@
-use super::{Pipeline, RenderTarget};
+use super::{Mesh, Pipeline, RenderTarget};
 use gfx_hal::command::{CommandBufferFlags, RawCommandBuffer};
 use gfx_hal::queue::RawCommandQueue;
 use gfx_hal::{Device, Swapchain};
@@ -40,7 +40,7 @@ pub fn begin(target: &mut RenderTarget) -> Result<(), BeginError> {
     viewport.rect,
     &[
       gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
-        1.0, 0.0, 0.0, 1.0,
+        0.1, 0.1, 0.1, 1.0,
       ])).into(),
     ],
     gfx_hal::command::SubpassContents::Inline,
@@ -55,10 +55,17 @@ pub fn bind_pipeline(target: &mut RenderTarget, pipeline: &Pipeline) {
   state.command_buffer.bind_graphics_pipeline(pipeline.raw());
 }
 
-pub fn draw(target: &mut RenderTarget) {
+pub fn draw(target: &mut RenderTarget, mesh: &Mesh) {
   let state = &mut target.states[target.current_state];
+  let mut buffers = SmallVec::<[_; 1]>::new();
 
-  state.command_buffer.draw(0..3, 0..1);
+  buffers.push((mesh.vertex_buffer().raw(), 0));
+
+  state.command_buffer.bind_vertex_buffers(0, buffers);
+
+  state
+    .command_buffer
+    .draw(0..mesh.vertices().len() as u32, 0..1);
 }
 
 pub fn end(target: &mut RenderTarget) -> Result<(), ()> {

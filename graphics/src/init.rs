@@ -48,6 +48,8 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
     .next()
     .expect("no adapters found");
 
+  let memory_properties = adapter.physical_device.memory_properties();
+
   log
     .trace("Selected best device by score.")
     .with("id", &adapter.info.device)
@@ -86,6 +88,7 @@ pub fn init(window: &winit::Window, log: &bflog::Logger) -> (Arc<Context>, Rende
   let context = Arc::new(Context {
     _instance: instance,
     adapter,
+    memory_properties,
     device,
     log: log.with_src("graphics"),
   });

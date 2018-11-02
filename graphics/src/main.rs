@@ -1,9 +1,12 @@
 use gfx_hal::Device;
+use nalgebra::{Vector2, Vector4};
 use smallvec::SmallVec;
 use std::sync::Arc;
 
 mod backend;
+mod buffers;
 mod init;
+mod mesh;
 mod pass;
 mod pipeline;
 mod rendering;
@@ -12,12 +15,14 @@ mod swapchain;
 
 pub use self::backend::Backend;
 use self::init::init;
+use self::mesh::{Mesh, Vertex};
 use self::pass::RenderPass;
 pub use self::pipeline::{Pipeline, ShaderSet};
 pub use self::shader::Shader;
 
 pub struct Context {
   device: backend::Device,
+  memory_properties: gfx_hal::adapter::MemoryProperties,
   adapter: backend::Adapter,
   _instance: backend::Instance,
   log: bflog::Logger,
@@ -105,6 +110,24 @@ fn main() {
 
   log.trace("Created main pipeline.");
 
+  let mesh = Mesh::new(
+    &context,
+    vec![
+      Vertex {
+        pos: Vector2::new(0.0, -0.5),
+        color: Vector4::new(1.0, 0.0, 0.0, 1.0),
+      },
+      Vertex {
+        pos: Vector2::new(0.5, 0.5),
+        color: Vector4::new(0.0, 1.0, 0.0, 1.0),
+      },
+      Vertex {
+        pos: Vector2::new(-0.5, 0.5),
+        color: Vector4::new(0.0, 0.0, 1.0, 1.0),
+      },
+    ],
+  );
+
   let mut exiting = false;
 
   while !exiting {
@@ -160,7 +183,7 @@ fn main() {
     }
 
     rendering::bind_pipeline(&mut render_target, &pipeline);
-    rendering::draw(&mut render_target);
+    rendering::draw(&mut render_target, &mesh);
 
     if let Err(_) = rendering::end(&mut render_target) {
       swapchain::destroy(&mut render_target);
