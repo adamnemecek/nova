@@ -1,10 +1,11 @@
 use super::backend;
 use super::prelude::*;
-use super::{Device, Pipeline, RenderPass, Swapchain};
+use super::{Buffer, Device, Pipeline, RenderPass, Swapchain};
 use gfx_hal::command::CommandBufferFlags;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use quick_error::quick_error;
 use smallvec::SmallVec;
+use std::iter;
 use std::sync::Arc;
 
 pub const FRAME_COUNT: usize = 3;
@@ -108,6 +109,24 @@ impl Renderer {
     Ok(())
   }
 
+  pub fn bind_vertex_buffer<T: Copy>(&mut self, binding: u32, buffer: &Buffer<T>) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.bind_vertex_buffers(binding, iter::once((buffer.raw(), 0)));
+  }
+
+  pub fn bind_index_buffer(&mut self, buffer: &Buffer<u16>) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.bind_index_buffer(gfx_hal::buffer::IndexBufferView {
+      buffer: buffer.raw(),
+      offset: 0,
+      index_type: gfx_hal::IndexType::U16,
+    })
+  }
+
   pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
     let frame = &mut self.frames[self.frame];
     let cmd = &mut frame.command_buffer;
@@ -115,11 +134,11 @@ impl Renderer {
     cmd.bind_graphics_pipeline(pipeline.raw());
   }
 
-  pub fn draw(&mut self) {
+  pub fn draw_indexed(&mut self, indices: u32) {
     let frame = &mut self.frames[self.frame];
     let cmd = &mut frame.command_buffer;
 
-    cmd.draw(0..3, 0..1);
+    cmd.draw_indexed(0..indices, 0, 0..1);
   }
 
   pub fn present(&mut self, swapchain: &mut Swapchain) -> Result<(), PresentError> {

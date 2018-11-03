@@ -17,24 +17,26 @@
 //! The `Atlas` struct provides a wrapper around an `Image` asset that slices
 //! it into cells, for use with tile sets or sprite sheets.
 
-use crate::prelude::*;
-use crate::window::Window;
-
-pub use ggez::graphics::{Color, DrawParam as DrawParams};
-
 //pub mod panels;
 
 mod atlas;
 mod canvas;
 mod image;
+mod mesh;
 mod rendering;
 
 pub use self::atlas::*;
 pub use self::canvas::Canvas;
 pub use self::image::*;
+pub use self::mesh::*;
+pub use ggez::graphics::{Color, DrawParam as DrawParams};
+
+use crate::prelude::*;
+use crate::window::Window;
 
 pub struct Extension {
   canvas: Canvas,
+  mesh: Mesh,
 }
 
 impl engine::Extension for Extension {
@@ -48,7 +50,7 @@ impl engine::Extension for Extension {
 
       self.canvas.begin();
 
-      self.canvas.draw();
+      self.canvas.draw(&self.mesh);
 
       self.canvas.present();
     }
@@ -65,11 +67,28 @@ pub fn init(ctx: &mut engine::Context, log: &bflog::Logger) {
 
     let device = rendering::init(window).expect("could not create device");
 
-    log.trace("Created device");
+    log
+      .trace("Created device.")
+      .with("backend", &rendering::BACKEND_NAME);
 
     let canvas = Canvas::new(&device, window, &log);
 
-    Extension { canvas }
+    log.trace("Created canvas.");
+
+    let mesh = Mesh::new(
+      &device,
+      &[
+        Vertex::new([-0.5, -0.5], [1.0, 0.0, 0.0, 1.0]),
+        Vertex::new([0.5, -0.5], [0.33, 0.67, 0.0, 1.0]),
+        Vertex::new([0.5, 0.5], [0.0, 0.67, 0.33, 1.0]),
+        Vertex::new([-0.5, 0.5], [0.0, 0.0, 1.0, 1.0]),
+      ],
+      &[0, 1, 2, 2, 3, 0],
+    );
+
+    log.trace("Created mesh.");
+
+    Extension { canvas, mesh }
   });
 
   //panels::init(ctx);

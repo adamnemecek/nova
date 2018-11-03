@@ -1,4 +1,6 @@
+use super::mesh;
 use super::rendering;
+use super::Mesh;
 use crate::prelude::*;
 use std::sync::Arc;
 
@@ -30,6 +32,7 @@ impl Canvas {
     let pipeline = rendering::PipelineBuilder::default()
       .render_pass(&render_pass)
       .shaders(shaders)
+      .vertex_buffer::<mesh::Vertex>()
       .create();
 
     log.trace("Created pipeline.");
@@ -85,8 +88,10 @@ impl Canvas {
     self.renderer.bind_pipeline(&self.pipeline);
   }
 
-  pub fn draw(&mut self) {
-    self.renderer.draw();
+  pub fn draw(&mut self, mesh: &Mesh) {
+    self.renderer.bind_vertex_buffer(0, mesh.vertex_buffer());
+    self.renderer.bind_index_buffer(mesh.index_buffer());
+    self.renderer.draw_indexed(mesh.indices());
   }
 
   pub fn present(&mut self) {

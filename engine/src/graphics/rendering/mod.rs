@@ -1,7 +1,5 @@
-use quick_error::quick_error;
-use std::sync::{Arc, Mutex};
-
 mod backend;
+mod buffer;
 mod pass;
 mod pipeline;
 mod prelude;
@@ -9,14 +7,21 @@ mod queue;
 mod renderer;
 mod shader;
 mod swapchain;
+mod vertices;
 
-pub use self::pass::RenderPass;
+pub use self::backend::NAME as BACKEND_NAME;
+pub use self::buffer::*;
+pub use self::pass::*;
 pub use self::pipeline::*;
-use self::prelude::*;
-use self::queue::CommandQueue;
 pub use self::renderer::*;
 pub use self::shader::*;
-pub use self::swapchain::Swapchain;
+pub use self::swapchain::*;
+pub use self::vertices::*;
+
+use self::prelude::*;
+use self::queue::*;
+use quick_error::quick_error;
+use std::sync::{Arc, Mutex};
 
 const ENGINE_NAME: &str = "nova";
 const ENGINE_VERSION: u32 = 1;
@@ -24,6 +29,7 @@ const ENGINE_VERSION: u32 = 1;
 pub struct Device {
   command_queue: CommandQueue,
   raw: backend::Device,
+  memory_properties: gfx_hal::MemoryProperties,
   adapter: backend::Adapter,
   surface: Mutex<backend::Surface>,
   _instance: backend::Instance,
@@ -40,6 +46,9 @@ pub fn init(window: &winit::Window) -> Result<Arc<Device>, InitError> {
   // Select the best available adapter.
   let adapter = select_adapter(&instance, &surface).ok_or(InitError::NoGraphicsDevice)?;
 
+  // Cache the memory properties info.
+  let memory_properties = adapter.physical_device.memory_properties();
+
   // Select a supported queue family.
   let queue_family = select_queue_family(&adapter, &surface).ok_or(InitError::NoSupportedQueue)?;
 
@@ -54,6 +63,7 @@ pub fn init(window: &winit::Window) -> Result<Arc<Device>, InitError> {
     _instance: instance,
     surface: Mutex::new(surface),
     adapter,
+    memory_properties,
     raw: gpu.device,
     command_queue,
   }))

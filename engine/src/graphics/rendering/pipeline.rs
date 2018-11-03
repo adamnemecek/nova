@@ -1,6 +1,6 @@
 use super::backend;
 use super::prelude::*;
-use super::{Device, RenderPass, Shader, ShaderKind};
+use super::{Device, RenderPass, Shader, ShaderKind, VertexData};
 use std::sync::Arc;
 
 pub struct Pipeline {
@@ -37,6 +37,14 @@ impl Pipeline {
         gfx_hal::pso::ColorMask::ALL,
         gfx_hal::pso::BlendState::ALPHA,
       ));
+
+    pipeline_desc
+      .vertex_buffers
+      .extend(builder.vertex_buffers.into_iter());
+
+    pipeline_desc
+      .attributes
+      .extend(builder.vertex_attributes.into_iter());
 
     let pipeline = device
       .raw
@@ -115,6 +123,8 @@ impl PipelineShaderSet {
 pub struct PipelineBuilder {
   render_pass: Option<Arc<RenderPass>>,
   shaders: PipelineShaderSet,
+  vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
+  vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
 }
 
 impl PipelineBuilder {
@@ -125,6 +135,37 @@ impl PipelineBuilder {
 
   pub fn shaders(mut self, shaders: PipelineShaderSet) -> Self {
     self.shaders = shaders;
+    self
+  }
+
+  pub fn vertex_buffer<T: VertexData>(mut self) -> Self {
+    let binding = self.vertex_buffers.len() as u32;
+
+    self.vertex_buffers.push(gfx_hal::pso::VertexBufferDesc {
+      binding,
+      stride: T::stride(),
+      rate: 0,
+    });
+
+    let mut offset = 0;
+
+    self
+      .vertex_attributes
+      .extend(T::attributes().iter().enumerate().map(|(i, attr)| {
+        let desc = gfx_hal::pso::AttributeDesc {
+          location: i as u32,
+          binding,
+          element: gfx_hal::pso::Element {
+            format: attr.into(),
+            offset,
+          },
+        };
+
+        offset += attr.size();
+
+        desc
+      }));
+
     self
   }
 
