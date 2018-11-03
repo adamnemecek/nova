@@ -1,10 +1,10 @@
-use nova::assets;
+//use nova::assets;
 use nova::graphics;
-use nova::graphics::panels;
-use nova::input;
+//use nova::graphics::panels;
+//use nova::input;
 use nova::time;
 use nova::window;
-use std::sync::Arc;
+//use std::sync::Arc;
 
 mod prelude;
 //mod stage;
@@ -16,7 +16,7 @@ pub fn main() {
   let ctx = &mut engine::Context::new();
 
   time::init(ctx);
-  assets::init(ctx);
+  //assets::init(ctx);
   window::init(ctx);
   graphics::init(ctx);
 

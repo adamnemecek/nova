@@ -4,7 +4,6 @@ use nalgebra::{Vector2, Vector4};
 use std::sync::Arc;
 
 pub struct Mesh {
-  vertices: u32,
   indices: u32,
   vertex_buffer: Buffer<Vertex>,
   index_buffer: Buffer<u16>,
@@ -19,15 +18,10 @@ impl Mesh {
     index_buffer.write(&indices);
 
     Mesh {
-      vertices: vertices.len() as u32,
       indices: indices.len() as u32,
       vertex_buffer,
       index_buffer,
     }
-  }
-
-  pub fn vertices(&self) -> u32 {
-    self.vertices
   }
 
   pub fn indices(&self) -> u32 {

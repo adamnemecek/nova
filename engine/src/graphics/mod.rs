@@ -22,7 +22,7 @@ use crate::window::Window;
 
 pub use ggez::graphics::{Color, DrawParam as DrawParams};
 
-pub mod panels;
+//pub mod panels;
 
 mod atlas;
 mod image;
@@ -30,83 +30,72 @@ mod rendering;
 
 pub use self::atlas::*;
 pub use self::image::*;
-pub use self::rendering::Canvas;
-
-use self::rendering::{RenderTarget, Renderer};
 
 pub struct Extension {
-  renderer: Option<Box<Renderer>>,
-  render_target: Option<Box<RenderTarget>>,
+  swapchain: rendering::Swapchain,
+  renderer: rendering::Renderer,
 }
 
 impl engine::Extension for Extension {
   fn after_tick(&mut self, ctx: &mut engine::Context) {
-    let mut renderer = self.renderer.take().unwrap();
-    let mut render_target = self.render_target.take().unwrap();
-
-    // Resize render target to match window size.
     {
       let window = engine::fetch_resource::<Window>(ctx);
 
-      let size = window.size();
-      let size = Vector2::new(size.x.round() as u32, size.y.round() as u32);
-
       if window.was_resized() {
-        render_target.destroy(&renderer);
-        render_target = Box::new(RenderTarget::new(&mut renderer, size));
+        self.swapchain.destroy();
+      }
+
+      if self.swapchain.is_destroyed() {
+        let width = window.size().x.round() as u32;
+        let height = window.size().y.round() as u32;
+
+        self.swapchain.create(self.renderer.pass(), width, height);
+      }
+
+      match self.renderer.begin(&mut self.swapchain) {
+        Err(rendering::BeginRenderError::SwapchainOutOfDate) => {
+          self.swapchain.destroy();
+          return;
+        }
+
+        Err(rendering::BeginRenderError::SurfaceLost) => {
+          panic!("surface lost");
+        }
+
+        Ok(_) => {}
+      }
+
+      match self.renderer.present(&mut self.swapchain) {
+        Err(rendering::PresentError::SwapchainOutOfDate) => {
+          self.swapchain.destroy();
+          return;
+        }
+
+        Ok(_) => {}
       }
     }
-
-    rendering::render(&mut renderer, &mut render_target, |canvas| {
-      println!("gottem");
-
-      let root = panels::get_root(ctx);
-
-      if let Some(root) = root {
-        panels::draw(ctx, canvas, root);
-      }
-    });
-
-    // Clear canvas to eigengrau.
-    // self.canvas.clear(Color::new(0.086, 0.086, 0.114, 1.0));
-
-    // Draw root panel and its children.
-    /*
-
-    self.canvas.present();
-    */
-
-    self.renderer = Some(renderer);
-    self.render_target = Some(render_target);
-  }
-
-  fn on_exit(&mut self, _ctx: &mut engine::Context) {
-    let renderer = self.renderer.take().unwrap();
-    let render_target = self.render_target.take().unwrap();
-
-    render_target.destroy(&renderer);
-    renderer.destroy();
   }
 }
 
 /// Initialize graphics for the given engine context. Requires a window.
 pub fn init(ctx: &mut engine::Context) {
-  let extension = {
-    let window = engine::fetch_resource::<Window>(ctx);
+  let window = engine::fetch_resource::<Window>(ctx);
+  let device = rendering::init(window.as_winit()).unwrap();
 
-    let size = window.size();
-    let size = Vector2::new(size.x.round() as u32, size.y.round() as u32);
+  drop(window);
 
-    let mut renderer = Renderer::new(window.as_winit());
-    let render_target = RenderTarget::new(&mut renderer, size);
+  let swapchain = rendering::Swapchain::new(&device);
 
+  let render_pass = rendering::RenderPass::new(&device);
+  let renderer = rendering::Renderer::new(&device, &render_pass);
+
+  engine::add_extension(
+    ctx,
     Extension {
-      renderer: Some(Box::new(renderer)),
-      render_target: Some(Box::new(render_target)),
-    }
-  };
+      swapchain,
+      renderer,
+    },
+  );
 
-  engine::add_extension(ctx, extension);
-
-  panels::init(ctx);
+  //panels::init(ctx);
 }

@@ -40,6 +40,8 @@ fn main() -> Result<(), Box<Error>> {
         );
 
         std::fs::write(&out_path, &compiled_bytes)?;
+
+        println!("cargo:rerun-if-changed={}", entry.path().to_str().unwrap());
       }
     }
   }

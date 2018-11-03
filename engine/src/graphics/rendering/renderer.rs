@@ -1,104 +1,173 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
 use super::backend;
-use super::backend::Backend;
-use super::shaders;
-use super::shaders::ShaderPair;
-use gfx_hal as hal;
-use gfx_hal::{Device, Instance, Surface};
-use winit;
+use super::prelude::*;
+use super::{Device, RenderPass, Swapchain};
+use gfx_hal::command::CommandBufferFlags;
+use gfx_hal::pool::CommandPoolCreateFlags;
+use quick_error::quick_error;
+use smallvec::SmallVec;
+use std::sync::Arc;
 
-const APP_NAME: &str = "nova";
-const APP_VERSION: u32 = 1;
+pub const FRAME_COUNT: usize = 3;
 
-/// Abstraction around base resources of the backend graphics API.
 pub struct Renderer {
-  /// Instance of a graphics backend.
-  pub(super) instance: backend::Instance,
-  /// Main render surface.
-  pub(super) surface: backend::Surface,
-  /// Physical graphics device adapter.
-  pub(super) adapter: hal::Adapter<Backend>,
-  /// Logical graphics device.
-  pub(super) device: backend::Device,
-  /// Group of graphics command queues for submitting commands.
-  pub(super) queue_group: hal::QueueGroup<Backend, hal::Graphics>,
-  /// Pool of command queues to use for rendering.
-  pub(super) command_pool: hal::CommandPool<Backend, hal::Graphics>,
-  pub(super) default_shaders: ShaderPair,
+  frame: usize,
+  frames: SmallVec<[Frame; FRAME_COUNT]>,
+  command_pool: Option<backend::CommandPool>,
+  pass: Arc<RenderPass>,
+  device: Arc<Device>,
+}
+
+struct Frame {
+  command_buffer: backend::CommandBuffer,
+  fence: backend::Fence,
+  acquire_semaphore: backend::Semaphore,
+  render_semaphore: backend::Semaphore,
+  image: u32,
 }
 
 impl Renderer {
-  pub fn new(window: &winit::Window) -> Renderer {
-    // Create an instance of the backend.
-    let instance = backend::Instance::create(APP_NAME, APP_VERSION);
-
-    // Create a surface from the window.
-    let surface = instance.create_surface(&window);
-
-    // Find the adapter (graphics card) to render with.
-    let mut adapter = {
-      // Get a list of available adapters.
-      let mut adapters = instance.enumerate_adapters();
-
-      // Take the first available adapter.
-      //
-      // TODO: Find the best available adapter.
-      adapters.remove(0)
-    };
-
-    // Open a logical device and a graphics queue group supported by the
-    // surface.
-    //
-    // The queue group contains pools of queues that will be used to
-    // send commands to the card.
-
-    const QUEUE_COUNT: usize = 1;
-
-    let (device, queue_group) = adapter
-      .open_with(QUEUE_COUNT, |family| surface.supports_queue_family(family))
-      .expect("could not open device");
-
-    // Create a command pool to get graphics command queues from.
-
-    const MAX_QUEUES: usize = 16;
-
-    let command_pool = device.create_command_pool_typed(
-      &queue_group,
-      gfx_hal::pool::CommandPoolCreateFlags::empty(),
-      MAX_QUEUES,
+  pub fn new(device: &Arc<Device>, pass: &Arc<RenderPass>) -> Self {
+    let mut command_pool = device.raw.create_command_pool(
+      device.command_queue.family_id(),
+      CommandPoolCreateFlags::TRANSIENT | CommandPoolCreateFlags::RESET_INDIVIDUAL,
     );
 
-    let default_shaders = shaders::create_default(&device);
+    let command_buffers = command_pool.allocate(FRAME_COUNT, gfx_hal::command::RawLevel::Primary);
 
-    device.map_memory();
+    let frames = command_buffers
+      .into_iter()
+      .map(|command_buffer| Frame {
+        command_buffer,
+        fence: device.raw.create_fence(true),
+        acquire_semaphore: device.raw.create_semaphore(),
+        render_semaphore: device.raw.create_semaphore(),
+        image: 0,
+      })
+      .collect();
 
-    // Return the completed context.
     Renderer {
-      instance,
-      surface,
-      adapter,
-      device,
-      queue_group,
-      command_pool,
-      default_shaders,
+      device: device.clone(),
+      pass: pass.clone(),
+      command_pool: Some(command_pool),
+      frames,
+      frame: 0,
     }
   }
 
-  pub fn destroy(self) {
-    self.default_shaders.destroy(&self.device);
+  pub fn pass(&self) -> &Arc<RenderPass> {
+    &self.pass
+  }
 
-    self
-      .device
-      .destroy_command_pool(self.command_pool.into_raw());
+  pub fn begin(&mut self, swapchain: &mut Swapchain) -> Result<(), BeginRenderError> {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+    let device = &self.device;
 
-    // Drop everything in the reverse order it was created in.
-    drop(self.queue_group);
-    drop(self.device);
-    drop(self.adapter);
-    drop(self.surface);
-    drop(self.instance);
+    device.raw.wait_for_fence(&frame.fence, !0);
+
+    frame.image = swapchain
+      .raw_mut()
+      .acquire_image(!0, gfx_hal::FrameSync::Semaphore(&frame.acquire_semaphore))
+      .map_err(|err| match err {
+        gfx_hal::AcquireError::OutOfDate => BeginRenderError::SwapchainOutOfDate,
+        gfx_hal::AcquireError::NotReady | gfx_hal::AcquireError::SurfaceLost => {
+          BeginRenderError::SurfaceLost
+        }
+      })?;
+
+    cmd.begin(CommandBufferFlags::ONE_TIME_SUBMIT, Default::default());
+
+    let viewport = gfx_hal::pso::Viewport {
+      rect: gfx_hal::pso::Rect {
+        x: 0,
+        y: 0,
+        w: swapchain.width() as i16,
+        h: swapchain.height() as i16,
+      },
+      depth: 0.0..1.0,
+    };
+
+    cmd.set_viewports(0, &[viewport.clone()]);
+
+    cmd.begin_render_pass(
+      self.pass.raw(),
+      swapchain.framebuffer(frame.image),
+      viewport.rect,
+      &[
+        gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
+          0.0080232, 0.0080232, 0.0122865, 1.0,
+        ]))
+        .into(),
+      ],
+      gfx_hal::command::SubpassContents::Inline,
+    );
+
+    Ok(())
+  }
+
+  pub fn present(&mut self, swapchain: &mut Swapchain) -> Result<(), PresentError> {
+    use std::iter;
+
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+    let mut queue = self.device.command_queue.raw_mut();
+
+    cmd.finish();
+
+    unsafe {
+      queue.submit_raw(
+        gfx_hal::queue::RawSubmission {
+          cmd_buffers: iter::once(cmd),
+          wait_semaphores: &[(
+            &frame.acquire_semaphore,
+            gfx_hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+          )],
+          signal_semaphores: &[&frame.render_semaphore],
+        },
+        Some(&frame.fence),
+      );
+    }
+
+    queue
+      .present(
+        iter::once((swapchain.raw_mut(), frame.image)),
+        iter::once(&frame.render_semaphore),
+      )
+      .or(Err(PresentError::SwapchainOutOfDate)) // Usually what happened.
+  }
+}
+
+impl Drop for Renderer {
+  fn drop(&mut self) {
+    for frame in self.frames.drain() {
+      self.device.raw.destroy_fence(frame.fence);
+      self.device.raw.destroy_semaphore(frame.acquire_semaphore);
+      self.device.raw.destroy_semaphore(frame.render_semaphore);
+    }
+
+    if let Some(pool) = self.command_pool.take() {
+      self.device.raw.destroy_command_pool(pool);
+    }
+  }
+}
+
+quick_error! {
+  #[derive(Debug)]
+  pub enum BeginRenderError {
+    SwapchainOutOfDate {
+      display("The given swapchain is out of date and must be recreated.")
+    }
+    SurfaceLost {
+      display("The render surface was destroyed.")
+    }
+  }
+}
+
+quick_error! {
+  #[derive(Debug)]
+  pub enum PresentError {
+    SwapchainOutOfDate {
+      display("The given swapchain is out of date and must be recreated.")
+    }
   }
 }
