@@ -1,9 +1,11 @@
 use super::backend;
 use super::prelude::*;
 use super::{Device, RenderPass, Shader, ShaderKind, VertexData};
+use std::ops::Range;
 use std::sync::Arc;
 
 pub struct Pipeline {
+  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
   _shaders: PipelineShaderSet,
@@ -11,7 +13,7 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-  pub fn new(builder: PipelineBuilder) -> Self {
+  pub fn new(builder: PipelineBuilder) -> Arc<Self> {
     let render_pass = builder.render_pass.expect("render_pass is required");
     let device = render_pass.device().clone();
 
@@ -20,7 +22,9 @@ impl Pipeline {
       main_pass: render_pass.raw(),
     };
 
-    let layout = device.raw.create_pipeline_layout(&[], &[]);
+    let layout = device
+      .raw
+      .create_pipeline_layout(&[], &builder.push_constants);
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       builder.shaders.as_raw(),
@@ -51,12 +55,21 @@ impl Pipeline {
       .create_graphics_pipeline(&pipeline_desc, None)
       .expect("could not create graphics pipeline");
 
-    Pipeline {
+    Arc::new(Pipeline {
       device,
+      push_constants: builder.push_constants,
       _shaders: builder.shaders,
       layout: Some(layout),
       raw: Some(pipeline),
-    }
+    })
+  }
+
+  pub fn layout(&self) -> &backend::PipelineLayout {
+    self.layout.as_ref().expect("pipeline layout was destroyed")
+  }
+
+  pub fn push_constant(&self, index: usize) -> (gfx_hal::pso::ShaderStageFlags, Range<u32>) {
+    self.push_constants[index].clone()
   }
 
   pub fn raw(&self) -> &backend::GraphicsPipeline {
@@ -125,6 +138,7 @@ pub struct PipelineBuilder {
   shaders: PipelineShaderSet,
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
+  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
 }
 
 impl PipelineBuilder {
@@ -169,7 +183,25 @@ impl PipelineBuilder {
     self
   }
 
-  pub fn create(self) -> Pipeline {
+  pub fn push_constant<T>(mut self) -> Self {
+    let size = std::mem::size_of::<T>();
+
+    assert!(
+      size % 4 == 0,
+      "Push constants must be a multiple of 4 bytes in size."
+    );
+
+    let start = self.push_constants.last().map(|r| r.1.end).unwrap_or(0);
+
+    self.push_constants.push((
+      gfx_hal::pso::ShaderStageFlags::VERTEX,
+      start..start + size as u32 / 4,
+    ));
+
+    self
+  }
+
+  pub fn build(self) -> Arc<Pipeline> {
     Pipeline::new(self)
   }
 }

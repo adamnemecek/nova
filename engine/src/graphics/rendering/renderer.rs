@@ -19,11 +19,12 @@ pub struct Renderer {
 }
 
 struct Frame {
+  pipeline: Option<Arc<Pipeline>>,
+  image: u32,
   command_buffer: backend::CommandBuffer,
   fence: backend::Fence,
   acquire_semaphore: backend::Semaphore,
   render_semaphore: backend::Semaphore,
-  image: u32,
 }
 
 impl Renderer {
@@ -46,6 +47,7 @@ impl Renderer {
         acquire_semaphore: device.raw.create_semaphore(),
         render_semaphore: device.raw.create_semaphore(),
         image: 0,
+        pipeline: None,
       })
       .collect();
 
@@ -127,11 +129,25 @@ impl Renderer {
     })
   }
 
-  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
+  pub fn bind_pipeline(&mut self, pipeline: &Arc<Pipeline>) {
     let frame = &mut self.frames[self.frame];
     let cmd = &mut frame.command_buffer;
 
     cmd.bind_graphics_pipeline(pipeline.raw());
+    frame.pipeline = Some(pipeline.clone());
+  }
+
+  pub fn push_constant<T>(&mut self, index: usize, value: &T) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    let pipeline = frame.pipeline.as_ref().expect("no pipeline is bound");
+    let (stages, range) = pipeline.push_constant(index);
+
+    let constants =
+      unsafe { std::slice::from_raw_parts(value as *const T as *const u32, range.len()) };
+
+    cmd.push_graphics_constants(pipeline.layout(), stages, range.start, constants);
   }
 
   pub fn draw_indexed(&mut self, indices: u32) {
@@ -142,9 +158,10 @@ impl Renderer {
   }
 
   pub fn present(&mut self, swapchain: &mut Swapchain) -> Result<(), PresentError> {
-    use std::iter;
-
     let frame = &mut self.frames[self.frame];
+
+    frame.pipeline = None;
+
     let cmd = &mut frame.command_buffer;
     let mut queue = self.device.command_queue.raw_mut();
 

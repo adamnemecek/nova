@@ -50,6 +50,7 @@ impl engine::Extension for Extension {
 
       self.canvas.begin();
 
+      self.canvas.set_tint([1.0, 0.1, 0.1, 1.0]);
       self.canvas.draw(&self.mesh);
 
       self.canvas.present();

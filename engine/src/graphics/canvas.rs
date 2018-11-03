@@ -8,7 +8,7 @@ pub struct Canvas {
   size: Vector2<f32>,
   renderer: rendering::Renderer,
   swapchain: rendering::Swapchain,
-  pipeline: rendering::Pipeline,
+  pipeline: Arc<rendering::Pipeline>,
   log: bflog::Logger,
 }
 
@@ -33,7 +33,8 @@ impl Canvas {
       .render_pass(&render_pass)
       .shaders(shaders)
       .vertex_buffer::<mesh::Vertex>()
-      .create();
+      .push_constant::<Vector4<f32>>()
+      .build();
 
     log.trace("Created pipeline.");
 
@@ -86,6 +87,11 @@ impl Canvas {
     };
 
     self.renderer.bind_pipeline(&self.pipeline);
+    self.set_tint([1.0, 1.0, 1.0, 1.0]);
+  }
+
+  pub fn set_tint(&mut self, tint: [f32; 4]) {
+    self.renderer.push_constant(0, &tint);
   }
 
   pub fn draw(&mut self, mesh: &Mesh) {

@@ -6,7 +6,11 @@ layout(location = 1) in vec4 inColor;
 
 layout(location = 0) out vec4 outColor;
 
+layout(push_constant) uniform PushConstants {
+  vec4 tint;
+} push_constants;
+
 void main() {
   gl_Position = vec4(inPosition, 0.0, 1.0);
-  outColor = inColor;
+  outColor = inColor * push_constants.tint;
 }
