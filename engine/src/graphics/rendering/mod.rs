@@ -2,14 +2,12 @@ use quick_error::quick_error;
 use std::sync::{Arc, Mutex};
 
 mod backend;
-mod destroy;
 mod pass;
 mod prelude;
 mod queue;
 mod renderer;
 mod swapchain;
 
-pub use self::destroy::{Destroy, Destroyable};
 pub use self::pass::RenderPass;
 use self::prelude::*;
 use self::queue::CommandQueue;

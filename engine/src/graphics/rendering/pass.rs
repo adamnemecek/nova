@@ -1,12 +1,10 @@
 use super::backend;
 use super::prelude::*;
-use super::{Destroy, Destroyable, Device};
+use super::Device;
 use std::sync::Arc;
 
-pub struct RenderPass(Destroyable<Inner>);
-
-struct Inner {
-  raw: backend::RenderPass,
+pub struct RenderPass {
+  raw: Option<backend::RenderPass>,
   device: Arc<Device>,
 }
 
@@ -44,22 +42,21 @@ impl RenderPass {
       .raw
       .create_render_pass(&[color_attachment], &[subpass], &[dependency]);
 
-    Arc::new(RenderPass(
-      Inner {
-        raw: pass,
-        device: device.clone(),
-      }
-      .into(),
-    ))
+    Arc::new(RenderPass {
+      raw: Some(pass),
+      device: device.clone(),
+    })
   }
 
   pub fn raw(&self) -> &backend::RenderPass {
-    &self.0.raw
+    self.raw.as_ref().expect("render pass is destroyed")
   }
 }
 
-impl Destroy for Inner {
-  fn destroy(self) {
-    self.device.raw.destroy_render_pass(self.raw);
+impl Drop for RenderPass {
+  fn drop(&mut self) {
+    if let Some(pass) = self.raw.take() {
+      self.device.raw.destroy_render_pass(pass);
+    }
   }
 }
