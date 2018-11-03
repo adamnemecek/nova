@@ -25,16 +25,16 @@ pub use ggez::graphics::{Color, DrawParam as DrawParams};
 //pub mod panels;
 
 mod atlas;
+mod canvas;
 mod image;
 mod rendering;
 
 pub use self::atlas::*;
+pub use self::canvas::Canvas;
 pub use self::image::*;
 
 pub struct Extension {
-  renderer: rendering::Renderer,
-  swapchain: rendering::Swapchain,
-  log: bflog::Logger,
+  canvas: Canvas,
 }
 
 impl engine::Extension for Extension {
@@ -42,64 +42,13 @@ impl engine::Extension for Extension {
     {
       let window = engine::fetch_resource::<Window>(ctx);
 
-      if window.was_resized() && !self.swapchain.is_destroyed() {
-        self.swapchain.destroy();
-
-        self
-          .log
-          .trace("Destroyed swapchain.")
-          .with("when", &"before render")
-          .with("reason", &"window was resized");
+      if window.was_resized() {
+        self.canvas.resize_to_fit(window.as_winit());
       }
 
-      if self.swapchain.is_destroyed() {
-        let width = window.size().x.round() as u32;
-        let height = window.size().y.round() as u32;
+      self.canvas.begin();
 
-        self.swapchain.create(self.renderer.pass(), width, height);
-
-        self
-          .log
-          .trace("Created swapchain.")
-          .with("width", &self.swapchain.width())
-          .with("height", &self.swapchain.height());
-      }
-
-      match self.renderer.begin(&mut self.swapchain) {
-        Err(rendering::BeginRenderError::SwapchainOutOfDate) => {
-          self.swapchain.destroy();
-
-          self
-            .log
-            .trace("Destroyed swapchain.")
-            .with("when", &"begin render")
-            .with("reason", &"out of date");
-
-          return;
-        }
-
-        Err(rendering::BeginRenderError::SurfaceLost) => {
-          panic!("surface lost");
-        }
-
-        Ok(_) => {}
-      }
-
-      match self.renderer.present(&mut self.swapchain) {
-        Err(rendering::PresentError::SwapchainOutOfDate) => {
-          self.swapchain.destroy();
-
-          self
-            .log
-            .trace("Destroyed swapchain.")
-            .with("when", &"present")
-            .with("reason", &"out of date");
-
-          return;
-        }
-
-        Ok(_) => {}
-      }
+      self.canvas.present();
     }
   }
 }
@@ -108,28 +57,18 @@ impl engine::Extension for Extension {
 pub fn init(ctx: &mut engine::Context, log: &bflog::Logger) {
   let mut log = log.with_src("nova::graphics");
 
-  let window = engine::fetch_resource::<Window>(ctx);
-  let device = rendering::init(window.as_winit()).unwrap();
+  engine::add_extension(ctx, {
+    let window = engine::fetch_resource::<Window>(ctx);
+    let window = window.as_winit();
 
-  log.trace("Created device.");
+    let device = rendering::init(window).expect("could not create device");
 
-  drop(window);
+    log.trace("Created device");
 
-  let render_pass = rendering::RenderPass::new(&device);
-  let renderer = rendering::Renderer::new(&device, &render_pass);
+    let canvas = Canvas::new(&device, window, &log);
 
-  log.trace("Created renderer.");
-
-  let swapchain = rendering::Swapchain::new(&device);
-
-  engine::add_extension(
-    ctx,
-    Extension {
-      renderer,
-      swapchain,
-      log,
-    },
-  );
+    Extension { canvas }
+  });
 
   //panels::init(ctx);
 }

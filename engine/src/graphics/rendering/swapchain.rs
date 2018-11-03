@@ -31,7 +31,9 @@ impl Swapchain {
   }
 
   pub fn create(&mut self, render_pass: &RenderPass, width: u32, height: u32) {
-    self.destroy();
+    if !self.is_destroyed() {
+      panic!("swapchain is already created");
+    }
 
     let mut surface = self.device.surface.lock().unwrap();
     let (caps, _, modes) = surface.compatibility(&self.device.adapter.physical_device);
