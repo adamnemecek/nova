@@ -13,12 +13,20 @@ use self::prelude::*;
 
 /// Main entry point of the program.
 pub fn main() {
+  let sink = bflog::LogSink::new(
+    std::io::stdout(),
+    bflog::Format::Modern,
+    bflog::LevelFilter::Trace,
+  );
+
+  let log = bflog::Logger::new(&sink);
+
   let ctx = &mut engine::Context::new();
 
   time::init(ctx);
   //assets::init(ctx);
   window::init(ctx);
-  graphics::init(ctx);
+  graphics::init(ctx, &log);
 
   //stage::init(ctx);
   //stage::actors::driving::init(ctx);

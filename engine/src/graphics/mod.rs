@@ -32,8 +32,9 @@ pub use self::atlas::*;
 pub use self::image::*;
 
 pub struct Extension {
-  swapchain: rendering::Swapchain,
   renderer: rendering::Renderer,
+  swapchain: rendering::Swapchain,
+  log: bflog::Logger,
 }
 
 impl engine::Extension for Extension {
@@ -41,8 +42,14 @@ impl engine::Extension for Extension {
     {
       let window = engine::fetch_resource::<Window>(ctx);
 
-      if window.was_resized() {
+      if window.was_resized() && !self.swapchain.is_destroyed() {
         self.swapchain.destroy();
+
+        self
+          .log
+          .trace("Destroyed swapchain.")
+          .with("when", &"before render")
+          .with("reason", &"window was resized");
       }
 
       if self.swapchain.is_destroyed() {
@@ -50,11 +57,24 @@ impl engine::Extension for Extension {
         let height = window.size().y.round() as u32;
 
         self.swapchain.create(self.renderer.pass(), width, height);
+
+        self
+          .log
+          .trace("Created swapchain.")
+          .with("width", &self.swapchain.width())
+          .with("height", &self.swapchain.height());
       }
 
       match self.renderer.begin(&mut self.swapchain) {
         Err(rendering::BeginRenderError::SwapchainOutOfDate) => {
           self.swapchain.destroy();
+
+          self
+            .log
+            .trace("Destroyed swapchain.")
+            .with("when", &"begin render")
+            .with("reason", &"out of date");
+
           return;
         }
 
@@ -68,6 +88,13 @@ impl engine::Extension for Extension {
       match self.renderer.present(&mut self.swapchain) {
         Err(rendering::PresentError::SwapchainOutOfDate) => {
           self.swapchain.destroy();
+
+          self
+            .log
+            .trace("Destroyed swapchain.")
+            .with("when", &"present")
+            .with("reason", &"out of date");
+
           return;
         }
 
@@ -78,22 +105,29 @@ impl engine::Extension for Extension {
 }
 
 /// Initialize graphics for the given engine context. Requires a window.
-pub fn init(ctx: &mut engine::Context) {
+pub fn init(ctx: &mut engine::Context, log: &bflog::Logger) {
+  let mut log = log.with_src("nova::graphics");
+
   let window = engine::fetch_resource::<Window>(ctx);
   let device = rendering::init(window.as_winit()).unwrap();
 
-  drop(window);
+  log.trace("Created device.");
 
-  let swapchain = rendering::Swapchain::new(&device);
+  drop(window);
 
   let render_pass = rendering::RenderPass::new(&device);
   let renderer = rendering::Renderer::new(&device, &render_pass);
 
+  log.trace("Created renderer.");
+
+  let swapchain = rendering::Swapchain::new(&device);
+
   engine::add_extension(
     ctx,
     Extension {
-      swapchain,
       renderer,
+      swapchain,
+      log,
     },
   );
 

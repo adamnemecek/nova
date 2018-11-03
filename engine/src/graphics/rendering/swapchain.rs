@@ -68,6 +68,8 @@ impl Swapchain {
     let (swapchain, backbuffer) = self.device.raw.create_swapchain(&mut surface, config, None);
 
     self.raw = Some(swapchain);
+    self.width = extent.width;
+    self.height = extent.height;
 
     let images = match backbuffer {
       gfx_hal::Backbuffer::Images(images) => images,
@@ -132,6 +134,12 @@ impl Swapchain {
     if let Some(swapchain) = self.raw.take() {
       device.destroy_swapchain(swapchain);
     }
+  }
+}
+
+impl Drop for Swapchain {
+  fn drop(&mut self) {
+    self.destroy();
   }
 }
 

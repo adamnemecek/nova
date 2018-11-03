@@ -18,6 +18,7 @@ gfx-hal = { git = "https://github.com/gfx-rs/gfx", features = ["serde"] }
 winit = "0.17"
 quick-error = "1.2.2"
 smallvec = "0.6.5"
+bflog = "0.2.2"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx" }
