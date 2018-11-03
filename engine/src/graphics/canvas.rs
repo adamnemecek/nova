@@ -23,11 +23,14 @@ impl Canvas {
 
     log.trace("Created renderer.");
 
-    let shaders = rendering::ShaderPair::load_defaults(device);
+    let shaders = rendering::PipelineShaderSet::load_defaults(device);
 
-    log.trace("Loaded default shaders.");
+    log.trace("Loaded default pipeline shaders.");
 
-    let pipeline = rendering::Pipeline::new(&render_pass, shaders);
+    let pipeline = rendering::PipelineBuilder::default()
+      .render_pass(&render_pass)
+      .shaders(shaders)
+      .create();
 
     log.trace("Created pipeline.");
 

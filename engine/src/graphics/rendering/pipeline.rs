@@ -1,38 +1,19 @@
 use super::backend;
 use super::prelude::*;
-use super::{Device, RenderPass, ShaderPair};
+use super::{Device, RenderPass, Shader, ShaderKind};
 use std::sync::Arc;
 
 pub struct Pipeline {
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
-  _shaders: ShaderPair,
+  _shaders: PipelineShaderSet,
   device: Arc<Device>,
 }
 
 impl Pipeline {
-  pub fn new(render_pass: &RenderPass, shaders: ShaderPair) -> Self {
+  pub fn new(builder: PipelineBuilder) -> Self {
+    let render_pass = builder.render_pass.expect("render_pass is required");
     let device = render_pass.device().clone();
-
-    let vert_entry = backend::ShaderEntryPoint {
-      entry: "main",
-      module: shaders.vertex.raw(),
-      specialization: Default::default(),
-    };
-
-    let frag_entry = backend::ShaderEntryPoint {
-      entry: "main",
-      module: shaders.fragment.raw(),
-      specialization: Default::default(),
-    };
-
-    let shader_entries = gfx_hal::pso::GraphicsShaderSet {
-      vertex: vert_entry,
-      hull: None,
-      domain: None,
-      geometry: None,
-      fragment: Some(frag_entry),
-    };
 
     let subpass = gfx_hal::pass::Subpass {
       index: 0,
@@ -42,7 +23,7 @@ impl Pipeline {
     let layout = device.raw.create_pipeline_layout(&[], &[]);
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
-      shader_entries,
+      builder.shaders.as_raw(),
       gfx_hal::Primitive::TriangleList,
       gfx_hal::pso::Rasterizer::FILL,
       &layout,
@@ -64,7 +45,7 @@ impl Pipeline {
 
     Pipeline {
       device,
-      _shaders: shaders,
+      _shaders: builder.shaders,
       layout: Some(layout),
       raw: Some(pipeline),
     }
@@ -86,5 +67,68 @@ impl Drop for Pipeline {
     if let Some(pipeline) = self.raw.take() {
       device.destroy_graphics_pipeline(pipeline);
     }
+  }
+}
+
+#[derive(Default)]
+pub struct PipelineShaderSet {
+  vertex: Option<Shader>,
+  fragment: Option<Shader>,
+}
+
+impl PipelineShaderSet {
+  pub fn load_defaults(device: &Arc<Device>) -> Self {
+    PipelineShaderSet {
+      vertex: Some(Shader::from_glsl(
+        device,
+        ShaderKind::Vertex,
+        include_str!("shaders/default.vert"),
+      )),
+      fragment: Some(Shader::from_glsl(
+        device,
+        ShaderKind::Fragment,
+        include_str!("shaders/default.frag"),
+      )),
+    }
+  }
+
+  fn as_raw<'a>(&'a self) -> backend::ShaderSet<'a> {
+    fn entry_point(shader: &Option<Shader>) -> Option<backend::ShaderEntryPoint> {
+      shader.as_ref().map(|shader| backend::ShaderEntryPoint {
+        entry: "main",
+        module: shader.raw(),
+        specialization: Default::default(),
+      })
+    };
+
+    gfx_hal::pso::GraphicsShaderSet {
+      vertex: entry_point(&self.vertex).expect("vertex shader is required"),
+      fragment: entry_point(&self.fragment),
+      hull: None,
+      domain: None,
+      geometry: None,
+    }
+  }
+}
+
+#[derive(Default)]
+pub struct PipelineBuilder {
+  render_pass: Option<Arc<RenderPass>>,
+  shaders: PipelineShaderSet,
+}
+
+impl PipelineBuilder {
+  pub fn render_pass(mut self, pass: &Arc<RenderPass>) -> Self {
+    self.render_pass = Some(pass.clone());
+    self
+  }
+
+  pub fn shaders(mut self, shaders: PipelineShaderSet) -> Self {
+    self.shaders = shaders;
+    self
+  }
+
+  pub fn create(self) -> Pipeline {
+    Pipeline::new(self)
   }
 }

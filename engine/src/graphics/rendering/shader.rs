@@ -43,25 +43,3 @@ impl Drop for Shader {
     }
   }
 }
-
-pub struct ShaderPair {
-  pub vertex: Shader,
-  pub fragment: Shader,
-}
-
-impl ShaderPair {
-  pub fn load_defaults(device: &Arc<Device>) -> ShaderPair {
-    ShaderPair {
-      vertex: Shader::from_glsl(
-        device,
-        ShaderKind::Vertex,
-        include_str!("shaders/default.vert"),
-      ),
-      fragment: Shader::from_glsl(
-        device,
-        ShaderKind::Fragment,
-        include_str!("shaders/default.frag"),
-      ),
-    }
-  }
-}
