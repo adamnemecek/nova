@@ -48,6 +48,10 @@ impl RenderPass {
     })
   }
 
+  pub fn device(&self) -> &Arc<Device> {
+    &self.device
+  }
+
   pub fn raw(&self) -> &backend::RenderPass {
     self.raw.as_ref().expect("render pass is destroyed")
   }

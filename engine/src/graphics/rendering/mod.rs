@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 
 mod backend;
 mod pass;
+mod pipeline;
 mod prelude;
 mod queue;
 mod renderer;
@@ -10,6 +11,7 @@ mod shader;
 mod swapchain;
 
 pub use self::pass::RenderPass;
+pub use self::pipeline::*;
 use self::prelude::*;
 use self::queue::CommandQueue;
 pub use self::renderer::*;

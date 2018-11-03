@@ -5,7 +5,6 @@ pub use glsl_to_spirv::ShaderType as ShaderKind;
 use std::sync::Arc;
 
 pub struct Shader {
-  kind: ShaderKind,
   raw: Option<backend::ShaderModule>,
   device: Arc<Device>,
 }
@@ -15,8 +14,7 @@ impl Shader {
     use std::io::Read;
 
     let mut spirv = Vec::new();
-    let mut output =
-      glsl_to_spirv::compile(source, kind.clone()).expect("could not compile shader");
+    let mut output = glsl_to_spirv::compile(source, kind).expect("could not compile shader");
 
     output
       .read_to_end(&mut spirv)
@@ -29,7 +27,6 @@ impl Shader {
 
     Shader {
       device: device.clone(),
-      kind,
       raw: Some(module),
     }
   }

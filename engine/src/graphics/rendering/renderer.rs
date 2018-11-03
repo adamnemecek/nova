@@ -1,6 +1,6 @@
 use super::backend;
 use super::prelude::*;
-use super::{Device, RenderPass, Swapchain};
+use super::{Device, Pipeline, RenderPass, Swapchain};
 use gfx_hal::command::CommandBufferFlags;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use quick_error::quick_error;
@@ -26,7 +26,10 @@ struct Frame {
 }
 
 impl Renderer {
-  pub fn new(device: &Arc<Device>, pass: &Arc<RenderPass>) -> Self {
+  pub fn new(pass: &Arc<RenderPass>) -> Self {
+    let pass = pass.clone();
+    let device = pass.device().clone();
+
     let mut command_pool = device.raw.create_command_pool(
       device.command_queue.family_id(),
       CommandPoolCreateFlags::TRANSIENT | CommandPoolCreateFlags::RESET_INDIVIDUAL,
@@ -46,8 +49,8 @@ impl Renderer {
       .collect();
 
     Renderer {
-      device: device.clone(),
-      pass: pass.clone(),
+      device,
+      pass,
       command_pool: Some(command_pool),
       frames,
       frame: 0,
@@ -103,6 +106,20 @@ impl Renderer {
     );
 
     Ok(())
+  }
+
+  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.bind_graphics_pipeline(pipeline.raw());
+  }
+
+  pub fn draw(&mut self) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.draw(0..3, 0..1);
   }
 
   pub fn present(&mut self, swapchain: &mut Swapchain) -> Result<(), PresentError> {

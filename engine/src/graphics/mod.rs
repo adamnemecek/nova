@@ -48,6 +48,8 @@ impl engine::Extension for Extension {
 
       self.canvas.begin();
 
+      self.canvas.draw();
+
       self.canvas.present();
     }
   }

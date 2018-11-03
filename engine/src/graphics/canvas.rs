@@ -6,7 +6,7 @@ pub struct Canvas {
   size: Vector2<f32>,
   renderer: rendering::Renderer,
   swapchain: rendering::Swapchain,
-  _shaders: rendering::ShaderPair,
+  pipeline: rendering::Pipeline,
   log: bflog::Logger,
 }
 
@@ -19,7 +19,7 @@ impl Canvas {
     let mut log = log.with_src("nova::graphics::Canvas");
 
     let render_pass = rendering::RenderPass::new(&device);
-    let renderer = rendering::Renderer::new(&device, &render_pass);
+    let renderer = rendering::Renderer::new(&render_pass);
 
     log.trace("Created renderer.");
 
@@ -27,10 +27,14 @@ impl Canvas {
 
     log.trace("Loaded default shaders.");
 
+    let pipeline = rendering::Pipeline::new(&render_pass, shaders);
+
+    log.trace("Created pipeline.");
+
     let mut canvas = Canvas {
       size: Vector2::zeros(),
       renderer,
-      _shaders: shaders,
+      pipeline,
       swapchain: rendering::Swapchain::new(&device),
       log,
     };
@@ -74,6 +78,12 @@ impl Canvas {
 
       Ok(_) => {}
     };
+
+    self.renderer.bind_pipeline(&self.pipeline);
+  }
+
+  pub fn draw(&mut self) {
+    self.renderer.draw();
   }
 
   pub fn present(&mut self) {

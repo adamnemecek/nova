@@ -20,6 +20,7 @@ pub const NAME: &str = "Metal";
 pub const NAME: &str = "Vulkan";
 
 pub type Adapter = gfx_hal::Adapter<Backend>;
+pub type ShaderEntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
 pub type Queues = gfx_hal::queue::Queues<Backend>;
 
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
