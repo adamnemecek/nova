@@ -6,12 +6,14 @@ mod pass;
 mod prelude;
 mod queue;
 mod renderer;
+mod shader;
 mod swapchain;
 
 pub use self::pass::RenderPass;
 use self::prelude::*;
 use self::queue::CommandQueue;
 pub use self::renderer::*;
+pub use self::shader::*;
 pub use self::swapchain::Swapchain;
 
 const ENGINE_NAME: &str = "nova";

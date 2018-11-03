@@ -6,6 +6,7 @@ pub struct Canvas {
   size: Vector2<f32>,
   renderer: rendering::Renderer,
   swapchain: rendering::Swapchain,
+  _shaders: rendering::ShaderPair,
   log: bflog::Logger,
 }
 
@@ -22,9 +23,14 @@ impl Canvas {
 
     log.trace("Created renderer.");
 
+    let shaders = rendering::ShaderPair::load_defaults(device);
+
+    log.trace("Loaded default shaders.");
+
     let mut canvas = Canvas {
       size: Vector2::zeros(),
       renderer,
+      _shaders: shaders,
       swapchain: rendering::Swapchain::new(&device),
       log,
     };
