@@ -192,11 +192,16 @@ impl PipelineBuilder {
     );
 
     let start = self.push_constants.last().map(|r| r.1.end).unwrap_or(0);
+    let end = start + size as u32 / 4;
 
-    self.push_constants.push((
-      gfx_hal::pso::ShaderStageFlags::VERTEX,
-      start..start + size as u32 / 4,
-    ));
+    assert!(
+      end <= 32,
+      "Push constants should not exceed 32 bytes total."
+    );
+
+    self
+      .push_constants
+      .push((gfx_hal::pso::ShaderStageFlags::VERTEX, start..end));
 
     self
   }
