@@ -60,7 +60,7 @@ impl Swapchain {
 
     let config = gfx_hal::SwapchainConfig {
       present_mode,
-      format: gfx_hal::format::Format::Bgra8Srgb,
+      format: render_pass.format(),
       extent,
       image_count,
       image_layers: 1,
@@ -83,7 +83,7 @@ impl Swapchain {
         .create_image_view(
           &image,
           gfx_hal::image::ViewKind::D2,
-          gfx_hal::format::Format::Bgra8Srgb,
+          render_pass.format(),
           gfx_hal::format::Swizzle::NO,
           gfx_hal::image::SubresourceRange {
             aspects: gfx_hal::format::Aspects::COLOR,

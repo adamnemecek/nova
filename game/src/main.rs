@@ -1,6 +1,6 @@
 //use nova::assets;
 use nova::graphics;
-//use nova::graphics::panels;
+use nova::graphics::panels;
 //use nova::input;
 use nova::time;
 use nova::window;
@@ -13,6 +13,19 @@ use self::prelude::*;
 
 /// Main entry point of the program.
 pub fn main() {
+  // let projection = math::Matrix4::new_orthographic(0.0, 1920.0, 0.0, 1080.0, -1.0, 1.0);
+
+  // let transform = Matrix4::new_translation(&Vector3::new(0.5, 0.5, 0.0))
+  //   .append_nonuniform_scaling(&Vector3::new(100.0, 540.0, 1.0));
+
+  // let point = math::Point3::<f32>::new(-600.0, 600.0, 0.0);
+
+  // let after = projection * point.to_homogeneous();
+
+  // println!("{} => {}", point, after);
+
+  // return ();
+
   let sink = bflog::LogSink::new(
     std::io::stdout(),
     bflog::Format::Modern,
@@ -32,10 +45,37 @@ pub fn main() {
   //stage::actors::driving::init(ctx);
   //stage::graphics::init(ctx);
 
-  //init(ctx);
+  init(ctx);
 
   engine::init(ctx);
   engine::run_loop(ctx);
+}
+
+fn init(ctx: &mut engine::Context) {
+  let parent = panels::create_panel(ctx);
+
+  engine::edit_component(ctx, parent, |style: &mut panels::Style| {
+    style.background = panels::Background::Solid;
+    style.color = graphics::Color([0.8, 0.2, 0.2, 1.0]);
+  });
+
+  panels::add_to_root(ctx, parent);
+
+  let child = panels::create_panel(ctx);
+
+  engine::edit_component(ctx, child, |style: &mut panels::Style| {
+    style.background = panels::Background::Solid;
+    style.color = graphics::Color([0.2, 0.2, 0.8, 1.0]);
+  });
+
+  engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
+    layout.width = panels::Dimension::Fixed(500.0);
+    layout.height = panels::Dimension::Fixed(500.0);
+    layout.right = panels::Dimension::Fixed(100.0);
+    layout.bottom = panels::Dimension::Fixed(100.0);
+  });
+
+  panels::set_parent(ctx, child, Some(parent));
 }
 
 /*

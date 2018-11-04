@@ -4,14 +4,17 @@ use super::Device;
 use std::sync::Arc;
 
 pub struct RenderPass {
+  format: gfx_hal::format::Format,
   raw: Option<backend::RenderPass>,
   device: Arc<Device>,
 }
 
 impl RenderPass {
   pub fn new(device: &Arc<Device>) -> Arc<Self> {
+    let format = gfx_hal::format::Format::Bgra8Unorm;
+
     let color_attachment = gfx_hal::pass::Attachment {
-      format: Some(gfx_hal::format::Format::Bgra8Srgb),
+      format: Some(format),
       samples: 1,
       ops: gfx_hal::pass::AttachmentOps::new(
         gfx_hal::pass::AttachmentLoadOp::Clear,
@@ -43,9 +46,14 @@ impl RenderPass {
       .create_render_pass(&[color_attachment], &[subpass], &[dependency]);
 
     Arc::new(RenderPass {
+      format,
       raw: Some(pass),
       device: device.clone(),
     })
+  }
+
+  pub fn format(&self) -> gfx_hal::format::Format {
+    self.format
   }
 
   pub fn device(&self) -> &Arc<Device> {

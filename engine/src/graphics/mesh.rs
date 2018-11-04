@@ -1,5 +1,6 @@
 use super::rendering;
-use nalgebra::{Vector2, Vector4};
+use super::Color;
+use nalgebra::Vector2;
 use std::sync::Arc;
 
 pub struct Mesh {
@@ -52,14 +53,14 @@ impl Mesh {
 #[repr(C)]
 pub struct Vertex {
   pub pos: Vector2<f32>,
-  pub color: Vector4<f32>,
+  pub color: Color,
 }
 
 impl Vertex {
   pub fn new(pos: [f32; 2], color: [f32; 4]) -> Self {
     Vertex {
       pos: Vector2::new(pos[0], pos[1]),
-      color: Vector4::new(color[0], color[1], color[2], color[3]),
+      color: Color(color),
     }
   }
 }

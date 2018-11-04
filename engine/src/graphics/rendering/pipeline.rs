@@ -207,6 +207,8 @@ impl PipelineBuilder {
   }
 
   pub fn build(self) -> Arc<Pipeline> {
+    print!("{:#?}", self.push_constants);
+
     Pipeline::new(self)
   }
 }

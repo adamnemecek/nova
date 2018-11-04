@@ -3,8 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Hierarchy, Layout};
-use crate::graphics::rendering::Canvas;
-use crate::graphics::{Color, Image};
+use crate::graphics::{Canvas, Color};
 use crate::prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -12,12 +11,16 @@ use std::sync::{Arc, Mutex};
 #[derive(Component)]
 #[storage(BTreeStorage)]
 pub struct Style {
-  /// Multiplicative color of the panel.
+  /// Background color of the panel.
   pub color: Color,
-  /// Background image of the panel.
-  pub background: Option<Arc<Image>>,
+  pub background: Background,
   /// Custom draw implementation used to draw panel content.
   pub custom_draw: Option<Arc<Mutex<dyn CustomDraw>>>,
+}
+
+pub enum Background {
+  None,
+  Solid,
 }
 
 impl Style {
@@ -30,8 +33,8 @@ impl Style {
 impl Default for Style {
   fn default() -> Self {
     Style {
-      color: Color::new(1.0, 1.0, 1.0, 1.0),
-      background: None,
+      color: Color([1.0, 1.0, 1.0, 1.0]),
+      background: Background::None,
       custom_draw: None,
     }
   }
@@ -114,22 +117,20 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, panel: Entity) {
 
 /// Draws a panel with the given `rect` and `style`.
 pub fn draw_panel(canvas: &mut Canvas, rect: &Rect<f32>, style: &Style) {
-  // If the panel has a background image, draw it covering the entire rect of
-  // the panel.
-  if let Some(ref background) = style.background {
-    let bg_size = background.size();
+  match style.background {
+    Background::Solid if style.color.a() > 0.0 => {
+      let size = &rect.size;
+      let pos = &rect.pos;
 
-    /*
-    canvas.draw(
-      background,
-      DrawParams::default()
-        .color(style.color)
-        .dest(rect.pos)
-        .scale(Vector2::new(
-          rect.size.x / bg_size.x as f32,
-          rect.size.y / bg_size.y as f32,
-        )),
-    );
-    */
+      let transform = Matrix4::new_translation(&Vector3::new(0.5, 0.5, 0.0))
+        .append_nonuniform_scaling(&Vector3::new(size.x, size.y, 1.0))
+        .append_translation(&Vector3::new(pos.x, pos.y, 0.0));
+
+      canvas.set_tint(style.color);
+      canvas.set_transform(transform);
+      canvas.draw_quad();
+    }
+
+    _ => {}
   }
 }

@@ -12,6 +12,6 @@ layout(push_constant) uniform PushConstants {
 } push_constants;
 
 void main() {
-  gl_Position = vec4(inPosition, 0.0, 1.0) * push_constants.transform;
+  gl_Position = push_constants.transform * vec4(inPosition, 0.0, 1.0);
   outColor = inColor * push_constants.tint;
 }
