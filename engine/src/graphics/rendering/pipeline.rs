@@ -196,7 +196,7 @@ impl PipelineBuilder {
 
     assert!(
       end <= 32,
-      "Push constants should not exceed 32 bytes total."
+      "Push constants should not exceed 128 bytes total."
     );
 
     self
