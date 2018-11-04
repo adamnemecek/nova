@@ -50,6 +50,7 @@ impl engine::Extension for Extension {
 
       self.canvas.begin();
 
+      self.canvas.set_transform(Matrix4::new_scaling(1800.0));
       self.canvas.set_tint([1.0, 0.1, 0.1, 1.0]);
       self.canvas.draw(&self.mesh);
 

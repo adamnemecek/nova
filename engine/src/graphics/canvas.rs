@@ -1,11 +1,13 @@
 use super::mesh;
 use super::rendering;
 use super::Mesh;
+use crate::math::{Matrix4, Orthographic3, Transform3};
 use crate::prelude::*;
 use std::sync::Arc;
 
 pub struct Canvas {
   size: Vector2<f32>,
+  projection: Matrix4<f32>,
   renderer: rendering::Renderer,
   swapchain: rendering::Swapchain,
   pipeline: Arc<rendering::Pipeline>,
@@ -34,12 +36,14 @@ impl Canvas {
       .shaders(shaders)
       .vertex_buffer::<mesh::Vertex>()
       .push_constant::<Vector4<f32>>()
+      .push_constant::<Transform3<f32>>()
       .build();
 
     log.trace("Created pipeline.");
 
     let mut canvas = Canvas {
       size: Vector2::zeros(),
+      projection: Matrix4::identity(),
       renderer,
       pipeline,
       swapchain: rendering::Swapchain::new(&device),
@@ -63,7 +67,11 @@ impl Canvas {
       return;
     }
 
+    let half = size / 2.0;
+
     self.size = size;
+    self.projection =
+      Orthographic3::new(-half.x, half.x, -half.y, half.y, -1.0, 1.0).to_homogeneous();
 
     self.destroy_swapchain("resize_to_fit", "window resized");
   }
@@ -87,11 +95,19 @@ impl Canvas {
     };
 
     self.renderer.bind_pipeline(&self.pipeline);
+
+    self.set_transform(Matrix4::identity());
     self.set_tint([1.0, 1.0, 1.0, 1.0]);
   }
 
   pub fn set_tint(&mut self, tint: [f32; 4]) {
     self.renderer.push_constant(0, &tint);
+  }
+
+  pub fn set_transform(&mut self, transform: Matrix4<f32>) {
+    let transform = transform * self.projection;
+
+    self.renderer.push_constant(1, &transform);
   }
 
   pub fn draw(&mut self, mesh: &Mesh) {
