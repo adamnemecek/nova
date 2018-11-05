@@ -71,6 +71,11 @@ impl Texture {
     let mut cmd_vec = pool.allocate(1, gfx_hal::command::RawLevel::Primary);
     let cmd = &mut cmd_vec[0];
 
+    cmd.begin(
+      gfx_hal::command::CommandBufferFlags::ONE_TIME_SUBMIT,
+      Default::default(),
+    );
+
     let barrier = gfx_hal::memory::Barrier::Image {
       states: (
         gfx_hal::image::Access::empty(),
@@ -139,6 +144,8 @@ impl Texture {
       &[barrier],
     );
 
+    cmd.finish();
+
     let mut queue = device.command_queue.raw_mut();
 
     unsafe {
@@ -152,7 +159,7 @@ impl Texture {
       );
     }
 
-    queue.wait_idle();
+    queue.wait_idle().expect("wait_idle failed");
 
     drop(queue);
 

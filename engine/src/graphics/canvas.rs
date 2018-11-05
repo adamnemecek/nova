@@ -1,6 +1,6 @@
 use super::mesh;
 use super::rendering;
-use super::{Color, Mesh, Vertex};
+use super::{image::Image, Color, Mesh, Vertex};
 use crate::math;
 use crate::math::Matrix4;
 use crate::prelude::*;
@@ -13,6 +13,9 @@ pub struct Canvas {
   renderer: rendering::Renderer,
   swapchain: rendering::Swapchain,
   pipeline: Arc<rendering::Pipeline>,
+  descriptor_set: rendering::DescriptorSet,
+  _image: Image,
+  _sampler: rendering::TextureSampler,
   log: bflog::Logger,
 }
 
@@ -26,17 +29,30 @@ impl Canvas {
 
     let render_pass = rendering::RenderPass::new(&device);
 
-    let descriptor_set_layout = rendering::DescriptorSetLayout::new()
-      .texture()
-      .create(&device);
-
-    let renderer = rendering::Renderer::new(&render_pass, &descriptor_set_layout);
+    let renderer = rendering::Renderer::new(&render_pass);
 
     log.trace("Created renderer.");
 
     let shaders = rendering::PipelineShaderSet::load_defaults(device);
 
     log.trace("Loaded default pipeline shaders.");
+
+    let image = Image::new(device, include_bytes!("do-it.jpg"));
+    let sampler = rendering::TextureSampler::new(device);
+
+    let descriptor_set_layout = rendering::DescriptorSetLayout::new()
+      .texture()
+      .create(&device);
+
+    let descriptor_pool = rendering::DescriptorPool::new(&descriptor_set_layout, 1);
+
+    let descriptor_set = rendering::DescriptorSet::new(
+      &descriptor_pool,
+      &[rendering::Descriptor::SampledTexture(
+        image.texture(),
+        &sampler,
+      )],
+    );
 
     let pipeline = rendering::Pipeline::new()
       .render_pass(&render_pass)
@@ -52,10 +68,10 @@ impl Canvas {
     let quad = Mesh::new(
       device,
       &[
-        Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0]),
-        Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0]),
-        Vertex::new([0.5, 0.5], [1.0, 1.0, 1.0, 1.0]),
-        Vertex::new([-0.5, 0.5], [1.0, 1.0, 1.0, 1.0]),
+        Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 0.0]),
+        Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 0.0]),
+        Vertex::new([0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 1.0]),
+        Vertex::new([-0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0]),
       ],
       &[0, 1, 2, 2, 3, 0],
     );
@@ -69,6 +85,9 @@ impl Canvas {
       pipeline,
       quad,
       swapchain: rendering::Swapchain::new(&device),
+      descriptor_set,
+      _image: image,
+      _sampler: sampler,
       log,
     };
 
@@ -114,6 +133,7 @@ impl Canvas {
     };
 
     self.renderer.bind_pipeline(&self.pipeline);
+    self.renderer.bind_descriptor_set(0, &self.descriptor_set);
 
     self.set_transform(Matrix4::identity());
     self.set_tint(Color::WHITE);

@@ -19,12 +19,16 @@ impl Image {
 
     let texture = rendering::Texture::new(
       device,
-      bytes,
+      &rgba_image,
       rendering::TextureFormat::Rgba8Srgb,
       width,
       height,
     );
 
     Image { texture }
+  }
+
+  pub fn texture(&self) -> &rendering::Texture {
+    &self.texture
   }
 }

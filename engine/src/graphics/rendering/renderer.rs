@@ -1,8 +1,6 @@
 use super::backend;
 use super::prelude::*;
-use super::{
-  Buffer, DescriptorSet, DescriptorSetLayout, Device, Pipeline, RenderPass, Swapchain, Texture,
-};
+use super::{Buffer, DescriptorSet, Device, Pipeline, RenderPass, Swapchain};
 use gfx_hal::command::CommandBufferFlags;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use quick_error::quick_error;
@@ -30,7 +28,7 @@ struct Frame {
 }
 
 impl Renderer {
-  pub fn new(pass: &Arc<RenderPass>, descriptor_set_layout: &Arc<DescriptorSetLayout>) -> Self {
+  pub fn new(pass: &Arc<RenderPass>) -> Self {
     let device = pass.device().clone();
 
     let mut command_pool = device.raw.create_command_pool(

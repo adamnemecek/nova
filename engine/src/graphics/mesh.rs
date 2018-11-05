@@ -55,13 +55,15 @@ impl Mesh {
 pub struct Vertex {
   pub pos: Vector2<f32>,
   pub color: Color,
+  pub tex_pos: Vector2<f32>,
 }
 
 impl Vertex {
-  pub fn new(pos: [f32; 2], color: [f32; 4]) -> Self {
+  pub fn new(pos: [f32; 2], color: [f32; 4], tex_pos: [f32; 2]) -> Self {
     Vertex {
       pos: Vector2::new(pos[0], pos[1]),
       color: Color(color),
+      tex_pos: Vector2::new(tex_pos[0], tex_pos[1]),
     }
   }
 }
@@ -71,6 +73,7 @@ impl rendering::VertexData for Vertex {
     &[
       rendering::VertexAttribute::Vector2f32,
       rendering::VertexAttribute::Vector4f32,
+      rendering::VertexAttribute::Vector2f32,
     ]
   }
 }

@@ -9,7 +9,6 @@ pub struct Pipeline {
   push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
-  descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
   _shaders: PipelineShaderSet,
   device: Arc<Device>,
 }
@@ -21,10 +20,6 @@ impl Pipeline {
 
   pub fn layout(&self) -> &backend::PipelineLayout {
     self.layout.as_ref().expect("pipeline layout was destroyed")
-  }
-
-  pub fn descriptor_set_layout(&self) -> Option<&Arc<DescriptorSetLayout>> {
-    self.descriptor_set_layout.as_ref()
   }
 
   pub fn push_constant(&self, index: usize) -> (gfx_hal::pso::ShaderStageFlags, Range<u32>) {
@@ -182,11 +177,13 @@ impl PipelineBuilder {
       main_pass: render_pass.raw(),
     };
 
-    let set_layout = device.raw.create_descriptor_set_layout(&[], &[]);
-
-    let layout = device
-      .raw
-      .create_pipeline_layout(iter::once(set_layout), &self.push_constants);
+    let layout = device.raw.create_pipeline_layout(
+      self
+        .descriptor_set_layout
+        .as_ref()
+        .map(|layout| layout.raw()),
+      &self.push_constants,
+    );
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       self.shaders.as_raw(),
@@ -220,7 +217,6 @@ impl PipelineBuilder {
     Arc::new(Pipeline {
       device,
       push_constants: self.push_constants,
-      descriptor_set_layout: self.descriptor_set_layout,
       _shaders: self.shaders,
       layout: Some(layout),
       raw: Some(pipeline),
@@ -296,7 +292,7 @@ pub struct DescriptorPool {
 }
 
 impl DescriptorPool {
-  pub fn new(layout: &Arc<DescriptorSetLayout>, capacity: usize) -> Self {
+  pub fn new(layout: &Arc<DescriptorSetLayout>, capacity: usize) -> Arc<Self> {
     let device = layout.device.clone();
 
     let pool = device.raw.create_descriptor_pool(
@@ -309,11 +305,11 @@ impl DescriptorPool {
         }),
     );
 
-    DescriptorPool {
+    Arc::new(DescriptorPool {
       device,
       layout: layout.clone(),
       raw: Mutex::new(Some(pool)),
-    }
+    })
   }
 }
 
@@ -355,7 +351,7 @@ impl DescriptorSet {
           Descriptor::SampledTexture(texture, sampler) => {
             gfx_hal::pso::Descriptor::CombinedImageSampler(
               texture.raw_view(),
-              gfx_hal::image::Layout::Undefined,
+              gfx_hal::image::Layout::ShaderReadOnlyOptimal,
               sampler.raw(),
             )
           }

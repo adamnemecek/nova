@@ -21,7 +21,7 @@ pub mod panels;
 
 mod canvas;
 mod color;
-//mod image;
+mod image;
 mod mesh;
 mod rendering;
 
