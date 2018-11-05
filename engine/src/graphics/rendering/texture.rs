@@ -1,4 +1,4 @@
-pub use gfx_hal::format::Format as TextureFormat;
+pub use gfx_hal::format::Format as ImageFormat;
 
 use super::backend;
 use super::prelude::*;
@@ -15,7 +15,7 @@ impl Texture {
   pub fn new(
     device: &Arc<Device>,
     data: &[u8],
-    format: TextureFormat,
+    format: ImageFormat,
     width: u32,
     height: u32,
   ) -> Texture {

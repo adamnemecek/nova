@@ -1,17 +1,17 @@
 use super::backend;
 use super::prelude::*;
-use super::Device;
+use super::{Device, ImageFormat};
 use std::sync::Arc;
 
 pub struct RenderPass {
-  format: gfx_hal::format::Format,
+  format: ImageFormat,
   raw: Option<backend::RenderPass>,
   device: Arc<Device>,
 }
 
 impl RenderPass {
   pub fn new(device: &Arc<Device>) -> Arc<Self> {
-    let format = gfx_hal::format::Format::Bgra8Unorm;
+    let format = ImageFormat::Bgra8Unorm;
 
     let color_attachment = gfx_hal::pass::Attachment {
       format: Some(format),
@@ -52,7 +52,7 @@ impl RenderPass {
     })
   }
 
-  pub fn format(&self) -> gfx_hal::format::Format {
+  pub fn format(&self) -> ImageFormat {
     self.format
   }
 

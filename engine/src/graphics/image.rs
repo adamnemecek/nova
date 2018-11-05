@@ -20,7 +20,7 @@ impl Image {
     let texture = rendering::Texture::new(
       device,
       &rgba_image,
-      rendering::TextureFormat::Rgba8Srgb,
+      rendering::ImageFormat::Rgba8Srgb,
       width,
       height,
     );

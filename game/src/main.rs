@@ -56,7 +56,7 @@ fn init(ctx: &mut engine::Context) {
 
   engine::edit_component(ctx, parent, |style: &mut panels::Style| {
     style.background = panels::Background::Solid;
-    style.color = graphics::Color([0.8, 0.2, 0.2, 1.0]);
+    style.color = graphics::Color([0.8, 0.6, 0.6, 1.0]);
   });
 
   panels::add_to_root(ctx, parent);
@@ -65,7 +65,7 @@ fn init(ctx: &mut engine::Context) {
 
   engine::edit_component(ctx, child, |style: &mut panels::Style| {
     style.background = panels::Background::Solid;
-    style.color = graphics::Color([0.2, 0.2, 0.8, 1.0]);
+    style.color = graphics::Color([0.6, 0.6, 0.8, 1.0]);
   });
 
   engine::edit_component(ctx, child, |layout: &mut panels::Layout| {

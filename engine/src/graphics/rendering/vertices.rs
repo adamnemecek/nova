@@ -1,3 +1,4 @@
+use super::ImageFormat;
 use std::mem;
 
 pub trait VertexData: Sized {
@@ -22,11 +23,11 @@ impl VertexAttribute {
   }
 }
 
-impl From<&VertexAttribute> for gfx_hal::format::Format {
+impl From<&VertexAttribute> for ImageFormat {
   fn from(attr: &VertexAttribute) -> Self {
     match attr {
-      VertexAttribute::Vector2f32 => gfx_hal::format::Format::Rg32Float,
-      VertexAttribute::Vector4f32 => gfx_hal::format::Format::Rgba32Float,
+      VertexAttribute::Vector2f32 => ImageFormat::Rg32Float,
+      VertexAttribute::Vector4f32 => ImageFormat::Rgba32Float,
     }
   }
 }

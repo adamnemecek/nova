@@ -1,5 +1,6 @@
 mod backend;
 mod buffer;
+mod hal;
 mod pass;
 mod pipeline;
 mod prelude;
