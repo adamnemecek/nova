@@ -7,6 +7,7 @@ mod queue;
 mod renderer;
 mod shader;
 mod swapchain;
+mod texture;
 mod vertices;
 
 pub use self::backend::NAME as BACKEND_NAME;
@@ -16,10 +17,12 @@ pub use self::pipeline::*;
 pub use self::renderer::*;
 pub use self::shader::*;
 pub use self::swapchain::*;
+pub use self::texture::*;
 pub use self::vertices::*;
 
 use self::prelude::*;
 use self::queue::*;
+use gfx_hal::pool::CommandPoolCreateFlags;
 use quick_error::quick_error;
 use std::sync::{Arc, Mutex};
 
@@ -27,6 +30,7 @@ const ENGINE_NAME: &str = "nova";
 const ENGINE_VERSION: u32 = 1;
 
 pub struct Device {
+  one_time_pool: Mutex<Option<backend::CommandPool>>,
   command_queue: CommandQueue,
   raw: backend::Device,
   memory_properties: gfx_hal::MemoryProperties,
@@ -54,9 +58,14 @@ pub fn init(window: &winit::Window) -> Result<Arc<Device>, InitError> {
 
   // Create a logical device and queues.
   let mut gpu = adapter.physical_device.open(&[(queue_family, &[1.0])])?;
+  let device = gpu.device;
 
   // Take the requested command queue.
   let command_queue = CommandQueue::take(&mut gpu.queues, queue_family.id());
+
+  // Create a command pool for one time command buffer submissions.
+  let one_time_pool =
+    device.create_command_pool(queue_family.id(), CommandPoolCreateFlags::TRANSIENT);
 
   // Return a `Device` wrapper struct.
   Ok(Arc::new(Device {
@@ -64,8 +73,9 @@ pub fn init(window: &winit::Window) -> Result<Arc<Device>, InitError> {
     surface: Mutex::new(surface),
     adapter,
     memory_properties,
-    raw: gpu.device,
+    raw: device,
     command_queue,
+    one_time_pool: Mutex::new(Some(one_time_pool)),
   }))
 }
 

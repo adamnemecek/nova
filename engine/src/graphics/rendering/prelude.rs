@@ -1,6 +1,7 @@
 pub use gfx_hal::command::RawCommandBuffer as HalRawCommandBuffer;
 pub use gfx_hal::pool::RawCommandPool as HalRawCommandPool;
 pub use gfx_hal::queue::RawCommandQueue as HalRawCommandQueue;
+pub use gfx_hal::DescriptorPool as HalDescriptorPool;
 pub use gfx_hal::Device as HalDevice;
 pub use gfx_hal::Instance as HalInstance;
 pub use gfx_hal::PhysicalDevice as HalPhysicalDevice;

@@ -1,6 +1,8 @@
 use super::backend;
 use super::prelude::*;
-use super::{Buffer, Device, Pipeline, RenderPass, Swapchain};
+use super::{
+  Buffer, DescriptorSet, DescriptorSetLayout, Device, Pipeline, RenderPass, Swapchain, Texture,
+};
 use gfx_hal::command::CommandBufferFlags;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use quick_error::quick_error;
@@ -13,7 +15,7 @@ pub const FRAME_COUNT: usize = 3;
 pub struct Renderer {
   frame: usize,
   frames: SmallVec<[Frame; FRAME_COUNT]>,
-  command_pool: Option<backend::CommandPool>,
+  pools: Option<backend::CommandPool>,
   pass: Arc<RenderPass>,
   device: Arc<Device>,
 }
@@ -28,33 +30,34 @@ struct Frame {
 }
 
 impl Renderer {
-  pub fn new(pass: &Arc<RenderPass>) -> Self {
-    let pass = pass.clone();
+  pub fn new(pass: &Arc<RenderPass>, descriptor_set_layout: &Arc<DescriptorSetLayout>) -> Self {
     let device = pass.device().clone();
 
     let mut command_pool = device.raw.create_command_pool(
       device.command_queue.family_id(),
-      CommandPoolCreateFlags::TRANSIENT | CommandPoolCreateFlags::RESET_INDIVIDUAL,
+      CommandPoolCreateFlags::RESET_INDIVIDUAL,
     );
 
-    let command_buffers = command_pool.allocate(FRAME_COUNT, gfx_hal::command::RawLevel::Primary);
+    let mut command_buffers =
+      command_pool.allocate(FRAME_COUNT, gfx_hal::command::RawLevel::Primary);
 
-    let frames = command_buffers
-      .into_iter()
-      .map(|command_buffer| Frame {
+    let mut frames = SmallVec::new();
+
+    while let Some(command_buffer) = command_buffers.pop() {
+      frames.push(Frame {
         command_buffer,
         fence: device.raw.create_fence(true),
         acquire_semaphore: device.raw.create_semaphore(),
         render_semaphore: device.raw.create_semaphore(),
         image: 0,
         pipeline: None,
-      })
-      .collect();
+      });
+    }
 
     Renderer {
       device,
-      pass,
-      command_pool: Some(command_pool),
+      pass: pass.clone(),
+      pools: Some(command_pool),
       frames,
       frame: 0,
     }
@@ -111,24 +114,6 @@ impl Renderer {
     Ok(())
   }
 
-  pub fn bind_vertex_buffer<T: Copy>(&mut self, binding: u32, buffer: &Buffer<T>) {
-    let frame = &mut self.frames[self.frame];
-    let cmd = &mut frame.command_buffer;
-
-    cmd.bind_vertex_buffers(binding, iter::once((buffer.raw(), 0)));
-  }
-
-  pub fn bind_index_buffer(&mut self, buffer: &Buffer<u16>) {
-    let frame = &mut self.frames[self.frame];
-    let cmd = &mut frame.command_buffer;
-
-    cmd.bind_index_buffer(gfx_hal::buffer::IndexBufferView {
-      buffer: buffer.raw(),
-      offset: 0,
-      index_type: gfx_hal::IndexType::U16,
-    })
-  }
-
   pub fn bind_pipeline(&mut self, pipeline: &Arc<Pipeline>) {
     let frame = &mut self.frames[self.frame];
     let cmd = &mut frame.command_buffer;
@@ -148,6 +133,33 @@ impl Renderer {
       unsafe { std::slice::from_raw_parts(value as *const T as *const u32, range.len()) };
 
     cmd.push_graphics_constants(pipeline.layout(), stages, range.start, constants);
+  }
+
+  pub fn bind_descriptor_set(&mut self, index: usize, set: &DescriptorSet) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    let pipeline = frame.pipeline.as_ref().expect("no pipeline is bound");
+
+    cmd.bind_graphics_descriptor_sets(pipeline.layout(), index, iter::once(set.raw()), &[]);
+  }
+
+  pub fn bind_vertex_buffer<T: Copy>(&mut self, binding: u32, buffer: &Buffer<T>) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.bind_vertex_buffers(binding, iter::once((buffer.raw(), 0)));
+  }
+
+  pub fn bind_index_buffer(&mut self, buffer: &Buffer<u16>) {
+    let frame = &mut self.frames[self.frame];
+    let cmd = &mut frame.command_buffer;
+
+    cmd.bind_index_buffer(gfx_hal::buffer::IndexBufferView {
+      buffer: buffer.raw(),
+      offset: 0,
+      index_type: gfx_hal::IndexType::U16,
+    })
   }
 
   pub fn draw_indexed(&mut self, indices: u32) {
@@ -198,8 +210,8 @@ impl Drop for Renderer {
       self.device.raw.destroy_semaphore(frame.render_semaphore);
     }
 
-    if let Some(pool) = self.command_pool.take() {
-      self.device.raw.destroy_command_pool(pool);
+    if let Some(command_pool) = self.pools.take() {
+      self.device.raw.destroy_command_pool(command_pool);
     }
   }
 }

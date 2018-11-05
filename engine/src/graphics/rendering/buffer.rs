@@ -60,7 +60,7 @@ impl<T: Copy> Buffer<T> {
     }
   }
 
-  pub fn write(&self, values: &[T]) {
+  pub fn write(&mut self, values: &[T]) {
     let device = &self.device.raw;
     let memory = self.memory.as_ref().expect("memory was destroyed");
 

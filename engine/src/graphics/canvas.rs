@@ -25,7 +25,12 @@ impl Canvas {
     let mut log = log.with_src("nova::graphics::Canvas");
 
     let render_pass = rendering::RenderPass::new(&device);
-    let renderer = rendering::Renderer::new(&render_pass);
+
+    let descriptor_set_layout = rendering::DescriptorSetLayout::new()
+      .texture()
+      .create(&device);
+
+    let renderer = rendering::Renderer::new(&render_pass, &descriptor_set_layout);
 
     log.trace("Created renderer.");
 
@@ -33,13 +38,14 @@ impl Canvas {
 
     log.trace("Loaded default pipeline shaders.");
 
-    let pipeline = rendering::PipelineBuilder::default()
+    let pipeline = rendering::Pipeline::new()
       .render_pass(&render_pass)
       .shaders(shaders)
       .vertex_buffer::<mesh::Vertex>()
       .push_constant::<Color>()
       .push_constant::<Matrix4<f32>>()
-      .build();
+      .descriptor_set_layout(&descriptor_set_layout)
+      .create();
 
     log.trace("Created pipeline.");
 

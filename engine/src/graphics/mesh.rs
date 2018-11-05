@@ -15,12 +15,13 @@ impl Mesh {
     assert!(vertices.len() > 0, "mesh has no vertices");
     assert!(indices.len() > 0, "mesh has no indices");
 
-    let vertex_buffer =
+    let mut vertex_buffer =
       rendering::Buffer::new(device, vertices.len(), rendering::BufferUsage::VERTEX);
 
     vertex_buffer.write(&vertices);
 
-    let index_buffer = rendering::Buffer::new(device, indices.len(), rendering::BufferUsage::INDEX);
+    let mut index_buffer =
+      rendering::Buffer::new(device, indices.len(), rendering::BufferUsage::INDEX);
 
     index_buffer.write(&indices);
 
