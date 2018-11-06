@@ -1,7 +1,6 @@
-use super::backend;
-use super::prelude::*;
-use super::Device;
 pub use glsl_to_spirv::ShaderType as ShaderKind;
+
+use super::*;
 use std::sync::Arc;
 
 pub struct Shader {

@@ -1,9 +1,7 @@
 use super::mesh;
 use super::rendering;
 use super::{image::Image, Color, Mesh, Vertex};
-use crate::math;
-use crate::math::Matrix4;
-use crate::prelude::*;
+use crate::math::algebra::*;
 use std::sync::Arc;
 
 pub struct Canvas {
@@ -109,7 +107,7 @@ impl Canvas {
     }
 
     self.size = size;
-    self.projection = math::Matrix4::new_orthographic(0.0, size.x, 0.0, size.y, -1.0, 1.0);
+    self.projection = Matrix4::new_orthographic(0.0, size.x, 0.0, size.y, -1.0, 1.0);
 
     self.destroy_swapchain("resize_to_fit", "window resized");
   }
@@ -175,11 +173,9 @@ impl Canvas {
       return;
     }
 
-    self.swapchain.create(
-      self.renderer.pass(),
-      self.size.x.round() as u32,
-      self.size.y.round() as u32,
-    );
+    self
+      .swapchain
+      .create(self.size.x.round() as u32, self.size.y.round() as u32);
 
     self
       .log

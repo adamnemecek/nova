@@ -1,6 +1,4 @@
-use super::backend;
-use super::prelude::*;
-use super::{Device, ImageFormat};
+use super::*;
 use std::sync::Arc;
 
 pub struct RenderPass {

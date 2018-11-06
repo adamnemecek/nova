@@ -1,4 +1,4 @@
-use super::ImageFormat;
+use super::*;
 use std::mem;
 
 pub trait VertexData: Sized {

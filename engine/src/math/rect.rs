@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::prelude::*;
-use nalgebra::Real;
+use super::algebra::*;
+use super::geometry::*;
+use super::Real;
 use std::fmt;
 
 /// Struct describing a rectangle in 2D space.

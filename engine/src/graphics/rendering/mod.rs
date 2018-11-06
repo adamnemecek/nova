@@ -1,9 +1,9 @@
 mod backend;
 mod buffer;
+mod commands;
 mod pass;
 mod pipeline;
 mod prelude;
-mod queue;
 mod renderer;
 mod shader;
 mod swapchain;
@@ -12,6 +12,7 @@ mod vertices;
 
 pub use self::backend::NAME as BACKEND_NAME;
 pub use self::buffer::*;
+pub use self::commands::*;
 pub use self::pass::*;
 pub use self::pipeline::*;
 pub use self::renderer::*;
@@ -21,22 +22,25 @@ pub use self::texture::*;
 pub use self::vertices::*;
 
 use self::prelude::*;
-use self::queue::*;
-use gfx_hal::pool::CommandPoolCreateFlags;
-use quick_error::quick_error;
+use crate::prelude::*;
 use std::sync::{Arc, Mutex};
 
 const ENGINE_NAME: &str = "nova";
 const ENGINE_VERSION: u32 = 1;
 
 pub struct Device {
-  one_time_pool: Mutex<Option<backend::CommandPool>>,
-  command_queue: CommandQueue,
+  queues: CommandQueueSet,
   raw: backend::Device,
   memory_properties: gfx_hal::MemoryProperties,
   adapter: backend::Adapter,
   surface: Mutex<backend::Surface>,
   _instance: backend::Instance,
+}
+
+impl Device {
+  pub fn queues(&self) -> &CommandQueueSet {
+    &self.queues
+  }
 }
 
 /// Initializes rendering for the given window, creating a [`Device`].
@@ -53,29 +57,21 @@ pub fn init(window: &winit::Window) -> Result<Arc<Device>, InitError> {
   // Cache the memory properties info.
   let memory_properties = adapter.physical_device.memory_properties();
 
-  // Select a supported queue family.
-  let queue_family = select_queue_family(&adapter, &surface).ok_or(InitError::NoSupportedQueue)?;
+  // Determine queue families to open.
+  let queue_families = select_queue_families(&adapter, &surface);
 
   // Create a logical device and queues.
-  let mut gpu = adapter.physical_device.open(&[(queue_family, &[1.0])])?;
-  let device = gpu.device;
+  let gpu = adapter
+    .physical_device
+    .open(&queue_families.create_info())?;
 
-  // Take the requested command queue.
-  let command_queue = CommandQueue::take(&mut gpu.queues, queue_family.id());
-
-  // Create a command pool for one time command buffer submissions.
-  let one_time_pool =
-    device.create_command_pool(queue_family.id(), CommandPoolCreateFlags::TRANSIENT);
-
-  // Return a `Device` wrapper struct.
   Ok(Arc::new(Device {
     _instance: instance,
     surface: Mutex::new(surface),
     adapter,
     memory_properties,
-    raw: device,
-    command_queue,
-    one_time_pool: Mutex::new(Some(one_time_pool)),
+    raw: gpu.device,
+    queues: CommandQueueSet::new(gpu.queues, queue_families),
   }))
 }
 
@@ -87,15 +83,20 @@ fn select_adapter(
   instance
     .enumerate_adapters()
     .into_iter()
-    // Only select adapters with at least one graphics queue.
-    .filter(|adapter| adapter.queue_families.iter().any(|f| f.supports_graphics()))
-    // Only select adapters with at least one queue that supports presentation
-    // to the window surface.
+    // Only select adapters with at least one graphics queue that supports
+    // presentation to the surface.
     .filter(|adapter| {
       adapter
         .queue_families
         .iter()
-        .any(|f| surface.supports_queue_family(f))
+        .any(|f| f.supports_graphics() && surface.supports_queue_family(f))
+    })
+    // Only select adapters with at least one non-graphics queue.
+    .filter(|adapter| {
+      adapter
+        .queue_families
+        .iter()
+        .any(|f| !f.supports_graphics())
     })
     // Select the adapter with the higest score:
     .max_by_key(|adapter| {
@@ -108,20 +109,6 @@ fn select_adapter(
 
       score
     })
-}
-
-/// Selects a queue family that supports graphics and presentation to the
-/// window surface.
-fn select_queue_family<'a, 'b>(
-  adapter: &'a backend::Adapter,
-  surface: &'b backend::Surface,
-) -> Option<&'a backend::QueueFamily> {
-  adapter
-    .queue_families
-    .iter()
-    .filter(|family| family.supports_graphics())
-    .filter(|family| surface.supports_queue_family(family))
-    .next()
 }
 
 quick_error! {

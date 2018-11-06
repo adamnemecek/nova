@@ -1,8 +1,6 @@
 pub use gfx_hal::buffer::Usage as BufferUsage;
 
-use super::backend;
-use super::prelude::*;
-use super::Device;
+use super::*;
 use std::mem;
 use std::sync::Arc;
 

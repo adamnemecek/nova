@@ -1,6 +1,4 @@
-use super::backend;
-use super::prelude::*;
-use super::{Device, RenderPass, Shader, ShaderKind, Texture, TextureSampler, VertexData};
+use super::*;
 use std::iter;
 use std::ops::Range;
 use std::sync::{Arc, Mutex};

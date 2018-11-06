@@ -17,65 +17,13 @@
 //! The `Atlas` struct provides a wrapper around an `Image` asset that slices
 //! it into cells, for use with tile sets or sprite sheets.
 
-pub mod panels;
+//pub mod panels;
+pub mod rendering;
 
-mod canvas;
+//mod canvas;
 mod color;
-mod image;
 mod mesh;
-mod rendering;
 
-pub use self::canvas::*;
+//pub use self::canvas::*;
 pub use self::color::*;
 pub use self::mesh::*;
-
-use crate::prelude::*;
-use crate::window::Window;
-
-pub struct Extension {
-  canvas: Canvas,
-}
-
-impl engine::Extension for Extension {
-  fn after_tick(&mut self, ctx: &mut engine::Context) {
-    {
-      let window = engine::fetch_resource::<Window>(ctx);
-
-      if window.was_resized() {
-        self.canvas.resize_to_fit(window.as_winit());
-      }
-    }
-
-    self.canvas.begin();
-
-    if let Some(root_panel) = panels::get_root(ctx) {
-      panels::draw(ctx, &mut self.canvas, root_panel);
-    }
-
-    self.canvas.present();
-  }
-}
-
-/// Initialize graphics for the given engine context. Requires a window.
-pub fn init(ctx: &mut engine::Context, log: &bflog::Logger) {
-  let mut log = log.with_src("nova::graphics");
-
-  engine::add_extension(ctx, {
-    let window = engine::fetch_resource::<Window>(ctx);
-    let window = window.as_winit();
-
-    let device = rendering::init(window).expect("could not create device");
-
-    log
-      .trace("Created device.")
-      .with("backend", &rendering::BACKEND_NAME);
-
-    let canvas = Canvas::new(&device, window, &log);
-
-    log.trace("Created canvas.");
-
-    Extension { canvas }
-  });
-
-  panels::init(ctx);
-}

@@ -37,6 +37,8 @@ pub type ShaderEntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
 pub type ShaderModule = <Backend as gfx_hal::Backend>::ShaderModule;
 
 pub type Queues = gfx_hal::queue::Queues<Backend>;
+pub type CommandBufferInheritanceInfo<'a> =
+  gfx_hal::command::CommandBufferInheritanceInfo<'a, Backend>;
 pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
 pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub type CommandQueue = <Backend as gfx_hal::Backend>::CommandQueue;

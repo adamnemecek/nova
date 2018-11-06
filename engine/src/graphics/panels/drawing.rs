@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Hierarchy, Layout};
+use crate::ecs::*;
 use crate::graphics::{Canvas, Color};
-use crate::prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// Component that stores the style of a panel.
