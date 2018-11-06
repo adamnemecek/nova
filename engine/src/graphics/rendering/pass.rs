@@ -2,9 +2,9 @@ use super::*;
 use std::sync::Arc;
 
 pub struct RenderPass {
-  format: ImageFormat,
-  raw: Option<backend::RenderPass>,
   device: Arc<Device>,
+  raw: Option<backend::RenderPass>,
+  format: ImageFormat,
 }
 
 impl RenderPass {
@@ -44,14 +44,10 @@ impl RenderPass {
       .create_render_pass(&[color_attachment], &[subpass], &[dependency]);
 
     Arc::new(RenderPass {
-      format,
-      raw: Some(pass),
       device: device.clone(),
+      raw: Some(pass),
+      format,
     })
-  }
-
-  pub fn format(&self) -> ImageFormat {
-    self.format
   }
 
   pub fn device(&self) -> &Arc<Device> {
@@ -60,6 +56,10 @@ impl RenderPass {
 
   pub fn raw(&self) -> &backend::RenderPass {
     self.raw.as_ref().expect("render pass is destroyed")
+  }
+
+  pub fn format(&self) -> ImageFormat {
+    self.format
   }
 }
 

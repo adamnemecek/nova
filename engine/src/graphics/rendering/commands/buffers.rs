@@ -1,5 +1,6 @@
+pub use gfx_hal::command::RawLevel as CommandBufferKind;
+
 use super::*;
-use gfx_hal::command::RawLevel;
 use smallvec::SmallVec;
 use std::iter;
 use std::sync::atomic;
@@ -14,8 +15,8 @@ pub struct CommandBuffer {
 }
 
 impl CommandBuffer {
-  pub fn new(pool: &Arc<CommandPool>) -> CommandBuffer {
-    let buffers = pool.raw_mut().allocate(1, RawLevel::Primary);
+  pub fn new(pool: &Arc<CommandPool>, kind: CommandBufferKind) -> CommandBuffer {
+    let buffers = pool.raw_mut().allocate(1, kind);
 
     CommandBuffer {
       pool: pool.clone(),
@@ -38,8 +39,8 @@ impl CommandBuffer {
       rect: gfx_hal::pso::Rect {
         x: 0,
         y: 0,
-        w: framebuffer.width() as i16,
-        h: framebuffer.height() as i16,
+        w: framebuffer.width(),
+        h: framebuffer.height(),
       },
       depth: 0.0..1.0,
     };

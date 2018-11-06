@@ -39,46 +39,42 @@ pub struct Device {
 }
 
 impl Device {
+  pub fn new(window: &window::Window) -> Result<Arc<Device>, InitError> {
+    // Create an instance of the backend.
+    let instance = backend::Instance::create(ENGINE_NAME, ENGINE_VERSION);
+
+    // Create a window surface for presentation.
+    let surface = instance.create_surface(window.raw());
+
+    // Select the best available adapter.
+    let adapter = select_adapter(&instance, &surface).ok_or(InitError::NoGraphicsDevice)?;
+
+    // Cache the memory properties info.
+    let memory_properties = adapter.physical_device.memory_properties();
+
+    // Determine queue families to open.
+    let queue_families = select_queue_families(&adapter, &surface);
+
+    // Create a logical device and queues.
+    let gpu = adapter
+      .physical_device
+      .open(&queue_families.create_info())?;
+
+    let device = Arc::new(Device {
+      _instance: instance,
+      surface: Mutex::new(surface),
+      adapter,
+      memory_properties,
+      raw: gpu.device,
+      queues: CommandQueueSet::new(gpu.queues, &queue_families),
+    });
+
+    Ok(device)
+  }
+
   pub fn queues(&self) -> &CommandQueueSet {
     &self.queues
   }
-}
-
-/// Initializes rendering for the given window, creating a [`Device`] and a
-/// [`Swapchain`].
-pub fn init(window: &window::Window) -> Result<(Arc<Device>, Swapchain), InitError> {
-  // Create an instance of the backend.
-  let instance = backend::Instance::create(ENGINE_NAME, ENGINE_VERSION);
-
-  // Create a window surface for presentation.
-  let surface = instance.create_surface(window.raw());
-
-  // Select the best available adapter.
-  let adapter = select_adapter(&instance, &surface).ok_or(InitError::NoGraphicsDevice)?;
-
-  // Cache the memory properties info.
-  let memory_properties = adapter.physical_device.memory_properties();
-
-  // Determine queue families to open.
-  let queue_families = select_queue_families(&adapter, &surface);
-
-  // Create a logical device and queues.
-  let gpu = adapter
-    .physical_device
-    .open(&queue_families.create_info())?;
-
-  let device = Arc::new(Device {
-    _instance: instance,
-    surface: Mutex::new(surface),
-    adapter,
-    memory_properties,
-    raw: gpu.device,
-    queues: CommandQueueSet::new(gpu.queues, &queue_families),
-  });
-
-  let swapchain = Swapchain::new(&device);
-
-  Ok((device, swapchain))
 }
 
 /// Selects the best available device adapter.

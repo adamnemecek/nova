@@ -118,7 +118,7 @@ impl TextureLoader {
       .bind_image_memory(&memory, 0, unbound)
       .expect("could not bind image memory");
 
-    let mut cmd = CommandBuffer::new(&self.command_pool);
+    let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
 
     cmd.begin();
 

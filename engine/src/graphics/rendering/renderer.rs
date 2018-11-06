@@ -46,8 +46,8 @@ impl Renderer {
   where
     R: IntoIterator<Item = CommandBuffer>,
   {
-    let frame = &mut self.frames[self.frame];
     let device = &self.device;
+    let frame = &mut self.frames[self.frame];
 
     device.raw.wait_for_fence(&frame.fence, !0);
 
@@ -57,11 +57,13 @@ impl Renderer {
       .acquire_framebuffer(&frame.acquire_semaphore)
       .map_err(|err| match err {
         gfx_hal::AcquireError::OutOfDate => RenderError::SwapchainOutOfDate,
-        gfx_hal::AcquireError::SurfaceLost => RenderError::SurfaceLost,
-        gfx_hal::AcquireError::NotReady => panic!("swapchain not ready after max timeout"),
+
+        _ => {
+          panic!("could not acquire framebuffer");
+        }
       })?;
 
-    let index = framebuffer.index();
+    let fb_index = framebuffer.index();
 
     frame.command_buffers.extend(func(framebuffer));
 
@@ -83,7 +85,7 @@ impl Renderer {
 
     queue
       .present(
-        iter::once((swapchain.raw_mut(), index)),
+        iter::once((swapchain.raw_mut(), fb_index)),
         iter::once(&frame.render_semaphore),
       )
       .or(Err(RenderError::SwapchainOutOfDate)) // Usually what happened.
@@ -93,9 +95,11 @@ impl Renderer {
 impl Drop for Renderer {
   fn drop(&mut self) {
     for frame in self.frames.drain() {
-      self.device.raw.destroy_fence(frame.fence);
-      self.device.raw.destroy_semaphore(frame.acquire_semaphore);
-      self.device.raw.destroy_semaphore(frame.render_semaphore);
+      let device = &self.device.raw;
+
+      device.destroy_fence(frame.fence);
+      device.destroy_semaphore(frame.acquire_semaphore);
+      device.destroy_semaphore(frame.render_semaphore);
     }
   }
 }
@@ -105,9 +109,6 @@ quick_error! {
   pub enum RenderError {
     SwapchainOutOfDate {
       display("The given swapchain is out of date and must be recreated.")
-    }
-    SurfaceLost {
-      display("The render surface was destroyed.")
     }
   }
 }

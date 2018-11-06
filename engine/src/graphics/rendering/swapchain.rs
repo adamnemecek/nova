@@ -1,46 +1,33 @@
 use super::*;
+use crate::math::algebra::Vector2;
 use smallvec::SmallVec;
 use std::cmp;
 use std::sync::Arc;
 
 pub struct Swapchain {
   device: Arc<Device>,
-  width: u32,
-  height: u32,
   raw: Option<backend::Swapchain>,
-  images: SmallVec<[(backend::Image, backend::ImageView); 3]>,
+  images: SmallVec<[backend::Image; 3]>,
+  image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
+  size: Vector2<u32>,
 }
 
 impl Swapchain {
-  pub fn new(device: &Arc<Device>) -> Self {
-    Swapchain {
-      device: device.clone(),
-      width: 0,
-      height: 0,
-      raw: None,
-      images: SmallVec::new(),
-      framebuffers: SmallVec::new(),
-    }
-  }
+  pub fn new(render_pass: &RenderPass, size: Vector2<u32>) -> Self {
+    let device = render_pass.device();
+    let surface = &mut device.surface.lock().unwrap();
 
-  pub fn create(&mut self, render_pass: &RenderPass, width: u32, height: u32) {
-    if !self.is_destroyed() {
-      panic!("swapchain is already created");
-    }
-
-    let mut surface = self.device.surface.lock().unwrap();
-    let (caps, _, modes) = surface.compatibility(&self.device.adapter.physical_device);
-    let device = &self.device.raw;
+    let (caps, _, modes) = surface.compatibility(&device.adapter.physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
         caps.extents.start.width,
-        cmp::min(width, caps.extents.end.width),
+        cmp::min(size.x, caps.extents.end.width),
       ),
       height: cmp::max(
         caps.extents.start.height,
-        cmp::min(height, caps.extents.end.height),
+        cmp::min(size.y, caps.extents.end.height),
       ),
     };
 
@@ -61,65 +48,67 @@ impl Swapchain {
       image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
     };
 
-    let (swapchain, backbuffer) = self.device.raw.create_swapchain(&mut surface, config, None);
+    let (raw, backbuffer) = device.raw.create_swapchain(surface, config, None);
 
-    self.raw = Some(swapchain);
-    self.width = extent.width;
-    self.height = extent.height;
+    let width = extent.width as i16;
+    let height = extent.height as i16;
 
-    let images = match backbuffer {
-      gfx_hal::Backbuffer::Images(images) => images,
+    let mut swapchain = Swapchain {
+      device: device.clone(),
+      raw: Some(raw),
+      images: SmallVec::new(),
+      image_views: SmallVec::new(),
+      framebuffers: SmallVec::new(),
+      size: Vector2::new(extent.width, extent.height),
+    };
+
+    let device = &device.raw;
+
+    match backbuffer {
+      gfx_hal::Backbuffer::Images(images) => {
+        for image in images {
+          let view = device
+            .create_image_view(
+              &image,
+              gfx_hal::image::ViewKind::D2,
+              render_pass.format(),
+              gfx_hal::format::Swizzle::NO,
+              gfx_hal::image::SubresourceRange {
+                aspects: gfx_hal::format::Aspects::COLOR,
+                levels: 0..1,
+                layers: 0..1,
+              },
+            )
+            .expect("could not create image view");
+
+          let framebuffer = device
+            .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
+            .expect("could not create framebuffer");
+
+          swapchain.images.push(image);
+          swapchain.image_views.push(view);
+
+          swapchain.framebuffers.push(Arc::new(Framebuffer {
+            index: swapchain.framebuffers.len() as u32,
+            raw: framebuffer,
+            width,
+            height,
+          }));
+        }
+      }
+
       _ => panic!("device created framebuffer objects"),
     };
 
-    for (i, image) in images.into_iter().enumerate() {
-      let view = device
-        .create_image_view(
-          &image,
-          gfx_hal::image::ViewKind::D2,
-          render_pass.format(),
-          gfx_hal::format::Swizzle::NO,
-          gfx_hal::image::SubresourceRange {
-            aspects: gfx_hal::format::Aspects::COLOR,
-            levels: 0..1,
-            layers: 0..1,
-          },
-        )
-        .expect("could not create image view");
-
-      let framebuffer = device
-        .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
-        .expect("could not create framebuffer");
-
-      self.images.push((image, view));
-
-      self.framebuffers.push(Arc::new(Framebuffer {
-        index: i as u32,
-        width,
-        height,
-        raw: framebuffer,
-      }));
-    }
+    swapchain
   }
 
   pub fn raw_mut(&mut self) -> &mut backend::Swapchain {
     self.raw.as_mut().expect("swapchain is destroyed")
   }
 
-  pub fn framebuffer(&self, index: u32) -> &Arc<Framebuffer> {
-    &self.framebuffers[index as usize]
-  }
-
-  pub fn width(&self) -> u32 {
-    self.width
-  }
-
-  pub fn height(&self) -> u32 {
-    self.height
-  }
-
-  pub fn is_destroyed(&self) -> bool {
-    self.raw.is_none()
+  pub fn size(&self) -> Vector2<u32> {
+    self.size
   }
 
   pub fn acquire_framebuffer(
@@ -132,14 +121,11 @@ impl Swapchain {
 
     Ok(self.framebuffers[index as usize].clone())
   }
+}
 
-  pub fn destroy(&mut self) {
+impl Drop for Swapchain {
+  fn drop(&mut self) {
     let device = &self.device.raw;
-
-    for (image, view) in self.images.drain() {
-      device.destroy_image_view(view);
-      drop(image);
-    }
 
     for framebuffer in self.framebuffers.drain() {
       if let Ok(framebuffer) = Arc::try_unwrap(framebuffer) {
@@ -149,15 +135,38 @@ impl Swapchain {
       }
     }
 
+    for view in self.image_views.drain() {
+      device.destroy_image_view(view);
+    }
+
     if let Some(swapchain) = self.raw.take() {
       device.destroy_swapchain(swapchain);
     }
   }
 }
 
-impl Drop for Swapchain {
-  fn drop(&mut self) {
-    self.destroy();
+pub struct Framebuffer {
+  index: u32,
+  raw: backend::Framebuffer,
+  width: i16,
+  height: i16,
+}
+
+impl Framebuffer {
+  pub fn raw(&self) -> &backend::Framebuffer {
+    &self.raw
+  }
+
+  pub fn index(&self) -> u32 {
+    self.index
+  }
+
+  pub fn width(&self) -> i16 {
+    self.width
+  }
+
+  pub fn height(&self) -> i16 {
+    self.height
   }
 }
 
@@ -168,30 +177,5 @@ fn select_present_mode(modes: Vec<gfx_hal::window::PresentMode>) -> gfx_hal::win
     gfx_hal::window::PresentMode::Immediate
   } else {
     gfx_hal::window::PresentMode::Fifo
-  }
-}
-
-pub struct Framebuffer {
-  index: u32,
-  raw: backend::Framebuffer,
-  width: u32,
-  height: u32,
-}
-
-impl Framebuffer {
-  pub fn index(&self) -> u32 {
-    self.index
-  }
-
-  pub fn raw(&self) -> &backend::Framebuffer {
-    &self.raw
-  }
-
-  pub fn width(&self) -> u32 {
-    self.width
-  }
-
-  pub fn height(&self) -> u32 {
-    self.height
   }
 }

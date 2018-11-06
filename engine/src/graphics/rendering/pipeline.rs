@@ -165,8 +165,6 @@ impl PipelineBuilder {
   }
 
   pub fn create(self) -> Arc<Pipeline> {
-    print!("{:#?}", self.push_constants);
-
     let render_pass = self.render_pass.expect("render_pass is required");
     let device = render_pass.device().clone();
 

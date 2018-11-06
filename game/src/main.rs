@@ -17,8 +17,7 @@ pub fn main() {
 
   let mut window = window::Window::new("nova-game");
 
-  let (gfx_device, mut swapchain) =
-    rendering::init(&window).expect("could not initialize rendering");
+  let gfx_device = rendering::Device::new(&window).expect("could not create rendering device");
 
   log.trace("Created graphics device.");
 
@@ -79,6 +78,8 @@ pub fn main() {
 
   log.trace("Created descriptor set.");
 
+  let mut swapchain = None;
+
   loop {
     window.poll_events();
 
@@ -87,25 +88,24 @@ pub fn main() {
     }
 
     if window.was_resized() {
-      swapchain.destroy();
+      swapchain = None;
     }
 
-    if swapchain.is_destroyed() {
-      let size = window.size();
-
-      let width = size.x.round() as u32;
-      let height = size.y.round() as u32;
-
-      swapchain.create(&render_pass, width, height);
+    if swapchain.is_none() {
+      let sc = rendering::Swapchain::new(&render_pass, window.size().map(|d| d.round() as u32));
+      let size = sc.size();
 
       log
         .info("Created swapchain.")
-        .with("width", &width)
-        .with("height", &height);
+        .with("width", &size.x)
+        .with("height", &size.y);
+
+      swapchain = Some(sc);
     }
 
-    let result = renderer.render(&mut swapchain, |framebuffer| {
-      let mut cmd = rendering::CommandBuffer::new(&command_pool);
+    let result = renderer.render(swapchain.as_mut().unwrap(), |framebuffer| {
+      let mut cmd =
+        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
 
       cmd.begin();
 
@@ -127,15 +127,11 @@ pub fn main() {
     });
 
     match result {
-      Err(rendering::RenderError::SwapchainOutOfDate) => {
-        swapchain.destroy();
-      }
-
-      Err(rendering::RenderError::SurfaceLost) => {
-        panic!("surface lost");
-      }
-
       Ok(_) => {}
+
+      Err(rendering::RenderError::SwapchainOutOfDate) => {
+        swapchain = None;
+      }
     }
   }
 }
