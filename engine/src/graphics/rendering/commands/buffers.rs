@@ -11,6 +11,7 @@ pub struct CommandBuffer {
   raw: Option<Vec<backend::CommandBuffer>>,
   recording: bool,
   passes: SmallVec<[Arc<RenderPass>; 1]>,
+  secondaries: Vec<CommandBuffer>,
   pipelines: SmallVec<[Arc<Pipeline>; 1]>,
 }
 
@@ -23,6 +24,7 @@ impl CommandBuffer {
       raw: Some(buffers),
       recording: true,
       passes: SmallVec::new(),
+      secondaries: Vec::new(),
       pipelines: SmallVec::new(),
     }
   }
@@ -63,7 +65,7 @@ impl CommandBuffer {
     self.passes.push(pass.clone());
   }
 
-  pub fn begin_in_pass(&mut self, pass: &Arc<RenderPass>) {
+  pub fn begin_in_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
     self.start_recording();
 
     self.raw_mut().begin(
@@ -73,11 +75,17 @@ impl CommandBuffer {
           index: 0,
           main_pass: pass.raw(),
         }),
+        framebuffer: Some(framebuffer.raw()),
         ..Default::default()
       },
     );
 
     self.passes.push(pass.clone());
+  }
+
+  pub fn execute_commands(&mut self, buffer: CommandBuffer) {
+    self.raw_mut().execute_commands(iter::once(buffer.raw()));
+    self.secondaries.push(buffer);
   }
 
   pub fn bind_pipeline(&mut self, pipeline: &Arc<Pipeline>) {

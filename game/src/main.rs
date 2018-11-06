@@ -105,11 +105,9 @@ pub fn main() {
 
     let result = renderer.render(swapchain.as_mut().unwrap(), |framebuffer| {
       let mut cmd =
-        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
+        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
 
-      cmd.begin();
-
-      cmd.begin_pass(&render_pass, &framebuffer);
+      cmd.begin_in_pass(&render_pass, &framebuffer);
 
       cmd.bind_pipeline(&pipeline);
 
@@ -123,7 +121,18 @@ pub fn main() {
 
       cmd.finish();
 
-      iter::once(cmd)
+      let mut primary =
+        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
+
+      primary.begin();
+
+      primary.begin_pass(&render_pass, &framebuffer);
+
+      primary.execute_commands(cmd);
+
+      primary.finish();
+
+      iter::once(primary)
     });
 
     match result {
