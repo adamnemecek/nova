@@ -2,6 +2,7 @@ use nova::graphics;
 use nova::graphics::rendering;
 use nova::graphics::{Mesh, Vertex};
 use nova::math::algebra::*;
+use nova::window;
 use std::iter;
 
 /// Main entry point of the program.
@@ -14,10 +15,12 @@ pub fn main() {
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
 
-  let mut events_loop = winit::EventsLoop::new();
-  let window = winit::Window::new(&events_loop).expect("could not create window");
+  let mut window = window::Window::new("nova-game");
 
-  let gfx_device = rendering::init(&window).expect("could not initialize rendering");
+  let (gfx_device, mut swapchain) =
+    rendering::init(&window).expect("could not initialize rendering");
+
+  log.trace("Created graphics device.");
 
   let render_pass = rendering::RenderPass::new(&gfx_device);
 
@@ -36,12 +39,13 @@ pub fn main() {
     .descriptor_set_layout(&descriptor_set_layout)
     .create();
 
-  log.trace("Created quad mesh.");
+  log.trace("Created pipeline.");
 
   let mut renderer = rendering::Renderer::new(&gfx_device);
-  let mut swapchain = rendering::Swapchain::new(&gfx_device);
 
   let command_pool = rendering::CommandPool::new(&gfx_device, gfx_device.queues().graphics());
+
+  log.trace("Created renderer arnd command pool.");
 
   let quad = Mesh::new(
     &gfx_device,
@@ -64,6 +68,8 @@ pub fn main() {
 
   let sampler = rendering::TextureSampler::new(&gfx_device);
 
+  log.trace("Created mesh and texture/sampler pair.");
+
   let descriptor_pool = rendering::DescriptorPool::new(&descriptor_set_layout, 1);
 
   let descriptor_set = rendering::DescriptorSet::new(
@@ -71,40 +77,24 @@ pub fn main() {
     &[rendering::Descriptor::SampledTexture(&texture, &sampler)],
   );
 
+  log.trace("Created descriptor set.");
+
   loop {
-    let mut close_requested = false;
-    let mut resized = false;
+    window.poll_events();
 
-    events_loop.poll_events(|event| match event {
-      winit::Event::WindowEvent { event, .. } => match event {
-        winit::WindowEvent::CloseRequested => {
-          log.info("Close requested.");
-
-          close_requested = true;
-        }
-
-        winit::WindowEvent::Resized(_) => {
-          resized = true;
-        }
-
-        _ => {}
-      },
-
-      _ => {}
-    });
-
-    if close_requested {
+    if window.is_closing() {
       break;
     }
 
-    if resized || swapchain.is_destroyed() {
-      let size = window
-        .get_inner_size()
-        .expect("window destroyed")
-        .to_physical(window.get_hidpi_factor());
+    if window.was_resized() {
+      swapchain.destroy();
+    }
 
-      let width = size.width.round() as u32;
-      let height = size.height.round() as u32;
+    if swapchain.is_destroyed() {
+      let size = window.size();
+
+      let width = size.x.round() as u32;
+      let height = size.y.round() as u32;
 
       swapchain.create(&render_pass, width, height);
 

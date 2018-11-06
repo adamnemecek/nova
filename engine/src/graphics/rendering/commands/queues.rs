@@ -32,17 +32,15 @@ impl CommandQueue {
 }
 
 pub struct CommandQueueSet {
-  families: CommandQueueFamilies,
   graphics: CommandQueue,
   transfer: CommandQueue,
 }
 
 impl CommandQueueSet {
-  pub fn new(mut queues: backend::Queues, families: CommandQueueFamilies) -> Self {
+  pub fn new(mut queues: backend::Queues, families: &CommandQueueFamilies) -> Self {
     CommandQueueSet {
       graphics: CommandQueue::new(&mut queues, families.graphics.id()),
       transfer: CommandQueue::new(&mut queues, families.transfer.id()),
-      families,
     }
   }
 

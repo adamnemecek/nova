@@ -7,8 +7,9 @@ use super::Context;
 pub use specs::shred::Fetch as FetchResource;
 pub use specs::shred::FetchMut as FetchResourceMut;
 pub use specs::shred::Read as ReadResource;
-pub use specs::shred::Resource;
+pub use specs::shred::SetupHandler as ResourceSetup;
 pub use specs::shred::Write as WriteResource;
+pub use specs::shred::{Resource, Resources};
 
 /// Adds a resource to the ECS context.
 pub fn add_resource(ctx: &mut Context, resource: impl Resource) {

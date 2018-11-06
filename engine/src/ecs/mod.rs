@@ -8,7 +8,7 @@ pub use self::components::*;
 pub use self::entities::*;
 pub use self::resources::*;
 pub use self::storages::*;
-pub use specs::System;
+pub use specs::{Dispatcher, DispatcherBuilder, System};
 pub use specs_derive::*;
 
 pub struct Context {
@@ -20,5 +20,9 @@ impl Context {
     Context {
       world: specs::World::new(),
     }
+  }
+
+  pub fn resources(&mut self) -> &mut Resources {
+    &mut self.world.res
   }
 }
