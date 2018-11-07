@@ -7,64 +7,53 @@ pub const FRAME_COUNT: usize = 3;
 
 pub struct Renderer {
   device: Arc<Device>,
-  fence: Option<backend::Fence>,
+  frames: Chain<[Frame; FRAME_COUNT]>,
+}
+
+struct Frame {
+  fence: Fence,
   semaphore: Semaphore,
-  commands: Vec<CommandBuffer>,
+  commands: SmallVec<[CommandBuffer; 1]>,
 }
 
 impl Renderer {
   pub fn new(device: &Arc<Device>) -> Self {
-    let fence = device.raw.create_fence(true);
-    let semaphore = Semaphore::new(device);
-    let commands = Vec::new();
-
     Renderer {
       device: device.clone(),
-      fence: Some(fence),
-      semaphore,
-      commands,
+      frames: Chain::new(FRAME_COUNT, || Frame {
+        fence: Fence::new(device),
+        semaphore: Semaphore::new(device),
+        commands: SmallVec::new(),
+      }),
     }
-  }
-
-  pub fn semaphore(&self) -> &Semaphore {
-    &self.semaphore
-  }
-
-  pub fn wait_ready(&self) {
-    self
-      .device
-      .raw
-      .wait_for_fence(self.fence.as_ref().unwrap(), !0);
   }
 
   pub fn render(
     &mut self,
     commands: impl IntoIterator<Item = CommandBuffer>,
     wait_for: &Semaphore,
-  ) {
-    self.commands.clear();
-    self.commands.extend(commands);
+  ) -> &Semaphore {
+    let frame = self.frames.next();
+
+    frame.commands.clear();
+    frame.commands.extend(commands);
 
     let mut queue = self.device.queues.graphics().raw_mut();
 
     unsafe {
       queue.submit_raw(
         gfx_hal::queue::RawSubmission {
-          cmd_buffers: self.commands.iter().map(CommandBuffer::raw),
+          cmd_buffers: frame.commands.iter().map(CommandBuffer::raw),
           wait_semaphores: &[(
             wait_for.raw(),
             gfx_hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
           )],
-          signal_semaphores: &[self.semaphore.raw()],
+          signal_semaphores: &[frame.semaphore.raw()],
         },
-        self.fence.as_ref(),
+        Some(frame.fence.raw()),
       );
     }
-  }
-}
 
-impl Drop for Renderer {
-  fn drop(&mut self) {
-    self.device.raw.destroy_fence(self.fence.take().unwrap());
+    &frame.semaphore
   }
 }

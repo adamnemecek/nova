@@ -11,7 +11,7 @@ pub struct Swapchain {
   images: SmallVec<[backend::Image; 3]>,
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
-  semaphores: SmallVec<[Arc<Semaphore>; 3]>,
+  semaphores: Chain<[Semaphore; 3]>,
   size: Vector2<u32>,
 }
 
@@ -61,7 +61,7 @@ impl Swapchain {
       images: SmallVec::new(),
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
-      semaphores: SmallVec::new(),
+      semaphores: Chain::new(3, || Semaphore::new(device)),
       size: Vector2::new(extent.width, extent.height),
     };
 
@@ -99,8 +99,6 @@ impl Swapchain {
             width,
             height,
           }));
-
-          swapchain.semaphores.push(Arc::new(semaphore));
         }
       }
 
@@ -120,19 +118,20 @@ impl Swapchain {
 
   pub fn acquire_framebuffer(
     &mut self,
-  ) -> Result<(Arc<Framebuffer>, Arc<Semaphore>), AcquireFramebufferError> {
-    let semaphore = self.semaphores.pop().unwrap();
+  ) -> Result<(Arc<Framebuffer>, &Semaphore), AcquireFramebufferError> {
+    let semaphore = self.semaphores.next();
 
-    self.semaphores.insert(0, semaphore.clone());
-
-    self
-      .raw_mut()
+    let index = self
+      .raw
+      .as_mut()
+      .unwrap()
       .acquire_image(!0, gfx_hal::FrameSync::Semaphore(semaphore.raw()))
-      .map(|index| (self.framebuffers[index as usize].clone(), semaphore))
       .map_err(|err| match err {
         gfx_hal::AcquireError::OutOfDate => AcquireFramebufferError::SwapchainOutOfDate,
         _ => panic!("could not acquire framebuffer"),
-      })
+      })?;
+
+    Ok((self.framebuffers[index as usize].clone(), semaphore))
   }
 
   pub fn present(&mut self, fb_index: u32, wait_for: &backend::Semaphore) -> Result<(), ()> {

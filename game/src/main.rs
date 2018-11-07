@@ -78,15 +78,9 @@ pub fn main() {
 
   let mut swapchain = None;
 
-  let mut renderers = [
-    rendering::Renderer::new(&gfx_device),
-    rendering::Renderer::new(&gfx_device),
-    rendering::Renderer::new(&gfx_device),
-  ];
+  let mut renderer = rendering::Renderer::new(&gfx_device);
 
-  for index in (0..3).cycle() {
-    let renderer = &mut renderers[index];
-
+  loop {
     window.poll_events();
 
     if window.is_closing() {
@@ -97,9 +91,7 @@ pub fn main() {
       swapchain = None;
     }
 
-    renderer.wait_ready();
-
-    let (framebuffer, fb_semaphore) = loop {
+    let (framebuffer, framebuffer_semaphore) = loop {
       if swapchain.is_none() {
         let sc = rendering::Swapchain::new(&render_pass, window.size().map(|d| d.round() as u32));
         let size = sc.size();
@@ -146,12 +138,12 @@ pub fn main() {
 
     primary.finish();
 
-    renderer.render(iter::once(primary), &fb_semaphore);
+    let render_semaphore = renderer.render(iter::once(primary), &framebuffer_semaphore);
 
     let result = swapchain
       .as_mut()
       .unwrap()
-      .present(framebuffer.index(), renderer.semaphore().raw());
+      .present(framebuffer.index(), render_semaphore.raw());
 
     if let Err(_) = result {
       swapchain = None;
