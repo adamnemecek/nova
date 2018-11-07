@@ -83,9 +83,14 @@ impl CommandBuffer {
     self.passes.push(pass.clone());
   }
 
-  pub fn execute_commands(&mut self, buffer: CommandBuffer) {
-    self.raw_mut().execute_commands(iter::once(buffer.raw()));
-    self.secondaries.push(buffer);
+  pub fn execute_commands(&mut self, buffers: impl IntoIterator<Item = CommandBuffer>) {
+    let start = self.secondaries.len();
+
+    self.secondaries.extend(buffers);
+
+    let cmd = &mut self.raw.as_mut().unwrap()[0];
+
+    cmd.execute_commands(self.secondaries[start..].iter().map(CommandBuffer::raw));
   }
 
   pub fn bind_pipeline(&mut self, pipeline: &Arc<Pipeline>) {

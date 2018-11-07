@@ -127,18 +127,7 @@ pub fn main() {
 
     cmd.finish();
 
-    let mut primary =
-      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
-
-    primary.begin();
-
-    primary.begin_pass(&render_pass, &framebuffer);
-
-    primary.execute_commands(cmd);
-
-    primary.finish();
-
-    let render_semaphore = renderer.render(iter::once(primary), &framebuffer_semaphore);
+    let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
 
     let result = swapchain
       .as_mut()
