@@ -34,7 +34,7 @@ impl CommandBuffer {
     self.raw_mut().begin(Default::default(), Default::default());
   }
 
-  pub fn begin_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Arc<Framebuffer>) {
+  pub fn begin_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
     let cmd = self.raw_mut();
 
     let viewport = gfx_hal::pso::Viewport {

@@ -2,6 +2,7 @@ use super::*;
 use crate::math::algebra::Vector2;
 use smallvec::SmallVec;
 use std::cmp;
+use std::iter;
 use std::sync::Arc;
 
 pub struct Swapchain {
@@ -10,6 +11,7 @@ pub struct Swapchain {
   images: SmallVec<[backend::Image; 3]>,
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
+  semaphores: SmallVec<[Arc<Semaphore>; 3]>,
   size: Vector2<u32>,
 }
 
@@ -59,15 +61,15 @@ impl Swapchain {
       images: SmallVec::new(),
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
+      semaphores: SmallVec::new(),
       size: Vector2::new(extent.width, extent.height),
     };
-
-    let device = &device.raw;
 
     match backbuffer {
       gfx_hal::Backbuffer::Images(images) => {
         for image in images {
           let view = device
+            .raw
             .create_image_view(
               &image,
               gfx_hal::image::ViewKind::D2,
@@ -82,8 +84,11 @@ impl Swapchain {
             .expect("could not create image view");
 
           let framebuffer = device
+            .raw
             .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
             .expect("could not create framebuffer");
+
+          let semaphore = Semaphore::new(device);
 
           swapchain.images.push(image);
           swapchain.image_views.push(view);
@@ -94,6 +99,8 @@ impl Swapchain {
             width,
             height,
           }));
+
+          swapchain.semaphores.push(Arc::new(semaphore));
         }
       }
 
@@ -113,13 +120,26 @@ impl Swapchain {
 
   pub fn acquire_framebuffer(
     &mut self,
-    signal: &backend::Semaphore,
-  ) -> Result<Arc<Framebuffer>, gfx_hal::AcquireError> {
-    let index = self
-      .raw_mut()
-      .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal))?;
+  ) -> Result<(Arc<Framebuffer>, Arc<Semaphore>), AcquireFramebufferError> {
+    let semaphore = self.semaphores.pop().unwrap();
 
-    Ok(self.framebuffers[index as usize].clone())
+    self.semaphores.insert(0, semaphore.clone());
+
+    self
+      .raw_mut()
+      .acquire_image(!0, gfx_hal::FrameSync::Semaphore(semaphore.raw()))
+      .map(|index| (self.framebuffers[index as usize].clone(), semaphore))
+      .map_err(|err| match err {
+        gfx_hal::AcquireError::OutOfDate => AcquireFramebufferError::SwapchainOutOfDate,
+        _ => panic!("could not acquire framebuffer"),
+      })
+  }
+
+  pub fn present(&mut self, fb_index: u32, wait_for: &backend::Semaphore) -> Result<(), ()> {
+    self.device.queues.graphics().raw_mut().present(
+      iter::once((self.raw.as_mut().unwrap(), fb_index)),
+      iter::once(wait_for),
+    )
   }
 }
 
@@ -146,8 +166,8 @@ impl Drop for Swapchain {
 }
 
 pub struct Framebuffer {
-  index: u32,
   raw: backend::Framebuffer,
+  index: u32,
   width: i16,
   height: i16,
 }
@@ -177,5 +197,14 @@ fn select_present_mode(modes: Vec<gfx_hal::window::PresentMode>) -> gfx_hal::win
     gfx_hal::window::PresentMode::Immediate
   } else {
     gfx_hal::window::PresentMode::Fifo
+  }
+}
+
+quick_error! {
+  #[derive(Debug)]
+  pub enum AcquireFramebufferError {
+    SwapchainOutOfDate {
+      display("The given swapchain is out of date and must be recreated.")
+    }
   }
 }

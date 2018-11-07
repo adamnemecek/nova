@@ -7,6 +7,7 @@ mod prelude;
 mod renderer;
 mod shader;
 mod swapchain;
+mod sync;
 mod texture;
 mod vertices;
 
@@ -18,6 +19,7 @@ pub use self::pipeline::*;
 pub use self::renderer::*;
 pub use self::shader::*;
 pub use self::swapchain::*;
+pub use self::sync::*;
 pub use self::texture::*;
 pub use self::vertices::*;
 

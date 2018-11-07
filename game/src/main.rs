@@ -40,8 +40,6 @@ pub fn main() {
 
   log.trace("Created pipeline.");
 
-  let mut renderer = rendering::Renderer::new(&gfx_device);
-
   let command_pool = rendering::CommandPool::new(&gfx_device, gfx_device.queues().graphics());
 
   log.trace("Created renderer arnd command pool.");
@@ -80,7 +78,15 @@ pub fn main() {
 
   let mut swapchain = None;
 
-  loop {
+  let mut renderers = [
+    rendering::Renderer::new(&gfx_device),
+    rendering::Renderer::new(&gfx_device),
+    rendering::Renderer::new(&gfx_device),
+  ];
+
+  for index in (0..3).cycle() {
+    let renderer = &mut renderers[index];
+
     window.poll_events();
 
     if window.is_closing() {
@@ -91,56 +97,64 @@ pub fn main() {
       swapchain = None;
     }
 
-    if swapchain.is_none() {
-      let sc = rendering::Swapchain::new(&render_pass, window.size().map(|d| d.round() as u32));
-      let size = sc.size();
+    renderer.wait_ready();
 
-      log
-        .info("Created swapchain.")
-        .with("width", &size.x)
-        .with("height", &size.y);
+    let (framebuffer, fb_semaphore) = loop {
+      if swapchain.is_none() {
+        let sc = rendering::Swapchain::new(&render_pass, window.size().map(|d| d.round() as u32));
+        let size = sc.size();
 
-      swapchain = Some(sc);
-    }
+        log
+          .info("Created swapchain.")
+          .with("width", &size.x)
+          .with("height", &size.y);
 
-    let result = renderer.render(swapchain.as_mut().unwrap(), |framebuffer| {
-      let mut cmd =
-        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
-
-      cmd.begin_in_pass(&render_pass, &framebuffer);
-
-      cmd.bind_pipeline(&pipeline);
-
-      cmd.push_constant(0, &graphics::Color([1.0, 1.0, 1.0, 1.0]));
-      cmd.push_constant(1, &Matrix4::<f32>::identity());
-
-      cmd.bind_descriptor_set(0, &descriptor_set);
-      cmd.bind_vertex_buffer(0, quad.vertex_buffer());
-      cmd.bind_index_buffer(quad.index_buffer());
-      cmd.draw_indexed(quad.indices());
-
-      cmd.finish();
-
-      let mut primary =
-        rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
-
-      primary.begin();
-
-      primary.begin_pass(&render_pass, &framebuffer);
-
-      primary.execute_commands(cmd);
-
-      primary.finish();
-
-      iter::once(primary)
-    });
-
-    match result {
-      Ok(_) => {}
-
-      Err(rendering::RenderError::SwapchainOutOfDate) => {
-        swapchain = None;
+        swapchain = Some(sc);
       }
+
+      match swapchain.as_mut().unwrap().acquire_framebuffer() {
+        Ok(fb) => break fb,
+        Err(_) => swapchain = None,
+      };
+    };
+
+    let mut cmd =
+      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
+
+    cmd.begin_in_pass(&render_pass, &framebuffer);
+
+    cmd.bind_pipeline(&pipeline);
+
+    cmd.push_constant(0, &graphics::Color([1.0, 1.0, 1.0, 1.0]));
+    cmd.push_constant(1, &Matrix4::<f32>::identity());
+
+    cmd.bind_descriptor_set(0, &descriptor_set);
+    cmd.bind_vertex_buffer(0, quad.vertex_buffer());
+    cmd.bind_index_buffer(quad.index_buffer());
+    cmd.draw_indexed(quad.indices());
+
+    cmd.finish();
+
+    let mut primary =
+      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
+
+    primary.begin();
+
+    primary.begin_pass(&render_pass, &framebuffer);
+
+    primary.execute_commands(cmd);
+
+    primary.finish();
+
+    renderer.render(iter::once(primary), &fb_semaphore);
+
+    let result = swapchain
+      .as_mut()
+      .unwrap()
+      .present(framebuffer.index(), renderer.semaphore().raw());
+
+    if let Err(_) = result {
+      swapchain = None;
     }
   }
 }
