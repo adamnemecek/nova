@@ -61,7 +61,7 @@ impl Swapchain {
       images: SmallVec::new(),
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
-      semaphores: Chain::new(3, || Semaphore::new(device)),
+      semaphores: Chain::allocate(|| Semaphore::new(device)),
       size: Vector2::new(extent.width, extent.height),
     };
 

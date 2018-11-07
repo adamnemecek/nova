@@ -19,7 +19,7 @@ impl Renderer {
   pub fn new(device: &Arc<Device>) -> Self {
     Renderer {
       device: device.clone(),
-      frames: Chain::new(FRAME_COUNT, || Frame {
+      frames: Chain::allocate(|| Frame {
         fence: Fence::new(device),
         semaphore: Semaphore::new(device),
         commands: SmallVec::new(),

@@ -62,9 +62,9 @@ pub(super) struct Chain<A: Array> {
 }
 
 impl<A: Array> Chain<A> {
-  pub fn new(size: usize, create: impl FnMut() -> A::Item) -> Self {
+  pub fn allocate(create: impl FnMut() -> A::Item) -> Self {
     Chain {
-      items: iter::repeat_with(create).take(size).collect(),
+      items: iter::repeat_with(create).take(A::size()).collect(),
       index: 0,
     }
   }
