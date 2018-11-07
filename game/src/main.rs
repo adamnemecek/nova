@@ -21,16 +21,16 @@ pub fn main() {
 
   log.trace("Created graphics device.");
 
-  let render_pass = rendering::RenderPass::new(&gfx_device);
-
   let shaders = rendering::PipelineShaderSet::load_defaults(&gfx_device);
+
+  let mut renderer = rendering::Renderer::new(&gfx_device);
 
   let descriptor_set_layout = rendering::DescriptorSetLayout::new()
     .texture()
     .create(&gfx_device);
 
   let pipeline = rendering::Pipeline::new()
-    .render_pass(&render_pass)
+    .render_pass(renderer.pass())
     .shaders(shaders)
     .vertex_buffer::<graphics::Vertex>()
     .push_constant::<graphics::Color>()
@@ -78,8 +78,6 @@ pub fn main() {
 
   let mut swapchain = None;
 
-  let mut renderer = rendering::Renderer::new(&gfx_device);
-
   loop {
     window.poll_events();
 
@@ -93,7 +91,8 @@ pub fn main() {
 
     let (framebuffer, framebuffer_semaphore) = loop {
       if swapchain.is_none() {
-        let sc = rendering::Swapchain::new(&render_pass, window.size().map(|d| d.round() as u32));
+        let sc =
+          rendering::Swapchain::new(renderer.pass(), window.size().map(|d| d.round() as u32));
         let size = sc.size();
 
         log
@@ -113,7 +112,7 @@ pub fn main() {
     let mut cmd =
       rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
 
-    cmd.begin_in_pass(&render_pass, &framebuffer);
+    cmd.begin_in_pass(renderer.pass(), &framebuffer);
 
     cmd.bind_pipeline(&pipeline);
 
