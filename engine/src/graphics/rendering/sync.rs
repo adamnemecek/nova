@@ -75,6 +75,6 @@ impl<A: Array> Chain<A> {
     self.index += 1;
     self.index %= self.items.len();
 
-    &mut self.items[self.index]
+    &mut self.items[index]
   }
 }

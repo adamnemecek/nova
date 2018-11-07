@@ -88,8 +88,6 @@ impl Swapchain {
             .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
             .expect("could not create framebuffer");
 
-          let semaphore = Semaphore::new(device);
-
           swapchain.images.push(image);
           swapchain.image_views.push(view);
 

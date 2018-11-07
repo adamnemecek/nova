@@ -1,6 +1,5 @@
 use super::*;
 use smallvec::SmallVec;
-use std::iter;
 use std::sync::Arc;
 
 pub const FRAME_COUNT: usize = 3;
