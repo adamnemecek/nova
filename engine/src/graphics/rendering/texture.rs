@@ -1,6 +1,8 @@
 pub use gfx_hal::format::Format as ImageFormat;
 
-use super::*;
+use super::{CommandBuffer, CommandBufferKind, CommandPool};
+use crate::graphics::device::{self, Device};
+use crate::graphics::hal::*;
 use std::iter;
 use std::sync::Arc;
 
@@ -18,8 +20,10 @@ impl Texture {
 impl Drop for Texture {
   fn drop(&mut self) {
     if let Some((view, image)) = self.raw.take() {
-      self.device.raw.destroy_image_view(view);
-      self.device.raw.destroy_image(image);
+      let device = self.device.raw();
+
+      device.destroy_image_view(view);
+      device.destroy_image(image);
     }
   }
 }
@@ -32,7 +36,7 @@ pub struct TextureSampler {
 impl TextureSampler {
   pub fn new(device: &Arc<Device>) -> Self {
     let sampler = device
-      .raw
+      .raw()
       .create_sampler(gfx_hal::image::SamplerInfo::new(
         gfx_hal::image::Filter::Linear,
         gfx_hal::image::WrapMode::Tile,
@@ -53,36 +57,36 @@ impl TextureSampler {
 impl Drop for TextureSampler {
   fn drop(&mut self) {
     if let Some(sampler) = self.raw.take() {
-      self.device.raw.destroy_sampler(sampler);
+      self.device.raw().destroy_sampler(sampler);
     }
   }
 }
 
 pub struct TextureLoader {
-  device: Arc<Device>,
   command_pool: Arc<CommandPool>,
 }
 
 impl TextureLoader {
-  pub fn new(device: &Arc<Device>) -> TextureLoader {
+  pub fn new(queue: &Arc<device::Queue>) -> TextureLoader {
     TextureLoader {
-      device: device.clone(),
-      command_pool: CommandPool::new(device, device.queues.transfer()),
+      command_pool: CommandPool::new(queue),
     }
   }
 
   pub fn load(&mut self, source: &image::RgbaImage) -> Texture {
-    let device = &self.device;
+    let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
+    let device = self.command_pool.queue().device();
+
     let (width, height) = source.dimensions();
 
-    let mut buffer = Buffer::new(device, source.len(), BufferUsage::TRANSFER_SRC);
+    let mut buffer = device::Buffer::new(device, source.len(), device::BufferUsage::TRANSFER_SRC);
 
     buffer.write(&source);
 
     let kind = gfx_hal::image::Kind::D2(width, height, 1, 1);
 
     let unbound = device
-      .raw
+      .raw()
       .create_image(
         kind,
         1,
@@ -93,10 +97,10 @@ impl TextureLoader {
       )
       .expect("could not create image");
 
-    let requirements = device.raw.get_image_requirements(&unbound);
+    let requirements = device.raw().get_image_requirements(&unbound);
 
     let upload_type = device
-      .memory_properties
+      .memory_properties()
       .memory_types
       .iter()
       .enumerate()
@@ -112,16 +116,14 @@ impl TextureLoader {
       .expect("could not find approprate vertex buffer memory type");
 
     let memory = device
-      .raw
+      .raw()
       .allocate_memory(upload_type, requirements.size)
       .unwrap();
 
     let image = device
-      .raw
+      .raw()
       .bind_image_memory(&memory, 0, unbound)
       .expect("could not bind image memory");
-
-    let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
 
     cmd.begin();
 
@@ -197,7 +199,7 @@ impl TextureLoader {
 
     cmd.finish();
 
-    let mut queue = device.queues.transfer().raw_mut();
+    let mut queue = self.command_pool.queue().raw_mut();
 
     unsafe {
       queue.submit_raw(
@@ -215,7 +217,7 @@ impl TextureLoader {
     drop(cmd);
 
     let view = device
-      .raw
+      .raw()
       .create_image_view(
         &image,
         gfx_hal::image::ViewKind::D2,

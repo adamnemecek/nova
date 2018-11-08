@@ -1,6 +1,8 @@
 use super::*;
+use crate::graphics::device::{Fence, Semaphore};
+use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
 use crate::graphics::window::Framebuffer;
-use smallvec::SmallVec;
+use crate::utils::{Chain, SmallVec};
 use std::sync::Arc;
 
 pub const FRAME_COUNT: usize = 3;
@@ -19,11 +21,11 @@ struct Frame {
 }
 
 impl Renderer {
-  pub fn new(device: &Arc<Device>) -> Self {
+  pub fn new(device: &Arc<Device>, queue: &Arc<device::Queue>) -> Self {
     Renderer {
       device: device.clone(),
       pass: RenderPass::new(device),
-      command_pool: CommandPool::new(device, device.queues.graphics()),
+      command_pool: CommandPool::new(&queue),
       frames: Chain::allocate(|| Frame {
         fence: Fence::new(device),
         semaphore: Semaphore::new(device),
@@ -56,10 +58,8 @@ impl Renderer {
     frame.commands.clear();
     frame.commands.push(primary);
 
-    let mut queue = self.device.queues.graphics().raw_mut();
-
     unsafe {
-      queue.submit_raw(
+      self.command_pool.queue().raw_mut().submit_raw(
         gfx_hal::queue::RawSubmission {
           cmd_buffers: frame.commands.iter().map(CommandBuffer::raw),
           wait_semaphores: &[(

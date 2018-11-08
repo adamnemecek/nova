@@ -1,4 +1,5 @@
 use nova::graphics;
+use nova::graphics::pipeline;
 use nova::graphics::rendering;
 use nova::graphics::window;
 use nova::graphics::{Mesh, Vertex};
@@ -7,7 +8,7 @@ use nova::utils::Nullable;
 use std::iter;
 
 /// Main entry point of the program.
-pub fn main() {
+pub fn main() -> Result<(), String> {
   let sink = bflog::LogSink::new(
     std::io::stdout(),
     bflog::Format::Modern,
@@ -15,20 +16,20 @@ pub fn main() {
   );
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
+  let mut gfx = graphics::Context::new("nova-game", 1)
+    .map_err(|err| format!("Could not create graphics context: {}", err))?;
 
-  let (gfx_device, mut window) = rendering::init().expect("could not create rendering device");
+  log.trace("Created graphics context.");
 
-  log.trace("Created graphics device.");
+  let shaders = pipeline::PipelineShaderSet::load_defaults(&gfx.device);
 
-  let shaders = rendering::PipelineShaderSet::load_defaults(&gfx_device);
+  let mut renderer = rendering::Renderer::new(&gfx.device, &gfx.queues.graphics);
 
-  let mut renderer = rendering::Renderer::new(&gfx_device);
-
-  let descriptor_set_layout = rendering::DescriptorSetLayout::new()
+  let descriptor_set_layout = pipeline::DescriptorSetLayout::new()
     .texture()
-    .create(&gfx_device);
+    .create(&gfx.device);
 
-  let pipeline = rendering::Pipeline::new()
+  let pipeline = pipeline::Pipeline::new()
     .render_pass(renderer.pass())
     .shaders(shaders)
     .vertex_buffer::<graphics::Vertex>()
@@ -39,12 +40,12 @@ pub fn main() {
 
   log.trace("Created pipeline.");
 
-  let command_pool = rendering::CommandPool::new(&gfx_device, gfx_device.queues().graphics());
+  let command_pool = rendering::CommandPool::new(&gfx.queues.graphics);
 
   log.trace("Created renderer arnd command pool.");
 
   let quad = Mesh::new(
-    &gfx_device,
+    &gfx.device,
     &[
       Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 0.0]),
       Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 0.0]),
@@ -54,7 +55,7 @@ pub fn main() {
     &[0, 1, 2, 2, 3, 0],
   );
 
-  let mut texture_loader = rendering::TextureLoader::new(&gfx_device);
+  let mut texture_loader = rendering::TextureLoader::new(&gfx.queues.transfer);
 
   let texture = texture_loader.load(
     &image::load_from_memory(include_bytes!("../assets/do-it.jpg"))
@@ -62,15 +63,15 @@ pub fn main() {
       .to_rgba(),
   );
 
-  let sampler = rendering::TextureSampler::new(&gfx_device);
+  let sampler = rendering::TextureSampler::new(&gfx.device);
 
   log.trace("Created mesh and texture/sampler pair.");
 
-  let descriptor_pool = rendering::DescriptorPool::new(&descriptor_set_layout, 1);
+  let descriptor_pool = pipeline::DescriptorPool::new(&descriptor_set_layout, 1);
 
-  let descriptor_set = rendering::DescriptorSet::new(
+  let descriptor_set = pipeline::DescriptorSet::new(
     &descriptor_pool,
-    &[rendering::Descriptor::SampledTexture(&texture, &sampler)],
+    &[pipeline::Descriptor::SampledTexture(&texture, &sampler)],
   );
 
   log.trace("Created descriptor set.");
@@ -78,21 +79,22 @@ pub fn main() {
   let mut swapchain = Nullable::<window::Swapchain>::new();
 
   loop {
-    window.update();
+    gfx.window.update();
 
-    if window.is_closed() {
+    if gfx.window.is_closed() {
       break;
     }
 
-    if !swapchain.is_null() && swapchain.size() != window.size() {
+    if !swapchain.is_null() && swapchain.size() != gfx.window.size() {
       swapchain.drop();
     }
 
     let (framebuffer, framebuffer_semaphore) = loop {
       if swapchain.is_null() {
-        let size = window.size();
+        let size = gfx.window.size();
 
-        swapchain = window::Swapchain::new(renderer.pass(), window.raw_surface_mut(), size).into();
+        swapchain =
+          window::Swapchain::new(renderer.pass(), gfx.window.raw_surface_mut(), size).into();
 
         let actual_size = swapchain.size();
 
@@ -127,111 +129,16 @@ pub fn main() {
 
     let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
 
-    let result = swapchain.present(framebuffer.index(), render_semaphore.raw());
+    let result = swapchain.present(
+      &gfx.queues.graphics,
+      framebuffer.index(),
+      render_semaphore.raw(),
+    );
 
     if let Err(_) = result {
       swapchain.drop();
     }
   }
+
+  Ok(())
 }
-
-/*
-fn init(ctx: &mut engine::Context) {
-  let parent = panels::create_panel(ctx);
-
-  engine::edit_component(ctx, parent, |style: &mut panels::Style| {
-    style.background = panels::Background::Solid;
-    style.color = graphics::Color([0.8, 0.6, 0.6, 1.0]);
-  });
-
-  panels::add_to_root(ctx, parent);
-
-  let child = panels::create_panel(ctx);
-
-  engine::edit_component(ctx, child, |style: &mut panels::Style| {
-    style.background = panels::Background::Solid;
-    style.color = graphics::Color([0.6, 0.6, 0.8, 1.0]);
-  });
-
-  engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
-    layout.width = panels::Dimension::Fixed(500.0);
-    layout.height = panels::Dimension::Fixed(500.0);
-    layout.right = panels::Dimension::Fixed(100.0);
-    layout.bottom = panels::Dimension::Fixed(100.0);
-  });
-
-  panels::set_parent(ctx, child, Some(parent));
-}
-
-*/
-/*
-fn init(ctx: &mut engine::Context) {
-  // Load actor templates.
-  let hero_template =
-    assets::load(ctx, &assets::PathBuf::from("hero-f/actor.yml")).expect("could not load hero");
-
-  let monster_template = assets::load(ctx, &assets::PathBuf::from("004-fire-salamander/actor.yml"))
-    .expect("could not load monster");
-
-  // Create actor entities.
-  let hero = stage::actors::build_entity(
-    Arc::new(hero_template),
-    stage::graphics::actors::build_entity(engine::build_entity(ctx)),
-  ).build();
-
-  let _monster = stage::actors::build_entity(
-    Arc::new(monster_template),
-    stage::graphics::actors::build_entity(engine::build_entity(ctx)),
-  ).with(stage::Position {
-    point: Point3::new(32.0, 24.0, 0.0),
-  }).build();
-
-  // Set the camera target to the hero.
-  stage::graphics::set_camera_target(ctx, hero);
-
-  // Set the hero to be input controlled.
-  stage::actors::driving::drive(ctx, hero);
-
-  // Load custom input mapping.
-  if let Ok(mapping) = assets::load(ctx, &assets::PathBuf::from("input-mapping.yml")) {
-    input::set_mapping(ctx, mapping);
-  }
-
-  {
-    let image = Arc::new(
-      assets::load::<graphics::Image>(ctx, &assets::PathBuf::from("solid-white.png"))
-        .expect("could not load image"),
-    );
-
-    let parent = panels::create_panel(ctx);
-
-    engine::edit_component(ctx, parent, |style: &mut panels::Style| {
-      style.background = Some(image.clone());
-      style.color = graphics::Color::new(0.8, 0.2, 0.2, 1.0);
-    });
-
-    panels::add_to_root(ctx, parent);
-
-    let child = panels::create_panel(ctx);
-
-    engine::edit_component(ctx, child, |style: &mut panels::Style| {
-      style.background = Some(image.clone());
-      style.color = graphics::Color::new(0.2, 0.2, 0.8, 1.0);
-
-      style.set_custom_draw(
-        move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &Rect<f32>| {
-          canvas.draw(&image, graphics::DrawParams::default());
-        },
-      );
-    });
-
-    engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
-      layout.width = panels::Dimension::Fixed(100.0);
-      layout.left = panels::Dimension::Auto;
-      layout.right = panels::Dimension::Fixed(0.0);
-    });
-
-    panels::set_parent(ctx, child, Some(parent));
-  }
-}
-*/

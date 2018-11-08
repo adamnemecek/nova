@@ -1,6 +1,7 @@
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
-use super::*;
+use crate::graphics::hal::*;
+use crate::graphics::Device;
 use std::sync::Arc;
 
 pub struct Shader {
@@ -20,7 +21,7 @@ impl Shader {
       .expect("could not read compiled shader");
 
     let module = device
-      .raw
+      .raw()
       .create_shader_module(&spirv)
       .expect("could not create shader module");
 
@@ -38,7 +39,7 @@ impl Shader {
 impl Drop for Shader {
   fn drop(&mut self) {
     if let Some(module) = self.raw.take() {
-      self.device.raw.destroy_shader_module(module);
+      self.device.raw().destroy_shader_module(module);
     }
   }
 }

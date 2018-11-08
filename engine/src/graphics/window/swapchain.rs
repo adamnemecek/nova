@@ -1,8 +1,8 @@
-use crate::graphics::backend;
+use crate::graphics::device::{self, Device, Semaphore};
 use crate::graphics::hal::*;
-use crate::graphics::rendering::{Chain, Device, RenderPass, Semaphore};
+use crate::graphics::rendering::RenderPass;
 use crate::math::algebra::Vector2;
-use crate::utils::{quick_error, Nullable};
+use crate::utils::{quick_error, Chain, Nullable};
 use smallvec::SmallVec;
 use std::cmp;
 use std::iter;
@@ -21,7 +21,7 @@ pub struct Swapchain {
 impl Swapchain {
   pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Vector2<f32>) -> Self {
     let device = render_pass.device();
-    let (caps, _, modes) = surface.compatibility(&device.raw_adapter().physical_device);
+    let (caps, _, modes) = surface.compatibility(&device.adapter().physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
@@ -52,7 +52,7 @@ impl Swapchain {
     };
 
     let (raw, backbuffer) = device
-      .raw
+      .raw()
       .create_swapchain(surface, config, None)
       .expect("could not create swapchain");
 
@@ -73,7 +73,7 @@ impl Swapchain {
       gfx_hal::Backbuffer::Images(images) => {
         for image in images {
           let view = device
-            .raw
+            .raw()
             .create_image_view(
               &image,
               gfx_hal::image::ViewKind::D2,
@@ -88,7 +88,7 @@ impl Swapchain {
             .expect("could not create image view");
 
           let framebuffer = device
-            .raw
+            .raw()
             .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
             .expect("could not create framebuffer");
 
@@ -134,8 +134,13 @@ impl Swapchain {
     Ok((self.framebuffers[index as usize].clone(), semaphore))
   }
 
-  pub fn present(&mut self, fb_index: u32, wait_for: &backend::Semaphore) -> Result<(), ()> {
-    self.device.queues().graphics().raw_mut().present(
+  pub fn present(
+    &mut self,
+    queue: &device::Queue,
+    fb_index: u32,
+    wait_for: &backend::Semaphore,
+  ) -> Result<(), ()> {
+    queue.raw_mut().present(
       iter::once((self.raw.as_ref(), fb_index)),
       iter::once(wait_for),
     )
@@ -144,7 +149,7 @@ impl Swapchain {
 
 impl Drop for Swapchain {
   fn drop(&mut self) {
-    let device = &self.device.raw;
+    let device = self.device.raw();
 
     for framebuffer in self.framebuffers.drain() {
       if let Ok(framebuffer) = Arc::try_unwrap(framebuffer) {

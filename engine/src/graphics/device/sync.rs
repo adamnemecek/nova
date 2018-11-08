@@ -1,7 +1,8 @@
-use super::backend;
-use super::*;
+use super::Device;
+use crate::graphics::hal::*;
 use smallvec::{Array, SmallVec};
 use std::iter;
+use std::sync::Arc;
 
 pub struct Semaphore {
   device: Arc<Device>,
@@ -11,7 +12,7 @@ pub struct Semaphore {
 impl Semaphore {
   pub fn new(device: &Arc<Device>) -> Self {
     let semaphore = device
-      .raw
+      .raw()
       .create_semaphore()
       .expect("could not create semaphore");
 
@@ -28,7 +29,10 @@ impl Semaphore {
 
 impl Drop for Semaphore {
   fn drop(&mut self) {
-    self.device.raw.destroy_semaphore(self.raw.take().unwrap());
+    self
+      .device
+      .raw()
+      .destroy_semaphore(self.raw.take().unwrap());
   }
 }
 
@@ -40,7 +44,7 @@ pub struct Fence {
 impl Fence {
   pub fn new(device: &Arc<Device>) -> Self {
     let fence = device
-      .raw
+      .raw()
       .create_fence(true)
       .expect("could not create fence");
 
@@ -57,7 +61,7 @@ impl Fence {
   pub fn wait(&self) {
     self
       .device
-      .raw
+      .raw()
       .wait_for_fence(self.raw(), !0)
       .expect("could not wait for fence");
   }
@@ -65,7 +69,7 @@ impl Fence {
 
 impl Drop for Fence {
   fn drop(&mut self) {
-    self.device.raw.destroy_fence(self.raw.take().unwrap());
+    self.device.raw().destroy_fence(self.raw.take().unwrap());
   }
 }
 

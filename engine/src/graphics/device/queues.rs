@@ -1,0 +1,102 @@
+pub use gfx_hal::queue::QueueFamilyId;
+
+use super::Device;
+use crate::graphics::hal::*;
+use std::sync::{Arc, Mutex, MutexGuard};
+
+pub struct Queue {
+  family: backend::QueueFamily,
+  raw: Mutex<backend::CommandQueue>,
+  device: Arc<Device>,
+}
+
+impl Queue {
+  pub fn new(
+    device: &Arc<Device>,
+    queues: &mut backend::Queues,
+    family: backend::QueueFamily,
+  ) -> Self {
+    let queue = queues
+      .take_raw(family.id())
+      .expect("queue family not found")
+      .into_iter()
+      .next()
+      .expect("queue not found");
+
+    Queue {
+      family,
+      raw: Mutex::new(queue),
+      device: device.clone(),
+    }
+  }
+
+  pub fn device(&self) -> &Arc<Device> {
+    &self.device
+  }
+
+  pub fn family_id(&self) -> QueueFamilyId {
+    self.family.id()
+  }
+
+  pub fn raw_mut(&self) -> MutexGuard<backend::CommandQueue> {
+    self.raw.lock().unwrap()
+  }
+}
+
+pub trait QueueSet {
+  fn select_families(
+    adapter: &backend::Adapter,
+    surface: &backend::Surface,
+  ) -> Vec<backend::QueueFamily>;
+
+  fn from_raw(
+    device: &Arc<Device>,
+    queues: &mut backend::Queues,
+    families: Vec<backend::QueueFamily>,
+  ) -> Self;
+}
+
+pub struct DefaultQueueSet {
+  pub graphics: Arc<Queue>,
+  pub transfer: Arc<Queue>,
+}
+
+impl QueueSet for DefaultQueueSet {
+  fn select_families(
+    adapter: &backend::Adapter,
+    surface: &backend::Surface,
+  ) -> Vec<backend::QueueFamily> {
+    let graphics = adapter
+      .queue_families
+      .iter()
+      .filter(|family| family.supports_graphics())
+      .filter(|family| surface.supports_queue_family(family))
+      .next()
+      .expect("no graphics queue family")
+      .clone();
+
+    let transfer = adapter
+      .queue_families
+      .iter()
+      .filter(|family| !family.supports_graphics())
+      .next()
+      .expect("no transfer queue family")
+      .clone();
+
+    vec![graphics, transfer]
+  }
+
+  fn from_raw(
+    device: &Arc<Device>,
+    queues: &mut backend::Queues,
+    mut families: Vec<backend::QueueFamily>,
+  ) -> Self {
+    let transfer = families.pop().unwrap();
+    let graphics = families.pop().unwrap();
+
+    DefaultQueueSet {
+      graphics: Arc::new(Queue::new(device, queues, graphics)),
+      transfer: Arc::new(Queue::new(device, queues, transfer)),
+    }
+  }
+}

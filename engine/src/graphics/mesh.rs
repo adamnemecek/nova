@@ -1,3 +1,4 @@
+use super::device::{self, Device};
 use super::rendering;
 use super::Color;
 use nalgebra::Vector2;
@@ -6,22 +7,21 @@ use std::sync::Arc;
 pub struct Mesh {
   vertices: u32,
   indices: u32,
-  vertex_buffer: rendering::Buffer<Vertex>,
-  index_buffer: rendering::Buffer<u16>,
+  vertex_buffer: device::Buffer<Vertex>,
+  index_buffer: device::Buffer<u16>,
 }
 
 impl Mesh {
-  pub fn new(device: &Arc<rendering::Device>, vertices: &[Vertex], indices: &[u16]) -> Mesh {
+  pub fn new(device: &Arc<Device>, vertices: &[Vertex], indices: &[u16]) -> Mesh {
     assert!(vertices.len() > 0, "mesh has no vertices");
     assert!(indices.len() > 0, "mesh has no indices");
 
     let mut vertex_buffer =
-      rendering::Buffer::new(device, vertices.len(), rendering::BufferUsage::VERTEX);
+      device::Buffer::new(device, vertices.len(), device::BufferUsage::VERTEX);
 
     vertex_buffer.write(&vertices);
 
-    let mut index_buffer =
-      rendering::Buffer::new(device, indices.len(), rendering::BufferUsage::INDEX);
+    let mut index_buffer = device::Buffer::new(device, indices.len(), device::BufferUsage::INDEX);
 
     index_buffer.write(&indices);
 
@@ -41,11 +41,11 @@ impl Mesh {
     self.indices
   }
 
-  pub fn vertex_buffer(&self) -> &rendering::Buffer<Vertex> {
+  pub fn vertex_buffer(&self) -> &device::Buffer<Vertex> {
     &self.vertex_buffer
   }
 
-  pub fn index_buffer(&self) -> &rendering::Buffer<u16> {
+  pub fn index_buffer(&self) -> &device::Buffer<u16> {
     &self.index_buffer
   }
 }

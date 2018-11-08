@@ -1,9 +1,3 @@
-//! The `backend` module exposes the contents of the most appropriate gfx-hal
-//! backend.
-//!
-//! Additionally, it exposes type aliases for the common types found in the
-//! backend like `Surface`.
-
 // Use DirectX 12 on Windows, Metal on MacOS, and Vulkan on Linux.
 #[cfg(windows)]
 pub use gfx_backend_dx12::*;

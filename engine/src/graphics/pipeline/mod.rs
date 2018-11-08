@@ -1,4 +1,10 @@
-use super::*;
+mod shaders;
+
+pub use self::shaders::{Shader, ShaderKind};
+
+use super::hal::*;
+use super::rendering::{RenderPass, Texture, TextureSampler, VertexData};
+use super::Device;
 use std::iter;
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
@@ -31,7 +37,7 @@ impl Pipeline {
 
 impl Drop for Pipeline {
   fn drop(&mut self) {
-    let device = &self.device.raw;
+    let device = self.device.raw();
 
     if let Some(layout) = self.layout.take() {
       device.destroy_pipeline_layout(layout);
@@ -174,7 +180,7 @@ impl PipelineBuilder {
     };
 
     let layout = device
-      .raw
+      .raw()
       .create_pipeline_layout(
         self
           .descriptor_set_layout
@@ -209,7 +215,7 @@ impl PipelineBuilder {
       .extend(self.vertex_attributes.into_iter());
 
     let pipeline = device
-      .raw
+      .raw()
       .create_graphics_pipeline(&pipeline_desc, None)
       .expect("could not create graphics pipeline");
 
@@ -246,7 +252,7 @@ impl DescriptorSetLayout {
 impl Drop for DescriptorSetLayout {
   fn drop(&mut self) {
     if let Some(layout) = self.raw.take() {
-      self.device.raw.destroy_descriptor_set_layout(layout);
+      self.device.raw().destroy_descriptor_set_layout(layout);
     }
   }
 }
@@ -275,7 +281,7 @@ impl DescriptorSetLayoutBuilder {
 
   pub fn create(self, device: &Arc<Device>) -> Arc<DescriptorSetLayout> {
     let layout = device
-      .raw
+      .raw()
       .create_descriptor_set_layout(&self.bindings, &[])
       .expect("could not create descriptor set layout");
 
@@ -298,7 +304,7 @@ impl DescriptorPool {
     let device = layout.device.clone();
 
     let pool = device
-      .raw
+      .raw()
       .create_descriptor_pool(
         capacity,
         layout
@@ -321,7 +327,7 @@ impl DescriptorPool {
 impl Drop for DescriptorPool {
   fn drop(&mut self) {
     if let Some(pool) = self.raw.lock().unwrap().take() {
-      self.device.raw.destroy_descriptor_pool(pool);
+      self.device.raw().destroy_descriptor_pool(pool);
     }
   }
 }
@@ -337,7 +343,7 @@ pub struct DescriptorSet {
 
 impl DescriptorSet {
   pub fn new(pool: &Arc<DescriptorPool>, descriptors: &[Descriptor]) -> DescriptorSet {
-    let device = &pool.device.raw;
+    let device = pool.device.raw();
 
     let mut raw_pool = pool.raw.lock().unwrap();
 

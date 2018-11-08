@@ -3,7 +3,7 @@ mod swapchain;
 pub use self::swapchain::*;
 pub use winit::CreationError;
 
-use super::backend;
+use super::hal::*;
 use crate::math::algebra::Vector2;
 use std::sync::Arc;
 

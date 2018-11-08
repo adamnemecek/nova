@@ -1,26 +1,32 @@
-use super::*;
+use crate::graphics::device::{self, Device};
+use crate::graphics::hal::*;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct CommandPool {
-  device: Arc<Device>,
+  queue: Arc<device::Queue>,
   raw: Option<Mutex<backend::CommandPool>>,
   pub(super) recording: AtomicBool,
 }
 
 impl CommandPool {
-  pub fn new(device: &Arc<Device>, queue: &CommandQueue) -> Arc<CommandPool> {
-    let pool = device
-      .raw
+  pub fn new(queue: &Arc<device::Queue>) -> Arc<CommandPool> {
+    let pool = queue
+      .device()
+      .raw()
       .create_command_pool(queue.family_id(), CommandPoolCreateFlags::TRANSIENT)
       .expect("could not create command pool");
 
     Arc::new(CommandPool {
-      device: device.clone(),
+      queue: queue.clone(),
       raw: Some(Mutex::new(pool)),
       recording: AtomicBool::new(false),
     })
+  }
+
+  pub fn queue(&self) -> &Arc<device::Queue> {
+    &self.queue
   }
 
   pub fn raw_mut(&self) -> MutexGuard<backend::CommandPool> {
@@ -32,8 +38,9 @@ impl Drop for CommandPool {
   fn drop(&mut self) {
     if let Some(pool) = self.raw.take() {
       self
-        .device
-        .raw
+        .queue
+        .device()
+        .raw()
         .destroy_command_pool(pool.into_inner().unwrap());
     }
   }

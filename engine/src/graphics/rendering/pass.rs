@@ -40,7 +40,7 @@ impl RenderPass {
     };
 
     let pass = device
-      .raw
+      .raw()
       .create_render_pass(&[color_attachment], &[subpass], &[dependency])
       .expect("could not create render pass");
 
@@ -67,7 +67,7 @@ impl RenderPass {
 impl Drop for RenderPass {
   fn drop(&mut self) {
     if let Some(pass) = self.raw.take() {
-      self.device.raw.destroy_render_pass(pass);
+      self.device.raw().destroy_render_pass(pass);
     }
   }
 }

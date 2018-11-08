@@ -1,6 +1,7 @@
 pub use gfx_hal::buffer::Usage as BufferUsage;
 
-use super::*;
+use super::Device;
+use crate::graphics::hal::*;
 use std::mem;
 use std::sync::Arc;
 
@@ -17,14 +18,14 @@ impl<T: Copy> Buffer<T> {
     let size = mem::size_of::<T>() as u64 * size as u64;
 
     let unbound = device
-      .raw
+      .raw()
       .create_buffer(size, usage)
       .expect("could not create buffer");
 
-    let requirements = device.raw.get_buffer_requirements(&unbound);
+    let requirements = device.raw().get_buffer_requirements(&unbound);
 
     let upload_type = device
-      .memory_properties
+      .memory_properties()
       .memory_types
       .iter()
       .enumerate()
@@ -40,12 +41,12 @@ impl<T: Copy> Buffer<T> {
       .expect("could not find approprate vertex buffer memory type");
 
     let memory = device
-      .raw
+      .raw()
       .allocate_memory(upload_type, requirements.size)
       .unwrap();
 
     let buffer = device
-      .raw
+      .raw()
       .bind_buffer_memory(&memory, 0, unbound)
       .expect("could not bind buffer memory");
 
@@ -59,7 +60,7 @@ impl<T: Copy> Buffer<T> {
   }
 
   pub fn write(&mut self, values: &[T]) {
-    let device = &self.device.raw;
+    let device = self.device.raw();
     let memory = self.memory.as_ref().expect("memory was destroyed");
 
     let mut dest = device
@@ -78,7 +79,7 @@ impl<T: Copy> Buffer<T> {
 
 impl<T> Drop for Buffer<T> {
   fn drop(&mut self) {
-    let device = &self.device.raw;
+    let device = self.device.raw();
 
     if let Some(memory) = self.memory.take() {
       device.free_memory(memory);
