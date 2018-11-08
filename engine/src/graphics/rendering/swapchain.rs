@@ -13,24 +13,22 @@ pub struct Swapchain {
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
   semaphores: Chain<[Semaphore; 3]>,
-  size: Vector2<u32>,
+  size: Vector2<f32>,
 }
 
 impl Swapchain {
-  pub fn new(render_pass: &RenderPass, size: Vector2<u32>) -> Self {
+  pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Vector2<f32>) -> Self {
     let device = render_pass.device();
-    let surface = &mut device.surface.lock().unwrap();
-
     let (caps, _, modes) = surface.compatibility(&device.adapter.physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
         caps.extents.start.width,
-        cmp::min(size.x, caps.extents.end.width),
+        cmp::min(size.x.round() as u32, caps.extents.end.width),
       ),
       height: cmp::max(
         caps.extents.start.height,
-        cmp::min(size.y, caps.extents.end.height),
+        cmp::min(size.y.round() as u32, caps.extents.end.height),
       ),
     };
 
@@ -66,7 +64,7 @@ impl Swapchain {
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
       semaphores: Chain::allocate(|| Semaphore::new(device)),
-      size: Vector2::new(extent.width, extent.height),
+      size: Vector2::new(extent.width as f32, extent.height as f32),
     };
 
     match backbuffer {
@@ -114,7 +112,7 @@ impl Swapchain {
     &mut self.raw
   }
 
-  pub fn size(&self) -> Vector2<u32> {
+  pub fn size(&self) -> Vector2<f32> {
     self.size
   }
 

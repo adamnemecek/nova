@@ -1,9 +1,9 @@
-mod backend;
+pub mod prelude;
+
 mod buffer;
 mod commands;
 mod pass;
 mod pipeline;
-mod prelude;
 mod renderer;
 mod shader;
 mod swapchain;
@@ -24,8 +24,9 @@ pub use self::texture::*;
 pub use self::vertices::*;
 
 use self::prelude::*;
+use super::backend;
+use super::window;
 use crate::prelude::*;
-use crate::window;
 use std::sync::{Arc, Mutex};
 
 const ENGINE_NAME: &str = "nova";
@@ -33,47 +34,13 @@ const ENGINE_VERSION: u32 = 1;
 
 pub struct Device {
   queues: CommandQueueSet,
-  raw: backend::Device,
+  pub(super) raw: backend::Device,
   memory_properties: gfx_hal::MemoryProperties,
   adapter: backend::Adapter,
-  surface: Mutex<backend::Surface>,
-  _instance: backend::Instance,
+  _instance: Arc<backend::Instance>,
 }
 
 impl Device {
-  pub fn new(window: &window::Window) -> Result<Arc<Device>, InitError> {
-    // Create an instance of the backend.
-    let instance = backend::Instance::create(ENGINE_NAME, ENGINE_VERSION);
-
-    // Create a window surface for presentation.
-    let surface = instance.create_surface(window.raw());
-
-    // Select the best available adapter.
-    let adapter = select_adapter(&instance, &surface).ok_or(InitError::NoGraphicsDevice)?;
-
-    // Cache the memory properties info.
-    let memory_properties = adapter.physical_device.memory_properties();
-
-    // Determine queue families to open.
-    let queue_families = select_queue_families(&adapter, &surface);
-
-    // Create a logical device and queues.
-    let gpu = adapter
-      .physical_device
-      .open(&queue_families.create_info())?;
-
-    let device = Arc::new(Device {
-      _instance: instance,
-      surface: Mutex::new(surface),
-      adapter,
-      memory_properties,
-      raw: gpu.device,
-      queues: CommandQueueSet::new(gpu.queues, &queue_families),
-    });
-
-    Ok(device)
-  }
-
   pub fn queues(&self) -> &CommandQueueSet {
     &self.queues
   }
@@ -115,11 +82,48 @@ fn select_adapter(
     })
 }
 
+pub fn init() -> Result<(Arc<Device>, window::Window), InitError> {
+  // Create an instance of the backend.
+  let instance = Arc::new(backend::Instance::create(ENGINE_NAME, ENGINE_VERSION));
+
+  // Create a window.
+  let mut window = window::Window::new(&instance)?;
+
+  // Select the best available adapter.
+  let adapter =
+    select_adapter(&instance, window.raw_surface()).ok_or(InitError::NoGraphicsDevice)?;
+
+  // Cache the memory properties info.
+  let memory_properties = adapter.physical_device.memory_properties();
+
+  // Determine queue families to open.
+  let queue_families = select_queue_families(&adapter, window.raw_surface());
+
+  // Create a logical device and queues.
+  let gpu = adapter
+    .physical_device
+    .open(&queue_families.create_info())?;
+
+  let device = Arc::new(Device {
+    _instance: instance,
+    adapter,
+    memory_properties,
+    raw: gpu.device,
+    queues: CommandQueueSet::new(gpu.queues, &queue_families),
+  });
+
+  Ok((device, window))
+}
+
 quick_error! {
   #[derive(Debug)]
   pub enum InitError {
     NoGraphicsDevice {
       display("No devices available that support graphics command and presentation to the window surface.")
+    }
+    CouldNotCreateWindow(err: window::CreationError) {
+      display("Could not create a window to render on.")
+      from()
     }
     NoSupportedQueue {
       display("Device has no queues that support graphics commands and presentation to the window surface.")

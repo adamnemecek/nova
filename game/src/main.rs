@@ -2,7 +2,7 @@ use nova::graphics;
 use nova::graphics::rendering;
 use nova::graphics::{Mesh, Vertex};
 use nova::math::algebra::*;
-use nova::window;
+use nova::utils::Nullable;
 use std::iter;
 
 /// Main entry point of the program.
@@ -15,9 +15,7 @@ pub fn main() {
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
 
-  let mut window = window::Window::new("nova-game");
-
-  let gfx_device = rendering::Device::new(&window).expect("could not create rendering device");
+  let (gfx_device, mut window) = rendering::init().expect("could not create rendering device");
 
   log.trace("Created graphics device.");
 
@@ -76,36 +74,37 @@ pub fn main() {
 
   log.trace("Created descriptor set.");
 
-  let mut swapchain = None;
+  let mut swapchain = Nullable::<rendering::Swapchain>::new();
 
   loop {
-    window.poll_events();
+    window.update();
 
-    if window.is_closing() {
+    if window.is_closed() {
       break;
     }
 
-    if window.was_resized() {
-      swapchain = None;
+    if !swapchain.is_null() && swapchain.size() != window.size() {
+      swapchain.drop();
     }
 
     let (framebuffer, framebuffer_semaphore) = loop {
-      if swapchain.is_none() {
-        let sc =
-          rendering::Swapchain::new(renderer.pass(), window.size().map(|d| d.round() as u32));
-        let size = sc.size();
+      if swapchain.is_null() {
+        let size = window.size();
+        let sc = rendering::Swapchain::new(renderer.pass(), window.raw_surface_mut(), size);
+
+        let actual_size = sc.size();
 
         log
           .info("Created swapchain.")
-          .with("width", &size.x)
-          .with("height", &size.y);
+          .with("width", &actual_size.x)
+          .with("height", &actual_size.y);
 
-        swapchain = Some(sc);
+        swapchain = sc.into();
       }
 
-      match swapchain.as_mut().unwrap().acquire_framebuffer() {
+      match swapchain.acquire_framebuffer() {
         Ok(fb) => break fb,
-        Err(_) => swapchain = None,
+        Err(_) => swapchain.drop(),
       };
     };
 
@@ -128,13 +127,10 @@ pub fn main() {
 
     let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
 
-    let result = swapchain
-      .as_mut()
-      .unwrap()
-      .present(framebuffer.index(), render_semaphore.raw());
+    let result = swapchain.present(framebuffer.index(), render_semaphore.raw());
 
     if let Err(_) = result {
-      swapchain = None;
+      swapchain.drop();
     }
   }
 }

@@ -19,11 +19,14 @@
 
 //pub mod panels;
 pub mod rendering;
+pub mod window;
 
 //mod canvas;
+mod backend;
 mod color;
 mod mesh;
 
 //pub use self::canvas::*;
 pub use self::color::*;
 pub use self::mesh::*;
+pub use self::window::Window;

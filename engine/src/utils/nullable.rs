@@ -9,8 +9,16 @@ impl<T> Nullable<T> {
     Nullable { value: None }
   }
 
+  pub fn is_null(&self) -> bool {
+    self.value.is_none()
+  }
+
   pub fn take(&mut self) -> Option<T> {
     self.value.take()
+  }
+
+  pub fn drop(&mut self) {
+    self.value = None;
   }
 }
 
