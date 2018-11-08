@@ -1,5 +1,3 @@
-pub mod prelude;
-
 mod buffer;
 mod commands;
 mod pass;
@@ -21,8 +19,8 @@ pub use self::sync::*;
 pub use self::texture::*;
 pub use self::vertices::*;
 
-use self::prelude::*;
 use super::backend;
+use super::hal::*;
 use super::window;
 use crate::utils::quick_error;
 use std::sync::Arc;

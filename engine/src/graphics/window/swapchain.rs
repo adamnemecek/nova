@@ -1,5 +1,5 @@
 use crate::graphics::backend;
-use crate::graphics::rendering::prelude::*;
+use crate::graphics::hal::*;
 use crate::graphics::rendering::{Chain, Device, RenderPass, Semaphore};
 use crate::math::algebra::Vector2;
 use crate::utils::{quick_error, Nullable};
