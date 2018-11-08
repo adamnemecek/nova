@@ -2,8 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::prelude::*;
-use nalgebra::Real;
+use super::algebra::*;
+use super::geometry::*;
+use super::Real;
+use std::fmt;
 
 /// Struct describing a rectangle in 2D space.
 #[derive(Clone, Copy, PartialEq)]
@@ -41,8 +43,12 @@ impl<N: Real> Default for Rect<N> {
   }
 }
 
-impl Into<ggez::graphics::Rect> for Rect<f32> {
-  fn into(self) -> ggez::graphics::Rect {
-    ggez::graphics::Rect::new(self.pos.x, self.pos.y, self.size.x, self.size.y)
+impl<N: Real> fmt::Debug for Rect<N> {
+  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    write!(
+      f,
+      "Rect {{ pos: ({:?}, {:?}), size: ({:?}, {:?}) }}",
+      self.pos.x, self.pos.y, self.size.x, self.size.y
+    )
   }
 }

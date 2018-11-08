@@ -1,12 +1,8 @@
 [workspace]
 members = [
   "engine",
-  "game",
-  "tools/audino-import",
+  "game"
 ]
-
-[profile.dev]
-opt-level = 1
 
 [profile.release]
 lto = true

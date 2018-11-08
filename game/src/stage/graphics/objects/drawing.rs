@@ -7,7 +7,8 @@ use crate::prelude::*;
 use crate::stage::graphics::{Camera, CameraTarget};
 use crate::stage::objects::Object;
 use crate::stage::Position;
-use nova::graphics::{Canvas, Color, DrawParams, Image};
+use nova::graphics::Canvas;
+use nova::graphics::{Color, DrawParams, Image};
 
 /// State of object drawing.
 #[derive(Default)]
@@ -50,7 +51,7 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
   let global_offset = rect.pos + rect.size / settings.scale / 2.0 - camera_pos;
 
   // Apply scale transform.
-  canvas.push_transform(Matrix4::new_scaling(settings.scale));
+  //canvas.push_transform(Matrix4::new_scaling(settings.scale));
 
   // Draw object shadows.
   for entity in &state.entities {
@@ -58,18 +59,15 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
     let size = &objects.get(*entity).unwrap().template.shadow_size;
     let image_size = settings.shadow_image.size();
 
-    canvas
-      .draw(
-        &settings.shadow_image,
-        DrawParams::default()
-          .color(Color::new(0.0, 0.0, 0.0, 0.2))
-          .scale(Vector2::new(
-            size.x / image_size.x as f32,
-            size.y / image_size.y as f32,
-          ))
-          .dest(Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset),
-      )
-      .expect("could not draw sprite");
+    canvas.draw(
+      &settings.shadow_image,
+      DrawParams::default()
+        .color(Color::new(0.0, 0.0, 0.0, 0.2))
+        .scale(Vector2::new(
+          size.x / image_size.x as f32,
+          size.y / image_size.y as f32,
+        )).dest(Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset),
+    );
   }
 
   // Draw object sprites.
@@ -96,12 +94,11 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
     let dest =
       Point2::new(position.point.x, position.point.y - position.point.z) + offset + global_offset;
 
-    canvas
-      .draw(
-        &atlas.image,
-        DrawParams::default().src(src).scale(scale).dest(dest),
-      ).expect("could not draw sprite");
+    canvas.draw(
+      &atlas.image,
+      DrawParams::default().src(src).scale(scale).dest(dest),
+    );
   }
 
-  canvas.pop_transform();
+  //canvas.pop_transform();
 }

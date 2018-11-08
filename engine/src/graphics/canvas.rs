@@ -1,94 +1,200 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+use super::mesh;
+use super::rendering;
+use super::{image::Image, Color, Mesh, Vertex};
+use crate::math::algebra::*;
+use std::sync::Arc;
 
-use super::{Color, DrawParams, Image};
-use crate::prelude::*;
-
-/// Struct for drawing to a `Window`.
 pub struct Canvas {
-  ctx: ggez::Context,
   size: Vector2<f32>,
+  projection: Matrix4<f32>,
+  quad: Mesh,
+  renderer: rendering::Renderer,
+  swapchain: rendering::Swapchain,
+  pipeline: Arc<rendering::Pipeline>,
+  descriptor_set: rendering::DescriptorSet,
+  _image: Image,
+  _sampler: rendering::TextureSampler,
+  log: bflog::Logger,
 }
 
 impl Canvas {
-  /// Creates a new canvas from the given window.
-  pub fn new(ctx: &engine::Context) -> Canvas {
-    let mut ctx = ctx
-      .window_handle
-      .borrow()
-      .as_ref()
-      .expect("engine context does not have a window")
-      .ggez
-      .take()
-      .expect("engine context already has a Canvas");
+  pub fn new(
+    device: &Arc<rendering::Device>,
+    window: &winit::Window,
+    log: &bflog::Logger,
+  ) -> Canvas {
+    let mut log = log.with_src("nova::graphics::Canvas");
 
-    let rect = ggez::graphics::screen_coordinates(&mut ctx);
+    let render_pass = rendering::RenderPass::new(&device);
 
-    Canvas {
-      ctx,
-      size: Vector2::new(rect.w, rect.h),
+    let renderer = rendering::Renderer::new(&render_pass);
+
+    log.trace("Created renderer.");
+
+    let shaders = rendering::PipelineShaderSet::load_defaults(device);
+
+    log.trace("Loaded default pipeline shaders.");
+
+    let image = Image::new(device, include_bytes!("do-it.jpg"));
+    let sampler = rendering::TextureSampler::new(device);
+
+    let descriptor_set_layout = rendering::DescriptorSetLayout::new()
+      .texture()
+      .create(&device);
+
+    let descriptor_pool = rendering::DescriptorPool::new(&descriptor_set_layout, 1);
+
+    let descriptor_set = rendering::DescriptorSet::new(
+      &descriptor_pool,
+      &[rendering::Descriptor::SampledTexture(
+        image.texture(),
+        &sampler,
+      )],
+    );
+
+    let pipeline = rendering::Pipeline::new()
+      .render_pass(&render_pass)
+      .shaders(shaders)
+      .vertex_buffer::<mesh::Vertex>()
+      .push_constant::<Color>()
+      .push_constant::<Matrix4<f32>>()
+      .descriptor_set_layout(&descriptor_set_layout)
+      .create();
+
+    log.trace("Created pipeline.");
+
+    let quad = Mesh::new(
+      device,
+      &[
+        Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 0.0]),
+        Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 0.0]),
+        Vertex::new([0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 1.0]),
+        Vertex::new([-0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0]),
+      ],
+      &[0, 1, 2, 2, 3, 0],
+    );
+
+    log.trace("Created quad mesh.");
+
+    let mut canvas = Canvas {
+      size: Vector2::zeros(),
+      projection: Matrix4::identity(),
+      renderer,
+      pipeline,
+      quad,
+      swapchain: rendering::Swapchain::new(&device),
+      descriptor_set,
+      _image: image,
+      _sampler: sampler,
+      log,
+    };
+
+    canvas.resize_to_fit(window);
+
+    canvas
+  }
+
+  pub fn resize_to_fit(&mut self, window: &winit::Window) {
+    let size = window
+      .get_inner_size()
+      .expect("window is destroyed")
+      .to_physical(window.get_hidpi_factor());
+
+    let size = Vector2::new(size.width as f32, size.height as f32);
+
+    if size == self.size {
+      return;
     }
-  }
-
-  /// Gets the size of the canvas in pixels.
-  pub fn size(&self) -> Vector2<f32> {
-    self.size
-  }
-
-  /// Resizes the canvas to the given size in pixels.
-  pub fn resize(&mut self, size: Vector2<f32>) {
-    ggez::graphics::set_screen_coordinates(
-      &mut self.ctx,
-      ggez::graphics::Rect::new(0.0, 0.0, size.x, size.y),
-    ).expect("could not set screen coordinates");
 
     self.size = size;
+    self.projection = Matrix4::new_orthographic(0.0, size.x, 0.0, size.y, -1.0, 1.0);
+
+    self.destroy_swapchain("resize_to_fit", "window resized");
   }
 
-  /// Clear the canvas with the given color.
-  pub fn clear(&mut self, color: Color) {
-    ggez::graphics::clear(&mut self.ctx, color);
+  pub fn begin(&mut self) {
+    self.ensure_swapchain();
+
+    match self.renderer.begin(&mut self.swapchain) {
+      Err(rendering::BeginRenderError::SwapchainOutOfDate) => {
+        self.destroy_swapchain("begin", "out of date");
+        self.begin();
+
+        return;
+      }
+
+      Err(rendering::BeginRenderError::SurfaceLost) => {
+        panic!("surface lost");
+      }
+
+      Ok(_) => {}
+    };
+
+    self.renderer.bind_pipeline(&self.pipeline);
+    self.renderer.bind_descriptor_set(0, &self.descriptor_set);
+
+    self.set_transform(Matrix4::identity());
+    self.set_tint(Color::WHITE);
   }
 
-  /// Push a transform so that all subsequent draw calls have it applied.
-  pub fn push_transform(&mut self, transform: Matrix4<f32>) {
-    ggez::graphics::push_transform(&mut self.ctx, Some(transform));
-    ggez::graphics::apply_transformations(&mut self.ctx).expect("could not push transform");
+  pub fn set_tint(&mut self, color: Color) {
+    self.renderer.push_constant(0, &color);
   }
 
-  /// Draws an image on the canvas.
-  pub fn draw(&mut self, image: &Image, params: DrawParams) -> ggez::GameResult<()> {
-    let mut inner = image.ggez_image.lock().expect("could not lock Image::ggez");
+  pub fn set_transform(&mut self, transform: Matrix4<f32>) {
+    let transform = self.projection * transform;
 
-    // Create the ggez image from the loaded image data if it has not yet been
-    // created.
-    if !inner.is_some() {
-      let size = image.size();
+    self.renderer.push_constant(1, &transform);
+  }
 
-      let mut ggez_image = ggez::graphics::Image::from_rgba8(
-        &mut self.ctx,
-        size.x as u16,
-        size.y as u16,
-        &image.rgba_image,
-      )?;
+  pub fn draw_quad(&mut self) {
+    self
+      .renderer
+      .bind_vertex_buffer(0, self.quad.vertex_buffer());
 
-      ggez_image.set_filter(ggez::graphics::FilterMode::Nearest);
+    self.renderer.bind_index_buffer(self.quad.index_buffer());
 
-      *inner = Some(ggez_image);
+    self.renderer.draw_indexed(self.quad.indices());
+  }
+
+  pub fn present(&mut self) {
+    match self.renderer.present(&mut self.swapchain) {
+      Err(rendering::PresentError::SwapchainOutOfDate) => {
+        self.destroy_swapchain("present", "out of date");
+        return;
+      }
+
+      Ok(_) => {}
+    }
+  }
+
+  fn ensure_swapchain(&mut self) {
+    if !self.swapchain.is_destroyed() {
+      return;
     }
 
-    ggez::graphics::draw(&mut self.ctx, inner.as_ref().unwrap(), params)
+    self
+      .swapchain
+      .create(self.size.x.round() as u32, self.size.y.round() as u32);
+
+    self
+      .log
+      .trace("Created swapchain.")
+      .with("width", &self.swapchain.width())
+      .with("height", &self.swapchain.height());
   }
 
-  /// Pops the most recent transform applied with `push_transform`.
-  pub fn pop_transform(&mut self) {
-    ggez::graphics::pop_transform(&mut self.ctx);
-    ggez::graphics::apply_transformations(&mut self.ctx).expect("could not pop transform");
-  }
+  fn destroy_swapchain(&mut self, when: &'static str, reason: &'static str) {
+    if self.swapchain.is_destroyed() {
+      return;
+    }
 
-  /// Presents the canvas, showing what has been drawn since the last `clear`.
-  pub fn present(&mut self) {
-    ggez::graphics::present(&mut self.ctx).expect("could not present");
+    self.swapchain.destroy();
+
+    self
+      .log
+      .trace("Destroyed swapchain.")
+      .with("when", &when)
+      .with("reason", &reason);
   }
 }

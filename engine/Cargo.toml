@@ -5,12 +5,23 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
-ggez = { git = "https://gitlab.com/bfrydl/ggez.git", branch = "devel" }
-nalgebra = "0.16.1"
-specs = "0.12.2"
-serde = "1.0.78"
-serde_yaml = "0.8.3"
-serde_derive = "1.0.78"
-specs-derive = "0.2.0"
-image = "0.19.0"
-crossbeam-channel = "0.2.6"
+bflog = "0.3"
+crossbeam = "0.4"
+gfx-hal = { git = "https://github.com/gfx-rs/gfx" }
+glsl-to-spirv = "0.1"
+image = "0.20"
+nalgebra = "0.16"
+quick-error = "1.2"
+smallvec = "0.6"
+specs = "0.14"
+specs-derive = "0.3"
+winit = "0.17"
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx" }
+
+[target.'cfg(windows)'.dependencies]
+gfx-backend-dx12 = { git = "https://github.com/gfx-rs/gfx"}
+
+[target.'cfg(target_os = "macos")'.dependencies]
+gfx-backend-metal = { git = "https://github.com/gfx-rs/gfx"}

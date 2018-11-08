@@ -1,36 +1,174 @@
-use nova::assets;
 use nova::graphics;
-use nova::graphics::panels;
-use nova::input;
-use nova::time;
-use std::sync::Arc;
-
-mod prelude;
-mod stage;
-
-use self::prelude::*;
+use nova::graphics::rendering;
+use nova::graphics::{Mesh, Vertex};
+use nova::math::algebra::*;
+use nova::window;
+use std::iter;
 
 /// Main entry point of the program.
 pub fn main() {
-  let ctx = &mut engine::Context::new();
+  let sink = bflog::LogSink::new(
+    std::io::stdout(),
+    bflog::Format::Modern,
+    bflog::LevelFilter::Trace,
+  );
 
-  engine::create_window(ctx, "nova-game");
+  let mut log = bflog::Logger::new(&sink).with_src("game");
 
-  assets::init(ctx);
-  graphics::init(ctx);
-  input::init(ctx);
-  time::init(ctx);
+  let mut window = window::Window::new("nova-game");
 
-  stage::init(ctx);
-  stage::actors::driving::init(ctx);
-  stage::graphics::init(ctx);
+  let gfx_device = rendering::Device::new(&window).expect("could not create rendering device");
 
-  init(ctx);
+  log.trace("Created graphics device.");
 
-  engine::init(ctx);
-  engine::run_loop(ctx);
+  let shaders = rendering::PipelineShaderSet::load_defaults(&gfx_device);
+
+  let mut renderer = rendering::Renderer::new(&gfx_device);
+
+  let descriptor_set_layout = rendering::DescriptorSetLayout::new()
+    .texture()
+    .create(&gfx_device);
+
+  let pipeline = rendering::Pipeline::new()
+    .render_pass(renderer.pass())
+    .shaders(shaders)
+    .vertex_buffer::<graphics::Vertex>()
+    .push_constant::<graphics::Color>()
+    .push_constant::<Matrix4<f32>>()
+    .descriptor_set_layout(&descriptor_set_layout)
+    .create();
+
+  log.trace("Created pipeline.");
+
+  let command_pool = rendering::CommandPool::new(&gfx_device, gfx_device.queues().graphics());
+
+  log.trace("Created renderer arnd command pool.");
+
+  let quad = Mesh::new(
+    &gfx_device,
+    &[
+      Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 0.0]),
+      Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 0.0]),
+      Vertex::new([0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 1.0]),
+      Vertex::new([-0.5, 0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 1.0]),
+    ],
+    &[0, 1, 2, 2, 3, 0],
+  );
+
+  let mut texture_loader = rendering::TextureLoader::new(&gfx_device);
+
+  let texture = texture_loader.load(
+    &image::load_from_memory(include_bytes!("../assets/do-it.jpg"))
+      .expect("could not load texture")
+      .to_rgba(),
+  );
+
+  let sampler = rendering::TextureSampler::new(&gfx_device);
+
+  log.trace("Created mesh and texture/sampler pair.");
+
+  let descriptor_pool = rendering::DescriptorPool::new(&descriptor_set_layout, 1);
+
+  let descriptor_set = rendering::DescriptorSet::new(
+    &descriptor_pool,
+    &[rendering::Descriptor::SampledTexture(&texture, &sampler)],
+  );
+
+  log.trace("Created descriptor set.");
+
+  let mut swapchain = None;
+
+  loop {
+    window.poll_events();
+
+    if window.is_closing() {
+      break;
+    }
+
+    if window.was_resized() {
+      swapchain = None;
+    }
+
+    let (framebuffer, framebuffer_semaphore) = loop {
+      if swapchain.is_none() {
+        let sc =
+          rendering::Swapchain::new(renderer.pass(), window.size().map(|d| d.round() as u32));
+        let size = sc.size();
+
+        log
+          .info("Created swapchain.")
+          .with("width", &size.x)
+          .with("height", &size.y);
+
+        swapchain = Some(sc);
+      }
+
+      match swapchain.as_mut().unwrap().acquire_framebuffer() {
+        Ok(fb) => break fb,
+        Err(_) => swapchain = None,
+      };
+    };
+
+    let mut cmd =
+      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
+
+    cmd.begin_in_pass(renderer.pass(), &framebuffer);
+
+    cmd.bind_pipeline(&pipeline);
+
+    cmd.push_constant(0, &graphics::Color([1.0, 1.0, 1.0, 1.0]));
+    cmd.push_constant(1, &Matrix4::<f32>::identity());
+
+    cmd.bind_descriptor_set(0, &descriptor_set);
+    cmd.bind_vertex_buffer(0, quad.vertex_buffer());
+    cmd.bind_index_buffer(quad.index_buffer());
+    cmd.draw_indexed(quad.indices());
+
+    cmd.finish();
+
+    let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
+
+    let result = swapchain
+      .as_mut()
+      .unwrap()
+      .present(framebuffer.index(), render_semaphore.raw());
+
+    if let Err(_) = result {
+      swapchain = None;
+    }
+  }
 }
 
+/*
+fn init(ctx: &mut engine::Context) {
+  let parent = panels::create_panel(ctx);
+
+  engine::edit_component(ctx, parent, |style: &mut panels::Style| {
+    style.background = panels::Background::Solid;
+    style.color = graphics::Color([0.8, 0.6, 0.6, 1.0]);
+  });
+
+  panels::add_to_root(ctx, parent);
+
+  let child = panels::create_panel(ctx);
+
+  engine::edit_component(ctx, child, |style: &mut panels::Style| {
+    style.background = panels::Background::Solid;
+    style.color = graphics::Color([0.6, 0.6, 0.8, 1.0]);
+  });
+
+  engine::edit_component(ctx, child, |layout: &mut panels::Layout| {
+    layout.width = panels::Dimension::Fixed(500.0);
+    layout.height = panels::Dimension::Fixed(500.0);
+    layout.right = panels::Dimension::Fixed(100.0);
+    layout.bottom = panels::Dimension::Fixed(100.0);
+  });
+
+  panels::set_parent(ctx, child, Some(parent));
+}
+
+*/
+/*
 fn init(ctx: &mut engine::Context) {
   // Load actor templates.
   let hero_template =
@@ -86,9 +224,7 @@ fn init(ctx: &mut engine::Context) {
 
       style.set_custom_draw(
         move |_: &mut engine::Context, canvas: &mut graphics::Canvas, _: &Rect<f32>| {
-          canvas
-            .draw(&image, graphics::DrawParams::default())
-            .expect("could not draw image");
+          canvas.draw(&image, graphics::DrawParams::default());
         },
       );
     });
@@ -102,3 +238,4 @@ fn init(ctx: &mut engine::Context) {
     panels::set_parent(ctx, child, Some(parent));
   }
 }
+*/
