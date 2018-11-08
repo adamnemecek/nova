@@ -1,5 +1,6 @@
 use super::*;
 use crate::math::algebra::Vector2;
+use crate::utils::Nullable;
 use smallvec::SmallVec;
 use std::cmp;
 use std::iter;
@@ -7,7 +8,7 @@ use std::sync::Arc;
 
 pub struct Swapchain {
   device: Arc<Device>,
-  raw: Option<backend::Swapchain>,
+  raw: Nullable<backend::Swapchain>,
   images: SmallVec<[backend::Image; 3]>,
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
@@ -60,7 +61,7 @@ impl Swapchain {
 
     let mut swapchain = Swapchain {
       device: device.clone(),
-      raw: Some(raw),
+      raw: raw.into(),
       images: SmallVec::new(),
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
@@ -110,7 +111,7 @@ impl Swapchain {
   }
 
   pub fn raw_mut(&mut self) -> &mut backend::Swapchain {
-    self.raw.as_mut().expect("swapchain is destroyed")
+    &mut self.raw
   }
 
   pub fn size(&self) -> Vector2<u32> {
@@ -124,8 +125,6 @@ impl Swapchain {
 
     let index = self
       .raw
-      .as_mut()
-      .unwrap()
       .acquire_image(!0, gfx_hal::FrameSync::Semaphore(semaphore.raw()))
       .map_err(|err| match err {
         gfx_hal::AcquireError::OutOfDate => AcquireFramebufferError::SwapchainOutOfDate,
@@ -137,7 +136,7 @@ impl Swapchain {
 
   pub fn present(&mut self, fb_index: u32, wait_for: &backend::Semaphore) -> Result<(), ()> {
     self.device.queues.graphics().raw_mut().present(
-      iter::once((self.raw.as_mut().unwrap(), fb_index)),
+      iter::once((self.raw.as_ref(), fb_index)),
       iter::once(wait_for),
     )
   }
