@@ -89,7 +89,7 @@ pub fn init() -> Result<(Arc<Device>, window::Window), InitError> {
   let instance = Arc::new(backend::Instance::create(ENGINE_NAME, ENGINE_VERSION));
 
   // Create a window.
-  let mut window = window::Window::new(&instance)?;
+  let window = window::Window::new(&instance)?;
 
   // Select the best available adapter.
   let adapter =
