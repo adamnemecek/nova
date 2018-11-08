@@ -31,10 +31,13 @@ pub struct TextureSampler {
 
 impl TextureSampler {
   pub fn new(device: &Arc<Device>) -> Self {
-    let sampler = device.raw.create_sampler(gfx_hal::image::SamplerInfo::new(
-      gfx_hal::image::Filter::Linear,
-      gfx_hal::image::WrapMode::Tile,
-    ));
+    let sampler = device
+      .raw
+      .create_sampler(gfx_hal::image::SamplerInfo::new(
+        gfx_hal::image::Filter::Linear,
+        gfx_hal::image::WrapMode::Tile,
+      ))
+      .expect("could not create sampler");
 
     TextureSampler {
       device: device.clone(),

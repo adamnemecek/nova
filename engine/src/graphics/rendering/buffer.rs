@@ -68,7 +68,7 @@ impl<T: Copy> Buffer<T> {
 
     dest.copy_from_slice(values);
 
-    device.release_mapping_writer(dest);
+    device.release_mapping_writer(dest).expect("out of memory");
   }
 
   pub fn raw(&self) -> &backend::Buffer {

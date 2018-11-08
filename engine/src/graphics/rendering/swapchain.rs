@@ -50,7 +50,10 @@ impl Swapchain {
       image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
     };
 
-    let (raw, backbuffer) = device.raw.create_swapchain(surface, config, None);
+    let (raw, backbuffer) = device
+      .raw
+      .create_swapchain(surface, config, None)
+      .expect("could not create swapchain");
 
     let width = extent.width as i16;
     let height = extent.height as i16;

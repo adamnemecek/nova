@@ -11,8 +11,13 @@ pub struct Semaphore {
 
 impl Semaphore {
   pub fn new(device: &Arc<Device>) -> Self {
+    let semaphore = device
+      .raw
+      .create_semaphore()
+      .expect("could not create semaphore");
+
     Semaphore {
-      raw: Some(device.raw.create_semaphore()),
+      raw: Some(semaphore),
       device: device.clone(),
     }
   }
@@ -35,8 +40,13 @@ pub struct Fence {
 
 impl Fence {
   pub fn new(device: &Arc<Device>) -> Self {
+    let fence = device
+      .raw
+      .create_fence(true)
+      .expect("could not create fence");
+
     Fence {
-      raw: Some(device.raw.create_fence(true)),
+      raw: Some(fence),
       device: device.clone(),
     }
   }
@@ -46,7 +56,11 @@ impl Fence {
   }
 
   pub fn wait(&self) {
-    self.device.raw.wait_for_fence(self.raw(), !0);
+    self
+      .device
+      .raw
+      .wait_for_fence(self.raw(), !0)
+      .expect("could not wait for fence");
   }
 }
 

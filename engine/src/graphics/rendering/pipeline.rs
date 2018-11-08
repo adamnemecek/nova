@@ -173,13 +173,16 @@ impl PipelineBuilder {
       main_pass: render_pass.raw(),
     };
 
-    let layout = device.raw.create_pipeline_layout(
-      self
-        .descriptor_set_layout
-        .as_ref()
-        .map(|layout| layout.raw()),
-      &self.push_constants,
-    );
+    let layout = device
+      .raw
+      .create_pipeline_layout(
+        self
+          .descriptor_set_layout
+          .as_ref()
+          .map(|layout| layout.raw()),
+        &self.push_constants,
+      )
+      .expect("could not create pipeline layout");
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       self.shaders.as_raw(),
@@ -271,7 +274,10 @@ impl DescriptorSetLayoutBuilder {
   }
 
   pub fn create(self, device: &Arc<Device>) -> Arc<DescriptorSetLayout> {
-    let layout = device.raw.create_descriptor_set_layout(&self.bindings, &[]);
+    let layout = device
+      .raw
+      .create_descriptor_set_layout(&self.bindings, &[])
+      .expect("could not create descriptor set layout");
 
     Arc::new(DescriptorSetLayout {
       raw: Some(layout),
@@ -291,15 +297,18 @@ impl DescriptorPool {
   pub fn new(layout: &Arc<DescriptorSetLayout>, capacity: usize) -> Arc<Self> {
     let device = layout.device.clone();
 
-    let pool = device.raw.create_descriptor_pool(
-      capacity,
-      layout
-        .bindings()
-        .map(|binding| gfx_hal::pso::DescriptorRangeDesc {
-          ty: binding.ty,
-          count: binding.count,
-        }),
-    );
+    let pool = device
+      .raw
+      .create_descriptor_pool(
+        capacity,
+        layout
+          .bindings()
+          .map(|binding| gfx_hal::pso::DescriptorRangeDesc {
+            ty: binding.ty,
+            count: binding.count,
+          }),
+      )
+      .expect("could not create descriptor pool");
 
     Arc::new(DescriptorPool {
       device,

@@ -13,7 +13,8 @@ impl CommandPool {
   pub fn new(device: &Arc<Device>, queue: &CommandQueue) -> Arc<CommandPool> {
     let pool = device
       .raw
-      .create_command_pool(queue.family_id(), CommandPoolCreateFlags::TRANSIENT);
+      .create_command_pool(queue.family_id(), CommandPoolCreateFlags::TRANSIENT)
+      .expect("could not create command pool");
 
     Arc::new(CommandPool {
       device: device.clone(),

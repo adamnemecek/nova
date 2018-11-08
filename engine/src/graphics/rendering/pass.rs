@@ -41,7 +41,8 @@ impl RenderPass {
 
     let pass = device
       .raw
-      .create_render_pass(&[color_attachment], &[subpass], &[dependency]);
+      .create_render_pass(&[color_attachment], &[subpass], &[dependency])
+      .expect("could not create render pass");
 
     Arc::new(RenderPass {
       device: device.clone(),
