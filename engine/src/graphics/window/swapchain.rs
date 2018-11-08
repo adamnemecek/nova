@@ -1,6 +1,8 @@
-use super::*;
+use crate::graphics::backend;
+use crate::graphics::rendering::prelude::*;
+use crate::graphics::rendering::{Chain, Device, RenderPass, Semaphore};
 use crate::math::algebra::Vector2;
-use crate::utils::Nullable;
+use crate::utils::{quick_error, Nullable};
 use smallvec::SmallVec;
 use std::cmp;
 use std::iter;
@@ -19,7 +21,7 @@ pub struct Swapchain {
 impl Swapchain {
   pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Vector2<f32>) -> Self {
     let device = render_pass.device();
-    let (caps, _, modes) = surface.compatibility(&device.adapter.physical_device);
+    let (caps, _, modes) = surface.compatibility(&device.raw_adapter().physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
@@ -133,7 +135,7 @@ impl Swapchain {
   }
 
   pub fn present(&mut self, fb_index: u32, wait_for: &backend::Semaphore) -> Result<(), ()> {
-    self.device.queues.graphics().raw_mut().present(
+    self.device.queues().graphics().raw_mut().present(
       iter::once((self.raw.as_ref(), fb_index)),
       iter::once(wait_for),
     )

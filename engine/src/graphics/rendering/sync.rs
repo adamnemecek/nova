@@ -70,7 +70,7 @@ impl Drop for Fence {
   }
 }
 
-pub(super) struct Chain<A: Array> {
+pub struct Chain<A: Array> {
   items: SmallVec<A>,
   index: usize,
 }

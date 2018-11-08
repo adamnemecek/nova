@@ -1,4 +1,5 @@
 use super::*;
+use crate::graphics::window::Framebuffer;
 use smallvec::SmallVec;
 use std::sync::Arc;
 

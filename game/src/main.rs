@@ -1,5 +1,6 @@
 use nova::graphics;
 use nova::graphics::rendering;
+use nova::graphics::window;
 use nova::graphics::{Mesh, Vertex};
 use nova::math::algebra::*;
 use nova::utils::Nullable;
@@ -74,7 +75,7 @@ pub fn main() {
 
   log.trace("Created descriptor set.");
 
-  let mut swapchain = Nullable::<rendering::Swapchain>::new();
+  let mut swapchain = Nullable::<window::Swapchain>::new();
 
   loop {
     window.update();
@@ -90,16 +91,15 @@ pub fn main() {
     let (framebuffer, framebuffer_semaphore) = loop {
       if swapchain.is_null() {
         let size = window.size();
-        let sc = rendering::Swapchain::new(renderer.pass(), window.raw_surface_mut(), size);
 
-        let actual_size = sc.size();
+        swapchain = window::Swapchain::new(renderer.pass(), window.raw_surface_mut(), size).into();
+
+        let actual_size = swapchain.size();
 
         log
           .info("Created swapchain.")
           .with("width", &actual_size.x)
           .with("height", &actual_size.y);
-
-        swapchain = sc.into();
       }
 
       match swapchain.acquire_framebuffer() {

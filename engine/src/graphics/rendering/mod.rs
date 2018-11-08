@@ -6,7 +6,6 @@ mod pass;
 mod pipeline;
 mod renderer;
 mod shader;
-mod swapchain;
 mod sync;
 mod texture;
 mod vertices;
@@ -18,7 +17,6 @@ pub use self::pass::*;
 pub use self::pipeline::*;
 pub use self::renderer::*;
 pub use self::shader::*;
-pub use self::swapchain::*;
 pub use self::sync::*;
 pub use self::texture::*;
 pub use self::vertices::*;
@@ -26,8 +24,8 @@ pub use self::vertices::*;
 use self::prelude::*;
 use super::backend;
 use super::window;
-use crate::prelude::*;
-use std::sync::{Arc, Mutex};
+use crate::utils::quick_error;
+use std::sync::Arc;
 
 const ENGINE_NAME: &str = "nova";
 const ENGINE_VERSION: u32 = 1;
@@ -41,6 +39,10 @@ pub struct Device {
 }
 
 impl Device {
+  pub fn raw_adapter(&self) -> &backend::Adapter {
+    &self.adapter
+  }
+
   pub fn queues(&self) -> &CommandQueueSet {
     &self.queues
   }

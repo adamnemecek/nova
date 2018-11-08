@@ -1,6 +1,7 @@
 pub use gfx_hal::command::RawLevel as CommandBufferKind;
 
 use super::*;
+use crate::graphics::window::Framebuffer;
 use smallvec::SmallVec;
 use std::iter;
 use std::sync::atomic;

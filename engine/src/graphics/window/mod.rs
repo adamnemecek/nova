@@ -1,3 +1,6 @@
+mod swapchain;
+
+pub use self::swapchain::*;
 pub use winit::CreationError;
 
 use super::backend;
