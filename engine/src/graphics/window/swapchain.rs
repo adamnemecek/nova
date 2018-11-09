@@ -1,11 +1,10 @@
-use crate::graphics::device::{self, Device, Semaphore};
+use crate::graphics::device::{Device, Semaphore};
 use crate::graphics::hal::*;
 use crate::graphics::rendering::RenderPass;
 use crate::math::algebra::Vector2;
 use crate::utils::{quick_error, Chain, Droppable};
 use smallvec::SmallVec;
 use std::cmp;
-use std::iter;
 use std::sync::Arc;
 
 pub struct Swapchain {
