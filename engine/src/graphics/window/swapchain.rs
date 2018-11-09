@@ -1,5 +1,6 @@
 use crate::graphics::device::{Device, Semaphore};
 use crate::graphics::hal::*;
+use crate::graphics::image::{self, Image};
 use crate::graphics::rendering::RenderPass;
 use crate::math::algebra::Vector2;
 use crate::utils::{quick_error, Chain, Droppable};
@@ -8,13 +9,12 @@ use std::cmp;
 use std::sync::Arc;
 
 pub struct Swapchain {
-  device: Arc<Device>,
-  raw: Droppable<backend::Swapchain>,
-  images: SmallVec<[backend::Image; 3]>,
-  image_views: SmallVec<[backend::ImageView; 3]>,
-  framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
-  semaphores: Chain<Semaphore>,
   size: Vector2<f32>,
+  semaphores: Chain<Semaphore>,
+  framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
+  images: SmallVec<[Image; 3]>,
+  raw: Droppable<backend::Swapchain>,
+  device: Arc<Device>,
 }
 
 impl Swapchain {
@@ -62,7 +62,6 @@ impl Swapchain {
       device: device.clone(),
       raw: raw.into(),
       images: SmallVec::new(),
-      image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
       semaphores: Chain::allocate(3, |_| Semaphore::new(device)),
       size: Vector2::new(extent.width as f32, extent.height as f32),
@@ -71,28 +70,20 @@ impl Swapchain {
     match backbuffer {
       gfx_hal::Backbuffer::Images(images) => {
         for image in images {
-          let view = device
-            .raw()
-            .create_image_view(
-              &image,
-              gfx_hal::image::ViewKind::D2,
+          let image = unsafe {
+            Image::new(
+              device,
+              image::Backing::Swapchain(image),
               render_pass.format(),
-              gfx_hal::format::Swizzle::NO,
-              gfx_hal::image::SubresourceRange {
-                aspects: gfx_hal::format::Aspects::COLOR,
-                levels: 0..1,
-                layers: 0..1,
-              },
             )
-            .expect("could not create image view");
+          };
 
           let framebuffer = device
             .raw()
-            .create_framebuffer(render_pass.raw(), Some(&view), extent.to_extent())
+            .create_framebuffer(render_pass.raw(), Some(image.as_ref()), extent.to_extent())
             .expect("could not create framebuffer");
 
           swapchain.images.push(image);
-          swapchain.image_views.push(view);
 
           swapchain.framebuffers.push(Arc::new(Framebuffer {
             index: swapchain.framebuffers.len() as u32,
@@ -150,9 +141,7 @@ impl Drop for Swapchain {
       }
     }
 
-    for view in self.image_views.drain() {
-      device.destroy_image_view(view);
-    }
+    self.images.clear();
 
     if let Some(swapchain) = self.raw.take() {
       device.destroy_swapchain(swapchain);

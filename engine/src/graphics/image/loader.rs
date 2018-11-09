@@ -1,4 +1,4 @@
-use super::{Image, Source};
+use super::{Backing, Format, Image, Source};
 use crate::graphics::device;
 use crate::graphics::hal::*;
 use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
@@ -42,7 +42,7 @@ impl Loader {
         ),
         gfx_hal::image::Kind::D2(size.x, size.y, 1, 1),
         1,
-        gfx_hal::format::Format::Rgba8Srgb,
+        Format::Rgba8Srgb,
         gfx_hal::image::Tiling::Optimal,
         gfx_hal::image::Usage::TRANSFER_DST | gfx_hal::image::Usage::SAMPLED,
         gfx_hal::image::ViewCapabilities::empty(),
@@ -140,25 +140,6 @@ impl Loader {
 
     drop(cmd);
 
-    let view = device
-      .raw()
-      .create_image_view(
-        image.borrow(),
-        gfx_hal::image::ViewKind::D2,
-        gfx_hal::format::Format::Rgba8Srgb,
-        gfx_hal::format::Swizzle::NO,
-        gfx_hal::image::SubresourceRange {
-          aspects: gfx_hal::format::Aspects::COLOR,
-          levels: 0..1,
-          layers: 0..1,
-        },
-      )
-      .expect("could not create image view");
-
-    Image {
-      device: device.clone(),
-      inner: image.into(),
-      view: view.into(),
-    }
+    unsafe { Image::new(device, Backing::Allocated(image), Format::Rgba8Srgb) }
   }
 }
