@@ -2,7 +2,7 @@ use crate::graphics::device::{self, Device, Semaphore};
 use crate::graphics::hal::*;
 use crate::graphics::rendering::RenderPass;
 use crate::math::algebra::Vector2;
-use crate::utils::{quick_error, Chain, Nullable};
+use crate::utils::{quick_error, Chain, Droppable};
 use smallvec::SmallVec;
 use std::cmp;
 use std::iter;
@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 pub struct Swapchain {
   device: Arc<Device>,
-  raw: Nullable<backend::Swapchain>,
+  raw: Droppable<backend::Swapchain>,
   images: SmallVec<[backend::Image; 3]>,
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,

@@ -1,7 +1,7 @@
 use nova::graphics;
 use nova::graphics::rendering;
 use nova::graphics::window;
-use nova::utils::Nullable;
+use nova::utils::Droppable;
 use std::iter;
 
 pub fn main() -> Result<(), String> {
@@ -9,7 +9,7 @@ pub fn main() -> Result<(), String> {
     .map_err(|err| format!("Could not create graphics context: {}", err))?;
 
   let mut renderer = rendering::Renderer::new(&gfx.queues.graphics);
-  let mut swapchain = Nullable::<window::Swapchain>::new();
+  let mut swapchain = Droppable::<window::Swapchain>::dropped();
 
   let command_pool = rendering::CommandPool::new(&gfx.queues.graphics);
 
@@ -20,12 +20,12 @@ pub fn main() -> Result<(), String> {
       break;
     }
 
-    if !swapchain.is_null() && swapchain.size() != gfx.window.size() {
+    if !swapchain.is_dropped() && swapchain.size() != gfx.window.size() {
       swapchain.drop();
     }
 
     let (framebuffer, framebuffer_semaphore) = loop {
-      if swapchain.is_null() {
+      if swapchain.is_dropped() {
         let size = gfx.window.size();
 
         swapchain =

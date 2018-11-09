@@ -4,7 +4,7 @@ use nova::graphics::rendering;
 use nova::graphics::window;
 use nova::graphics::{Mesh, Vertex};
 use nova::math::algebra::*;
-use nova::utils::Nullable;
+use nova::utils::Droppable;
 use std::iter;
 
 /// Main entry point of the program.
@@ -76,7 +76,7 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created descriptor set.");
 
-  let mut swapchain = Nullable::<window::Swapchain>::new();
+  let mut swapchain = Droppable::<window::Swapchain>::dropped();
 
   loop {
     gfx.window.update();
@@ -85,12 +85,12 @@ pub fn main() -> Result<(), String> {
       break;
     }
 
-    if !swapchain.is_null() && swapchain.size() != gfx.window.size() {
+    if !swapchain.is_dropped() && swapchain.size() != gfx.window.size() {
       swapchain.drop();
     }
 
     let (framebuffer, framebuffer_semaphore) = loop {
-      if swapchain.is_null() {
+      if swapchain.is_dropped() {
         let size = gfx.window.size();
 
         swapchain =
@@ -113,7 +113,7 @@ pub fn main() -> Result<(), String> {
     let mut cmd =
       rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
 
-    cmd.begin_in_pass(renderer.pass(), &framebuffer);
+    cmd.begin_with(renderer.pass(), &framebuffer);
 
     cmd.bind_pipeline(&pipeline);
 

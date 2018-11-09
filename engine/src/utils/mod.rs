@@ -1,7 +1,7 @@
 mod chain;
-mod nullable;
+mod droppable;
 
 pub use self::chain::Chain;
-pub use self::nullable::Nullable;
+pub use self::droppable::Droppable;
 pub use quick_error::quick_error;
 pub use smallvec::{Array, SmallVec};
