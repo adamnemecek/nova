@@ -10,9 +10,8 @@ use std::sync::Arc;
 type Allocation = <Allocator as Factory<Backend>>::Buffer;
 
 pub struct Buffer<T> {
-  len: usize,
-  size: u64,
   inner: Droppable<Allocation>,
+  size: u64,
   device: Arc<Device>,
   _marker: std::marker::PhantomData<T>,
 }
@@ -37,23 +36,15 @@ impl<T: Copy> Buffer<T> {
     Buffer {
       device: device.clone(),
       inner: inner.into(),
-      len,
       size,
       _marker: std::marker::PhantomData,
     }
   }
 
   pub fn write(&mut self, values: &[T]) {
-    let range = self.inner.range();
-
-    assert_eq!(
-      values.len(),
-      self.len,
-      "Must write the entire buffer at once."
-    );
-
-    let memory = self.inner.memory();
     let device = self.device.raw();
+    let memory = self.inner.memory();
+    let range = self.inner.range();
 
     let mut dest = device
       .acquire_mapping_writer::<T>(&memory, range.start..range.start + self.size)
