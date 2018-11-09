@@ -26,8 +26,8 @@ struct Inner {
   image: Allocation,
 }
 
-impl Image {
-  pub fn raw_view(&self) -> &backend::ImageView {
+impl AsRef<backend::ImageView> for Image {
+  fn as_ref(&self) -> &backend::ImageView {
     &self.inner.view
   }
 }

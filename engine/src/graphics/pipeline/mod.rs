@@ -361,7 +361,7 @@ impl DescriptorSet {
         array_offset: 0,
         descriptors: iter::once(match descriptor {
           Descriptor::Texture(image, sampler) => gfx_hal::pso::Descriptor::CombinedImageSampler(
-            image.raw_view(),
+            image.as_ref(),
             gfx_hal::image::Layout::ShaderReadOnlyOptimal,
             sampler.raw(),
           ),
