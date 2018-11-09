@@ -1,4 +1,4 @@
-use crate::graphics::device::{self, Device};
+use crate::graphics::device;
 use crate::graphics::hal::*;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use std::sync::atomic::AtomicBool;

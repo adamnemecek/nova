@@ -110,6 +110,10 @@ impl Swapchain {
     swapchain
   }
 
+  pub fn raw(&self) -> &backend::Swapchain {
+    &self.raw
+  }
+
   pub fn raw_mut(&mut self) -> &mut backend::Swapchain {
     &mut self.raw
   }
@@ -132,18 +136,6 @@ impl Swapchain {
       })?;
 
     Ok((self.framebuffers[index as usize].clone(), semaphore))
-  }
-
-  pub fn present(
-    &mut self,
-    queue: &device::Queue,
-    fb_index: u32,
-    wait_for: &backend::Semaphore,
-  ) -> Result<(), ()> {
-    queue.raw_mut().present(
-      iter::once((self.raw.as_ref(), fb_index)),
-      iter::once(wait_for),
-    )
   }
 }
 

@@ -8,7 +8,6 @@ use std::sync::Arc;
 pub const FRAME_COUNT: usize = 3;
 
 pub struct Renderer {
-  device: Arc<Device>,
   pass: Arc<RenderPass>,
   command_pool: Arc<CommandPool>,
   frames: Chain<[Frame; FRAME_COUNT]>,
@@ -21,9 +20,10 @@ struct Frame {
 }
 
 impl Renderer {
-  pub fn new(device: &Arc<Device>, queue: &Arc<device::Queue>) -> Self {
+  pub fn new(queue: &Arc<device::Queue>) -> Self {
+    let device = queue.device();
+
     Renderer {
-      device: device.clone(),
       pass: RenderPass::new(device),
       command_pool: CommandPool::new(&queue),
       frames: Chain::allocate(|| Frame {

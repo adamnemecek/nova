@@ -70,7 +70,7 @@ impl CommandBuffer {
     self.passes.push(pass.clone());
   }
 
-  pub fn begin_in_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
+  pub fn begin_with(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
     self.start_recording();
 
     self.raw_mut().begin(

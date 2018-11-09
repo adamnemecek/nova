@@ -1,7 +1,8 @@
 pub use gfx_hal::queue::QueueFamilyId;
 
-use super::Device;
+use super::{Device, Semaphore};
 use crate::graphics::hal::*;
+use crate::graphics::window::Swapchain;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct Queue {
@@ -36,6 +37,17 @@ impl Queue {
 
   pub fn family_id(&self) -> QueueFamilyId {
     self.family.id()
+  }
+
+  pub fn present<'a>(
+    &self,
+    framebuffers: impl IntoIterator<Item = (&'a Swapchain, u32)>,
+    wait_for: impl IntoIterator<Item = &'a Semaphore>,
+  ) -> Result<(), ()> {
+    self.raw_mut().present(
+      framebuffers.into_iter().map(|(sc, i)| (sc.raw(), i)),
+      wait_for.into_iter().map(Semaphore::raw),
+    )
   }
 
   pub fn raw_mut(&self) -> MutexGuard<backend::CommandQueue> {

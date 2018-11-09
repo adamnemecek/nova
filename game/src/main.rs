@@ -23,7 +23,7 @@ pub fn main() -> Result<(), String> {
 
   let shaders = pipeline::PipelineShaderSet::load_defaults(&gfx.device);
 
-  let mut renderer = rendering::Renderer::new(&gfx.device, &gfx.queues.graphics);
+  let mut renderer = rendering::Renderer::new(&gfx.queues.graphics);
 
   let descriptor_set_layout = pipeline::DescriptorSetLayout::new()
     .texture()
@@ -129,10 +129,9 @@ pub fn main() -> Result<(), String> {
 
     let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
 
-    let result = swapchain.present(
-      &gfx.queues.graphics,
-      framebuffer.index(),
-      render_semaphore.raw(),
+    let result = gfx.queues.graphics.present(
+      iter::once((swapchain.as_ref(), framebuffer.index())),
+      iter::once(render_semaphore),
     );
 
     if let Err(_) = result {
