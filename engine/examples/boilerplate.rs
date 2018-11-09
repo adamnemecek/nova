@@ -13,7 +13,7 @@ pub fn main() -> Result<(), String> {
 
   let command_pool = rendering::CommandPool::new(&gfx.queues.graphics);
 
-  for fence in graphics::device::Fence::chain(&gfx.device, 3).iter_mut() {
+  for fence in &mut graphics::device::Fence::chain(&gfx.device, 3) {
     gfx.window.update();
 
     if gfx.window.is_closed() {

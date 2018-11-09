@@ -3,11 +3,15 @@ pub use gfx_hal::format::Format as ImageFormat;
 use super::{CommandBuffer, CommandBufferKind, CommandPool};
 use crate::graphics::device::{self, Device};
 use crate::graphics::hal::*;
+use gfx_memory::Factory;
+use std::borrow::Borrow;
 use std::iter;
 use std::sync::Arc;
 
+pub type Allocation = <device::Allocator as Factory<Backend>>::Image;
+
 pub struct Texture {
-  raw: Option<(backend::ImageView, backend::Image)>,
+  raw: Option<(backend::ImageView, Allocation)>,
   device: Arc<Device>,
 }
 
@@ -20,10 +24,12 @@ impl Texture {
 impl Drop for Texture {
   fn drop(&mut self) {
     if let Some((view, image)) = self.raw.take() {
-      let device = self.device.raw();
+      self.device.raw().destroy_image_view(view);
 
-      device.destroy_image_view(view);
-      device.destroy_image(image);
+      self
+        .device
+        .allocator()
+        .destroy_image(self.device.raw(), image);
     }
   }
 }
@@ -83,12 +89,15 @@ impl TextureLoader {
 
     buffer.write(&source);
 
-    let kind = gfx_hal::image::Kind::D2(width, height, 1, 1);
-
-    let unbound = device
-      .raw()
+    let image = device
+      .allocator()
       .create_image(
-        kind,
+        device.raw(),
+        (
+          gfx_memory::Type::General,
+          gfx_hal::memory::Properties::DEVICE_LOCAL,
+        ),
+        gfx_hal::image::Kind::D2(width, height, 1, 1),
         1,
         gfx_hal::format::Format::Rgba8Srgb,
         gfx_hal::image::Tiling::Optimal,
@@ -96,34 +105,6 @@ impl TextureLoader {
         gfx_hal::image::ViewCapabilities::empty(),
       )
       .expect("could not create image");
-
-    let requirements = device.raw().get_image_requirements(&unbound);
-
-    let upload_type = device
-      .memory_properties()
-      .memory_types
-      .iter()
-      .enumerate()
-      .find(|(id, ty)| {
-        let supported = requirements.type_mask & (1_u64 << id) != 0;
-
-        supported
-          && ty
-            .properties
-            .contains(gfx_hal::memory::Properties::DEVICE_LOCAL)
-      })
-      .map(|(id, _ty)| gfx_hal::MemoryTypeId(id))
-      .expect("could not find approprate vertex buffer memory type");
-
-    let memory = device
-      .raw()
-      .allocate_memory(upload_type, requirements.size)
-      .unwrap();
-
-    let image = device
-      .raw()
-      .bind_image_memory(&memory, 0, unbound)
-      .expect("could not bind image memory");
 
     cmd.begin();
 
@@ -137,7 +118,7 @@ impl TextureLoader {
             gfx_hal::image::Access::TRANSFER_WRITE,
             gfx_hal::image::Layout::TransferDstOptimal,
           ),
-        target: &image,
+        target: image.borrow(),
         range: gfx_hal::image::SubresourceRange {
           aspects: gfx_hal::format::Aspects::COLOR,
           levels: 0..1,
@@ -153,7 +134,7 @@ impl TextureLoader {
 
       cmd.copy_buffer_to_image(
         buffer.raw(),
-        &image,
+        image.borrow(),
         gfx_hal::image::Layout::TransferDstOptimal,
         &[gfx_hal::command::BufferImageCopy {
           buffer_offset: 0,
@@ -182,7 +163,7 @@ impl TextureLoader {
             gfx_hal::image::Access::SHADER_READ,
             gfx_hal::image::Layout::ShaderReadOnlyOptimal,
           ),
-        target: &image,
+        target: image.borrow(),
         range: gfx_hal::image::SubresourceRange {
           aspects: gfx_hal::format::Aspects::COLOR,
           levels: 0..1,
@@ -219,7 +200,7 @@ impl TextureLoader {
     let view = device
       .raw()
       .create_image_view(
-        &image,
+        image.borrow(),
         gfx_hal::image::ViewKind::D2,
         gfx_hal::format::Format::Rgba8Srgb,
         gfx_hal::format::Swizzle::NO,

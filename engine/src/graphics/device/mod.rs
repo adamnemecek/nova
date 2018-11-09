@@ -7,10 +7,14 @@ pub use self::queues::*;
 pub use self::sync::*;
 
 use super::hal::*;
-use crate::utils::quick_error;
-use std::sync::Arc;
+use crate::utils::{quick_error, Droppable};
+use gfx_memory::{MemoryAllocator, SmartAllocator};
+use std::sync::{Arc, Mutex, MutexGuard};
+
+pub type Allocator = SmartAllocator<Backend>;
 
 pub struct Device {
+  allocator: Droppable<Mutex<Allocator>>,
   raw: backend::Device,
   adapter: backend::Adapter,
   _instance: Arc<backend::Instance>,
@@ -38,11 +42,20 @@ impl Device {
 
     let mut gpu = adapter.physical_device.open(&creation_info[..])?;
 
+    let allocator = Allocator::new(
+      adapter.physical_device.memory_properties(),
+      64 * 1024 * 1024,
+      32,
+      128,
+      256 * 1024 * 1024,
+    );
+
     // Create a wrapper.
     let device = Arc::new(Device {
       _instance: instance.clone(),
       adapter,
       raw: gpu.device,
+      allocator: Mutex::new(allocator).into(),
     });
 
     // Create a queue set from the queues.
@@ -55,12 +68,28 @@ impl Device {
     &self.adapter
   }
 
+  pub fn allocator(&self) -> MutexGuard<SmartAllocator<Backend>> {
+    self.allocator.lock().unwrap()
+  }
+
   pub fn memory_properties(&self) -> gfx_hal::MemoryProperties {
     self.adapter.physical_device.memory_properties()
   }
 
   pub fn raw(&self) -> &backend::Device {
     &self.raw
+  }
+}
+
+impl Drop for Device {
+  fn drop(&mut self) {
+    if let Some(allocator) = self.allocator.take() {
+      allocator
+        .into_inner()
+        .unwrap()
+        .dispose(&self.raw)
+        .expect("could not dispose allocator");
+    }
   }
 }
 
