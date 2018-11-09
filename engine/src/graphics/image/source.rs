@@ -2,13 +2,13 @@ use crate::math::algebra::Vector2;
 use derive_more::*;
 use image::RgbaImage;
 
-pub type DataError = ::image::ImageError;
+pub type SourceError = ::image::ImageError;
 
 #[derive(From)]
-pub struct Data(RgbaImage);
+pub struct Source(RgbaImage);
 
-impl Data {
-  pub fn from_memory(bytes: &[u8]) -> Result<Data, DataError> {
+impl Source {
+  pub fn from_bytes(bytes: &[u8]) -> Result<Source, SourceError> {
     Ok(::image::load_from_memory(bytes)?.to_rgba().into())
   }
 

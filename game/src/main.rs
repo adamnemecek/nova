@@ -59,7 +59,7 @@ pub fn main() -> Result<(), String> {
   let mut image_loader = image::Loader::new(&gfx.queues.transfer);
 
   let image = image_loader.load(
-    &image::Data::from_memory(include_bytes!("../assets/do-it.jpg"))
+    &image::Source::from_bytes(include_bytes!("../assets/do-it.jpg"))
       .expect("could not load image data"),
   );
 

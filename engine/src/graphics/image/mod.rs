@@ -1,10 +1,10 @@
-mod data;
 mod loader;
 mod sampler;
+mod source;
 
-pub use self::data::*;
 pub use self::loader::Loader;
 pub use self::sampler::Sampler;
+pub use self::source::*;
 pub use gfx_hal::format::Format;
 pub use gfx_hal::image::Layout;
 
@@ -14,32 +14,30 @@ use crate::utils::Droppable;
 use gfx_memory::Factory;
 use std::sync::Arc;
 
-pub type Allocation = <device::Allocator as Factory<Backend>>::Image;
+type AllocatorImage = <device::Allocator as Factory<Backend>>::Image;
 
 pub struct Image {
-  inner: Droppable<Inner>,
+  view: Droppable<backend::ImageView>,
+  inner: Droppable<AllocatorImage>,
   device: Arc<Device>,
-}
-
-struct Inner {
-  view: backend::ImageView,
-  image: Allocation,
 }
 
 impl AsRef<backend::ImageView> for Image {
   fn as_ref(&self) -> &backend::ImageView {
-    &self.inner.view
+    &self.view
   }
 }
 
 impl Drop for Image {
   fn drop(&mut self) {
     let device = &self.device;
-    let raw_device = device.raw();
+
+    if let Some(view) = self.view.take() {
+      device.raw().destroy_image_view(view);
+    }
 
     if let Some(inner) = self.inner.take() {
-      raw_device.destroy_image_view(inner.view);
-      device.allocator().destroy_image(raw_device, inner.image);
+      device.allocator().destroy_image(device.raw(), inner);
     }
   }
 }

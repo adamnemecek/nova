@@ -1,4 +1,4 @@
-use super::{Data, Image, Inner};
+use super::{Image, Source};
 use crate::graphics::device;
 use crate::graphics::hal::*;
 use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
@@ -18,7 +18,7 @@ impl Loader {
     }
   }
 
-  pub fn load(&mut self, source: &Data) -> Image {
+  pub fn load(&mut self, source: &Source) -> Image {
     let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
     let device = self.command_pool.queue().device();
 
@@ -157,7 +157,8 @@ impl Loader {
 
     Image {
       device: device.clone(),
-      inner: Inner { image, view }.into(),
+      inner: image.into(),
+      view: view.into(),
     }
   }
 }
