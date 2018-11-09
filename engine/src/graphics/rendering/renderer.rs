@@ -10,11 +10,10 @@ pub const FRAME_COUNT: usize = 3;
 pub struct Renderer {
   pass: Arc<RenderPass>,
   command_pool: Arc<CommandPool>,
-  frames: Chain<[Frame; FRAME_COUNT]>,
+  frames: Chain<Frame>,
 }
 
 struct Frame {
-  fence: Fence,
   semaphore: Semaphore,
   commands: SmallVec<[CommandBuffer; 1]>,
 }
@@ -26,8 +25,7 @@ impl Renderer {
     Renderer {
       pass: RenderPass::new(device),
       command_pool: CommandPool::new(&queue),
-      frames: Chain::allocate(|| Frame {
-        fence: Fence::new(device),
+      frames: Chain::allocate(FRAME_COUNT, |_| Frame {
         semaphore: Semaphore::new(device),
         commands: SmallVec::new(),
       }),
@@ -41,8 +39,9 @@ impl Renderer {
   pub fn render(
     &mut self,
     framebuffer: &Framebuffer,
-    wait_for: &Semaphore,
     commands: impl IntoIterator<Item = CommandBuffer>,
+    wait_for: &Semaphore,
+    fence: Option<&Fence>,
   ) -> &Semaphore {
     let mut primary = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
 
@@ -52,8 +51,6 @@ impl Renderer {
     primary.finish();
 
     let frame = self.frames.next();
-
-    frame.fence.wait();
 
     frame.commands.clear();
     frame.commands.push(primary);
@@ -68,7 +65,7 @@ impl Renderer {
           )],
           signal_semaphores: &[frame.semaphore.raw()],
         },
-        Some(frame.fence.raw()),
+        fence.map(Fence::raw),
       );
     }
 

@@ -13,7 +13,7 @@ pub struct Swapchain {
   images: SmallVec<[backend::Image; 3]>,
   image_views: SmallVec<[backend::ImageView; 3]>,
   framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
-  semaphores: Chain<[Semaphore; 3]>,
+  semaphores: Chain<Semaphore>,
   size: Vector2<f32>,
 }
 
@@ -64,7 +64,7 @@ impl Swapchain {
       images: SmallVec::new(),
       image_views: SmallVec::new(),
       framebuffers: SmallVec::new(),
-      semaphores: Chain::allocate(|| Semaphore::new(device)),
+      semaphores: Chain::allocate(3, |_| Semaphore::new(device)),
       size: Vector2::new(extent.width as f32, extent.height as f32),
     };
 

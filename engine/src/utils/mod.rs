@@ -1,4 +1,5 @@
-mod chain;
+pub mod chain;
+
 mod droppable;
 
 pub use self::chain::Chain;

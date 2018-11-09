@@ -1,5 +1,6 @@
 use super::Device;
 use crate::graphics::hal::*;
+use crate::utils::Chain;
 use std::sync::Arc;
 
 pub struct Semaphore {
@@ -40,6 +41,10 @@ pub struct Fence {
 }
 
 impl Fence {
+  pub fn chain(device: &Arc<Device>, size: usize) -> Chain<Fence> {
+    Chain::allocate(size, |_| Fence::new(device))
+  }
+
   pub fn new(device: &Arc<Device>) -> Self {
     let fence = device
       .raw()

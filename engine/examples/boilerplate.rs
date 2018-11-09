@@ -13,7 +13,7 @@ pub fn main() -> Result<(), String> {
 
   let command_pool = rendering::CommandPool::new(&gfx.queues.graphics);
 
-  loop {
+  for fence in graphics::device::Fence::chain(&gfx.device, 3).iter_mut() {
     gfx.window.update();
 
     if gfx.window.is_closed() {
@@ -47,7 +47,14 @@ pub fn main() -> Result<(), String> {
 
     cmd.finish();
 
-    let render_semaphore = renderer.render(&framebuffer, &framebuffer_semaphore, iter::once(cmd));
+    fence.wait();
+
+    let render_semaphore = renderer.render(
+      &framebuffer,
+      iter::once(cmd),
+      &framebuffer_semaphore,
+      Some(fence),
+    );
 
     let result = gfx.queues.graphics.present(
       iter::once((swapchain.as_ref(), framebuffer.index())),
