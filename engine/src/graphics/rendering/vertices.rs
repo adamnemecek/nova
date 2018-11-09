@@ -1,4 +1,4 @@
-use super::*;
+use crate::graphics::image;
 use std::mem;
 
 pub trait VertexData: Sized {
@@ -23,11 +23,11 @@ impl VertexAttribute {
   }
 }
 
-impl From<&VertexAttribute> for ImageFormat {
+impl From<&VertexAttribute> for image::Format {
   fn from(attr: &VertexAttribute) -> Self {
     match attr {
-      VertexAttribute::Vector2f32 => ImageFormat::Rg32Float,
-      VertexAttribute::Vector4f32 => ImageFormat::Rgba32Float,
+      VertexAttribute::Vector2f32 => image::Format::Rg32Float,
+      VertexAttribute::Vector4f32 => image::Format::Rgba32Float,
     }
   }
 }

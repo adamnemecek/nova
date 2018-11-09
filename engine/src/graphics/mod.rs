@@ -5,6 +5,7 @@
 pub mod context;
 pub mod device;
 pub mod hal;
+pub mod image;
 pub mod pipeline;
 pub mod rendering;
 pub mod window;
@@ -15,6 +16,7 @@ mod mesh;
 pub use self::color::*;
 pub use self::context::Context;
 pub use self::device::Device;
+pub use self::image::Image;
 pub use self::mesh::*;
 pub use self::pipeline::Pipeline;
 pub use self::window::Window;

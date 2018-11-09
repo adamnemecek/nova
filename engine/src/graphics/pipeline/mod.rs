@@ -3,7 +3,8 @@ mod shaders;
 pub use self::shaders::{Shader, ShaderKind};
 
 use super::hal::*;
-use super::rendering::{RenderPass, Texture, TextureSampler, VertexData};
+use super::image::{self, Image};
+use super::rendering::{RenderPass, VertexData};
 use super::Device;
 use std::iter;
 use std::ops::Range;
@@ -333,7 +334,7 @@ impl Drop for DescriptorPool {
 }
 
 pub enum Descriptor<'a> {
-  SampledTexture(&'a Texture, &'a TextureSampler),
+  Texture(&'a Image, &'a image::Sampler),
 }
 
 pub struct DescriptorSet {
@@ -359,13 +360,11 @@ impl DescriptorSet {
         binding: i as u32,
         array_offset: 0,
         descriptors: iter::once(match descriptor {
-          Descriptor::SampledTexture(texture, sampler) => {
-            gfx_hal::pso::Descriptor::CombinedImageSampler(
-              texture.raw_view(),
-              gfx_hal::image::Layout::ShaderReadOnlyOptimal,
-              sampler.raw(),
-            )
-          }
+          Descriptor::Texture(image, sampler) => gfx_hal::pso::Descriptor::CombinedImageSampler(
+            image.raw_view(),
+            gfx_hal::image::Layout::ShaderReadOnlyOptimal,
+            sampler.raw(),
+          ),
         }),
       }
     }));

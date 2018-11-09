@@ -1,4 +1,5 @@
 use nova::graphics;
+use nova::graphics::image;
 use nova::graphics::pipeline;
 use nova::graphics::rendering;
 use nova::graphics::window;
@@ -55,15 +56,14 @@ pub fn main() -> Result<(), String> {
     &[0, 1, 2, 2, 3, 0],
   );
 
-  let mut texture_loader = rendering::TextureLoader::new(&gfx.queues.transfer);
+  let mut image_loader = image::Loader::new(&gfx.queues.transfer);
 
-  let texture = texture_loader.load(
-    &image::load_from_memory(include_bytes!("../assets/do-it.jpg"))
-      .expect("could not load texture")
-      .to_rgba(),
+  let image = image_loader.load(
+    &image::Data::from_memory(include_bytes!("../assets/do-it.jpg"))
+      .expect("could not load image data"),
   );
 
-  let sampler = rendering::TextureSampler::new(&gfx.device);
+  let sampler = image::Sampler::new(&gfx.device);
 
   log.trace("Created mesh and texture/sampler pair.");
 
@@ -71,7 +71,7 @@ pub fn main() -> Result<(), String> {
 
   let descriptor_set = pipeline::DescriptorSet::new(
     &descriptor_pool,
-    &[pipeline::Descriptor::SampledTexture(&texture, &sampler)],
+    &[pipeline::Descriptor::Texture(&image, &sampler)],
   );
 
   log.trace("Created descriptor set.");

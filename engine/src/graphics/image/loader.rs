@@ -1,93 +1,36 @@
-pub use gfx_hal::format::Format as ImageFormat;
-
-use super::{CommandBuffer, CommandBufferKind, CommandPool};
-use crate::graphics::device::{self, Device};
+use super::{Data, Image, Inner};
+use crate::graphics::device;
 use crate::graphics::hal::*;
+use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
 use gfx_memory::Factory;
 use std::borrow::Borrow;
 use std::iter;
 use std::sync::Arc;
 
-pub type Allocation = <device::Allocator as Factory<Backend>>::Image;
-
-pub struct Texture {
-  raw: Option<(backend::ImageView, Allocation)>,
-  device: Arc<Device>,
-}
-
-impl Texture {
-  pub fn raw_view(&self) -> &backend::ImageView {
-    &self.raw.as_ref().unwrap().0
-  }
-}
-
-impl Drop for Texture {
-  fn drop(&mut self) {
-    if let Some((view, image)) = self.raw.take() {
-      self.device.raw().destroy_image_view(view);
-
-      self
-        .device
-        .allocator()
-        .destroy_image(self.device.raw(), image);
-    }
-  }
-}
-
-pub struct TextureSampler {
-  raw: Option<backend::Sampler>,
-  device: Arc<Device>,
-}
-
-impl TextureSampler {
-  pub fn new(device: &Arc<Device>) -> Self {
-    let sampler = device
-      .raw()
-      .create_sampler(gfx_hal::image::SamplerInfo::new(
-        gfx_hal::image::Filter::Linear,
-        gfx_hal::image::WrapMode::Tile,
-      ))
-      .expect("could not create sampler");
-
-    TextureSampler {
-      device: device.clone(),
-      raw: Some(sampler),
-    }
-  }
-
-  pub fn raw(&self) -> &backend::Sampler {
-    self.raw.as_ref().unwrap()
-  }
-}
-
-impl Drop for TextureSampler {
-  fn drop(&mut self) {
-    if let Some(sampler) = self.raw.take() {
-      self.device.raw().destroy_sampler(sampler);
-    }
-  }
-}
-
-pub struct TextureLoader {
+pub struct Loader {
   command_pool: Arc<CommandPool>,
 }
 
-impl TextureLoader {
-  pub fn new(queue: &Arc<device::Queue>) -> TextureLoader {
-    TextureLoader {
+impl Loader {
+  pub fn new(queue: &Arc<device::Queue>) -> Self {
+    Loader {
       command_pool: CommandPool::new(queue),
     }
   }
 
-  pub fn load(&mut self, source: &image::RgbaImage) -> Texture {
+  pub fn load(&mut self, source: &Data) -> Image {
     let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
     let device = self.command_pool.queue().device();
 
-    let (width, height) = source.dimensions();
+    let size = source.size();
 
-    let mut buffer = device::Buffer::new(device, source.len(), device::BufferUsage::TRANSFER_SRC);
+    let mut buffer = device::Buffer::new(
+      device,
+      source.bytes().len(),
+      device::BufferUsage::TRANSFER_SRC,
+    );
 
-    buffer.write(&source);
+    buffer.write(source.bytes());
 
     let image = device
       .allocator()
@@ -97,7 +40,7 @@ impl TextureLoader {
           gfx_memory::Type::General,
           gfx_hal::memory::Properties::DEVICE_LOCAL,
         ),
-        gfx_hal::image::Kind::D2(width, height, 1, 1),
+        gfx_hal::image::Kind::D2(size.x, size.y, 1, 1),
         1,
         gfx_hal::format::Format::Rgba8Srgb,
         gfx_hal::image::Tiling::Optimal,
@@ -147,8 +90,8 @@ impl TextureLoader {
           },
           image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
           image_extent: gfx_hal::image::Extent {
-            width,
-            height,
+            width: size.x,
+            height: size.y,
             depth: 1,
           },
         }],
@@ -212,9 +155,9 @@ impl TextureLoader {
       )
       .expect("could not create image view");
 
-    Texture {
+    Image {
       device: device.clone(),
-      raw: Some((view, image)),
+      inner: Inner { image, view }.into(),
     }
   }
 }

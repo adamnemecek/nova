@@ -1,15 +1,16 @@
 use super::*;
+use crate::graphics::image;
 use std::sync::Arc;
 
 pub struct RenderPass {
   device: Arc<Device>,
   raw: Option<backend::RenderPass>,
-  format: ImageFormat,
+  format: image::Format,
 }
 
 impl RenderPass {
   pub fn new(device: &Arc<Device>) -> Arc<Self> {
-    let format = ImageFormat::Bgra8Unorm;
+    let format = image::Format::Bgra8Unorm;
 
     let color_attachment = gfx_hal::pass::Attachment {
       format: Some(format),
@@ -59,7 +60,7 @@ impl RenderPass {
     self.raw.as_ref().expect("render pass is destroyed")
   }
 
-  pub fn format(&self) -> ImageFormat {
+  pub fn format(&self) -> image::Format {
     self.format
   }
 }
