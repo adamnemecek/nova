@@ -1,5 +1,6 @@
+use crate::graphics::backend;
 use crate::graphics::device;
-use crate::graphics::hal::*;
+use crate::graphics::hal::prelude::*;
 use gfx_hal::pool::CommandPoolCreateFlags;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};

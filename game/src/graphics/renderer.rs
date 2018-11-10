@@ -1,5 +1,5 @@
 use super::device;
-use super::hal::*;
+use super::hal::prelude::*;
 use super::rendering::pipeline;
 use super::rendering::{CommandBuffer, Framebuffer, RenderPass};
 use super::window::swapchain::{self, Swapchain};

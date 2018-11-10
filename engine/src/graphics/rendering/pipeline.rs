@@ -1,7 +1,8 @@
 pub use gfx_hal::pso::PipelineStage as Stage;
 
 use super::{RenderPass, Shader, VertexData};
-use crate::graphics::hal::*;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
 use crate::graphics::Device;
 use std::iter;

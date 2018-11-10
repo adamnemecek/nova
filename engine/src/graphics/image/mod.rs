@@ -8,8 +8,9 @@ pub use self::source::Source;
 pub use gfx_hal::format::Format;
 pub use gfx_hal::image::Layout;
 
+use super::backend::{self, Backend};
 use super::device::{self, Device};
-use super::hal::*;
+use super::hal::prelude::*;
 use crate::math::algebra::Vector2;
 use crate::utils::Droppable;
 use gfx_memory::Factory;

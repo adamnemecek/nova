@@ -1,8 +1,9 @@
 pub use gfx_hal::command::RawLevel as CommandBufferKind;
 
 use super::CommandPool;
+use crate::graphics::backend;
 use crate::graphics::device;
-use crate::graphics::hal::*;
+use crate::graphics::hal::prelude::*;
 use crate::graphics::rendering::{DescriptorSet, Framebuffer, Pipeline, RenderPass};
 use smallvec::SmallVec;
 use std::iter;

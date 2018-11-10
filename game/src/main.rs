@@ -2,8 +2,7 @@ mod graphics;
 
 use self::graphics::image;
 use self::graphics::rendering;
-use self::graphics::{Mesh, Vertex};
-use self::graphics::{Renderer, Window};
+use self::graphics::{Mesh, Renderer, Vertex, Window};
 use nova::math::algebra::*;
 use std::iter;
 
@@ -17,11 +16,11 @@ pub fn main() -> Result<(), String> {
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
 
-  let backend = graphics::hal::backend::Instance::create("nova-game", 1).into();
+  let backend = graphics::backend::Instance::create("nova-game", 1).into();
 
   log
     .trace("Created backend.")
-    .with("name", &graphics::hal::backend::NAME);
+    .with("name", &graphics::backend::NAME);
 
   let mut window =
     Window::new(&backend).map_err(|err| format!("Could not create window: {}", err))?;

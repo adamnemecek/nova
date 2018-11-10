@@ -1,6 +1,7 @@
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
-use crate::graphics::hal::*;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
 use crate::graphics::Device;
 use std::sync::Arc;
 

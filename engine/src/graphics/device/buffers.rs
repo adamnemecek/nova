@@ -1,7 +1,8 @@
 pub use gfx_hal::buffer::Usage as BufferUsage;
 
 use super::{Allocator, Device};
-use crate::graphics::hal::*;
+use crate::graphics::backend::{self, Backend};
+use crate::graphics::hal::prelude::*;
 use crate::utils::Droppable;
 use gfx_memory::{Block, Factory};
 use std::mem;

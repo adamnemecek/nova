@@ -1,6 +1,6 @@
 use super::{Backing, Format, Image, Source};
 use crate::graphics::device;
-use crate::graphics::hal::*;
+use crate::graphics::hal::prelude::*;
 use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
 use gfx_memory::Factory;
 use std::borrow::Borrow;

@@ -1,5 +1,6 @@
 use super::Device;
-use crate::graphics::hal::*;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
 use crate::utils::Chain;
 use std::sync::Arc;
 

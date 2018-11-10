@@ -6,7 +6,8 @@ pub use self::surface::Surface;
 pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
 
-use super::hal::*;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
 use crate::math::algebra::Vector2;
 use std::sync::Arc;
 

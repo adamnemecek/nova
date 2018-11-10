@@ -7,7 +7,8 @@ pub use self::buffers::*;
 pub use self::queues::{DefaultQueueSet, Queue, QueueSet};
 pub use self::sync::*;
 
-use super::hal::*;
+use super::backend::{self, Backend};
+use super::hal::prelude::*;
 use crate::utils::{quick_error, Droppable};
 use gfx_memory::{MemoryAllocator, SmartAllocator};
 use std::sync::{Arc, Mutex, MutexGuard};

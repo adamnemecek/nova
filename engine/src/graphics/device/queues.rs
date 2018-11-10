@@ -2,7 +2,8 @@ pub use gfx_hal::queue::QueueFamilyId;
 pub use gfx_hal::queue::RawSubmission;
 
 use super::{Device, Semaphore};
-use crate::graphics::hal::*;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
 use crate::graphics::window::Swapchain;
 use std::sync::{Arc, Mutex, MutexGuard};
 
