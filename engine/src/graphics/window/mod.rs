@@ -1,6 +1,9 @@
-mod swapchain;
+pub mod swapchain;
 
-pub use self::swapchain::*;
+mod surface;
+
+pub use self::surface::Surface;
+pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
 
 use super::hal::*;
@@ -8,31 +11,31 @@ use crate::math::algebra::Vector2;
 use std::sync::Arc;
 
 pub struct Window {
-  size: Vector2<f32>,
-  closed: bool,
   events_loop: winit::EventsLoop,
   raw: winit::Window,
-  surface: backend::Surface,
-  _instance: Arc<backend::Instance>,
+  surface: Arc<Surface>,
+  size: Vector2<u32>,
+  closed: bool,
 }
 
 impl Window {
-  pub fn new(instance: &Arc<backend::Instance>) -> Result<Window, CreationError> {
+  pub fn new(backend: &Arc<backend::Instance>) -> Result<Window, CreationError> {
     let events_loop = winit::EventsLoop::new();
 
     let window = winit::WindowBuilder::new()
       .with_title("nova")
       .build(&events_loop)?;
 
-    let surface = instance.create_surface(&window);
+    let size = physical_size_of(&window);
+
+    let surface = Surface::new(backend, &window).into();
 
     Ok(Window {
-      size: physical_size_of(&window),
-      closed: false,
       events_loop,
       raw: window,
       surface,
-      _instance: instance.clone(),
+      size,
+      closed: false,
     })
   }
 
@@ -65,28 +68,24 @@ impl Window {
     }
   }
 
+  pub fn surface(&self) -> &Arc<Surface> {
+    &self.surface
+  }
+
   pub fn is_closed(&self) -> bool {
     self.closed
   }
 
-  pub fn size(&self) -> Vector2<f32> {
+  pub fn size(&self) -> Vector2<u32> {
     self.size
-  }
-
-  pub fn raw_surface(&self) -> &backend::Surface {
-    &self.surface
-  }
-
-  pub fn raw_surface_mut(&mut self) -> &mut backend::Surface {
-    &mut self.surface
   }
 }
 
-fn physical_size_of(window: &winit::Window) -> Vector2<f32> {
+fn physical_size_of(window: &winit::Window) -> Vector2<u32> {
   let size = window
     .get_inner_size()
     .expect("window destroyed")
     .to_physical(window.get_hidpi_factor());
 
-  Vector2::new(size.width as f32, size.height as f32)
+  Vector2::new(size.width.round() as u32, size.height.round() as u32)
 }

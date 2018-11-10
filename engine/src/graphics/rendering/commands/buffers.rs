@@ -3,9 +3,7 @@ pub use gfx_hal::command::RawLevel as CommandBufferKind;
 use super::CommandPool;
 use crate::graphics::device;
 use crate::graphics::hal::*;
-use crate::graphics::pipeline::{DescriptorSet, Pipeline};
-use crate::graphics::rendering::RenderPass;
-use crate::graphics::window::Framebuffer;
+use crate::graphics::rendering::{DescriptorSet, Framebuffer, Pipeline, RenderPass};
 use smallvec::SmallVec;
 use std::iter;
 use std::sync::atomic;
@@ -41,13 +39,14 @@ impl CommandBuffer {
 
   pub fn begin_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
     let cmd = self.raw_mut();
+    let size = framebuffer.size().map(|u| u as i16);
 
     let viewport = gfx_hal::pso::Viewport {
       rect: gfx_hal::pso::Rect {
         x: 0,
         y: 0,
-        w: framebuffer.width(),
-        h: framebuffer.height(),
+        w: size.x as i16,
+        h: size.y as i16,
       },
       depth: 0.0..1.0,
     };
@@ -56,7 +55,7 @@ impl CommandBuffer {
 
     cmd.begin_render_pass(
       pass.raw(),
-      framebuffer.raw(),
+      framebuffer.as_ref(),
       viewport.rect,
       &[
         gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
@@ -80,7 +79,7 @@ impl CommandBuffer {
           index: 0,
           main_pass: pass.raw(),
         }),
-        framebuffer: Some(framebuffer.raw()),
+        framebuffer: Some(framebuffer.as_ref()),
         ..Default::default()
       },
     );

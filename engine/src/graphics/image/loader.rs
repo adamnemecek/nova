@@ -140,6 +140,6 @@ impl Loader {
 
     drop(cmd);
 
-    unsafe { Image::new(device, Backing::Allocated(image), Format::Rgba8Srgb) }
+    Image::from_raw(device, Backing::Allocated(image), Format::Rgba8Srgb, size)
   }
 }

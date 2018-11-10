@@ -15,6 +15,14 @@ impl<T> Chain<T> {
     IterMut(self)
   }
 
+  pub fn current(&self) -> &T {
+    &self.items[self.index]
+  }
+
+  pub fn current_mut(&mut self) -> &mut T {
+    &mut self.items[self.index]
+  }
+
   pub fn next(&mut self) -> &mut T {
     let index = self.index;
 

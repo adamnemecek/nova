@@ -1,11 +1,10 @@
-use nova::graphics;
-use nova::graphics::image;
-use nova::graphics::pipeline;
-use nova::graphics::rendering;
-use nova::graphics::window;
-use nova::graphics::{Mesh, Vertex};
+mod graphics;
+
+use self::graphics::image;
+use self::graphics::rendering;
+use self::graphics::{Mesh, Vertex};
+use self::graphics::{Renderer, Window};
 use nova::math::algebra::*;
-use nova::utils::Droppable;
 use std::iter;
 
 /// Main entry point of the program.
@@ -17,36 +16,41 @@ pub fn main() -> Result<(), String> {
   );
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
-  let mut gfx = graphics::Context::new("nova-game", 1)
-    .map_err(|err| format!("Could not create graphics context: {}", err))?;
 
-  log.trace("Created graphics context.");
+  let backend = graphics::hal::backend::Instance::create("nova-game", 1).into();
 
-  let shaders = pipeline::PipelineShaderSet::load_defaults(&gfx.device);
+  log
+    .trace("Created backend.")
+    .with("name", &graphics::hal::backend::NAME);
 
-  let mut renderer = rendering::Renderer::new(&gfx.queues.graphics);
+  let mut window =
+    Window::new(&backend).map_err(|err| format!("Could not create window: {}", err))?;
 
-  let descriptor_set_layout = pipeline::DescriptorSetLayout::new()
-    .texture()
-    .create(&gfx.device);
+  log
+    .trace("Created window.")
+    .with("width", &window.size().x)
+    .with("height", &window.size().y);
 
-  let pipeline = pipeline::Pipeline::new()
-    .render_pass(renderer.pass())
-    .shaders(shaders)
-    .vertex_buffer::<graphics::Vertex>()
-    .push_constant::<graphics::Color>()
-    .push_constant::<Matrix4<f32>>()
-    .descriptor_set_layout(&descriptor_set_layout)
-    .create();
+  let (gfx_device, gfx_queues) =
+    graphics::Device::open::<graphics::device::DefaultQueueSet>(&backend)
+      .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
-  log.trace("Created pipeline.");
+  log.trace("Opened graphics device.");
 
-  let command_pool = rendering::CommandPool::new(&gfx.queues.graphics);
+  let mut renderer = Renderer::new(&gfx_queues.graphics, &window, &log);
 
-  log.trace("Created renderer arnd command pool.");
+  log.trace("Created renderer.");
+
+  let command_pool = rendering::CommandPool::new(&gfx_queues.graphics);
+
+  log.trace("Created command pool.");
+
+  let pipeline = graphics::pipeline::create_default(renderer.pass());
+
+  log.trace("Created graphics pipeline.");
 
   let quad = Mesh::new(
-    &gfx.device,
+    &gfx_device,
     &[
       Vertex::new([-0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [1.0, 0.0]),
       Vertex::new([0.5, -0.5], [1.0, 1.0, 1.0, 1.0], [0.0, 0.0]),
@@ -56,64 +60,46 @@ pub fn main() -> Result<(), String> {
     &[0, 1, 2, 2, 3, 0],
   );
 
-  let mut image_loader = image::Loader::new(&gfx.queues.transfer);
+  log.trace("Created quad mesh.");
+
+  let mut image_loader = image::Loader::new(&gfx_queues.transfer);
 
   let image = image_loader.load(
     &image::Source::from_bytes(include_bytes!("../assets/do-it.jpg"))
-      .expect("could not load image data"),
+      .map_err(|err| format!("Could not load image data: {}", err))?,
   );
 
-  let sampler = image::Sampler::new(&gfx.device);
+  let sampler = image::Sampler::new(&gfx_device);
 
-  log.trace("Created mesh and texture/sampler pair.");
+  log.trace("Created quad texture.");
 
-  let descriptor_pool = pipeline::DescriptorPool::new(&descriptor_set_layout, 1);
+  let descriptor_pool =
+    rendering::DescriptorPool::new(pipeline.descriptor_set_layout().unwrap(), 1);
 
-  let descriptor_set = pipeline::DescriptorSet::new(
+  let descriptor_set = rendering::DescriptorSet::new(
     &descriptor_pool,
-    &[pipeline::Descriptor::Texture(&image, &sampler)],
+    &[rendering::Descriptor::Texture(&image, &sampler)],
   );
 
-  log.trace("Created descriptor set.");
+  log.trace("Created quad texture descriptor set.");
 
-  let mut swapchain = Droppable::<window::Swapchain>::dropped();
+  loop {
+    window.update();
 
-  for fence in &mut graphics::device::Fence::chain(&gfx.device, 3) {
-    gfx.window.update();
-
-    if gfx.window.is_closed() {
+    if window.is_closed() {
       break;
     }
 
-    if !swapchain.is_dropped() && swapchain.size() != gfx.window.size() {
-      swapchain.drop();
-    }
+    renderer.resize(window.size());
 
-    let (framebuffer, framebuffer_semaphore) = loop {
-      if swapchain.is_dropped() {
-        let size = gfx.window.size();
-
-        swapchain =
-          window::Swapchain::new(renderer.pass(), gfx.window.raw_surface_mut(), size).into();
-
-        let actual_size = swapchain.size();
-
-        log
-          .info("Created swapchain.")
-          .with("width", &actual_size.x)
-          .with("height", &actual_size.y);
-      }
-
-      match swapchain.acquire_framebuffer() {
-        Ok(fb) => break fb,
-        Err(_) => swapchain.drop(),
-      };
-    };
+    let framebuffer = renderer.begin_frame();
 
     let mut cmd =
-      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Secondary);
+      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
 
-    cmd.begin_with(renderer.pass(), &framebuffer);
+    cmd.begin();
+
+    cmd.begin_pass(renderer.pass(), &framebuffer);
 
     cmd.bind_pipeline(&pipeline);
 
@@ -123,27 +109,11 @@ pub fn main() -> Result<(), String> {
     cmd.bind_descriptor_set(0, &descriptor_set);
     cmd.bind_vertex_buffer(0, quad.vertex_buffer());
     cmd.bind_index_buffer(quad.index_buffer());
-    cmd.draw_indexed(quad.indices());
+    cmd.draw_indexed(quad.index_count());
 
     cmd.finish();
 
-    fence.wait();
-
-    let render_semaphore = renderer.render(
-      &framebuffer,
-      iter::once(cmd),
-      &framebuffer_semaphore,
-      Some(fence),
-    );
-
-    let result = gfx.queues.graphics.present(
-      iter::once((swapchain.as_ref(), framebuffer.index())),
-      iter::once(render_semaphore),
-    );
-
-    if let Err(_) = result {
-      swapchain.drop();
-    }
+    renderer.submit_frame(iter::once(cmd));
   }
 
   Ok(())

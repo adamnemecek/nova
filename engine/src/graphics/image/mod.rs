@@ -10,6 +10,7 @@ pub use gfx_hal::image::Layout;
 
 use super::device::{self, Device};
 use super::hal::*;
+use crate::math::algebra::Vector2;
 use crate::utils::Droppable;
 use gfx_memory::Factory;
 use std::sync::Arc;
@@ -17,13 +18,19 @@ use std::sync::Arc;
 type AllocatorImage = <device::Allocator as Factory<Backend>>::Image;
 
 pub struct Image {
-  view: Droppable<backend::ImageView>,
-  backing: Droppable<Backing>,
   device: Arc<Device>,
+  backing: Droppable<Backing>,
+  view: Droppable<backend::ImageView>,
+  size: Vector2<u32>,
 }
 
 impl Image {
-  pub unsafe fn new(device: &Arc<Device>, backing: Backing, format: Format) -> Self {
+  pub fn from_raw(
+    device: &Arc<Device>,
+    backing: Backing,
+    format: Format,
+    size: Vector2<u32>,
+  ) -> Self {
     let view = device
       .raw()
       .create_image_view(
@@ -40,10 +47,15 @@ impl Image {
       .expect("could not create image view");
 
     Image {
-      view: view.into(),
-      backing: backing.into(),
       device: device.clone(),
+      backing: backing.into(),
+      view: view.into(),
+      size,
     }
+  }
+
+  pub fn size(&self) -> Vector2<u32> {
+    self.size
   }
 }
 

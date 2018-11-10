@@ -1,9 +1,10 @@
+pub mod queues;
+
 mod buffers;
-mod queues;
 mod sync;
 
 pub use self::buffers::*;
-pub use self::queues::*;
+pub use self::queues::{DefaultQueueSet, Queue, QueueSet};
 pub use self::sync::*;
 
 use super::hal::*;
@@ -14,23 +15,21 @@ use std::sync::{Arc, Mutex, MutexGuard};
 pub type Allocator = SmartAllocator<Backend>;
 
 pub struct Device {
-  allocator: Droppable<Mutex<Allocator>>,
   raw: backend::Device,
   adapter: backend::Adapter,
-  _instance: Arc<backend::Instance>,
+  allocator: Droppable<Mutex<Allocator>>,
+  backend: Arc<backend::Instance>,
 }
 
 impl Device {
-  pub fn new<Q: QueueSet>(
-    instance: &Arc<backend::Instance>,
-    surface: &backend::Surface,
+  pub fn open<Q: QueueSet>(
+    backend: &Arc<backend::Instance>,
   ) -> Result<(Arc<Device>, Q), CreationError> {
     // Select the best available adapter.
-    let adapter =
-      select_best_adapter(&instance, surface).ok_or(CreationError::NoSupportedAdapter)?;
+    let adapter = select_best_adapter(&backend).ok_or(CreationError::NoSupportedAdapter)?;
 
     // Determine queue families to open.
-    let queue_families = Q::select_families(&adapter, &surface);
+    let queue_families = Q::select_families(&adapter);
 
     // Open the adapter's physical device.
     let priorities = [1.0f32];
@@ -52,10 +51,10 @@ impl Device {
 
     // Create a wrapper.
     let device = Arc::new(Device {
-      _instance: instance.clone(),
       adapter,
       raw: gpu.device,
       allocator: Mutex::new(allocator).into(),
+      backend: backend.clone(),
     });
 
     // Create a queue set from the queues.
@@ -64,16 +63,16 @@ impl Device {
     Ok((device, queues))
   }
 
+  pub fn backend(&self) -> &Arc<backend::Instance> {
+    &self.backend
+  }
+
   pub fn adapter(&self) -> &backend::Adapter {
     &self.adapter
   }
 
   pub fn allocator(&self) -> MutexGuard<SmartAllocator<Backend>> {
     self.allocator.lock().unwrap()
-  }
-
-  pub fn memory_properties(&self) -> gfx_hal::MemoryProperties {
-    self.adapter.physical_device.memory_properties()
   }
 
   pub fn raw(&self) -> &backend::Device {
@@ -94,28 +93,12 @@ impl Drop for Device {
 }
 
 /// Selects the best available device adapter.
-fn select_best_adapter(
-  instance: &backend::Instance,
-  surface: &backend::Surface,
-) -> Option<backend::Adapter> {
+fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adapter> {
   instance
     .enumerate_adapters()
     .into_iter()
-    // Only select adapters with at least one graphics queue that supports
-    // presentation to the surface.
-    .filter(|adapter| {
-      adapter
-        .queue_families
-        .iter()
-        .any(|f| f.supports_graphics() && surface.supports_queue_family(f))
-    })
-    // Only select adapters with at least one non-graphics queue.
-    .filter(|adapter| {
-      adapter
-        .queue_families
-        .iter()
-        .any(|f| !f.supports_graphics())
-    })
+    // Select only adapters with a graphics queue family.
+    .filter(|adapter| adapter.queue_families.iter().any(|f| f.supports_graphics()))
     // Select the adapter with the higest score:
     .max_by_key(|adapter| {
       let mut score = 0;

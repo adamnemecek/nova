@@ -3,18 +3,16 @@ use crate::graphics::hal::*;
 use crate::graphics::image::{self, Image};
 use crate::graphics::rendering::RenderPass;
 use crate::math::algebra::Vector2;
-use crate::utils::{quick_error, Chain, Droppable};
+use crate::utils::{quick_error, Droppable};
 use smallvec::SmallVec;
 use std::cmp;
 use std::sync::Arc;
 
 pub struct Swapchain {
-  size: Vector2<f32>,
-  semaphores: Chain<Semaphore>,
-  framebuffers: SmallVec<[Arc<Framebuffer>; 3]>,
-  images: SmallVec<[Image; 3]>,
-  raw: Droppable<backend::Swapchain>,
   device: Arc<Device>,
+  raw: Droppable<backend::Swapchain>,
+  images: SmallVec<[Arc<Image>; 3]>,
+  size: Vector2<f32>,
 }
 
 impl Swapchain {
@@ -55,42 +53,22 @@ impl Swapchain {
       .create_swapchain(surface, config, None)
       .expect("could not create swapchain");
 
-    let width = extent.width as i16;
-    let height = extent.height as i16;
-
     let mut swapchain = Swapchain {
       device: device.clone(),
       raw: raw.into(),
       images: SmallVec::new(),
-      framebuffers: SmallVec::new(),
-      semaphores: Chain::allocate(3, |_| Semaphore::new(device)),
       size: Vector2::new(extent.width as f32, extent.height as f32),
     };
 
     match backbuffer {
       gfx_hal::Backbuffer::Images(images) => {
         for image in images {
-          let image = unsafe {
-            Image::new(
-              device,
-              image::Backing::Swapchain(image),
-              render_pass.format(),
-            )
-          };
-
-          let framebuffer = device
-            .raw()
-            .create_framebuffer(render_pass.raw(), Some(image.as_ref()), extent.to_extent())
-            .expect("could not create framebuffer");
-
-          swapchain.images.push(image);
-
-          swapchain.framebuffers.push(Arc::new(Framebuffer {
-            index: swapchain.framebuffers.len() as u32,
-            raw: framebuffer,
-            width,
-            height,
-          }));
+          swapchain.images.push(Arc::new(Image::from_raw(
+            device,
+            image::Backing::Swapchain(image),
+            render_pass.format(),
+            Vector2::new(extent.width, extent.height),
+          )));
         }
       }
 
@@ -104,28 +82,25 @@ impl Swapchain {
     &self.raw
   }
 
-  pub fn raw_mut(&mut self) -> &mut backend::Swapchain {
-    &mut self.raw
+  pub fn images(&self) -> impl Iterator<Item = &Arc<Image>> {
+    self.images.iter()
   }
 
   pub fn size(&self) -> Vector2<f32> {
     self.size
   }
 
-  pub fn acquire_framebuffer(
-    &mut self,
-  ) -> Result<(Arc<Framebuffer>, &Semaphore), AcquireFramebufferError> {
-    let semaphore = self.semaphores.next();
-
+  pub fn acquire_image(&mut self, semaphore: &Semaphore) -> Result<usize, AcquireImageError> {
     let index = self
       .raw
       .acquire_image(!0, gfx_hal::FrameSync::Semaphore(semaphore.raw()))
       .map_err(|err| match err {
-        gfx_hal::AcquireError::OutOfDate => AcquireFramebufferError::SwapchainOutOfDate,
-        _ => panic!("could not acquire framebuffer"),
+        gfx_hal::AcquireError::OutOfDate => AcquireImageError::OutOfDate,
+        gfx_hal::AcquireError::NotReady => panic!("Swapchain::acquire_image timed out."),
+        gfx_hal::AcquireError::SurfaceLost(_) => panic!("Surface lost."),
       })?;
 
-    Ok((self.framebuffers[index as usize].clone(), semaphore))
+    Ok(index as usize)
   }
 }
 
@@ -133,44 +108,11 @@ impl Drop for Swapchain {
   fn drop(&mut self) {
     let device = self.device.raw();
 
-    for framebuffer in self.framebuffers.drain() {
-      if let Ok(framebuffer) = Arc::try_unwrap(framebuffer) {
-        device.destroy_framebuffer(framebuffer.raw);
-      } else {
-        panic!("swapchain framebuffer still in use");
-      }
-    }
-
     self.images.clear();
 
     if let Some(swapchain) = self.raw.take() {
       device.destroy_swapchain(swapchain);
     }
-  }
-}
-
-pub struct Framebuffer {
-  raw: backend::Framebuffer,
-  index: u32,
-  width: i16,
-  height: i16,
-}
-
-impl Framebuffer {
-  pub fn raw(&self) -> &backend::Framebuffer {
-    &self.raw
-  }
-
-  pub fn index(&self) -> u32 {
-    self.index
-  }
-
-  pub fn width(&self) -> i16 {
-    self.width
-  }
-
-  pub fn height(&self) -> i16 {
-    self.height
   }
 }
 
@@ -186,9 +128,9 @@ fn select_present_mode(modes: Vec<gfx_hal::window::PresentMode>) -> gfx_hal::win
 
 quick_error! {
   #[derive(Debug)]
-  pub enum AcquireFramebufferError {
-    SwapchainOutOfDate {
-      display("The given swapchain is out of date and must be recreated.")
+  pub enum AcquireImageError {
+    OutOfDate {
+      display("The swapchain is out of date and must be recreated.")
     }
   }
 }

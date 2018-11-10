@@ -1,21 +1,20 @@
-mod shaders;
+pub use gfx_hal::pso::PipelineStage as Stage;
 
-pub use self::shaders::{Shader, ShaderKind};
-
-use super::hal::*;
-use super::image::{self, Image};
-use super::rendering::{RenderPass, VertexData};
-use super::Device;
+use super::{RenderPass, Shader, VertexData};
+use crate::graphics::hal::*;
+use crate::graphics::image::{self, Image};
+use crate::graphics::Device;
 use std::iter;
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
 
 pub struct Pipeline {
-  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
+  device: Arc<Device>,
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
+  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
+  descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
   _shaders: PipelineShaderSet,
-  device: Arc<Device>,
 }
 
 impl Pipeline {
@@ -29,6 +28,10 @@ impl Pipeline {
 
   pub fn push_constant(&self, index: usize) -> (gfx_hal::pso::ShaderStageFlags, Range<u32>) {
     self.push_constants[index].clone()
+  }
+
+  pub fn descriptor_set_layout(&self) -> Option<&Arc<DescriptorSetLayout>> {
+    self.descriptor_set_layout.as_ref()
   }
 
   pub fn raw(&self) -> &backend::GraphicsPipeline {
@@ -57,21 +60,6 @@ pub struct PipelineShaderSet {
 }
 
 impl PipelineShaderSet {
-  pub fn load_defaults(device: &Arc<Device>) -> Self {
-    PipelineShaderSet {
-      vertex: Some(Shader::from_glsl(
-        device,
-        ShaderKind::Vertex,
-        include_str!("shaders/default.vert"),
-      )),
-      fragment: Some(Shader::from_glsl(
-        device,
-        ShaderKind::Fragment,
-        include_str!("shaders/default.frag"),
-      )),
-    }
-  }
-
   fn as_raw<'a>(&'a self) -> backend::ShaderSet<'a> {
     fn entry_point(shader: &Option<Shader>) -> Option<backend::ShaderEntryPoint> {
       shader.as_ref().map(|shader| backend::ShaderEntryPoint {
@@ -104,11 +92,6 @@ pub struct PipelineBuilder {
 impl PipelineBuilder {
   pub fn render_pass(mut self, pass: &Arc<RenderPass>) -> Self {
     self.render_pass = Some(pass.clone());
-    self
-  }
-
-  pub fn shaders(mut self, shaders: PipelineShaderSet) -> Self {
-    self.shaders = shaders;
     self
   }
 
@@ -171,9 +154,18 @@ impl PipelineBuilder {
     self
   }
 
-  pub fn create(self) -> Arc<Pipeline> {
+  pub fn vertex_shader(mut self, shader: Shader) -> Self {
+    self.shaders.vertex = Some(shader);
+    self
+  }
+
+  pub fn fragment_shader(mut self, shader: Shader) -> Self {
+    self.shaders.fragment = Some(shader);
+    self
+  }
+
+  pub fn build(self, device: &Arc<Device>) -> Arc<Pipeline> {
     let render_pass = self.render_pass.expect("render_pass is required");
-    let device = render_pass.device().clone();
 
     let subpass = gfx_hal::pass::Subpass {
       index: 0,
@@ -221,11 +213,12 @@ impl PipelineBuilder {
       .expect("could not create graphics pipeline");
 
     Arc::new(Pipeline {
-      device,
-      push_constants: self.push_constants,
-      _shaders: self.shaders,
-      layout: Some(layout),
+      device: device.clone(),
       raw: Some(pipeline),
+      layout: Some(layout),
+      push_constants: self.push_constants,
+      descriptor_set_layout: self.descriptor_set_layout,
+      _shaders: self.shaders,
     })
   }
 }
@@ -280,7 +273,7 @@ impl DescriptorSetLayoutBuilder {
     self
   }
 
-  pub fn create(self, device: &Arc<Device>) -> Arc<DescriptorSetLayout> {
+  pub fn build(self, device: &Arc<Device>) -> Arc<DescriptorSetLayout> {
     let layout = device
       .raw()
       .create_descriptor_set_layout(&self.bindings, &[])

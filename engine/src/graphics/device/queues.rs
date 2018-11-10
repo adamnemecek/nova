@@ -1,4 +1,5 @@
 pub use gfx_hal::queue::QueueFamilyId;
+pub use gfx_hal::queue::RawSubmission;
 
 use super::{Device, Semaphore};
 use crate::graphics::hal::*;
@@ -41,11 +42,11 @@ impl Queue {
 
   pub fn present<'a>(
     &self,
-    framebuffers: impl IntoIterator<Item = (&'a Swapchain, u32)>,
+    images: impl IntoIterator<Item = (&'a Swapchain, u32)>,
     wait_for: impl IntoIterator<Item = &'a Semaphore>,
   ) -> Result<(), ()> {
     self.raw_mut().present(
-      framebuffers.into_iter().map(|(sc, i)| (sc.raw(), i)),
+      images.into_iter().map(|(sc, i)| (sc.raw(), i)),
       wait_for.into_iter().map(Semaphore::raw),
     )
   }
@@ -56,10 +57,7 @@ impl Queue {
 }
 
 pub trait QueueSet {
-  fn select_families(
-    adapter: &backend::Adapter,
-    surface: &backend::Surface,
-  ) -> Vec<backend::QueueFamily>;
+  fn select_families(adapter: &backend::Adapter) -> Vec<backend::QueueFamily>;
 
   fn from_raw(
     device: &Arc<Device>,
@@ -74,15 +72,11 @@ pub struct DefaultQueueSet {
 }
 
 impl QueueSet for DefaultQueueSet {
-  fn select_families(
-    adapter: &backend::Adapter,
-    surface: &backend::Surface,
-  ) -> Vec<backend::QueueFamily> {
+  fn select_families(adapter: &backend::Adapter) -> Vec<backend::QueueFamily> {
     let graphics = adapter
       .queue_families
       .iter()
       .filter(|family| family.supports_graphics())
-      .filter(|family| surface.supports_queue_family(family))
       .next()
       .expect("no graphics queue family")
       .clone();

@@ -1,5 +1,6 @@
-use super::*;
+use crate::graphics::hal::*;
 use crate::graphics::image;
+use crate::graphics::Device;
 use std::sync::Arc;
 
 pub struct RenderPass {
