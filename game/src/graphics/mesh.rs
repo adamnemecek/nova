@@ -1,13 +1,13 @@
-use super::device::{self, Device};
-use super::rendering;
-use super::Color;
+use super::buffer::{self, Buffer};
+use super::vertices::*;
+use super::{Color, Device};
 use nova::math::algebra::Vector2;
 use std::sync::Arc;
 
 pub struct Mesh {
   indices: u32,
-  vertex_buffer: device::Buffer<Vertex>,
-  index_buffer: device::Buffer<u16>,
+  vertex_buffer: Buffer<Vertex>,
+  index_buffer: Buffer<u16>,
 }
 
 impl Mesh {
@@ -15,12 +15,11 @@ impl Mesh {
     assert!(vertices.len() > 0, "mesh has no vertices");
     assert!(indices.len() > 0, "mesh has no indices");
 
-    let mut vertex_buffer =
-      device::Buffer::new(device, vertices.len(), device::BufferUsage::VERTEX);
+    let mut vertex_buffer = Buffer::new(device, vertices.len(), buffer::Usage::VERTEX);
 
     vertex_buffer.write(&vertices);
 
-    let mut index_buffer = device::Buffer::new(device, indices.len(), device::BufferUsage::INDEX);
+    let mut index_buffer = Buffer::new(device, indices.len(), buffer::Usage::INDEX);
 
     index_buffer.write(&indices);
 
@@ -35,11 +34,11 @@ impl Mesh {
     self.indices
   }
 
-  pub fn vertex_buffer(&self) -> &device::Buffer<Vertex> {
+  pub fn vertex_buffer(&self) -> &Buffer<Vertex> {
     &self.vertex_buffer
   }
 
-  pub fn index_buffer(&self) -> &device::Buffer<u16> {
+  pub fn index_buffer(&self) -> &Buffer<u16> {
     &self.index_buffer
   }
 }
@@ -62,12 +61,12 @@ impl Vertex {
   }
 }
 
-impl rendering::VertexData for Vertex {
-  fn attributes() -> &'static [rendering::VertexAttribute] {
+impl VertexData for Vertex {
+  fn attributes() -> &'static [VertexAttribute] {
     &[
-      rendering::VertexAttribute::Vector2f32,
-      rendering::VertexAttribute::Vector4f32,
-      rendering::VertexAttribute::Vector2f32,
+      VertexAttribute::Vector2f32,
+      VertexAttribute::Vector4f32,
+      VertexAttribute::Vector2f32,
     ]
   }
 }

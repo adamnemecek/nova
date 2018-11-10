@@ -1,8 +1,8 @@
 mod graphics;
 
 use self::graphics::image;
-use self::graphics::rendering;
-use self::graphics::{Mesh, Renderer, Vertex, Window};
+use self::graphics::pipeline;
+use self::graphics::{Mesh, Vertex, Window};
 use nova::math::algebra::*;
 use std::iter;
 
@@ -36,11 +36,11 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Opened graphics device.");
 
-  let mut renderer = Renderer::new(&gfx_queues.graphics, &window, &log);
+  let mut renderer = graphics::Renderer::new(&gfx_queues.graphics, &window, &log);
 
   log.trace("Created renderer.");
 
-  let command_pool = rendering::CommandPool::new(&gfx_queues.graphics);
+  let command_pool = graphics::CommandPool::new(&gfx_queues.graphics);
 
   log.trace("Created command pool.");
 
@@ -72,12 +72,11 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture.");
 
-  let descriptor_pool =
-    rendering::DescriptorPool::new(pipeline.descriptor_set_layout().unwrap(), 1);
+  let descriptor_pool = pipeline::DescriptorPool::new(pipeline.descriptor_set_layout().unwrap(), 1);
 
-  let descriptor_set = rendering::DescriptorSet::new(
+  let descriptor_set = pipeline::DescriptorSet::new(
     &descriptor_pool,
-    &[rendering::Descriptor::Texture(&image, &sampler)],
+    &[pipeline::Descriptor::Texture(&image, &sampler)],
   );
 
   log.trace("Created quad texture descriptor set.");
@@ -93,8 +92,7 @@ pub fn main() -> Result<(), String> {
 
     let framebuffer = renderer.begin_frame();
 
-    let mut cmd =
-      rendering::CommandBuffer::new(&command_pool, rendering::CommandBufferKind::Primary);
+    let mut cmd = graphics::CommandBuffer::new(&command_pool, graphics::CommandBufferKind::Primary);
 
     cmd.begin();
 

@@ -1,8 +1,8 @@
-pub use glsl_to_spirv::ShaderType as ShaderKind;
+pub use glsl_to_spirv::ShaderType as Kind;
 
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
-use crate::graphics::Device;
+use super::backend;
+use super::hal::prelude::*;
+use super::Device;
 use std::sync::Arc;
 
 pub struct Shader {
@@ -11,7 +11,7 @@ pub struct Shader {
 }
 
 impl Shader {
-  pub fn from_glsl(device: &Arc<Device>, kind: ShaderKind, source: &str) -> Shader {
+  pub fn from_glsl(device: &Arc<Device>, kind: Kind, source: &str) -> Shader {
     use std::io::Read;
 
     let mut spirv = Vec::new();

@@ -1,7 +1,8 @@
 use super::{Backing, Format, Image, Source};
+use crate::graphics::buffer::{self, Buffer};
 use crate::graphics::device;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::rendering::{CommandBuffer, CommandBufferKind, CommandPool};
+use crate::graphics::{CommandBuffer, CommandBufferKind, CommandPool};
 use gfx_memory::Factory;
 use std::borrow::Borrow;
 use std::iter;
@@ -24,11 +25,7 @@ impl Loader {
 
     let size = source.size();
 
-    let mut buffer = device::Buffer::new(
-      device,
-      source.bytes().len(),
-      device::BufferUsage::TRANSFER_SRC,
-    );
+    let mut buffer = Buffer::new(device, source.bytes().len(), buffer::Usage::TRANSFER_SRC);
 
     buffer.write(source.bytes());
 

@@ -1,6 +1,6 @@
-pub use gfx_hal::buffer::Usage as BufferUsage;
+pub use gfx_hal::buffer::Usage;
 
-use super::{Allocator, Device};
+use super::device::{self, Device};
 use crate::graphics::backend::{self, Backend};
 use crate::graphics::hal::prelude::*;
 use crate::utils::Droppable;
@@ -8,7 +8,7 @@ use gfx_memory::{Block, Factory};
 use std::mem;
 use std::sync::Arc;
 
-type Allocation = <Allocator as Factory<Backend>>::Buffer;
+type Allocation = <device::Allocator as Factory<Backend>>::Buffer;
 
 pub struct Buffer<T> {
   inner: Droppable<Allocation>,
@@ -18,7 +18,7 @@ pub struct Buffer<T> {
 }
 
 impl<T: Copy> Buffer<T> {
-  pub fn new(device: &Arc<Device>, len: usize, usage: BufferUsage) -> Self {
+  pub fn new(device: &Arc<Device>, len: usize, usage: Usage) -> Self {
     let size = mem::size_of::<T>() as u64 * len as u64;
 
     let inner = device

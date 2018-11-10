@@ -7,7 +7,6 @@ pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
 
 use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
 use crate::math::algebra::Vector2;
 use std::sync::Arc;
 

@@ -1,11 +1,6 @@
 pub mod queues;
 
-mod buffers;
-mod sync;
-
-pub use self::buffers::*;
 pub use self::queues::{DefaultQueueSet, Queue, QueueSet};
-pub use self::sync::*;
 
 use super::backend::{self, Backend};
 use super::hal::prelude::*;

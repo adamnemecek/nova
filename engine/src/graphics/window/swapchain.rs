@@ -1,8 +1,7 @@
 use crate::graphics::backend;
-use crate::graphics::device::{Device, Semaphore};
 use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
-use crate::graphics::rendering::RenderPass;
+use crate::graphics::{Device, RenderPass, Semaphore};
 use crate::math::algebra::Vector2;
 use crate::utils::{quick_error, Droppable};
 use smallvec::SmallVec;

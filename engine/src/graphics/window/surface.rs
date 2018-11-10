@@ -1,5 +1,4 @@
 use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct Surface {

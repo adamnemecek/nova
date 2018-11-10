@@ -1,7 +1,6 @@
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
-use crate::graphics::rendering::RenderPass;
-use crate::graphics::{Device, Image};
+use super::backend;
+use super::hal::prelude::*;
+use super::{Device, Image, RenderPass};
 use crate::math::algebra::Vector2;
 use crate::utils::Droppable;
 use std::sync::Arc;

@@ -1,9 +1,9 @@
 use super::device;
 use super::hal::prelude::*;
-use super::rendering::pipeline;
-use super::rendering::{CommandBuffer, Framebuffer, RenderPass};
+use super::pipeline;
 use super::window::swapchain::{self, Swapchain};
 use super::window::{self, Window};
+use super::{CommandBuffer, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::algebra::Vector2;
 use nova::utils::{Chain, Droppable};
 use std::iter;
@@ -15,8 +15,8 @@ pub struct Renderer {
   surface: Arc<window::Surface>,
   queue: Arc<device::Queue>,
   pass: Arc<RenderPass>,
-  fences: Chain<device::Fence>,
-  semaphores: Chain<(device::Semaphore, device::Semaphore)>,
+  fences: Chain<Fence>,
+  semaphores: Chain<(Semaphore, Semaphore)>,
   swapchain: Droppable<Swapchain>,
   submissions: Chain<Vec<CommandBuffer>>,
   framebuffers: Vec<Arc<Framebuffer>>,
@@ -39,13 +39,10 @@ impl Renderer {
 
     log.trace("Created descriptor set layout.");
 
-    let fences = Chain::allocate(FRAMES_IN_FLIGHT, |_| device::Fence::new(&device));
+    let fences = Chain::allocate(FRAMES_IN_FLIGHT, |_| Fence::new(&device));
 
     let semaphores = Chain::allocate(FRAMES_IN_FLIGHT, |_| {
-      (
-        device::Semaphore::new(&device),
-        device::Semaphore::new(&device),
-      )
+      (Semaphore::new(&device), Semaphore::new(&device))
     });
 
     let submissions = Chain::allocate(FRAMES_IN_FLIGHT, |_| Vec::new());

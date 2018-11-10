@@ -2,9 +2,9 @@ pub use gfx_hal::command::RawLevel as CommandBufferKind;
 
 use super::CommandPool;
 use crate::graphics::backend;
-use crate::graphics::device;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::rendering::{DescriptorSet, Framebuffer, Pipeline, RenderPass};
+use crate::graphics::pipeline::{DescriptorSet, Pipeline};
+use crate::graphics::{Buffer, Framebuffer, RenderPass};
 use smallvec::SmallVec;
 use std::iter;
 use std::sync::atomic;
@@ -129,13 +129,13 @@ impl CommandBuffer {
     );
   }
 
-  pub fn bind_vertex_buffer<T: Copy>(&mut self, binding: u32, buffer: &device::Buffer<T>) {
+  pub fn bind_vertex_buffer<T: Copy>(&mut self, binding: u32, buffer: &Buffer<T>) {
     self
       .raw_mut()
       .bind_vertex_buffers(binding, iter::once((buffer.raw(), 0)));
   }
 
-  pub fn bind_index_buffer(&mut self, buffer: &device::Buffer<u16>) {
+  pub fn bind_index_buffer(&mut self, buffer: &Buffer<u16>) {
     self
       .raw_mut()
       .bind_index_buffer(gfx_hal::buffer::IndexBufferView {

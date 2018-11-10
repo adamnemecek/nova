@@ -1,5 +1,7 @@
-use super::rendering::{DescriptorSetLayout, Pipeline, RenderPass, Shader, ShaderKind};
-use super::{Color, Vertex};
+pub use nova::graphics::pipeline::*;
+
+use super::shader::{self, Shader};
+use super::{Color, RenderPass, Vertex};
 use nova::math::algebra::Matrix4;
 use std::sync::Arc;
 
@@ -18,12 +20,12 @@ pub fn create_default(pass: &Arc<RenderPass>) -> Arc<Pipeline> {
     .descriptor_set_layout(&descriptor_set_layout)
     .vertex_shader(Shader::from_glsl(
       device,
-      ShaderKind::Vertex,
+      shader::Kind::Vertex,
       include_str!("shaders/default.vert"),
     ))
     .fragment_shader(Shader::from_glsl(
       device,
-      ShaderKind::Fragment,
+      shader::Kind::Fragment,
       include_str!("shaders/default.frag"),
     ))
     .build(device)
