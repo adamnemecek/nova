@@ -11,10 +11,12 @@ use std::sync::{Arc, Mutex};
 pub struct CommandPool {
   /// The raw backend command pool in a mutex for synchronized access.
   raw: Droppable<Mutex<backend::CommandPool>>,
-  /// An atomic flag indicating whether any [`Commands`] are recording.
-  pub(super) recording: AtomicBool,
   /// The device the pool was created with.
   device: Arc<Device>,
+  /// An atomic flag indicating whether any [`Commands`] are recording.
+  pub(super) recording: AtomicBool,
+  /// ID of the device queue family this command pool was created for.
+  queue_family_id: usize,
 }
 
 impl CommandPool {
@@ -23,14 +25,23 @@ impl CommandPool {
     let pool = queue
       .device()
       .raw()
-      .create_command_pool(queue.family_id(), CreateFlags::TRANSIENT)
+      .create_command_pool(
+        gfx_hal::queue::QueueFamilyId(queue.family_id()),
+        CreateFlags::TRANSIENT,
+      )
       .expect("Could not create command pool.");
 
     Arc::new(CommandPool {
+      device: queue.device().clone(),
       raw: Mutex::new(pool).into(),
       recording: AtomicBool::new(false),
-      device: queue.device().clone(),
+      queue_family_id: queue.family_id(),
     })
+  }
+
+  /// Gets the ID of the device queue family this command pool was created for.
+  pub fn queue_family_id(&self) -> usize {
+    self.queue_family_id
   }
 
   /// Allocates a raw command buffer with the given level from the pool.

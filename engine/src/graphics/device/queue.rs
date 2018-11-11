@@ -1,4 +1,3 @@
-pub use gfx_hal::queue::QueueFamilyId as FamilyId;
 pub use gfx_hal::queue::RawSubmission;
 
 use super::Device;
@@ -6,7 +5,7 @@ use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::window::Swapchain;
 use crate::graphics::Semaphore;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::Arc;
 
 pub struct Queue {
   family: backend::QueueFamily,
@@ -38,8 +37,8 @@ impl Queue {
     &self.device
   }
 
-  pub fn family_id(&self) -> FamilyId {
-    self.family.id()
+  pub fn family_id(&self) -> usize {
+    self.family.id().0
   }
 
   pub fn present<'a>(

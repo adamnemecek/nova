@@ -10,20 +10,24 @@ use std::sync::Arc;
 
 pub struct Loader {
   device: Arc<Device>,
-  queue: device::Queue,
   command_pool: Arc<CommandPool>,
 }
 
 impl Loader {
-  pub fn new(queue: device::Queue) -> Self {
+  pub fn new(queue: &device::Queue) -> Self {
     Loader {
-      command_pool: CommandPool::new(&queue),
       device: queue.device().clone(),
-      queue,
+      command_pool: CommandPool::new(&queue),
     }
   }
 
-  pub fn load(&mut self, source: &Source) -> Image {
+  pub fn load(&mut self, queue: &mut device::Queue, source: &Source) -> Image {
+    assert!(
+      self.command_pool.queue_family_id() == queue.family_id(),
+      "Images must be loaded with a queue in family {}.",
+      self.command_pool.queue_family_id()
+    );
+
     let device = &self.device;
     let mut cmd = Commands::new(&self.command_pool, commands::Level::Primary);
 
@@ -124,7 +128,7 @@ impl Loader {
 
     cmd.finish();
 
-    let queue = self.queue.raw_mut();
+    let queue = queue.raw_mut();
 
     unsafe {
       queue.submit_raw(

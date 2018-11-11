@@ -12,8 +12,8 @@ use std::sync::Arc;
 const FRAMES_IN_FLIGHT: usize = 3;
 
 pub struct Renderer {
+  queue_family_id: usize,
   surface: Arc<window::Surface>,
-  queue_family_id: device::queue::FamilyId,
   pass: Arc<RenderPass>,
   fences: Chain<Fence>,
   semaphores: Chain<(Semaphore, Semaphore)>,
@@ -104,7 +104,8 @@ impl Renderer {
   ) {
     assert!(
       queue.family_id() == self.queue_family_id,
-      "Frames must be submitted to the same queue the renderer was created with.",
+      "Frames must be submitted with queue family {}.",
+      self.queue_family_id
     );
 
     let fence = self.fences.current();
