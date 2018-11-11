@@ -18,7 +18,7 @@ pub struct Device {
   /// Raw backend device.
   raw: backend::Device,
   /// Raw backend adapter information for this device.
-  adapter: backend::Adapter,
+  adapter: hal::Adapter,
   /// Memory allocator for allocating device memory.
   allocator: Droppable<Mutex<Allocator>>,
   /// Raw backend instance this device was created from.
@@ -32,7 +32,7 @@ impl Device {
   /// adapter, and backend instance are related.
   pub unsafe fn from_raw(
     raw: backend::Device,
-    adapter: backend::Adapter,
+    adapter: hal::Adapter,
     backend: &Arc<backend::Instance>,
   ) -> Device {
     // Create a new gfx_memory smart allocator.
@@ -59,8 +59,8 @@ impl Device {
     &self.backend
   }
 
-  /// Gets a reference to the raw backend adapter information.
-  pub fn adapter(&self) -> &backend::Adapter {
+  /// Gets a reference to the HAL adapter information.
+  pub fn adapter(&self) -> &hal::Adapter {
     &self.adapter
   }
 

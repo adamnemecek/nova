@@ -40,7 +40,7 @@ impl Framebuffer {
         panic!("All images in a framebuffer must be of the same size.");
       }
 
-      gfx_hal::image::Extent {
+      hal::image::Extent {
         width: size.x,
         height: size.y,
         depth: 1,

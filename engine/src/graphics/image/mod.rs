@@ -36,11 +36,11 @@ impl Image {
       .raw()
       .create_image_view(
         backing.as_ref(),
-        gfx_hal::image::ViewKind::D2,
+        hal::image::ViewKind::D2,
         format,
-        gfx_hal::format::Swizzle::NO,
-        gfx_hal::image::SubresourceRange {
-          aspects: gfx_hal::format::Aspects::COLOR,
+        hal::format::Swizzle::NO,
+        hal::image::SubresourceRange {
+          aspects: hal::format::Aspects::COLOR,
           levels: 0..1,
           layers: 0..1,
         },

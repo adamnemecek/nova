@@ -12,9 +12,9 @@ impl Sampler {
   pub fn new(device: &Arc<Device>) -> Self {
     let sampler = device
       .raw()
-      .create_sampler(gfx_hal::image::SamplerInfo::new(
-        gfx_hal::image::Filter::Linear,
-        gfx_hal::image::WrapMode::Tile,
+      .create_sampler(hal::image::SamplerInfo::new(
+        hal::image::Filter::Linear,
+        hal::image::WrapMode::Tile,
       ))
       .expect("could not create sampler");
 

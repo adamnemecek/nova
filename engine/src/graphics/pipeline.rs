@@ -13,7 +13,7 @@ pub struct Pipeline {
   device: Arc<Device>,
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
-  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
+  push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
   descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
   _shaders: PipelineShaderSet,
 }
@@ -27,7 +27,7 @@ impl Pipeline {
     self.layout.as_ref().expect("pipeline layout was destroyed")
   }
 
-  pub fn push_constant(&self, index: usize) -> (gfx_hal::pso::ShaderStageFlags, Range<u32>) {
+  pub fn push_constant(&self, index: usize) -> (hal::pso::ShaderStageFlags, Range<u32>) {
     self.push_constants[index].clone()
   }
 
@@ -61,16 +61,16 @@ pub struct PipelineShaderSet {
 }
 
 impl PipelineShaderSet {
-  fn as_raw<'a>(&'a self) -> backend::ShaderSet<'a> {
-    fn entry_point(shader: &Option<Shader>) -> Option<backend::ShaderEntryPoint> {
-      shader.as_ref().map(|shader| backend::ShaderEntryPoint {
+  fn as_raw<'a>(&'a self) -> hal::pso::GraphicsShaderSet<'a> {
+    fn entry_point(shader: &Option<Shader>) -> Option<hal::pso::EntryPoint> {
+      shader.as_ref().map(|shader| hal::pso::EntryPoint {
         entry: "main",
         module: shader.raw(),
         specialization: Default::default(),
       })
     };
 
-    gfx_hal::pso::GraphicsShaderSet {
+    hal::pso::GraphicsShaderSet {
       vertex: entry_point(&self.vertex).expect("vertex shader is required"),
       fragment: entry_point(&self.fragment),
       hull: None,
@@ -84,9 +84,9 @@ impl PipelineShaderSet {
 pub struct PipelineBuilder {
   render_pass: Option<Arc<RenderPass>>,
   shaders: PipelineShaderSet,
-  vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
-  vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
-  push_constants: Vec<(gfx_hal::pso::ShaderStageFlags, Range<u32>)>,
+  vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
+  vertex_attributes: Vec<hal::pso::AttributeDesc>,
+  push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
   descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
 }
 
@@ -99,7 +99,7 @@ impl PipelineBuilder {
   pub fn vertex_buffer<T: VertexData>(mut self) -> Self {
     let binding = self.vertex_buffers.len() as u32;
 
-    self.vertex_buffers.push(gfx_hal::pso::VertexBufferDesc {
+    self.vertex_buffers.push(hal::pso::VertexBufferDesc {
       binding,
       stride: T::stride(),
       rate: 0,
@@ -110,10 +110,10 @@ impl PipelineBuilder {
     self
       .vertex_attributes
       .extend(T::attributes().iter().enumerate().map(|(i, attr)| {
-        let desc = gfx_hal::pso::AttributeDesc {
+        let desc = hal::pso::AttributeDesc {
           location: i as u32,
           binding,
-          element: gfx_hal::pso::Element {
+          element: hal::pso::Element {
             format: attr.into(),
             offset,
           },
@@ -145,7 +145,7 @@ impl PipelineBuilder {
 
     self
       .push_constants
-      .push((gfx_hal::pso::ShaderStageFlags::VERTEX, start..end));
+      .push((hal::pso::ShaderStageFlags::VERTEX, start..end));
 
     self
   }
@@ -168,7 +168,7 @@ impl PipelineBuilder {
   pub fn build(self, device: &Arc<Device>) -> Arc<Pipeline> {
     let render_pass = self.render_pass.expect("render_pass is required");
 
-    let subpass = gfx_hal::pass::Subpass {
+    let subpass = hal::pass::Subpass {
       index: 0,
       main_pass: render_pass.raw(),
     };
@@ -184,21 +184,18 @@ impl PipelineBuilder {
       )
       .expect("could not create pipeline layout");
 
-    let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
+    let mut pipeline_desc = hal::pso::GraphicsPipelineDesc::new(
       self.shaders.as_raw(),
-      gfx_hal::Primitive::TriangleList,
-      gfx_hal::pso::Rasterizer::FILL,
+      hal::Primitive::TriangleList,
+      hal::pso::Rasterizer::FILL,
       &layout,
       subpass,
     );
 
-    pipeline_desc
-      .blender
-      .targets
-      .push(gfx_hal::pso::ColorBlendDesc(
-        gfx_hal::pso::ColorMask::ALL,
-        gfx_hal::pso::BlendState::ALPHA,
-      ));
+    pipeline_desc.blender.targets.push(hal::pso::ColorBlendDesc(
+      hal::pso::ColorMask::ALL,
+      hal::pso::BlendState::ALPHA,
+    ));
 
     pipeline_desc
       .vertex_buffers
@@ -225,7 +222,7 @@ impl PipelineBuilder {
 }
 
 pub struct DescriptorSetLayout {
-  bindings: Vec<gfx_hal::pso::DescriptorSetLayoutBinding>,
+  bindings: Vec<hal::pso::DescriptorSetLayoutBinding>,
   raw: Option<backend::DescriptorSetLayout>,
   device: Arc<Device>,
 }
@@ -235,7 +232,7 @@ impl DescriptorSetLayout {
     DescriptorSetLayoutBuilder::default()
   }
 
-  pub fn bindings(&self) -> impl Iterator<Item = &gfx_hal::pso::DescriptorSetLayoutBinding> {
+  pub fn bindings(&self) -> impl Iterator<Item = &hal::pso::DescriptorSetLayoutBinding> {
     self.bindings.iter()
   }
 
@@ -254,22 +251,20 @@ impl Drop for DescriptorSetLayout {
 
 #[derive(Default)]
 pub struct DescriptorSetLayoutBuilder {
-  bindings: Vec<gfx_hal::pso::DescriptorSetLayoutBinding>,
+  bindings: Vec<hal::pso::DescriptorSetLayoutBinding>,
 }
 
 impl DescriptorSetLayoutBuilder {
   pub fn texture(mut self) -> Self {
     let binding = self.bindings.len() as u32;
 
-    self
-      .bindings
-      .push(gfx_hal::pso::DescriptorSetLayoutBinding {
-        binding,
-        ty: gfx_hal::pso::DescriptorType::SampledImage,
-        count: 1,
-        stage_flags: gfx_hal::pso::ShaderStageFlags::FRAGMENT,
-        immutable_samplers: false,
-      });
+    self.bindings.push(hal::pso::DescriptorSetLayoutBinding {
+      binding,
+      ty: hal::pso::DescriptorType::SampledImage,
+      count: 1,
+      stage_flags: hal::pso::ShaderStageFlags::FRAGMENT,
+      immutable_samplers: false,
+    });
 
     self
   }
@@ -304,7 +299,7 @@ impl DescriptorPool {
         capacity,
         layout
           .bindings()
-          .map(|binding| gfx_hal::pso::DescriptorRangeDesc {
+          .map(|binding| hal::pso::DescriptorRangeDesc {
             ty: binding.ty,
             count: binding.count,
           }),
@@ -349,14 +344,14 @@ impl DescriptorSet {
       .expect("could not allocate descriptor set");
 
     device.write_descriptor_sets(descriptors.iter().enumerate().map(|(i, descriptor)| {
-      gfx_hal::pso::DescriptorSetWrite {
+      hal::pso::DescriptorSetWrite {
         set: &set,
         binding: i as u32,
         array_offset: 0,
         descriptors: iter::once(match descriptor {
-          Descriptor::Texture(image, sampler) => gfx_hal::pso::Descriptor::CombinedImageSampler(
+          Descriptor::Texture(image, sampler) => hal::pso::Descriptor::CombinedImageSampler(
             image.as_ref(),
-            gfx_hal::image::Layout::ShaderReadOnlyOptimal,
+            hal::image::Layout::ShaderReadOnlyOptimal,
             sampler.raw(),
           ),
         }),

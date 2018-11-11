@@ -52,7 +52,7 @@ impl Gpu {
 }
 
 /// Selects the best available device adapter.
-pub fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adapter> {
+pub fn select_best_adapter(instance: &backend::Instance) -> Option<hal::Adapter> {
   instance
     .enumerate_adapters()
     .into_iter()
@@ -63,7 +63,7 @@ pub fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adap
       let mut score = 0;
 
       // Prefer discrete graphics devices over integrated ones.
-      if adapter.info.device_type == gfx_hal::adapter::DeviceType::DiscreteGpu {
+      if adapter.info.device_type == hal::adapter::DeviceType::DiscreteGpu {
         score += 1000;
       }
 
@@ -73,9 +73,7 @@ pub fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adap
 
 /// Selects a queue family for graphics queues and a queue family for transfer
 /// queues from the given backend adapter info.
-fn select_queue_families(
-  adapter: &backend::Adapter,
-) -> (backend::QueueFamily, backend::QueueFamily) {
+fn select_queue_families(adapter: &hal::Adapter) -> (backend::QueueFamily, backend::QueueFamily) {
   let graphics = adapter
     .queue_families
     .iter()
@@ -101,7 +99,7 @@ quick_error! {
     NoSupportedAdapter {
       display("No supported graphics adapters available.")
     }
-    OpenAdapterFailed(err: gfx_hal::error::DeviceCreationError) {
+    OpenAdapterFailed(err: hal::error::DeviceCreationError) {
       display("Could not open adapter: {}", err)
       from()
     }

@@ -43,58 +43,55 @@ impl Loader {
         device.raw(),
         (
           gfx_memory::Type::General,
-          gfx_hal::memory::Properties::DEVICE_LOCAL,
+          hal::memory::Properties::DEVICE_LOCAL,
         ),
-        gfx_hal::image::Kind::D2(size.x, size.y, 1, 1),
+        hal::image::Kind::D2(size.x, size.y, 1, 1),
         1,
         Format::Rgba8Srgb,
-        gfx_hal::image::Tiling::Optimal,
-        gfx_hal::image::Usage::TRANSFER_DST | gfx_hal::image::Usage::SAMPLED,
-        gfx_hal::image::ViewCapabilities::empty(),
+        hal::image::Tiling::Optimal,
+        hal::image::Usage::TRANSFER_DST | hal::image::Usage::SAMPLED,
+        hal::image::ViewCapabilities::empty(),
       )
       .expect("could not create image");
 
     cmd.begin();
 
     cmd.record_raw(|cmd| {
-      let barrier = gfx_hal::memory::Barrier::Image {
-        states: (
-          gfx_hal::image::Access::empty(),
-          gfx_hal::image::Layout::Undefined,
-        )
+      let barrier = hal::memory::Barrier::Image {
+        states: (hal::image::Access::empty(), hal::image::Layout::Undefined)
           ..(
-            gfx_hal::image::Access::TRANSFER_WRITE,
-            gfx_hal::image::Layout::TransferDstOptimal,
+            hal::image::Access::TRANSFER_WRITE,
+            hal::image::Layout::TransferDstOptimal,
           ),
         target: image.borrow(),
-        range: gfx_hal::image::SubresourceRange {
-          aspects: gfx_hal::format::Aspects::COLOR,
+        range: hal::image::SubresourceRange {
+          aspects: hal::format::Aspects::COLOR,
           levels: 0..1,
           layers: 0..1,
         },
       };
 
       cmd.pipeline_barrier(
-        gfx_hal::pso::PipelineStage::TOP_OF_PIPE..gfx_hal::pso::PipelineStage::TRANSFER,
-        gfx_hal::memory::Dependencies::empty(),
+        hal::pso::PipelineStage::TOP_OF_PIPE..hal::pso::PipelineStage::TRANSFER,
+        hal::memory::Dependencies::empty(),
         &[barrier],
       );
 
       cmd.copy_buffer_to_image(
         buffer.as_ref(),
         image.borrow(),
-        gfx_hal::image::Layout::TransferDstOptimal,
-        &[gfx_hal::command::BufferImageCopy {
+        hal::image::Layout::TransferDstOptimal,
+        &[hal::command::BufferImageCopy {
           buffer_offset: 0,
           buffer_width: 0,
           buffer_height: 0,
-          image_layers: gfx_hal::image::SubresourceLayers {
-            aspects: gfx_hal::format::Aspects::COLOR,
+          image_layers: hal::image::SubresourceLayers {
+            aspects: hal::format::Aspects::COLOR,
             level: 0,
             layers: 0..1,
           },
-          image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
-          image_extent: gfx_hal::image::Extent {
+          image_offset: hal::image::Offset { x: 0, y: 0, z: 0 },
+          image_extent: hal::image::Extent {
             width: size.x,
             height: size.y,
             depth: 1,
@@ -102,26 +99,26 @@ impl Loader {
         }],
       );
 
-      let barrier = gfx_hal::memory::Barrier::Image {
+      let barrier = hal::memory::Barrier::Image {
         states: (
-          gfx_hal::image::Access::TRANSFER_WRITE,
-          gfx_hal::image::Layout::TransferDstOptimal,
+          hal::image::Access::TRANSFER_WRITE,
+          hal::image::Layout::TransferDstOptimal,
         )
           ..(
-            gfx_hal::image::Access::SHADER_READ,
-            gfx_hal::image::Layout::ShaderReadOnlyOptimal,
+            hal::image::Access::SHADER_READ,
+            hal::image::Layout::ShaderReadOnlyOptimal,
           ),
         target: image.borrow(),
-        range: gfx_hal::image::SubresourceRange {
-          aspects: gfx_hal::format::Aspects::COLOR,
+        range: hal::image::SubresourceRange {
+          aspects: hal::format::Aspects::COLOR,
           levels: 0..1,
           layers: 0..1,
         },
       };
 
       cmd.pipeline_barrier(
-        gfx_hal::pso::PipelineStage::TRANSFER..gfx_hal::pso::PipelineStage::FRAGMENT_SHADER,
-        gfx_hal::memory::Dependencies::empty(),
+        hal::pso::PipelineStage::TRANSFER..hal::pso::PipelineStage::FRAGMENT_SHADER,
+        hal::memory::Dependencies::empty(),
         &[barrier],
       );
     });
@@ -132,7 +129,7 @@ impl Loader {
 
     unsafe {
       queue.submit_raw(
-        gfx_hal::queue::RawSubmission {
+        hal::queue::RawSubmission {
           cmd_buffers: iter::once(cmd.as_ref()),
           wait_semaphores: &[],
           signal_semaphores: &[],

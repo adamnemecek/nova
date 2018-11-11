@@ -35,7 +35,7 @@ impl<T: Copy> Buffer<T> {
         (
           // TODO: Other kinds of buffers.
           gfx_memory::Type::General,
-          gfx_hal::memory::Properties::CPU_VISIBLE,
+          hal::memory::Properties::CPU_VISIBLE,
         ),
         size,
         usage,

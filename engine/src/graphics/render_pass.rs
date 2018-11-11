@@ -14,32 +14,31 @@ impl RenderPass {
   pub fn new(device: &Arc<Device>) -> Arc<Self> {
     let format = image::Format::Bgra8Unorm;
 
-    let color_attachment = gfx_hal::pass::Attachment {
+    let color_attachment = hal::pass::Attachment {
       format: Some(format),
       samples: 1,
-      ops: gfx_hal::pass::AttachmentOps::new(
-        gfx_hal::pass::AttachmentLoadOp::Clear,
-        gfx_hal::pass::AttachmentStoreOp::Store,
+      ops: hal::pass::AttachmentOps::new(
+        hal::pass::AttachmentLoadOp::Clear,
+        hal::pass::AttachmentStoreOp::Store,
       ),
-      stencil_ops: gfx_hal::pass::AttachmentOps::DONT_CARE,
-      layouts: gfx_hal::image::Layout::Undefined..gfx_hal::image::Layout::Present,
+      stencil_ops: hal::pass::AttachmentOps::DONT_CARE,
+      layouts: hal::image::Layout::Undefined..hal::image::Layout::Present,
     };
 
-    let subpass = gfx_hal::pass::SubpassDesc {
-      colors: &[(0, gfx_hal::image::Layout::ColorAttachmentOptimal)],
+    let subpass = hal::pass::SubpassDesc {
+      colors: &[(0, hal::image::Layout::ColorAttachmentOptimal)],
       depth_stencil: None,
       inputs: &[],
       resolves: &[],
       preserves: &[],
     };
 
-    let dependency = gfx_hal::pass::SubpassDependency {
-      passes: gfx_hal::pass::SubpassRef::External..gfx_hal::pass::SubpassRef::Pass(0),
-      stages: gfx_hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT
-        ..gfx_hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
-      accesses: gfx_hal::image::Access::empty()
-        ..(gfx_hal::image::Access::COLOR_ATTACHMENT_READ
-          | gfx_hal::image::Access::COLOR_ATTACHMENT_WRITE),
+    let dependency = hal::pass::SubpassDependency {
+      passes: hal::pass::SubpassRef::External..hal::pass::SubpassRef::Pass(0),
+      stages: hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT
+        ..hal::pso::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+      accesses: hal::image::Access::empty()
+        ..(hal::image::Access::COLOR_ATTACHMENT_READ | hal::image::Access::COLOR_ATTACHMENT_WRITE),
     };
 
     let pass = device

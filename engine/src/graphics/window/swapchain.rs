@@ -37,7 +37,7 @@ impl Swapchain {
     let (caps, _, present_modes) = surface.compatibility(&device.adapter().physical_device);
 
     // Determine the best available extent of the swapchain.
-    let extent = gfx_hal::window::Extent2D {
+    let extent = hal::window::Extent2D {
       width: cmp::max(
         caps.extents.start.width,
         cmp::min(size.x, caps.extents.end.width),
@@ -52,7 +52,7 @@ impl Swapchain {
     // that mode.
     let present_mode = select_present_mode(present_modes);
 
-    let image_count = if present_mode == gfx_hal::window::PresentMode::Mailbox {
+    let image_count = if present_mode == hal::window::PresentMode::Mailbox {
       // Mailbox should use three images if possible.
       cmp::min(caps.image_count.start, cmp::min(3, caps.image_count.end))
     } else {
@@ -61,13 +61,13 @@ impl Swapchain {
     };
 
     // Create a swapchain with the above config values.
-    let config = gfx_hal::SwapchainConfig {
+    let config = hal::SwapchainConfig {
       present_mode,
       format: render_pass.format(),
       extent,
       image_count,
       image_layers: 1,
-      image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
+      image_usage: hal::image::Usage::COLOR_ATTACHMENT,
     };
 
     let (raw, backbuffer) = device
@@ -86,7 +86,7 @@ impl Swapchain {
     // Extract the raw images from the enum result and create `Image` structs
     // for them.
     match backbuffer {
-      gfx_hal::Backbuffer::Images(images) => {
+      hal::Backbuffer::Images(images) => {
         for image in images {
           swapchain.images.push(Arc::new(Image::from_raw(
             device,
@@ -126,11 +126,11 @@ impl Swapchain {
   pub fn acquire_image(&mut self, semaphore: &Semaphore) -> Result<usize, AcquireImageError> {
     let index = self
       .raw
-      .acquire_image(!0, gfx_hal::FrameSync::Semaphore(semaphore.raw()))
+      .acquire_image(!0, hal::FrameSync::Semaphore(semaphore.raw()))
       .map_err(|err| match err {
-        gfx_hal::AcquireError::OutOfDate => AcquireImageError::OutOfDate,
-        gfx_hal::AcquireError::NotReady => panic!("Swapchain::acquire_image timed out."),
-        gfx_hal::AcquireError::SurfaceLost(_) => panic!("Surface lost."),
+        hal::AcquireError::OutOfDate => AcquireImageError::OutOfDate,
+        hal::AcquireError::NotReady => panic!("Swapchain::acquire_image timed out."),
+        hal::AcquireError::SurfaceLost(_) => panic!("Surface lost."),
       })?;
 
     Ok(index as usize)

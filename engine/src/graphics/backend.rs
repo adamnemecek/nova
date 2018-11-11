@@ -13,7 +13,6 @@ pub const NAME: &str = "Metal";
 #[cfg(all(unix, not(target_os = "macos")))]
 pub const NAME: &str = "Vulkan";
 
-pub type Adapter = gfx_hal::Adapter<Backend>;
 pub type Device = <Backend as gfx_hal::Backend>::Device;
 
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
@@ -26,13 +25,8 @@ pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
 pub type RenderPass = <Backend as gfx_hal::Backend>::RenderPass;
 pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 pub type GraphicsPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
-pub type ShaderSet<'a> = gfx_hal::pso::GraphicsShaderSet<'a, Backend>;
-pub type ShaderEntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
 pub type ShaderModule = <Backend as gfx_hal::Backend>::ShaderModule;
 
-pub type Queues = gfx_hal::queue::Queues<Backend>;
-pub type CommandBufferInheritanceInfo<'a> =
-  gfx_hal::command::CommandBufferInheritanceInfo<'a, Backend>;
 pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
 pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub type CommandQueue = <Backend as gfx_hal::Backend>::CommandQueue;

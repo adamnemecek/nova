@@ -26,7 +26,7 @@ impl CommandPool {
       .device()
       .raw()
       .create_command_pool(
-        gfx_hal::queue::QueueFamilyId(queue.family_id()),
+        hal::queue::QueueFamilyId(queue.family_id()),
         CreateFlags::TRANSIENT,
       )
       .expect("Could not create command pool.");

@@ -60,8 +60,8 @@ impl Commands {
     let size = framebuffer.size().map(|u| u as i16);
 
     // Create a viewport struct covering the entire framebuffer.
-    let viewport = gfx_hal::pso::Viewport {
-      rect: gfx_hal::pso::Rect {
+    let viewport = hal::pso::Viewport {
+      rect: hal::pso::Rect {
         x: 0,
         y: 0,
         w: size.x as i16,
@@ -80,12 +80,12 @@ impl Commands {
         viewport.rect,
         &[
           // Clear the framebuffer to eigengrau.
-          gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
+          hal::command::ClearValue::Color(hal::command::ClearColor::Float([
             0.086, 0.086, 0.114, 1.0,
           ]))
           .into(),
         ],
-        gfx_hal::command::SubpassContents::Inline,
+        hal::command::SubpassContents::Inline,
       );
     });
 
@@ -103,8 +103,8 @@ impl Commands {
 
     self.buffer.begin(
       Default::default(),
-      backend::CommandBufferInheritanceInfo {
-        subpass: Some(gfx_hal::pass::Subpass {
+      hal::command::CommandBufferInheritanceInfo {
+        subpass: Some(hal::pass::Subpass {
           index: 0,
           main_pass: pass.raw(),
         }),
@@ -204,13 +204,11 @@ impl Commands {
       "A pipeline must be bound to bind an index buffer.",
     );
 
-    self
-      .buffer
-      .bind_index_buffer(gfx_hal::buffer::IndexBufferView {
-        buffer: buffer.as_ref(),
-        offset: 0,
-        index_type: gfx_hal::IndexType::U16,
-      })
+    self.buffer.bind_index_buffer(hal::buffer::IndexBufferView {
+      buffer: buffer.as_ref(),
+      offset: 0,
+      index_type: hal::IndexType::U16,
+    })
   }
 
   /// Records a command to draw a given number of indices from the bound index

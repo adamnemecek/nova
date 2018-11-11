@@ -25,7 +25,7 @@ impl Queue {
   /// to the device.
   pub unsafe fn from_raw(
     device: &Arc<Device>,
-    queues: &mut backend::Queues,
+    queues: &mut hal::queue::Queues,
     family: backend::QueueFamily,
   ) -> Self {
     let raw = queues
