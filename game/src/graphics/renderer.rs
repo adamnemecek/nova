@@ -5,7 +5,7 @@ use super::window::swapchain::{self, Swapchain};
 use super::window::Window;
 use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::algebra::Vector2;
-use nova::utils::{Chain, Droppable};
+use nova::utils::{Droppable, Ring};
 use std::iter;
 use std::sync::Arc;
 
@@ -14,10 +14,10 @@ const FRAMES_IN_FLIGHT: usize = 3;
 pub struct Renderer {
   queue_family_id: usize,
   pass: Arc<RenderPass>,
-  fences: Chain<Fence>,
-  semaphores: Chain<(Semaphore, Semaphore)>,
+  fences: Ring<Fence>,
+  semaphores: Ring<(Semaphore, Semaphore)>,
   swapchain: Droppable<Swapchain>,
-  submissions: Chain<Vec<Commands>>,
+  submissions: Ring<Vec<Commands>>,
   framebuffers: Vec<Arc<Framebuffer>>,
   frame: usize,
   size: Vector2<u32>,
@@ -36,13 +36,13 @@ impl Renderer {
 
     log.trace("Created render pass.");
 
-    let fences = Chain::allocate(FRAMES_IN_FLIGHT, |_| Fence::new(&device));
+    let fences = Ring::new(FRAMES_IN_FLIGHT, |_| Fence::new(&device));
 
-    let semaphores = Chain::allocate(FRAMES_IN_FLIGHT, |_| {
+    let semaphores = Ring::new(FRAMES_IN_FLIGHT, |_| {
       (Semaphore::new(&device), Semaphore::new(&device))
     });
 
-    let submissions = Chain::allocate(FRAMES_IN_FLIGHT, |_| Vec::new());
+    let submissions = Ring::new(FRAMES_IN_FLIGHT, |_| Vec::new());
 
     log.trace("Created resource chains.");
 
