@@ -81,7 +81,16 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture descriptor set.");
 
+  use std::time;
+
+  let mut duration = time::Duration::default();
+  let mut frames = 0;
+
   loop {
+    std::thread::yield_now();
+
+    let start = time::Instant::now();
+
     window.update();
 
     if window.is_closed() {
@@ -111,6 +120,25 @@ pub fn main() -> Result<(), String> {
     cmd.finish();
 
     renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
+
+    // Track frame rate and duration.
+    duration += time::Instant::now() - start;
+    frames += 1;
+
+    const FPS_WINDOW: time::Duration = time::Duration::from_secs(3);
+
+    if duration > FPS_WINDOW {
+      let secs = duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9;
+      let fps = frames as f64 / secs;
+
+      duration = time::Duration::default();
+      frames = 0;
+
+      log
+        .trace("Running…")
+        .with("fps", &fps)
+        .with("avg_ms", &(fps.recip() * 1000.0));
+    }
   }
 
   Ok(())
