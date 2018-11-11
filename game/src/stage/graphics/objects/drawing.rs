@@ -1,7 +1,3 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
 use super::Sprite;
 use crate::prelude::*;
 use crate::stage::graphics::{Camera, CameraTarget};
@@ -66,7 +62,8 @@ pub fn draw(ctx: &mut engine::Context, canvas: &mut Canvas, rect: &Rect<f32>) {
         .scale(Vector2::new(
           size.x / image_size.x as f32,
           size.y / image_size.y as f32,
-        )).dest(Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset),
+        ))
+        .dest(Point2::new(position.x - size.x / 2.0, position.y - size.y / 2.0) + global_offset),
     );
   }
 
