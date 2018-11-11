@@ -1,5 +1,8 @@
 pub mod queues;
 
+pub mod gpu;
+
+pub use self::gpu::Gpu;
 pub use self::queues::{DefaultQueueSet, Queue, QueueSet};
 
 use super::backend::{self, Backend};
@@ -8,55 +11,41 @@ use crate::utils::{quick_error, Droppable};
 use gfx_memory::{MemoryAllocator, SmartAllocator};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+/// Type of memory allocator used by the device.
 pub type Allocator = SmartAllocator<Backend>;
 
+/// A graphics device. Used to create most other graphics resources.
 pub struct Device {
+  /// Raw backend device.
   raw: backend::Device,
+  /// Raw backend adapter information for this device.
   adapter: backend::Adapter,
+  /// Memory allocator for allocating device memory.
   allocator: Droppable<Mutex<Allocator>>,
+  /// Raw backend instance this device was created from.
   backend: Arc<backend::Instance>,
 }
 
 impl Device {
-  pub fn open<Q: QueueSet>(
+  pub unsafe fn from_raw(
+    raw: backend::Device,
+    adapter: backend::Adapter,
     backend: &Arc<backend::Instance>,
-  ) -> Result<(Arc<Device>, Q), CreationError> {
-    // Select the best available adapter.
-    let adapter = select_best_adapter(&backend).ok_or(CreationError::NoSupportedAdapter)?;
-
-    // Determine queue families to open.
-    let queue_families = Q::select_families(&adapter);
-
-    // Open the adapter's physical device.
-    let priorities = [1.0f32];
-
-    let creation_info = queue_families
-      .iter()
-      .map(|f| (f, &priorities[..]))
-      .collect::<Vec<_>>();
-
-    let mut gpu = adapter.physical_device.open(&creation_info[..])?;
-
-    let allocator = Allocator::new(
+  ) -> Device {
+    let allocator = Mutex::new(Allocator::new(
       adapter.physical_device.memory_properties(),
       64 * 1024 * 1024,
       32,
       128,
       256 * 1024 * 1024,
-    );
+    ));
 
-    // Create a wrapper.
-    let device = Arc::new(Device {
+    Device {
       adapter,
-      raw: gpu.device,
-      allocator: Mutex::new(allocator).into(),
+      raw,
+      allocator: allocator.into(),
       backend: backend.clone(),
-    });
-
-    // Create a queue set from the queues.
-    let queues = Q::from_raw(&device, &mut gpu.queues, queue_families);
-
-    Ok((device, queues))
+    }
   }
 
   pub fn backend(&self) -> &Arc<backend::Instance> {
@@ -84,39 +73,6 @@ impl Drop for Device {
         .unwrap()
         .dispose(&self.raw)
         .expect("could not dispose allocator");
-    }
-  }
-}
-
-/// Selects the best available device adapter.
-fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adapter> {
-  instance
-    .enumerate_adapters()
-    .into_iter()
-    // Select only adapters with a graphics queue family.
-    .filter(|adapter| adapter.queue_families.iter().any(|f| f.supports_graphics()))
-    // Select the adapter with the higest score:
-    .max_by_key(|adapter| {
-      let mut score = 0;
-
-      // Prefer discrete graphics devices over integrated ones.
-      if adapter.info.device_type == gfx_hal::adapter::DeviceType::DiscreteGpu {
-        score += 1000;
-      }
-
-      score
-    })
-}
-
-quick_error! {
-  #[derive(Debug)]
-  pub enum CreationError {
-    NoSupportedAdapter {
-      display("No supported graphics adapters available.")
-    }
-    OpenAdapterFailed(err: gfx_hal::error::DeviceCreationError) {
-      display("Could not open adapter: {}", err)
-      from()
     }
   }
 }

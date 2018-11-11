@@ -6,8 +6,4 @@ edition = "2018"
 
 [dependencies]
 bflog = "0.3"
-image = "0.20"
 nova = { path = "../engine" }
-specs = "0.14"
-specs-derive = "0.3"
-winit = "0.17"
