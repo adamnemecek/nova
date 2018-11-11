@@ -1,7 +1,7 @@
 use super::{Backing, Format, Image, Source};
 use crate::graphics::buffer::{self, Buffer};
 use crate::graphics::commands::{self, CommandPool, Commands};
-use crate::graphics::device;
+use crate::graphics::device::{self, Device};
 use crate::graphics::hal::prelude::*;
 use gfx_memory::Factory;
 use std::borrow::Borrow;
@@ -9,19 +9,23 @@ use std::iter;
 use std::sync::Arc;
 
 pub struct Loader {
+  device: Arc<Device>,
+  queue: device::Queue,
   command_pool: Arc<CommandPool>,
 }
 
 impl Loader {
-  pub fn new(queue: &Arc<device::Queue>) -> Self {
+  pub fn new(queue: device::Queue) -> Self {
     Loader {
-      command_pool: CommandPool::new(queue),
+      command_pool: CommandPool::new(&queue),
+      device: queue.device().clone(),
+      queue,
     }
   }
 
   pub fn load(&mut self, source: &Source) -> Image {
+    let device = &self.device;
     let mut cmd = Commands::new(&self.command_pool, commands::Level::Primary);
-    let device = self.command_pool.queue().device();
 
     let size = source.size();
 
@@ -120,7 +124,7 @@ impl Loader {
 
     cmd.finish();
 
-    let mut queue = self.command_pool.queue().raw_mut();
+    let queue = self.queue.raw_mut();
 
     unsafe {
       queue.submit_raw(

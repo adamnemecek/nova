@@ -30,7 +30,7 @@ pub fn main() -> Result<(), String> {
     .with("width", &window.size().x)
     .with("height", &window.size().y);
 
-  let gpu = graphics::device::Gpu::new(&backend)
+  let mut gpu = graphics::device::Gpu::new(&backend)
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log.trace("Created graphics device.");
@@ -60,7 +60,7 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad mesh.");
 
-  let mut image_loader = image::Loader::new(&gpu.queues.transfer);
+  let mut image_loader = image::Loader::new(gpu.queues.transfer);
 
   let image = image_loader.load(
     &image::Source::from_bytes(include_bytes!("../assets/do-it.jpg"))
@@ -109,7 +109,7 @@ pub fn main() -> Result<(), String> {
 
     cmd.finish();
 
-    renderer.submit_frame(iter::once(cmd));
+    renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
   }
 
   Ok(())

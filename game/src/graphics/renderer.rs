@@ -13,7 +13,7 @@ const FRAMES_IN_FLIGHT: usize = 3;
 
 pub struct Renderer {
   surface: Arc<window::Surface>,
-  queue: Arc<device::Queue>,
+  queue_family_id: device::queue::FamilyId,
   pass: Arc<RenderPass>,
   fences: Chain<Fence>,
   semaphores: Chain<(Semaphore, Semaphore)>,
@@ -26,7 +26,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(queue: &Arc<device::Queue>, window: &Window, log: &bflog::Logger) -> Self {
+  pub fn new(queue: &device::Queue, window: &Window, log: &bflog::Logger) -> Self {
     let mut log = log.with_src("game::graphics::Renderer");
 
     let device = queue.device();
@@ -36,8 +36,6 @@ impl Renderer {
     let pass = RenderPass::new(device);
 
     log.trace("Created render pass.");
-
-    log.trace("Created descriptor set layout.");
 
     let fences = Chain::allocate(FRAMES_IN_FLIGHT, |_| Fence::new(&device));
 
@@ -50,7 +48,7 @@ impl Renderer {
     log.trace("Created resource chains.");
 
     Renderer {
-      queue: queue.clone(),
+      queue_family_id: queue.family_id(),
       surface: window.surface().clone(),
       pass,
       fences,
@@ -99,7 +97,16 @@ impl Renderer {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  pub fn submit_frame(&mut self, commands: impl IntoIterator<Item = Commands>) {
+  pub fn submit_frame(
+    &mut self,
+    queue: &mut device::Queue,
+    commands: impl IntoIterator<Item = Commands>,
+  ) {
+    assert!(
+      queue.family_id() == self.queue_family_id,
+      "Frames must be submitted to the same queue the renderer was created with.",
+    );
+
     let fence = self.fences.current();
     let (acquire_semaphore, render_semaphore) = self.semaphores.current();
     let submission = self.submissions.current_mut();
@@ -107,8 +114,8 @@ impl Renderer {
     submission.extend(commands);
 
     unsafe {
-      self.queue.raw_mut().submit_raw(
-        device::queues::RawSubmission {
+      queue.raw_mut().submit_raw(
+        device::queue::RawSubmission {
           cmd_buffers: submission.iter().map(AsRef::as_ref),
           wait_semaphores: &[(
             acquire_semaphore.raw(),
@@ -120,7 +127,7 @@ impl Renderer {
       );
     }
 
-    let result = self.queue.present(
+    let result = queue.present(
       iter::once((self.swapchain.as_ref(), self.frame as u32)),
       iter::once(render_semaphore),
     );

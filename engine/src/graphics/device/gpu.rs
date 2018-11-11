@@ -10,8 +10,8 @@ pub struct Gpu {
 }
 
 pub struct GpuQueues {
-  pub graphics: Arc<Queue>,
-  pub transfer: Arc<Queue>,
+  pub graphics: Queue,
+  pub transfer: Queue,
 }
 
 impl Gpu {
@@ -32,8 +32,8 @@ impl Gpu {
 
     // Create a set of queues from the raw queues.
     let queues = GpuQueues {
-      graphics: Arc::new(Queue::new(&device, &mut raw.queues, graphics_family)),
-      transfer: Arc::new(Queue::new(&device, &mut raw.queues, transfer_family)),
+      graphics: unsafe { Queue::from_raw(&device, &mut raw.queues, graphics_family) },
+      transfer: unsafe { Queue::from_raw(&device, &mut raw.queues, transfer_family) },
     };
 
     Ok(Gpu {
