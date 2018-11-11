@@ -8,7 +8,7 @@
 //! target platform.
 //!
 //! The `hal::prelude` module exposes traits needed to invoke methods on backend
-//! structures with names prefixed by `Abstract` that they will not conflict
+//! structures with names prefixed by `Abstract` so that they will not conflict
 //! with custom types of the same names. It also exposes the `hal` module itself
 //! so that `use hal::prelude::*` offers easy access to graphics API.
 
