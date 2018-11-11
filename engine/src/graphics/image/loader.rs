@@ -81,7 +81,7 @@ impl Loader {
       );
 
       cmd.copy_buffer_to_image(
-        buffer.raw(),
+        buffer.as_ref(),
         image.borrow(),
         gfx_hal::image::Layout::TransferDstOptimal,
         &[gfx_hal::command::BufferImageCopy {

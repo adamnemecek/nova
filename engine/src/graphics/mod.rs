@@ -14,20 +14,22 @@ pub mod vertices;
 pub mod window;
 
 mod color;
+mod fence;
 mod framebuffer;
 mod render_pass;
-mod sync;
+mod semaphore;
 
 pub use self::backend::Backend;
 pub use self::buffer::Buffer;
 pub use self::color::Color;
 pub use self::commands::{CommandPool, Commands};
 pub use self::device::Device;
+pub use self::fence::Fence;
 pub use self::framebuffer::Framebuffer;
 pub use self::image::Image;
 pub use self::pipeline::Pipeline;
 pub use self::render_pass::RenderPass;
+pub use self::semaphore::Semaphore;
 pub use self::shader::Shader;
-pub use self::sync::{Fence, Semaphore};
 pub use self::vertices::*;
 pub use self::window::Window;

@@ -192,7 +192,7 @@ impl Commands {
 
     self
       .buffer
-      .bind_vertex_buffers(binding, iter::once((buffer.raw(), 0)));
+      .bind_vertex_buffers(binding, iter::once((buffer.as_ref(), 0)));
   }
 
   /// Records a command to bind an index buffer to the given binding index.
@@ -207,7 +207,7 @@ impl Commands {
     self
       .buffer
       .bind_index_buffer(gfx_hal::buffer::IndexBufferView {
-        buffer: buffer.raw(),
+        buffer: buffer.as_ref(),
         offset: 0,
         index_type: gfx_hal::IndexType::U16,
       })

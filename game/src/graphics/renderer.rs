@@ -74,7 +74,14 @@ impl Renderer {
   }
 
   pub fn begin_frame(&mut self) -> Arc<Framebuffer> {
-    self.fences.next().wait();
+    let fence = self.fences.next();
+
+    if fence.is_signaled() {
+      fence.reset();
+    } else {
+      fence.wait_and_reset();
+    }
+
     self.semaphores.next();
     self.submissions.next().clear();
 
@@ -124,7 +131,7 @@ impl Renderer {
           )],
           signal_semaphores: &[render_semaphore.raw()],
         },
-        Some(fence.raw()),
+        Some(fence.as_ref()),
       );
     }
 

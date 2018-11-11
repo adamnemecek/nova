@@ -5,19 +5,29 @@ use crate::math::algebra::Vector2;
 use crate::utils::Droppable;
 use std::sync::Arc;
 
+/// A set of images used by a render pass.
 pub struct Framebuffer {
-  device: Arc<Device>,
+  /// Raw backend framebuffer structure.
   raw: Droppable<backend::Framebuffer>,
-  images: Vec<Arc<Image>>,
+  /// Size of the framebuffer in pixels.
   size: Vector2<u32>,
+  /// Images in the framebuffer. Stored to prevent them from being dropped.
+  _images: Vec<Arc<Image>>,
+  /// Device the framebuffer was created with. Stored to prevent it from being
+  /// dropped.
+  _device: Arc<Device>,
 }
 
 impl Framebuffer {
+  /// Creates a new framebuffer compatible with the given render pass from the
+  /// given images.
   pub fn new(render_pass: &Arc<RenderPass>, images: impl IntoIterator<Item = Arc<Image>>) -> Self {
     let device = render_pass.device();
 
+    // Collect the images to store them.
     let images = images.into_iter().collect::<Vec<_>>();
 
+    // Get the extent (size) of the images, panicing if any differ.
     let extent = {
       let mut iter = images.iter();
 
@@ -27,7 +37,7 @@ impl Framebuffer {
         .size();
 
       if !iter.all(|img| img.size() == size) {
-        panic!("All images in the framebuffer must be the same size.");
+        panic!("All images in a framebuffer must be of the same size.");
       }
 
       gfx_hal::image::Extent {
@@ -37,28 +47,32 @@ impl Framebuffer {
       }
     };
 
+    // Create the framebuffer.
+    let image_views = images
+      .iter()
+      .map(AsRef::as_ref) // Arc<Image> -> &Image
+      .map(AsRef::as_ref); // &Image -> &backend::ImageView
+
     let framebuffer = device
       .raw()
-      .create_framebuffer(
-        render_pass.raw(),
-        images.iter().map(|img| img.as_ref().as_ref()),
-        extent,
-      )
-      .expect("out of memory");
+      .create_framebuffer(render_pass.raw(), image_views, extent)
+      .expect("Out of memory.");
 
     Framebuffer {
       raw: framebuffer.into(),
-      images,
-      device: device.clone(),
       size: Vector2::new(extent.width, extent.height),
+      _images: images,
+      _device: device.clone(),
     }
   }
 
+  /// Gets the size of the framebuffer in pixels.
   pub fn size(&self) -> Vector2<u32> {
     self.size
   }
 }
 
+// Implement `AsRef` to expose the raw backend framebuffer.
 impl AsRef<backend::Framebuffer> for Framebuffer {
   fn as_ref(&self) -> &backend::Framebuffer {
     &self.raw

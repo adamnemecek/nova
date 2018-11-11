@@ -8,16 +8,23 @@ use gfx_memory::{Block, Factory};
 use std::mem;
 use std::sync::Arc;
 
+/// Value returned from the device allocator's `create_buffer` method.
 type Allocation = <device::Allocator as Factory<Backend>>::Buffer;
 
+/// A buffer of device-accessible memory.
 pub struct Buffer<T> {
-  inner: Droppable<Allocation>,
-  size: u64,
+  /// Device the buffer was created with.
   device: Arc<Device>,
+  /// Raw backend buffer and memory allocated by the device.
+  inner: Droppable<Allocation>,
+  /// Size of the buffer in bytes.
+  size: u64,
+  /// A phantom data marker so that buffers can be generic on their contents.
   _marker: std::marker::PhantomData<T>,
 }
 
 impl<T: Copy> Buffer<T> {
+  /// Creates a new buffer large enough for `len` elements.
   pub fn new(device: &Arc<Device>, len: usize, usage: Usage) -> Self {
     let size = mem::size_of::<T>() as u64 * len as u64;
 
@@ -26,13 +33,14 @@ impl<T: Copy> Buffer<T> {
       .create_buffer(
         device.raw(),
         (
+          // TODO: Other kinds of buffers.
           gfx_memory::Type::General,
           gfx_hal::memory::Properties::CPU_VISIBLE,
         ),
         size,
         usage,
       )
-      .expect("could not allocate buffer");
+      .expect("Could not allocate buffer");
 
     Buffer {
       device: device.clone(),
@@ -42,6 +50,9 @@ impl<T: Copy> Buffer<T> {
     }
   }
 
+  /// Writes new contents to the buffer.
+  ///
+  /// Panics if the given slice is not the same length as the buffer.
   pub fn write(&mut self, values: &[T]) {
     let device = self.device.raw();
     let memory = self.inner.memory();
@@ -49,18 +60,24 @@ impl<T: Copy> Buffer<T> {
 
     let mut dest = device
       .acquire_mapping_writer::<T>(&memory, range.start..range.start + self.size)
-      .expect("could not acquire mapping writer");
+      .expect("Could not acquire mapping writer");
 
     dest.copy_from_slice(values);
 
-    device.release_mapping_writer(dest).expect("out of memory");
+    device
+      .release_mapping_writer(dest)
+      .expect("Could not release mapping writer");
   }
+}
 
-  pub fn raw(&self) -> &backend::Buffer {
+// Implement `AsRef` to expose the raw backend buffer.
+impl<T> AsRef<backend::Buffer> for Buffer<T> {
+  fn as_ref(&self) -> &backend::Buffer {
     self.inner.raw()
   }
 }
 
+// Implement `Drop` to destroy the buffer with the device allocator.
 impl<T> Drop for Buffer<T> {
   fn drop(&mut self) {
     if let Some(inner) = self.inner.take() {
