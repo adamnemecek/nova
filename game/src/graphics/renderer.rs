@@ -154,7 +154,10 @@ impl Renderer {
 
     self.swapchain = Swapchain::new(&self.pass, &mut self.surface.lock(), size).into();
 
-    self.log.trace("Created swapchain.");
+    self.log.trace("Created swapchain.").with(
+      "present_mode",
+      &format!("{:#?}", self.swapchain.present_mode()),
+    );
 
     for image in self.swapchain.images() {
       self.framebuffers.push(Arc::new(Framebuffer::new(

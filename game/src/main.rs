@@ -87,8 +87,6 @@ pub fn main() -> Result<(), String> {
   let mut frames = 0;
 
   loop {
-    std::thread::yield_now();
-
     let start = time::Instant::now();
 
     window.update();
@@ -120,6 +118,8 @@ pub fn main() -> Result<(), String> {
     cmd.finish();
 
     renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
+
+    std::thread::yield_now();
 
     // Track frame rate and duration.
     duration += time::Instant::now() - start;

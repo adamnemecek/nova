@@ -1,3 +1,5 @@
+pub use gfx_hal::window::PresentMode;
+
 use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
@@ -13,6 +15,7 @@ pub struct Swapchain {
   raw: Droppable<backend::Swapchain>,
   images: SmallVec<[Arc<Image>; 3]>,
   size: Vector2<f32>,
+  present_mode: PresentMode,
 }
 
 impl Swapchain {
@@ -34,7 +37,7 @@ impl Swapchain {
     let present_mode = select_present_mode(modes);
 
     let image_count = if present_mode == gfx_hal::window::PresentMode::Mailbox {
-      cmp::max(caps.image_count.start, cmp::min(3, caps.image_count.end))
+      cmp::min(caps.image_count.start, cmp::min(3, caps.image_count.end))
     } else {
       caps.image_count.start
     };
@@ -51,13 +54,14 @@ impl Swapchain {
     let (raw, backbuffer) = device
       .raw()
       .create_swapchain(surface, config, None)
-      .expect("could not create swapchain");
+      .expect("Could not create swapchain");
 
     let mut swapchain = Swapchain {
       device: device.clone(),
       raw: raw.into(),
       images: SmallVec::new(),
       size: Vector2::new(extent.width as f32, extent.height as f32),
+      present_mode,
     };
 
     match backbuffer {
@@ -72,7 +76,7 @@ impl Swapchain {
         }
       }
 
-      _ => panic!("device created framebuffer objects"),
+      _ => panic!("Device created framebuffer objects."),
     };
 
     swapchain
@@ -88,6 +92,10 @@ impl Swapchain {
 
   pub fn size(&self) -> Vector2<f32> {
     self.size
+  }
+
+  pub fn present_mode(&self) -> PresentMode {
+    self.present_mode
   }
 
   pub fn acquire_image(&mut self, semaphore: &Semaphore) -> Result<usize, AcquireImageError> {
@@ -116,13 +124,11 @@ impl Drop for Swapchain {
   }
 }
 
-fn select_present_mode(modes: Vec<gfx_hal::window::PresentMode>) -> gfx_hal::window::PresentMode {
-  if modes.contains(&gfx_hal::window::PresentMode::Mailbox) {
-    gfx_hal::window::PresentMode::Mailbox
-  } else if modes.contains(&gfx_hal::window::PresentMode::Immediate) {
-    gfx_hal::window::PresentMode::Immediate
+fn select_present_mode(modes: Vec<PresentMode>) -> PresentMode {
+  if modes.contains(&PresentMode::Mailbox) {
+    PresentMode::Mailbox
   } else {
-    gfx_hal::window::PresentMode::Fifo
+    PresentMode::Fifo
   }
 }
 
