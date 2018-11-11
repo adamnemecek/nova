@@ -3,7 +3,7 @@ use super::hal::prelude::*;
 use super::pipeline;
 use super::window::swapchain::{self, Swapchain};
 use super::window::{self, Window};
-use super::{CommandBuffer, Fence, Framebuffer, RenderPass, Semaphore};
+use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::algebra::Vector2;
 use nova::utils::{Chain, Droppable};
 use std::iter;
@@ -18,7 +18,7 @@ pub struct Renderer {
   fences: Chain<Fence>,
   semaphores: Chain<(Semaphore, Semaphore)>,
   swapchain: Droppable<Swapchain>,
-  submissions: Chain<Vec<CommandBuffer>>,
+  submissions: Chain<Vec<Commands>>,
   framebuffers: Vec<Arc<Framebuffer>>,
   frame: usize,
   size: Vector2<u32>,
@@ -99,7 +99,7 @@ impl Renderer {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  pub fn submit_frame(&mut self, commands: impl IntoIterator<Item = CommandBuffer>) {
+  pub fn submit_frame(&mut self, commands: impl IntoIterator<Item = Commands>) {
     let fence = self.fences.current();
     let (acquire_semaphore, render_semaphore) = self.semaphores.current();
     let submission = self.submissions.current_mut();
@@ -109,7 +109,7 @@ impl Renderer {
     unsafe {
       self.queue.raw_mut().submit_raw(
         device::queues::RawSubmission {
-          cmd_buffers: submission.iter().map(CommandBuffer::raw),
+          cmd_buffers: submission.iter().map(AsRef::as_ref),
           wait_semaphores: &[(
             acquire_semaphore.raw(),
             pipeline::Stage::COLOR_ATTACHMENT_OUTPUT,

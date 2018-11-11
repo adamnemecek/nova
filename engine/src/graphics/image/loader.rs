@@ -1,8 +1,8 @@
 use super::{Backing, Format, Image, Source};
 use crate::graphics::buffer::{self, Buffer};
+use crate::graphics::commands::{self, CommandPool, Commands};
 use crate::graphics::device;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::{CommandBuffer, CommandBufferKind, CommandPool};
 use gfx_memory::Factory;
 use std::borrow::Borrow;
 use std::iter;
@@ -20,7 +20,7 @@ impl Loader {
   }
 
   pub fn load(&mut self, source: &Source) -> Image {
-    let mut cmd = CommandBuffer::new(&self.command_pool, CommandBufferKind::Primary);
+    let mut cmd = Commands::new(&self.command_pool, commands::Level::Primary);
     let device = self.command_pool.queue().device();
 
     let size = source.size();
@@ -125,7 +125,7 @@ impl Loader {
     unsafe {
       queue.submit_raw(
         gfx_hal::queue::RawSubmission {
-          cmd_buffers: iter::once(cmd.raw()),
+          cmd_buffers: iter::once(cmd.as_ref()),
           wait_semaphores: &[],
           signal_semaphores: &[],
         },

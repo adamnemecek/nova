@@ -92,11 +92,11 @@ pub fn main() -> Result<(), String> {
 
     let framebuffer = renderer.begin_frame();
 
-    let mut cmd = graphics::CommandBuffer::new(&command_pool, graphics::CommandBufferKind::Primary);
+    let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 
     cmd.begin();
 
-    cmd.begin_pass(renderer.pass(), &framebuffer);
+    cmd.begin_render_pass(renderer.pass(), &framebuffer);
 
     cmd.bind_pipeline(&pipeline);
 

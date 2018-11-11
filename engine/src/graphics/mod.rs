@@ -4,6 +4,7 @@
 
 pub mod backend;
 pub mod buffer;
+pub mod commands;
 pub mod device;
 pub mod hal;
 pub mod image;
@@ -13,7 +14,6 @@ pub mod vertices;
 pub mod window;
 
 mod color;
-mod commands;
 mod framebuffer;
 mod render_pass;
 mod sync;
@@ -21,7 +21,7 @@ mod sync;
 pub use self::backend::Backend;
 pub use self::buffer::Buffer;
 pub use self::color::Color;
-pub use self::commands::*;
+pub use self::commands::{CommandPool, Commands};
 pub use self::device::Device;
 pub use self::framebuffer::Framebuffer;
 pub use self::image::Image;
