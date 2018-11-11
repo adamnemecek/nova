@@ -1,3 +1,17 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+//! The `hal` module exposes the contents of the `gfx_hal` crate that the
+//! engine was built with. Types that are normally generic over a backend type
+//! are replaced with type aliases that use the most appropriate backend for the
+//! target platform.
+//!
+//! The `hal::prelude` module exposes traits needed to invoke methods on backend
+//! structures with names prefixed by `Abstract` that they will not conflict
+//! with custom types of the same names. It also exposes the `hal` module itself
+//! so that `use hal::prelude::*` offers easy access to graphics API.
+
 pub use gfx_hal::*;
 
 use super::Backend;
