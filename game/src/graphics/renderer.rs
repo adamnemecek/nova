@@ -2,7 +2,7 @@ use super::device;
 use super::hal::prelude::*;
 use super::pipeline;
 use super::window::swapchain::{self, Swapchain};
-use super::window::{self, Window};
+use super::window::Window;
 use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::algebra::Vector2;
 use nova::utils::{Chain, Droppable};
@@ -13,7 +13,6 @@ const FRAMES_IN_FLIGHT: usize = 3;
 
 pub struct Renderer {
   queue_family_id: usize,
-  surface: Arc<window::Surface>,
   pass: Arc<RenderPass>,
   fences: Chain<Fence>,
   semaphores: Chain<(Semaphore, Semaphore)>,
@@ -49,7 +48,6 @@ impl Renderer {
 
     Renderer {
       queue_family_id: queue.family_id(),
-      surface: window.surface().clone(),
       pass,
       fences,
       semaphores,
@@ -66,14 +64,7 @@ impl Renderer {
     &self.pass
   }
 
-  pub fn resize(&mut self, size: Vector2<u32>) {
-    if size != self.size {
-      self.size = size;
-      self.swapchain.drop();
-    }
-  }
-
-  pub fn begin_frame(&mut self) -> Arc<Framebuffer> {
+  pub fn begin_frame(&mut self, window: &mut Window) -> Arc<Framebuffer> {
     let fence = self.fences.next();
 
     if fence.is_signaled() {
@@ -86,7 +77,7 @@ impl Renderer {
     self.submissions.next().clear();
 
     for _ in 0..5 {
-      self.ensure_swapchain();
+      self.ensure_swapchain(window);
 
       let (semaphore, _) = self.semaphores.current();
 
@@ -145,14 +136,19 @@ impl Renderer {
     }
   }
 
-  fn ensure_swapchain(&mut self) {
+  fn ensure_swapchain(&mut self, window: &mut Window) {
+    let size = window.size();
+
+    if size != self.size {
+      self.size = size;
+      self.swapchain.drop();
+    }
+
     if !self.swapchain.is_dropped() {
       return;
     }
 
-    let size = self.size.map(|c| c as f32);
-
-    self.swapchain = Swapchain::new(&self.pass, &mut self.surface.lock(), size).into();
+    self.swapchain = Swapchain::new(&self.pass, window.surface_mut().as_mut(), size).into();
 
     self.log.trace("Created swapchain.").with(
       "present_mode",

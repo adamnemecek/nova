@@ -1,26 +1,30 @@
 use crate::graphics::backend;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::Arc;
 
+/// A rendering surface created from a [`Window`].
 pub struct Surface {
-  surface: Mutex<backend::Surface>,
-  backend: Arc<backend::Instance>,
+  /// Raw backend surface structure.
+  raw: backend::Surface,
+  /// Reference to the backend instance the surface was created with. Stored so
+  /// that the backend does not get dropped.
+  _backend: Arc<backend::Instance>,
 }
 
 impl Surface {
+  /// Creates a new surface from a window with the given backend instance.
   pub fn new(backend: &Arc<backend::Instance>, window: &winit::Window) -> Surface {
-    let surface = backend.create_surface(&window).into();
+    let surface = backend.create_surface(&window);
 
     Surface {
-      surface,
-      backend: backend.clone(),
+      raw: surface,
+      _backend: backend.clone(),
     }
   }
+}
 
-  pub fn backend(&self) -> &Arc<backend::Instance> {
-    &self.backend
-  }
-
-  pub fn lock(&self) -> MutexGuard<backend::Surface> {
-    self.surface.lock().unwrap()
+// Implement `AsMut` to expose a mutable reference to the raw backend surface.
+impl AsMut<backend::Surface> for Surface {
+  fn as_mut(&mut self) -> &mut backend::Surface {
+    &mut self.raw
   }
 }

@@ -10,15 +10,23 @@ use crate::graphics::backend;
 use crate::math::algebra::Vector2;
 use std::sync::Arc;
 
+/// Represents a platform-specfic window.
 pub struct Window {
+  /// Events loop the window was created with.
   events_loop: winit::EventsLoop,
+  /// Raw winit window structure.
   raw: winit::Window,
-  surface: Arc<Surface>,
+  /// Rendering surface created from the window with a backend instance.
+  surface: Surface,
+  /// Size of the window in pixels.
   size: Vector2<u32>,
-  closed: bool,
+  /// Whether the user has requested the window be closed.
+  closing: bool,
 }
 
 impl Window {
+  /// Creates a new platform-specific window with a rendering surface for the
+  /// given backend instance.
   pub fn new(backend: &Arc<backend::Instance>) -> Result<Window, CreationError> {
     let events_loop = winit::EventsLoop::new();
 
@@ -26,19 +34,36 @@ impl Window {
       .with_title("nova")
       .build(&events_loop)?;
 
-    let size = physical_size_of(&window);
+    let size = pixel_size_of(&window);
 
-    let surface = Surface::new(backend, &window).into();
+    let surface = Surface::new(backend, &window);
 
     Ok(Window {
       events_loop,
       raw: window,
       surface,
       size,
-      closed: false,
+      closing: false,
     })
   }
 
+  /// Gets a mutable reference to the rendering surface of the window.
+  pub fn surface_mut(&mut self) -> &mut Surface {
+    &mut self.surface
+  }
+
+  /// Returns `true` after the user requests closing the window.
+  pub fn is_closing(&self) -> bool {
+    self.closing
+  }
+
+  /// Gets the size of the window in pixels.
+  pub fn size(&self) -> Vector2<u32> {
+    self.size
+  }
+
+  /// Updates the window by processing events that have occured since the last
+  /// update.
   pub fn update(&mut self) {
     let mut closing = false;
     let mut resized = false;
@@ -60,28 +85,17 @@ impl Window {
     });
 
     if closing {
-      self.closed = true;
+      self.closing = true;
     }
 
     if resized {
-      self.size = physical_size_of(&self.raw);
+      self.size = pixel_size_of(&self.raw);
     }
-  }
-
-  pub fn surface(&self) -> &Arc<Surface> {
-    &self.surface
-  }
-
-  pub fn is_closed(&self) -> bool {
-    self.closed
-  }
-
-  pub fn size(&self) -> Vector2<u32> {
-    self.size
   }
 }
 
-fn physical_size_of(window: &winit::Window) -> Vector2<u32> {
+/// Determines the size of a window in pixels.
+fn pixel_size_of(window: &winit::Window) -> Vector2<u32> {
   let size = window
     .get_inner_size()
     .expect("window destroyed")

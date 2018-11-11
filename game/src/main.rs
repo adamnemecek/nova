@@ -91,13 +91,11 @@ pub fn main() -> Result<(), String> {
 
     window.update();
 
-    if window.is_closed() {
+    if window.is_closing() {
       break;
     }
 
-    renderer.resize(window.size());
-
-    let framebuffer = renderer.begin_frame();
+    let framebuffer = renderer.begin_frame(&mut window);
 
     let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 

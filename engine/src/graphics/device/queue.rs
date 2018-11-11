@@ -63,7 +63,7 @@ impl Queue {
     wait_for: impl IntoIterator<Item = &'a Semaphore>,
   ) -> Result<(), ()> {
     self.raw.present(
-      images.into_iter().map(|(sc, i)| (sc.raw(), i)),
+      images.into_iter().map(|(sc, i)| (sc.as_ref(), i)),
       wait_for.into_iter().map(Semaphore::raw),
     )
   }
