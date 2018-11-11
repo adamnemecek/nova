@@ -4,17 +4,25 @@ use crate::graphics::hal::prelude::*;
 use crate::utils::quick_error;
 use std::sync::Arc;
 
+/// Initialization helper structure for creating a device and a set of queues
+/// for submitting commands.
 pub struct Gpu {
   pub device: Arc<Device>,
   pub queues: GpuQueues,
 }
 
+/// Set of queues created by [`Gpu::new`].
 pub struct GpuQueues {
+  /// Graphics queue for submitting rendering commands and presenting to a
+  /// window surface.
   pub graphics: Queue,
+  /// Transfer queue for copying to and from buffers and images.
   pub transfer: Queue,
 }
 
 impl Gpu {
+  /// Initializes a new graphics device with a set of queues for submitting
+  /// commands and presenting to a window surface.
   pub fn new(backend: &Arc<backend::Instance>) -> Result<Gpu, CreationError> {
     // Select the best available adapter.
     let adapter = select_best_adapter(&backend).ok_or(CreationError::NoSupportedAdapter)?;
@@ -63,6 +71,8 @@ pub fn select_best_adapter(instance: &backend::Instance) -> Option<backend::Adap
     })
 }
 
+/// Selects a queue family for graphics queues and a queue family for transfer
+/// queues from the given backend adapter info.
 fn select_queue_families(
   adapter: &backend::Adapter,
 ) -> (backend::QueueFamily, backend::QueueFamily) {

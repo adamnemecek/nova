@@ -1,6 +1,5 @@
-pub mod queue;
-
 pub mod gpu;
+pub mod queue;
 
 pub use self::gpu::Gpu;
 pub use self::queue::Queue;
