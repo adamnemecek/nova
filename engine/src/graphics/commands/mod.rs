@@ -61,7 +61,7 @@ impl Commands {
     assert!(self.recording, "The command buffer is not recording.");
 
     // Convert the framebuffer size from `u32` to `i16`.
-    let size = framebuffer.size().map(|u| u as i16);
+    let size = framebuffer.size().vector.map(|u| u as i16);
 
     // Create a viewport struct covering the entire framebuffer.
     let viewport = hal::pso::Viewport {

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::math::algebra::Vector2;
+use crate::math::Size;
 use derive_more::*;
 use image::RgbaImage;
 
@@ -20,9 +20,7 @@ impl Source {
     &self.0
   }
 
-  pub fn size(&self) -> Vector2<u32> {
-    let dim = self.0.dimensions();
-
-    Vector2::new(dim.0, dim.1)
+  pub fn size(&self) -> Size<u32> {
+    self.0.dimensions().into()
   }
 }

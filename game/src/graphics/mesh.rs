@@ -1,7 +1,7 @@
 use super::buffer::{self, Buffer};
 use super::vertices::*;
 use super::{Color, Device};
-use nova::math::algebra::Vector2;
+use nova::math::Vector2;
 use std::sync::Arc;
 
 pub struct Mesh {

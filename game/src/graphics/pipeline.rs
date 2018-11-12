@@ -2,7 +2,7 @@ pub use nova::graphics::pipeline::*;
 
 use super::shader::{self, Shader};
 use super::{Color, RenderPass, Vertex};
-use nova::math::algebra::Matrix4;
+use nova::math::Matrix4;
 use std::sync::Arc;
 
 pub fn create_default(pass: &Arc<RenderPass>) -> Arc<Pipeline> {

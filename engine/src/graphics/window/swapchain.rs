@@ -8,7 +8,7 @@ use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
 use crate::graphics::{Device, RenderPass, Semaphore};
-use crate::math::algebra::Vector2;
+use crate::math::Size;
 use crate::utils::{quick_error, Droppable};
 use smallvec::SmallVec;
 use std::cmp;
@@ -23,7 +23,7 @@ pub struct Swapchain {
   /// Images in the swapchain.
   images: SmallVec<[Arc<Image>; 3]>, // No swapchain needs more than 3 images.
   /// Size of the swapchain in pixels.
-  size: Vector2<u32>,
+  size: Size<u32>,
   /// Present mode of the swapchain.
   present_mode: PresentMode,
 }
@@ -33,7 +33,7 @@ impl Swapchain {
   /// surface.
   ///
   /// The returned swapchain may not be the same size as requested.
-  pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Vector2<u32>) -> Self {
+  pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Size<u32>) -> Self {
     let device = render_pass.device();
 
     // Determine surface capabilities and settings as well as available present
@@ -44,11 +44,11 @@ impl Swapchain {
     let extent = hal::window::Extent2D {
       width: cmp::max(
         caps.extents.start.width,
-        cmp::min(size.x, caps.extents.end.width),
+        cmp::min(size.width(), caps.extents.end.width),
       ),
       height: cmp::max(
         caps.extents.start.height,
-        cmp::min(size.y, caps.extents.end.height),
+        cmp::min(size.height(), caps.extents.end.height),
       ),
     };
 
@@ -83,7 +83,7 @@ impl Swapchain {
       device: device.clone(),
       raw: raw.into(),
       images: SmallVec::new(),
-      size: Vector2::new(extent.width, extent.height),
+      size: extent.into(),
       present_mode,
     };
 
@@ -96,7 +96,7 @@ impl Swapchain {
             device,
             image::Backing::Swapchain(image),
             render_pass.format(),
-            Vector2::new(extent.width, extent.height),
+            extent.into(),
           )));
         }
       }
@@ -114,7 +114,7 @@ impl Swapchain {
   }
 
   /// Gets the size of the swapchain images in pixels.
-  pub fn size(&self) -> Vector2<u32> {
+  pub fn size(&self) -> Size<u32> {
     self.size
   }
 

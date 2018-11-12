@@ -2,53 +2,33 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::algebra::*;
-use super::geometry::*;
-use super::Real;
-use std::fmt;
+use super::{Point2, ScalarNum, Size};
 
-/// Struct describing a rectangle in 2D space.
-#[derive(Clone, Copy, PartialEq)]
-pub struct Rect<N: Real> {
-  /// Position of the rectangle's top left corner.
+/// Definition of a two-dimensional rectangle.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Rect<N: ScalarNum> {
+  /// Position of the rectangle's top-left corner.
   pub pos: Point2<N>,
   /// Size of the rectangle.
-  pub size: Vector2<N>,
+  pub size: Size<N>,
 }
 
-impl<N: Real> Rect<N> {
+impl<N: ScalarNum> Rect<N> {
   /// Creates a new rect with the given dimensions.
-  pub fn new(pos_x: N, pos_y: N, size_x: N, size_y: N) -> Self {
+  pub fn new(x: N, y: N, width: N, height: N) -> Self {
     Rect {
-      pos: Point2::new(pos_x, pos_y),
-      size: Vector2::new(size_x, size_y),
-    }
-  }
-
-  /// Returns a new rect offset from this one by the given vector.
-  pub fn offset(&self, vector: Vector2<N>) -> Self {
-    Rect {
-      pos: self.pos + vector,
-      size: self.size,
+      pos: Point2::new(x, y),
+      size: Size::new(width, height),
     }
   }
 }
 
-impl<N: Real> Default for Rect<N> {
+// Implement `Default` to provide a rectangle with all zeros.
+impl<N: ScalarNum> Default for Rect<N> {
   fn default() -> Self {
     Rect {
       pos: Point2::origin(),
-      size: Vector2::zeros(),
+      size: Size::default(),
     }
-  }
-}
-
-impl<N: Real> fmt::Debug for Rect<N> {
-  fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-    write!(
-      f,
-      "Rect {{ pos: ({:?}, {:?}), size: ({:?}, {:?}) }}",
-      self.pos.x, self.pos.y, self.size.x, self.size.y
-    )
   }
 }

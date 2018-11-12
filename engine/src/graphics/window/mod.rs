@@ -11,7 +11,7 @@ pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
 
 use crate::graphics::backend;
-use crate::math::algebra::Vector2;
+use crate::math::Size;
 use std::sync::Arc;
 
 /// Represents a platform-specfic window.
@@ -23,7 +23,7 @@ pub struct Window {
   /// Rendering surface created from the window with a backend instance.
   surface: Surface,
   /// Size of the window in pixels.
-  size: Vector2<u32>,
+  size: Size<u32>,
   /// Whether the user has requested the window be closed.
   closing: bool,
 }
@@ -62,7 +62,7 @@ impl Window {
   }
 
   /// Gets the size of the window in pixels.
-  pub fn size(&self) -> Vector2<u32> {
+  pub fn size(&self) -> Size<u32> {
     self.size
   }
 
@@ -99,11 +99,11 @@ impl Window {
 }
 
 /// Determines the size of a window in pixels.
-fn pixel_size_of(window: &winit::Window) -> Vector2<u32> {
+fn pixel_size_of(window: &winit::Window) -> Size<u32> {
   let size = window
     .get_inner_size()
     .expect("window destroyed")
     .to_physical(window.get_hidpi_factor());
 
-  Vector2::new(size.width.round() as u32, size.height.round() as u32)
+  Size::new(size.width.round() as u32, size.height.round() as u32)
 }

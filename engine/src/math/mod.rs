@@ -2,16 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//! The `math` module exposes common functions and types for working with
+//! scalar numbers, vectors, matrices, and geometric dimensions.
+
 mod rect;
+mod size;
 
-pub use nalgebra::Real;
+pub use self::rect::Rect;
+pub use self::size::Size;
+pub use nalgebra::Matrix4;
+pub use nalgebra::{Point2, Point3};
+pub use nalgebra::{Real, Scalar};
+pub use nalgebra::{Vector2, Vector3, Vector4};
+pub use num_traits::{Num, NumAssign};
 
-pub mod algebra {
-  pub use nalgebra::Matrix4;
-  pub use nalgebra::{Vector2, Vector3, Vector4};
-}
+/// Common trait for scalar numbers. Types with this trait can be used in math
+/// structures like [`Vector2`] or [`Rect`].
+///
+/// It is automatically implemented for types that implement [`Scalar`] and
+/// [`Num`], including all primitive numeric types.
+pub trait ScalarNum: Scalar + Num {}
 
-pub mod geometry {
-  pub use super::rect::*;
-  pub use nalgebra::{Point2, Point3};
-}
+impl<T: Scalar + Num> ScalarNum for T {}

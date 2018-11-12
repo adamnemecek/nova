@@ -49,7 +49,7 @@ impl Loader {
           gfx_memory::Type::General,
           hal::memory::Properties::DEVICE_LOCAL,
         ),
-        hal::image::Kind::D2(size.x, size.y, 1, 1),
+        hal::image::Kind::D2(size.width(), size.height(), 1, 1),
         1,
         Format::Rgba8Srgb,
         hal::image::Tiling::Optimal,
@@ -95,11 +95,7 @@ impl Loader {
             layers: 0..1,
           },
           image_offset: hal::image::Offset { x: 0, y: 0, z: 0 },
-          image_extent: hal::image::Extent {
-            width: size.x,
-            height: size.y,
-            depth: 1,
-          },
+          image_extent: size.into(),
         }],
       );
 

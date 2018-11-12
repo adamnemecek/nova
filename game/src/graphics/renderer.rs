@@ -4,7 +4,7 @@ use super::pipeline;
 use super::window::swapchain::{self, Swapchain};
 use super::window::Window;
 use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
-use nova::math::algebra::Vector2;
+use nova::math::Size;
 use nova::utils::{Droppable, Ring};
 use std::iter;
 use std::sync::Arc;
@@ -20,7 +20,7 @@ pub struct Renderer {
   submissions: Ring<Vec<Commands>>,
   framebuffers: Vec<Arc<Framebuffer>>,
   frame: usize,
-  size: Vector2<u32>,
+  size: Size<u32>,
   log: bflog::Logger,
 }
 
@@ -166,8 +166,8 @@ impl Renderer {
       .log
       .trace("Created framebuffers.")
       .with("count", &self.framebuffers.len())
-      .with("width", &self.framebuffers[0].size().x)
-      .with("height", &self.framebuffers[0].size().y);
+      .with("width", &self.framebuffers[0].size().width())
+      .with("height", &self.framebuffers[0].size().height());
   }
 
   fn destroy_swapchain(&mut self) {

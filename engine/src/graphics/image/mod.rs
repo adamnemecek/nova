@@ -15,7 +15,7 @@ pub use gfx_hal::image::Layout;
 use super::backend::{self, Backend};
 use super::device::{self, Device};
 use super::hal::prelude::*;
-use crate::math::algebra::Vector2;
+use crate::math::Size;
 use crate::utils::Droppable;
 use gfx_memory::Factory;
 use std::sync::Arc;
@@ -26,16 +26,11 @@ pub struct Image {
   device: Arc<Device>,
   backing: Droppable<Backing>,
   view: Droppable<backend::ImageView>,
-  size: Vector2<u32>,
+  size: Size<u32>,
 }
 
 impl Image {
-  pub fn from_raw(
-    device: &Arc<Device>,
-    backing: Backing,
-    format: Format,
-    size: Vector2<u32>,
-  ) -> Self {
+  pub fn from_raw(device: &Arc<Device>, backing: Backing, format: Format, size: Size<u32>) -> Self {
     let view = device
       .raw()
       .create_image_view(
@@ -59,7 +54,7 @@ impl Image {
     }
   }
 
-  pub fn size(&self) -> Vector2<u32> {
+  pub fn size(&self) -> Size<u32> {
     self.size
   }
 }

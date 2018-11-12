@@ -5,7 +5,7 @@
 use super::backend;
 use super::hal::prelude::*;
 use super::{Device, Image, RenderPass};
-use crate::math::algebra::Vector2;
+use crate::math::Size;
 use crate::utils::Droppable;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ pub struct Framebuffer {
   /// Raw backend framebuffer structure.
   raw: Droppable<backend::Framebuffer>,
   /// Size of the framebuffer in pixels.
-  size: Vector2<u32>,
+  size: Size<u32>,
   /// Images in the framebuffer. Stored to prevent them from being dropped.
   _images: Vec<Arc<Image>>,
   /// Device the framebuffer was created with. Stored to prevent it from being
@@ -23,8 +23,8 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-  /// Creates a new framebuffer compatible with the given render pass from the
-  /// given images.
+  /// Creates a new framebuffer from a set of images that is compatible with the
+  /// given render pass.
   pub fn new(render_pass: &Arc<RenderPass>, images: impl IntoIterator<Item = Arc<Image>>) -> Self {
     let device = render_pass.device();
 
@@ -44,11 +44,7 @@ impl Framebuffer {
         panic!("All images in a framebuffer must be of the same size.");
       }
 
-      hal::image::Extent {
-        width: size.x,
-        height: size.y,
-        depth: 1,
-      }
+      size.into()
     };
 
     // Create the framebuffer.
@@ -64,14 +60,14 @@ impl Framebuffer {
 
     Framebuffer {
       raw: framebuffer.into(),
-      size: Vector2::new(extent.width, extent.height),
+      size: extent.into(),
       _images: images,
       _device: device.clone(),
     }
   }
 
   /// Gets the size of the framebuffer in pixels.
-  pub fn size(&self) -> Vector2<u32> {
+  pub fn size(&self) -> Size<u32> {
     self.size
   }
 }

@@ -3,7 +3,7 @@ mod graphics;
 use self::graphics::image;
 use self::graphics::pipeline;
 use self::graphics::{Mesh, Vertex, Window};
-use nova::math::algebra::*;
+use nova::math::Matrix4;
 use std::iter;
 
 /// Main entry point of the program.
@@ -27,8 +27,8 @@ pub fn main() -> Result<(), String> {
 
   log
     .trace("Created window.")
-    .with("width", &window.size().x)
-    .with("height", &window.size().y);
+    .with("width", &window.size().width())
+    .with("height", &window.size().height());
 
   let mut gpu = graphics::device::Gpu::new(&backend)
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
