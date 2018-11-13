@@ -12,7 +12,7 @@
 
 // TODO: Create a `nova-derive` crate with custom `Component` derive macro that
 //   uses `::nova::ecs::Component` so that it doesn't need to be imported like
-//   this. Also the macro should set the default storage to `HashMapStorage`.
+//   this. Also the macro should set the default storage to `BTreeStorage`.
 
 pub use super::storages::*;
 pub use super::Component;
