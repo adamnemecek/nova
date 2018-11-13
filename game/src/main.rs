@@ -126,7 +126,7 @@ pub fn main() -> Result<(), String> {
 
     let duration = time::Instant::now() - start_time;
 
-    if duration > time::Duration::from_millis(0) {
+    if duration > time::Duration::from_millis(20) {
       log.warn("Long frame.").with(
         "duration",
         &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
