@@ -1,4 +1,3 @@
-mod fps;
 mod graphics;
 //mod panels;
 
@@ -8,6 +7,7 @@ use self::graphics::{Mesh, Vertex, Window};
 use nova::ecs;
 use nova::math::Matrix4;
 use std::iter;
+use std::time;
 
 /// Main entry point of the program.
 pub fn main() -> Result<(), String> {
@@ -84,15 +84,12 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture descriptor set.");
 
-  let mut ecs = ecs::Context::new();
-
-  ecs::put_resource(&mut ecs, gpu.device.clone());
-
-  let mut dispatcher = ecs::Dispatcher::new()
-    .system("fps::Counter", &[], fps::Counter::new())
-    .setup(&mut ecs);
+  //let mut ctx = ecs::Context::new();
+  //let mut dispatcher = ecs::Dispatcher::new().setup(&mut ctx);
 
   loop {
+    let start_time = time::Instant::now();
+
     window.update();
 
     if window.is_closing() {
@@ -101,7 +98,9 @@ pub fn main() -> Result<(), String> {
 
     let framebuffer = renderer.begin_frame(&mut window);
 
-    dispatcher.dispatch(&mut ecs);
+    //dispatcher.dispatch(&mut ctx);
+
+    //ctx.update();
 
     let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 
@@ -123,15 +122,13 @@ pub fn main() -> Result<(), String> {
 
     renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
 
-    let fps = ecs::get_resource_mut::<fps::Stats>(&mut ecs);
+    let duration = time::Instant::now() - start_time;
 
-    if fps.total_secs > 3.0 {
-      log
-        .trace("Running.")
-        .with("fps", &fps.fps)
-        .with("avg_ms", &fps.avg_ms);
-
-      fps.total_secs = 0.0;
+    if duration > time::Duration::from_millis(100) {
+      log.warn("Long frame.").with(
+        "duration",
+        &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
+      );
     }
 
     std::thread::yield_now();
