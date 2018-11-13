@@ -1,6 +1,7 @@
-use super::{Hierarchy, Rect};
-use crate::ecs::*;
-use crate::window::Window;
+use super::Hierarchy;
+use crate::graphics::Window;
+use nova::ecs::*;
+use nova::math::Rect;
 
 /// Component that stores layout state for a panel entity.
 #[derive(Component)]

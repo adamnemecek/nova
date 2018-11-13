@@ -1,4 +1,4 @@
-use crate::ecs::*;
+use nova::ecs::*;
 
 /// Component that stores a panel entity's parent and children.
 #[derive(Default, Component)]

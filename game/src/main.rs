@@ -1,8 +1,11 @@
+mod fps;
 mod graphics;
+//mod panels;
 
 use self::graphics::image;
 use self::graphics::pipeline;
 use self::graphics::{Mesh, Vertex, Window};
+use nova::ecs;
 use nova::math::Matrix4;
 use std::iter;
 
@@ -81,14 +84,15 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture descriptor set.");
 
-  use std::time;
+  let mut ecs = ecs::Context::new();
 
-  let mut duration = time::Duration::default();
-  let mut frames = 0;
+  ecs::add_resource(&mut ecs, gpu.device.clone());
+
+  let mut dispatcher = ecs::Dispatcher::new()
+    .system("fps::Counter", &[], fps::Counter::new())
+    .setup(&mut ecs);
 
   loop {
-    let start = time::Instant::now();
-
     window.update();
 
     if window.is_closing() {
@@ -96,6 +100,8 @@ pub fn main() -> Result<(), String> {
     }
 
     let framebuffer = renderer.begin_frame(&mut window);
+
+    dispatcher.dispatch(&mut ecs);
 
     let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 
@@ -117,26 +123,18 @@ pub fn main() -> Result<(), String> {
 
     renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
 
-    std::thread::yield_now();
+    let fps = ecs::get_resource_mut::<fps::Stats>(&mut ecs);
 
-    // Track frame rate and duration.
-    duration += time::Instant::now() - start;
-    frames += 1;
-
-    const FPS_WINDOW: time::Duration = time::Duration::from_secs(3);
-
-    if duration > FPS_WINDOW {
-      let secs = duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9;
-      let fps = frames as f64 / secs;
-
-      duration = time::Duration::default();
-      frames = 0;
-
+    if fps.total_secs > 3.0 {
       log
-        .trace("Running…")
-        .with("fps", &fps)
-        .with("avg_ms", &(fps.recip() * 1000.0));
+        .trace("Running.")
+        .with("fps", &fps.fps)
+        .with("avg_ms", &fps.avg_ms);
+
+      fps.total_secs = 0.0;
     }
+
+    std::thread::yield_now();
   }
 
   Ok(())

@@ -1,5 +1,3 @@
-use crate::prelude::*;
-
 mod drawing;
 mod hierarchy;
 mod layout;
@@ -7,30 +5,3 @@ mod layout;
 pub use self::drawing::*;
 pub use self::hierarchy::*;
 pub use self::layout::*;
-
-/// Initializes panels for the given engine context.
-pub fn init(ctx: &mut engine::Context) {
-  engine::add_storage::<Hierarchy>(ctx);
-  engine::add_storage::<Layout>(ctx);
-  engine::add_storage::<Style>(ctx);
-
-  let root = create_panel(ctx);
-
-  engine::add_resource(ctx, Root { entity: Some(root) });
-
-  engine::add_system(
-    ctx,
-    LayoutSolver::new(root),
-    "graphics::panels::LayoutSolver",
-    &[],
-  );
-}
-
-/// Creates a new panel entity in the given engine context.
-pub fn create_panel(ctx: &mut engine::Context) -> Entity {
-  engine::build_entity(ctx)
-    .with(Layout::default())
-    .with(Hierarchy::default())
-    .with(Style::default())
-    .build()
-}
