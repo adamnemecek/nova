@@ -86,7 +86,7 @@ pub fn main() -> Result<(), String> {
 
   let mut ecs = ecs::Context::new();
 
-  ecs::add_resource(&mut ecs, gpu.device.clone());
+  ecs::put_resource(&mut ecs, gpu.device.clone());
 
   let mut dispatcher = ecs::Dispatcher::new()
     .system("fps::Counter", &[], fps::Counter::new())

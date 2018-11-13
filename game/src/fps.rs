@@ -26,7 +26,7 @@ impl<'a> ecs::System<'a> for Counter {
   type Data = ecs::WriteResource<'a, Stats>;
 
   fn setup(&mut self, ctx: &mut ecs::Context) {
-    ecs::add_resource(ctx, Stats::default());
+    ecs::put_resource(ctx, Stats::default());
   }
 
   fn run(&mut self, mut stats: Self::Data) {

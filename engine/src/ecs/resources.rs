@@ -8,10 +8,21 @@ pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 
 use super::Context;
 
-pub fn add_resource(ctx: &mut Context, resource: impl Resource) {
+/// Adds a resource to the ECS context. If the resource already existed, the old
+/// value is overwritten.
+pub fn put_resource(ctx: &mut Context, resource: impl Resource) {
   ctx.world.res.insert(resource);
 }
 
+/// Gets a mutable reference to a resource in an ECS context. If the resource
+/// does not exist, this function will panic.
+///
+/// This is faster than fetching the resource but requires a mutable reference
+/// to the context.
 pub fn get_resource_mut<T: Resource>(ctx: &mut Context) -> &mut T {
-  ctx.world.res.get_mut().unwrap()
+  ctx
+    .world
+    .res
+    .get_mut()
+    .expect("The specified resource does not exist.")
 }
