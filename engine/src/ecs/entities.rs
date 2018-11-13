@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub use specs::world::EntitiesRes as Entities;
+pub use specs::Builder as BuildEntity;
 pub use specs::Entities as ReadEntities;
-pub use specs::Entity;
-pub use specs::EntityBuilder;
+pub use specs::{Entity, EntityBuilder};
 
 use super::Context;
 
