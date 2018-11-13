@@ -38,11 +38,9 @@ impl<T> Ring<T> {
 
   /// Moves to the next item and returns a mutable reference to it.
   pub fn next(&mut self) -> &mut T {
-    let index = self.index;
-
     self.index += 1;
     self.index %= self.items.len();
 
-    &mut self.items[index]
+    &mut self.items[self.index]
   }
 }
