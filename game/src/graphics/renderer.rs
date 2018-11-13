@@ -5,19 +5,17 @@ use super::window::swapchain::{self, Swapchain};
 use super::window::Window;
 use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::Size;
-use nova::utils::{Droppable, Ring};
+use nova::utils::Droppable;
 use std::iter;
 use std::sync::Arc;
-
-const FRAMES_IN_FLIGHT: usize = 3;
 
 pub struct Renderer {
   queue_family_id: usize,
   pass: Arc<RenderPass>,
-  fences: Ring<Fence>,
-  semaphores: Ring<(Semaphore, Semaphore)>,
+  fence: Fence,
+  semaphores: (Semaphore, Semaphore),
   swapchain: Droppable<Swapchain>,
-  submissions: Ring<Vec<Commands>>,
+  commands: Vec<Commands>,
   framebuffers: Vec<Arc<Framebuffer>>,
   frame: usize,
   size: Size<u32>,
@@ -26,37 +24,23 @@ pub struct Renderer {
 
 impl Renderer {
   pub fn new(queue: &device::Queue, window: &Window, log: &bflog::Logger) -> Self {
-    let mut log = log.with_src("game::graphics::Renderer");
-
     let device = queue.device();
 
     // Create the render pass, which currently defaults to a single image
     // attachment for a swapchain backbuffer.
     let pass = RenderPass::new(device);
 
-    log.trace("Created render pass.");
-
-    let fences = Ring::new(FRAMES_IN_FLIGHT, |_| Fence::new(&device));
-
-    let semaphores = Ring::new(FRAMES_IN_FLIGHT, |_| {
-      (Semaphore::new(&device), Semaphore::new(&device))
-    });
-
-    let submissions = Ring::new(FRAMES_IN_FLIGHT, |_| Vec::new());
-
-    log.trace("Created resource chains.");
-
     Renderer {
       queue_family_id: queue.family_id(),
       pass,
-      fences,
-      semaphores,
-      submissions,
+      fence: Fence::new(&device),
+      semaphores: (Semaphore::new(&device), Semaphore::new(&device)),
+      commands: Vec::new(),
       swapchain: Droppable::dropped(),
       framebuffers: Vec::new(),
       frame: 0,
       size: window.size(),
-      log,
+      log: log.with_src("game::graphics::Renderer"),
     }
   }
 
@@ -65,21 +49,10 @@ impl Renderer {
   }
 
   pub fn begin_frame(&mut self, window: &mut Window) -> Arc<Framebuffer> {
-    let fence = self.fences.next();
-
-    if fence.is_signaled() {
-      fence.reset();
-    } else {
-      fence.wait_and_reset();
-    }
-
-    self.semaphores.next();
-    self.submissions.next().clear();
-
     for _ in 0..5 {
       self.ensure_swapchain(window);
 
-      let (semaphore, _) = self.semaphores.current();
+      let (ref semaphore, _) = self.semaphores;
 
       match self.swapchain.acquire_image(semaphore) {
         Ok(index) => {
@@ -106,23 +79,28 @@ impl Renderer {
       self.queue_family_id
     );
 
-    let fence = self.fences.current();
-    let (acquire_semaphore, render_semaphore) = self.semaphores.current();
-    let submission = self.submissions.current_mut();
+    if self.fence.is_signaled() {
+      self.fence.reset();
+    } else {
+      self.fence.wait_and_reset();
+    }
 
-    submission.extend(commands);
+    self.commands.clear();
+    self.commands.extend(commands);
+
+    let (ref acquire_semaphore, ref render_semaphore) = self.semaphores;
 
     unsafe {
       queue.raw_mut().submit_raw(
         device::queue::RawSubmission {
-          cmd_buffers: submission.iter().map(AsRef::as_ref),
+          cmd_buffers: self.commands.iter().map(AsRef::as_ref),
           wait_semaphores: &[(
             acquire_semaphore.raw(),
             pipeline::Stage::COLOR_ATTACHMENT_OUTPUT,
           )],
           signal_semaphores: &[render_semaphore.raw()],
         },
-        Some(fence.as_ref()),
+        Some(self.fence.as_ref()),
       );
     }
 

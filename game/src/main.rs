@@ -1,4 +1,6 @@
+//mod clock;
 mod graphics;
+mod hierarchy;
 //mod panels;
 
 use self::graphics::image;
@@ -84,8 +86,8 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture descriptor set.");
 
-  //let mut ctx = ecs::Context::new();
-  //let mut dispatcher = ecs::Dispatcher::new().setup(&mut ctx);
+  let mut ctx = ecs::Context::new();
+  let mut dispatcher = ecs::Dispatcher::new().setup(&mut ctx);
 
   loop {
     let start_time = time::Instant::now();
@@ -98,9 +100,9 @@ pub fn main() -> Result<(), String> {
 
     let framebuffer = renderer.begin_frame(&mut window);
 
-    //dispatcher.dispatch(&mut ctx);
+    dispatcher.dispatch(&mut ctx);
 
-    //ctx.update();
+    ctx.update();
 
     let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 
@@ -124,7 +126,7 @@ pub fn main() -> Result<(), String> {
 
     let duration = time::Instant::now() - start_time;
 
-    if duration > time::Duration::from_millis(100) {
+    if duration > time::Duration::from_millis(0) {
       log.warn("Long frame.").with(
         "duration",
         &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
