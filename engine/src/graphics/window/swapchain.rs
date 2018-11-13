@@ -161,7 +161,7 @@ impl Drop for Swapchain {
 
 /// Selects the best available present mode from the given choices.
 fn select_present_mode(modes: Vec<PresentMode>) -> PresentMode {
-  // If mailbox is avaliable use it.ü
+  // If mailbox is avaliable use it (for triple buffering).
   if modes.contains(&PresentMode::Mailbox) {
     PresentMode::Mailbox
   } else {

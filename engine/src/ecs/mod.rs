@@ -7,6 +7,7 @@
 //! [1]: https://github.com/slide-rs/specs
 
 pub mod components;
+pub mod derive;
 pub mod entities;
 pub mod resources;
 pub mod storages;
