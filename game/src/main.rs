@@ -27,7 +27,8 @@ pub fn main() -> Result<(), String> {
     .trace("Created backend.")
     .with("name", &graphics::backend::NAME);
 
-  let mut window = Window::new().map_err(|err| format!("Could not create window: {}", err))?;
+  let (mut window, mut event_source) =
+    Window::new().map_err(|err| format!("Could not create window: {}", err))?;
 
   log
     .trace("Created window.")
@@ -91,7 +92,9 @@ pub fn main() -> Result<(), String> {
   loop {
     let start_time = time::Instant::now();
 
-    window.update();
+    event_source.update();
+
+    window.update(event_source.events());
 
     if window.is_closing() {
       break;

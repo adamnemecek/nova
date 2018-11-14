@@ -4,19 +4,15 @@
 
 mod events;
 
+pub use self::events::{Event, EventSource};
 pub use winit::CreationError;
 
-use self::events::Event;
 use crate::math::Size;
-use crossbeam::channel;
-use std::thread;
 
 /// Represents a platform-specfic window.
 pub struct Window {
   /// Raw winit window structure.
   raw: winit::Window,
-  /// Receiver that gets sets of events.
-  recv_events: channel::Receiver<Vec<Event>>,
   /// Size of the window in pixels.
   size: Size<u32>,
   /// Whether the user has requested the window be closed.
@@ -25,32 +21,25 @@ pub struct Window {
 
 impl Window {
   /// Creates a new platform-specific window.
-  pub fn new() -> Result<Window, CreationError> {
-    let (send_window, recv_window) = channel::bounded(0);
-    let (send_events, recv_events) = channel::bounded(0);
+  ///
+  /// This function returns a `Window` and an [`EventSource`] which can be used
+  /// to poll window events.
+  pub fn new() -> Result<(Window, EventSource), CreationError> {
+    let events_loop = winit::EventsLoop::new();
 
-    thread::spawn(move || {
-      let events_loop = winit::EventsLoop::new();
+    let raw = winit::WindowBuilder::new()
+      .with_title("nova")
+      .build(&events_loop)?;
 
-      let result = winit::WindowBuilder::new()
-        .with_title("nova")
-        .build(&events_loop);
+    let size = pixel_size_of(&raw);
 
-      send_window.send(result).unwrap();
-
-      events::process(events_loop, send_events);
-    });
-
-    let window = recv_window.recv().unwrap()?;
-
-    let size = pixel_size_of(&window);
-
-    Ok(Window {
-      recv_events,
-      raw: window,
+    let window = Window {
+      raw,
       size,
       closing: false,
-    })
+    };
+
+    Ok((window, events_loop.into()))
   }
 
   /// Returns `true` after the user requests closing the window.
@@ -65,17 +54,15 @@ impl Window {
 
   /// Updates the window by processing events that have occured since the last
   /// update.
-  pub fn update(&mut self) {
-    while let Ok(events) = self.recv_events.try_recv() {
-      for event in events {
-        match event {
-          Event::CloseRequested => {
-            self.closing = true;
-          }
+  pub fn update<'a>(&mut self, events: impl IntoIterator<Item = &'a Event>) {
+    for event in events {
+      match event {
+        Event::CloseRequested => {
+          self.closing = true;
+        }
 
-          Event::Resized => {
-            self.size = pixel_size_of(&self.raw);
-          }
+        Event::Resized => {
+          self.size = pixel_size_of(&self.raw);
         }
       }
     }
