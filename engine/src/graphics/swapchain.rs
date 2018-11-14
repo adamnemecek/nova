@@ -4,10 +4,10 @@
 
 pub use gfx_hal::window::PresentMode;
 
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
-use crate::graphics::image::{self, Image};
-use crate::graphics::{Device, RenderPass, Semaphore};
+use super::backend;
+use super::hal::prelude::*;
+use super::image::{self, Image};
+use super::{Device, Semaphore, Surface};
 use crate::math::Size;
 use crate::utils::{quick_error, Droppable};
 use smallvec::SmallVec;
@@ -29,12 +29,17 @@ pub struct Swapchain {
 }
 
 impl Swapchain {
-  /// Creates a new swapchain compatible with the given render pass from a
-  /// surface.
+  /// Creates a new swapchain with the given device.
   ///
   /// The returned swapchain may not be the same size as requested.
-  pub fn new(render_pass: &RenderPass, surface: &mut backend::Surface, size: Size<u32>) -> Self {
-    let device = render_pass.device();
+  pub fn new(device: &Arc<Device>, surface: &mut Surface, size: Size<u32>) -> Self {
+    assert!(
+      Arc::ptr_eq(device.backend(), surface.backend()),
+      "Device and surface were created with different backend instances."
+    );
+
+    // Get a reference to the raw backend surface.
+    let surface: &mut backend::Surface = surface.as_mut();
 
     // Determine surface capabilities and settings as well as available present
     // modes.
@@ -67,7 +72,7 @@ impl Swapchain {
     // Create a swapchain with the above config values.
     let config = hal::SwapchainConfig {
       present_mode,
-      format: render_pass.format(),
+      format: image::Format::Bgra8Unorm,
       extent,
       image_count,
       image_layers: 1,
@@ -95,7 +100,7 @@ impl Swapchain {
           swapchain.images.push(Arc::new(Image::from_raw(
             device,
             image::Backing::Swapchain(image),
-            render_pass.format(),
+            image::Format::Bgra8Unorm,
             extent.into(),
           )));
         }

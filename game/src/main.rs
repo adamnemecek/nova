@@ -1,13 +1,13 @@
 //mod clock;
 mod graphics;
-mod hierarchy;
 //mod panels;
 
 use self::graphics::image;
 use self::graphics::pipeline;
-use self::graphics::{Mesh, Vertex, Window};
+use self::graphics::{Mesh, Vertex};
 use nova::ecs;
 use nova::math::Matrix4;
+use nova::window::Window;
 use std::iter;
 use std::time;
 
@@ -27,8 +27,7 @@ pub fn main() -> Result<(), String> {
     .trace("Created backend.")
     .with("name", &graphics::backend::NAME);
 
-  let mut window =
-    Window::new(&backend).map_err(|err| format!("Could not create window: {}", err))?;
+  let mut window = Window::new().map_err(|err| format!("Could not create window: {}", err))?;
 
   log
     .trace("Created window.")
@@ -48,7 +47,7 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created command pool.");
 
-  let pipeline = graphics::pipeline::create_default(renderer.pass());
+  let pipeline = graphics::pipeline::create_default(renderer.render_pass());
 
   log.trace("Created graphics pipeline.");
 
@@ -108,7 +107,7 @@ pub fn main() -> Result<(), String> {
 
     cmd.begin();
 
-    cmd.begin_render_pass(renderer.pass(), &framebuffer);
+    cmd.begin_render_pass(renderer.render_pass(), &framebuffer);
 
     cmd.bind_pipeline(&pipeline);
 
@@ -131,9 +130,14 @@ pub fn main() -> Result<(), String> {
         "duration",
         &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
       );
-    }
+    } else if duration < time::Duration::from_millis(1) {
+      log.warn("Short frame.").with(
+        "duration",
+        &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
+      );
 
-    std::thread::yield_now();
+      std::thread::yield_now();
+    }
   }
 
   Ok(())

@@ -1,19 +1,20 @@
 use super::device;
 use super::hal::prelude::*;
 use super::pipeline;
-use super::window::swapchain::{self, Swapchain};
-use super::window::Window;
-use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
+use super::swapchain::{self, Swapchain};
+use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore, Surface};
 use nova::math::Size;
-use nova::utils::Droppable;
+use nova::utils::{Droppable, Ring};
+use nova::window::Window;
 use std::iter;
 use std::sync::Arc;
 
 pub struct Renderer {
   queue_family_id: usize,
-  pass: Arc<RenderPass>,
+  surface: Surface,
+  render_pass: Arc<RenderPass>,
   fence: Fence,
-  semaphores: (Semaphore, Semaphore),
+  semaphores: Ring<(Semaphore, Semaphore)>,
   swapchain: Droppable<Swapchain>,
   commands: Vec<Commands>,
   framebuffers: Vec<Arc<Framebuffer>>,
@@ -26,15 +27,18 @@ impl Renderer {
   pub fn new(queue: &device::Queue, window: &Window, log: &bflog::Logger) -> Self {
     let device = queue.device();
 
-    // Create the render pass, which currently defaults to a single image
-    // attachment for a swapchain backbuffer.
-    let pass = RenderPass::new(device);
+    let surface = Surface::new(device.backend(), window);
+
+    let render_pass = RenderPass::new(device);
+
+    let semaphores = Ring::new(3, |_| (Semaphore::new(&device), Semaphore::new(&device)));
 
     Renderer {
       queue_family_id: queue.family_id(),
-      pass,
+      surface,
+      render_pass,
       fence: Fence::new(&device),
-      semaphores: (Semaphore::new(&device), Semaphore::new(&device)),
+      semaphores,
       commands: Vec::new(),
       swapchain: Droppable::dropped(),
       framebuffers: Vec::new(),
@@ -44,15 +48,15 @@ impl Renderer {
     }
   }
 
-  pub fn pass(&self) -> &Arc<RenderPass> {
-    &self.pass
+  pub fn render_pass(&self) -> &Arc<RenderPass> {
+    &self.render_pass
   }
 
   pub fn begin_frame(&mut self, window: &mut Window) -> Arc<Framebuffer> {
     for _ in 0..5 {
       self.ensure_swapchain(window);
 
-      let (ref semaphore, _) = self.semaphores;
+      let (semaphore, _) = self.semaphores.next();
 
       match self.swapchain.acquire_image(semaphore) {
         Ok(index) => {
@@ -88,7 +92,7 @@ impl Renderer {
     self.commands.clear();
     self.commands.extend(commands);
 
-    let (ref acquire_semaphore, ref render_semaphore) = self.semaphores;
+    let (acquire_semaphore, render_semaphore) = self.semaphores.current();
 
     unsafe {
       queue.raw_mut().submit_raw(
@@ -126,7 +130,7 @@ impl Renderer {
       return;
     }
 
-    self.swapchain = Swapchain::new(&self.pass, window.surface_mut().as_mut(), size).into();
+    self.swapchain = Swapchain::new(self.render_pass.device(), &mut self.surface, size).into();
 
     self.log.trace("Created swapchain.").with(
       "present_mode",
@@ -135,7 +139,7 @@ impl Renderer {
 
     for image in self.swapchain.images() {
       self.framebuffers.push(Arc::new(Framebuffer::new(
-        self.pass(),
+        self.render_pass(),
         iter::once(image.clone()),
       )));
     }

@@ -2,15 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod swapchain;
-
-mod surface;
-
-pub use self::surface::Surface;
-pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
 
-use crate::graphics::backend;
 use crate::math::Size;
 use std::sync::Arc;
 
@@ -20,8 +13,6 @@ pub struct Window {
   events_loop: winit::EventsLoop,
   /// Raw winit window structure.
   raw: winit::Window,
-  /// Rendering surface created from the window with a backend instance.
-  surface: Surface,
   /// Size of the window in pixels.
   size: Size<u32>,
   /// Whether the user has requested the window be closed.
@@ -29,9 +20,8 @@ pub struct Window {
 }
 
 impl Window {
-  /// Creates a new platform-specific window with a rendering surface for the
-  /// given backend instance.
-  pub fn new(backend: &Arc<backend::Instance>) -> Result<Window, CreationError> {
+  /// Creates a new platform-specific window.
+  pub fn new() -> Result<Window, CreationError> {
     let events_loop = winit::EventsLoop::new();
 
     let window = winit::WindowBuilder::new()
@@ -40,20 +30,12 @@ impl Window {
 
     let size = pixel_size_of(&window);
 
-    let surface = Surface::new(backend, &window);
-
     Ok(Window {
       events_loop,
       raw: window,
-      surface,
       size,
       closing: false,
     })
-  }
-
-  /// Gets a mutable reference to the rendering surface of the window.
-  pub fn surface_mut(&mut self) -> &mut Surface {
-    &mut self.surface
   }
 
   /// Returns `true` after the user requests closing the window.
@@ -95,6 +77,12 @@ impl Window {
     if resized {
       self.size = pixel_size_of(&self.raw);
     }
+  }
+}
+
+impl AsRef<winit::Window> for Window {
+  fn as_ref(&self) -> &winit::Window {
+    &self.raw
   }
 }
 

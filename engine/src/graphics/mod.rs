@@ -10,14 +10,15 @@ pub mod hal;
 pub mod image;
 pub mod pipeline;
 pub mod shader;
+pub mod swapchain;
 pub mod vertices;
-pub mod window;
 
 mod color;
 mod fence;
 mod framebuffer;
 mod render_pass;
 mod semaphore;
+mod surface;
 
 pub use self::backend::Backend;
 pub use self::buffer::Buffer;
@@ -31,5 +32,6 @@ pub use self::pipeline::Pipeline;
 pub use self::render_pass::RenderPass;
 pub use self::semaphore::Semaphore;
 pub use self::shader::Shader;
+pub use self::surface::Surface;
+pub use self::swapchain::Swapchain;
 pub use self::vertices::*;
-pub use self::window::Window;
