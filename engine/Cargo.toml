@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 bflog = "0.3"
-crossbeam = "0.4"
+crossbeam = "0.5"
 derive_more = "0.13"
 gfx-hal = { version = "0.1", git = "https://github.com/gfx-rs/gfx", rev = "bd7f058efe78d7626a1cc6fbc0c1d3702fb6d2e7" }
 gfx-memory = { version = "0.1", git = "https://github.com/gfx-rs/gfx-memory", rev = "1dacf31e26990c9636ba0f566ca8b02bcdd7e503" }
