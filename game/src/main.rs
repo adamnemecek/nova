@@ -41,7 +41,9 @@ pub fn main() -> Result<(), String> {
   let mut gpu = graphics::device::Gpu::new(&backend)
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
-  log.trace("Created graphics device.");
+  log
+    .trace("Created graphics device.")
+    .with("name", &gpu.device.name());
 
   let mut renderer = graphics::Renderer::new(&gpu.queues.graphics, &window, &log);
 

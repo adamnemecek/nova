@@ -68,6 +68,11 @@ impl Device {
     &self.adapter
   }
 
+  /// Gets the name of the device.
+  pub fn name(&self) -> &str {
+    &self.adapter.info.name
+  }
+
   /// Locks and gets a reference to the device's memory allocator.
   pub fn allocator(&self) -> MutexGuard<Allocator> {
     self.allocator.lock().unwrap()
