@@ -9,7 +9,6 @@ pub mod device;
 pub mod hal;
 pub mod image;
 pub mod pipeline;
-pub mod shader;
 pub mod swapchain;
 
 mod color;
@@ -30,6 +29,5 @@ pub use self::image::Image;
 pub use self::pipeline::Pipeline;
 pub use self::render_pass::RenderPass;
 pub use self::semaphore::Semaphore;
-pub use self::shader::Shader;
 pub use self::surface::Surface;
 pub use self::swapchain::Swapchain;

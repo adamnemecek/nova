@@ -2,7 +2,7 @@ use nova::*;
 
 //mod clock;
 mod graphics;
-mod ui;
+//mod ui;
 //mod panels;
 
 use self::graphics::image;

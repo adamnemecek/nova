@@ -1,6 +1,8 @@
-use super::{Hierarchy, Node, Style};
+use super::{Hierarchy, Style};
 use crate::ecs;
-use crate::graphics::pipeline::{self, Pipeline, VertexAttribute, VertexData};
+use crate::graphics::pipeline::shader::{self, Shader, ShaderKind, ShaderSet};
+use crate::graphics::pipeline::vertex::*;
+use crate::graphics::pipeline::{self, Pipeline};
 use crate::graphics::{self, Color};
 use crate::math::{Point2, Rect};
 use std::sync::Arc;
@@ -25,16 +27,22 @@ impl Renderer {
       .push_constant::<Color>()
       .push_constant::<Rect<f32>>()
       .descriptor_layout(&descriptor_layout)
-      .vertex_shader(graphics::Shader::from_glsl(
-        device,
-        graphics::shader::Kind::Vertex,
-        include_str!("shaders/default.vert"),
-      ))
-      .fragment_shader(graphics::Shader::from_glsl(
-        device,
-        graphics::shader::Kind::Fragment,
-        include_str!("shaders/default.frag"),
-      ))
+      .shaders(ShaderSet {
+        vertex: shader::EntryPoint(
+          Shader::new(
+            device,
+            &shader::Spirv::from_glsl(ShaderKind::Vertex, include_str!("shaders/default.vert")),
+          ),
+          "main",
+        ),
+        fragment: Some(shader::EntryPoint(
+          Shader::new(
+            device,
+            &shader::Spirv::from_glsl(ShaderKind::Fragment, include_str!("shaders/default.frag")),
+          ),
+          "main",
+        )),
+      })
       .build(device);
 
     Renderer { pipeline }

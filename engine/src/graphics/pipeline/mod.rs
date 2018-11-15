@@ -3,13 +3,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod descriptor;
+pub mod shader;
 pub mod vertex;
 
 pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
+pub use self::shader::{Shader, ShaderKind, ShaderSet};
 pub use self::vertex::{VertexAttribute, VertexData};
 pub use gfx_hal::pso::PipelineStage as Stage;
 
-use super::{RenderPass, Shader};
+use super::RenderPass;
 use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::Device;
@@ -22,7 +24,7 @@ pub struct Pipeline {
   layout: Option<backend::PipelineLayout>,
   push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
   descriptor_layouts: Vec<Arc<DescriptorLayout>>,
-  _shaders: PipelineShaderSet,
+  shaders: ShaderSet,
 }
 
 impl Pipeline {
@@ -40,6 +42,10 @@ impl Pipeline {
 
   pub fn descriptor_layouts(&self) -> &[Arc<DescriptorLayout>] {
     &self.descriptor_layouts
+  }
+
+  pub fn shaders(&self) -> &ShaderSet {
+    &self.shaders
   }
 
   pub fn raw(&self) -> &backend::GraphicsPipeline {
@@ -62,35 +68,9 @@ impl Drop for Pipeline {
 }
 
 #[derive(Default)]
-pub struct PipelineShaderSet {
-  vertex: Option<Shader>,
-  fragment: Option<Shader>,
-}
-
-impl PipelineShaderSet {
-  fn as_raw<'a>(&'a self) -> hal::pso::GraphicsShaderSet<'a> {
-    fn entry_point(shader: &Option<Shader>) -> Option<hal::pso::EntryPoint> {
-      shader.as_ref().map(|shader| hal::pso::EntryPoint {
-        entry: "main",
-        module: shader.raw(),
-        specialization: Default::default(),
-      })
-    };
-
-    hal::pso::GraphicsShaderSet {
-      vertex: entry_point(&self.vertex).expect("vertex shader is required"),
-      fragment: entry_point(&self.fragment),
-      hull: None,
-      domain: None,
-      geometry: None,
-    }
-  }
-}
-
-#[derive(Default)]
 pub struct PipelineBuilder {
   render_pass: Option<Arc<RenderPass>>,
-  shaders: PipelineShaderSet,
+  shaders: Option<ShaderSet>,
   vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<hal::pso::AttributeDesc>,
   push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
@@ -162,18 +142,14 @@ impl PipelineBuilder {
     self
   }
 
-  pub fn vertex_shader(mut self, shader: Shader) -> Self {
-    self.shaders.vertex = Some(shader);
-    self
-  }
-
-  pub fn fragment_shader(mut self, shader: Shader) -> Self {
-    self.shaders.fragment = Some(shader);
+  pub fn shaders(mut self, shaders: ShaderSet) -> Self {
+    self.shaders = Some(shaders);
     self
   }
 
   pub fn build(self, device: &Arc<Device>) -> Arc<Pipeline> {
-    let render_pass = self.render_pass.expect("render_pass is required");
+    let render_pass = self.render_pass.expect("A render pass is required.");
+    let shaders = self.shaders.expect("A shader set is required.");
 
     let subpass = hal::pass::Subpass {
       index: 0,
@@ -190,10 +166,10 @@ impl PipelineBuilder {
           .map(AsRef::as_ref),
         &self.push_constants,
       )
-      .expect("could not create pipeline layout");
+      .expect("Could not create pipeline layout");
 
     let mut pipeline_desc = hal::pso::GraphicsPipelineDesc::new(
-      self.shaders.as_raw(),
+      (&shaders).into(),
       hal::Primitive::TriangleList,
       hal::pso::Rasterizer::FILL,
       &layout,
@@ -224,7 +200,7 @@ impl PipelineBuilder {
       layout: Some(layout),
       push_constants: self.push_constants,
       descriptor_layouts: self.descriptor_layouts,
-      _shaders: self.shaders,
+      shaders,
     })
   }
 }
