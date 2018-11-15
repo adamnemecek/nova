@@ -1,5 +1,5 @@
 use super::buffer::{self, Buffer};
-use super::vertices::*;
+use super::pipeline::vertex::*;
 use super::{Color, Device};
 use nova::math::Vector2;
 use std::sync::Arc;

@@ -11,7 +11,6 @@ pub mod image;
 pub mod pipeline;
 pub mod shader;
 pub mod swapchain;
-pub mod vertices;
 
 mod color;
 mod fence;
@@ -34,4 +33,3 @@ pub use self::semaphore::Semaphore;
 pub use self::shader::Shader;
 pub use self::surface::Surface;
 pub use self::swapchain::Swapchain;
-pub use self::vertices::*;

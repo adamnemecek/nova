@@ -1,6 +1,6 @@
 use super::{Hierarchy, Node, Style};
 use crate::ecs;
-use crate::graphics::pipeline::{self, Pipeline};
+use crate::graphics::pipeline::{self, Pipeline, VertexAttribute, VertexData};
 use crate::graphics::{self, Color};
 use crate::math::{Point2, Rect};
 use std::sync::Arc;
@@ -85,12 +85,12 @@ struct Vertex {
   pub tex_pos: Point2<f32>,
 }
 
-impl graphics::VertexData for Vertex {
-  fn attributes() -> &'static [graphics::VertexAttribute] {
+impl VertexData for Vertex {
+  fn attributes() -> &'static [VertexAttribute] {
     &[
-      graphics::VertexAttribute::Vector2f32,
-      graphics::VertexAttribute::Vector4f32,
-      graphics::VertexAttribute::Vector2f32,
+      VertexAttribute::Vector2f32,
+      VertexAttribute::Vector4f32,
+      VertexAttribute::Vector2f32,
     ]
   }
 }

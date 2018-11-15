@@ -3,11 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod descriptor;
+pub mod vertex;
 
 pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
+pub use self::vertex::{VertexAttribute, VertexData};
 pub use gfx_hal::pso::PipelineStage as Stage;
 
-use super::{RenderPass, Shader, VertexData};
+use super::{RenderPass, Shader};
 use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::Device;
