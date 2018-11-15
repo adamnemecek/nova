@@ -1,7 +1,5 @@
-use super::{Hierarchy, Layout};
 use crate::graphics::Color;
-use nova::ecs::*;
-use std::sync::{Arc, Mutex};
+use nova::ecs::derive::*;
 
 /// Component that stores the style of a panel.
 #[derive(Component)]
@@ -22,7 +20,6 @@ impl Default for Style {
     Style {
       color: Color([1.0, 1.0, 1.0, 1.0]),
       background: Background::None,
-      custom_draw: None,
     }
   }
 }

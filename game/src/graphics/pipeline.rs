@@ -8,16 +8,14 @@ use std::sync::Arc;
 pub fn create_default(pass: &Arc<RenderPass>) -> Arc<Pipeline> {
   let device = pass.device();
 
-  // Create a descriptor set layout with just one texture (image and sampler)
-  // binding.
-  let descriptor_set_layout = DescriptorSetLayout::new().texture().build(device);
+  let descriptor_layout = DescriptorLayout::new(&device, &[descriptor::Binding::Texture]);
 
   Pipeline::new()
     .render_pass(&pass)
     .vertex_buffer::<Vertex>()
     .push_constant::<Color>()
     .push_constant::<Matrix4<f32>>()
-    .descriptor_set_layout(&descriptor_set_layout)
+    .descriptor_layout(&descriptor_layout)
     .vertex_shader(Shader::from_glsl(
       device,
       shader::Kind::Vertex,

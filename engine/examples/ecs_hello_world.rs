@@ -7,7 +7,7 @@ use nova::ecs;
 fn main() {
   // Create a new ECS context. This represents the state of all ECS resources,
   // including entities and components.
-  let mut ctx = ecs::Context::new();
+  let ctx = &mut ecs::Context::new();
 
   // Create a new dispatcher. A dispatcher creates an execution plan so that
   // systems that do not mutate the same resources can run simultaneously on
@@ -16,19 +16,19 @@ fn main() {
     // Add a `Greeter` as a new system named `"Greeter"` with no dependencies.
     .system("Greeter", &[], Greeter)
     // Set up the dispatcher and all of its systems. Calls `Greeter::setup()`.
-    .setup(&mut ctx);
+    .setup(ctx);
 
   // Dispatches all systems once. In this case, it calls `Greeter::run` which
   // prints `"Hello world."`, the default message.
-  dispatcher.dispatch(&mut ctx);
+  dispatcher.dispatch(ctx);
 
   // Gets a mutable reference to the `Greeting` resource to change its message.
-  let greeting = ecs::get_resource_mut::<Greeting>(&mut ctx);
+  let greeting: &mut Greeting = ecs::get_resource_mut(ctx);
 
   greeting.message = "Hallo Welt!".into();
 
   // This time, `Greeter::run` will print `"Hallo Welt!"`.
-  dispatcher.dispatch(&mut ctx);
+  dispatcher.dispatch(ctx);
 }
 
 // A resource read by `Greeter` to determine what to print on the screen.

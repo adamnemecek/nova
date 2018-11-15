@@ -1,14 +1,17 @@
+use nova::*;
+
 //mod clock;
 mod graphics;
+mod ui;
 //mod panels;
 
 use self::graphics::image;
 use self::graphics::pipeline;
 use self::graphics::{Mesh, Vertex};
-use nova::ecs;
-use nova::math::Matrix4;
-use nova::window::Window;
+use self::math::Matrix4;
+use self::window::Window;
 use std::iter;
+use std::sync::Arc;
 use std::time;
 
 /// Main entry point of the program.
@@ -27,7 +30,7 @@ pub fn main() -> Result<(), String> {
     .trace("Created backend.")
     .with("name", &graphics::backend::NAME);
 
-  let (mut window, mut event_source) =
+  let (window, mut event_source) =
     Window::new().map_err(|err| format!("Could not create window: {}", err))?;
 
   log
@@ -77,20 +80,23 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture.");
 
-  let descriptor_pool = pipeline::DescriptorPool::new(pipeline.descriptor_set_layout().unwrap(), 1);
+  let mut descriptor_pool = pipeline::DescriptorPool::new(&pipeline.descriptor_layouts()[0], 1);
 
-  let descriptor_set = pipeline::DescriptorSet::new(
-    &descriptor_pool,
-    &[pipeline::Descriptor::Texture(&image, &sampler)],
-  );
+  let descriptor_set = descriptor_pool.allocate_set(vec![pipeline::Descriptor::Texture(
+    Arc::new(image),
+    Arc::new(sampler),
+  )]);
 
   log.trace("Created quad texture descriptor set.");
 
-  let mut ctx = ecs::Context::new();
-  let mut dispatcher = ecs::Dispatcher::new().setup(&mut ctx);
+  let ctx = &mut ecs::Context::new();
+  let mut dispatcher = ecs::Dispatcher::new().setup(ctx);
+
+  ecs::put_resource(ctx, window);
 
   loop {
     let start_time = time::Instant::now();
+    let window: &mut Window = ecs::get_resource_mut(ctx);
 
     event_source.update();
 
@@ -100,9 +106,9 @@ pub fn main() -> Result<(), String> {
       break;
     }
 
-    let framebuffer = renderer.begin_frame(&mut window);
+    let framebuffer = renderer.begin_frame(window);
 
-    dispatcher.dispatch(&mut ctx);
+    dispatcher.dispatch(ctx);
 
     ctx.update();
 

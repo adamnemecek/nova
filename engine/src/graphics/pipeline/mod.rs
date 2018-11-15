@@ -2,23 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod descriptor;
+
+pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
 pub use gfx_hal::pso::PipelineStage as Stage;
 
 use super::{RenderPass, Shader, VertexData};
 use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::image::{self, Image};
 use crate::graphics::Device;
-use std::iter;
 use std::ops::Range;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 pub struct Pipeline {
   device: Arc<Device>,
   raw: Option<backend::GraphicsPipeline>,
   layout: Option<backend::PipelineLayout>,
   push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
-  descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
+  descriptor_layouts: Vec<Arc<DescriptorLayout>>,
   _shaders: PipelineShaderSet,
 }
 
@@ -35,8 +36,8 @@ impl Pipeline {
     self.push_constants[index].clone()
   }
 
-  pub fn descriptor_set_layout(&self) -> Option<&Arc<DescriptorSetLayout>> {
-    self.descriptor_set_layout.as_ref()
+  pub fn descriptor_layouts(&self) -> &[Arc<DescriptorLayout>] {
+    &self.descriptor_layouts
   }
 
   pub fn raw(&self) -> &backend::GraphicsPipeline {
@@ -91,7 +92,7 @@ pub struct PipelineBuilder {
   vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<hal::pso::AttributeDesc>,
   push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
-  descriptor_set_layout: Option<Arc<DescriptorSetLayout>>,
+  descriptor_layouts: Vec<Arc<DescriptorLayout>>,
 }
 
 impl PipelineBuilder {
@@ -154,8 +155,8 @@ impl PipelineBuilder {
     self
   }
 
-  pub fn descriptor_set_layout(mut self, layout: &Arc<DescriptorSetLayout>) -> Self {
-    self.descriptor_set_layout = Some(layout.clone());
+  pub fn descriptor_layout(mut self, layout: &Arc<DescriptorLayout>) -> Self {
+    self.descriptor_layouts.push(layout.clone());
     self
   }
 
@@ -181,9 +182,10 @@ impl PipelineBuilder {
       .raw()
       .create_pipeline_layout(
         self
-          .descriptor_set_layout
-          .as_ref()
-          .map(|layout| layout.raw()),
+          .descriptor_layouts
+          .iter()
+          .map(AsRef::as_ref)
+          .map(AsRef::as_ref),
         &self.push_constants,
       )
       .expect("could not create pipeline layout");
@@ -219,171 +221,8 @@ impl PipelineBuilder {
       raw: Some(pipeline),
       layout: Some(layout),
       push_constants: self.push_constants,
-      descriptor_set_layout: self.descriptor_set_layout,
+      descriptor_layouts: self.descriptor_layouts,
       _shaders: self.shaders,
     })
-  }
-}
-
-pub struct DescriptorSetLayout {
-  bindings: Vec<hal::pso::DescriptorSetLayoutBinding>,
-  raw: Option<backend::DescriptorSetLayout>,
-  device: Arc<Device>,
-}
-
-impl DescriptorSetLayout {
-  pub fn new() -> DescriptorSetLayoutBuilder {
-    DescriptorSetLayoutBuilder::default()
-  }
-
-  pub fn bindings(&self) -> impl Iterator<Item = &hal::pso::DescriptorSetLayoutBinding> {
-    self.bindings.iter()
-  }
-
-  pub fn raw(&self) -> &backend::DescriptorSetLayout {
-    self.raw.as_ref().unwrap()
-  }
-}
-
-impl Drop for DescriptorSetLayout {
-  fn drop(&mut self) {
-    if let Some(layout) = self.raw.take() {
-      self.device.raw().destroy_descriptor_set_layout(layout);
-    }
-  }
-}
-
-#[derive(Default)]
-pub struct DescriptorSetLayoutBuilder {
-  bindings: Vec<hal::pso::DescriptorSetLayoutBinding>,
-}
-
-impl DescriptorSetLayoutBuilder {
-  pub fn texture(mut self) -> Self {
-    let binding = self.bindings.len() as u32;
-
-    self.bindings.push(hal::pso::DescriptorSetLayoutBinding {
-      binding,
-      ty: hal::pso::DescriptorType::SampledImage,
-      count: 1,
-      stage_flags: hal::pso::ShaderStageFlags::FRAGMENT,
-      immutable_samplers: false,
-    });
-
-    self
-  }
-
-  pub fn build(self, device: &Arc<Device>) -> Arc<DescriptorSetLayout> {
-    let layout = device
-      .raw()
-      .create_descriptor_set_layout(&self.bindings, &[])
-      .expect("could not create descriptor set layout");
-
-    Arc::new(DescriptorSetLayout {
-      raw: Some(layout),
-      device: device.clone(),
-      bindings: self.bindings,
-    })
-  }
-}
-
-pub struct DescriptorPool {
-  device: Arc<Device>,
-  layout: Arc<DescriptorSetLayout>,
-  raw: Mutex<Option<backend::DescriptorPool>>,
-}
-
-impl DescriptorPool {
-  pub fn new(layout: &Arc<DescriptorSetLayout>, capacity: usize) -> Arc<Self> {
-    let device = layout.device.clone();
-
-    let pool = device
-      .raw()
-      .create_descriptor_pool(
-        capacity,
-        layout
-          .bindings()
-          .map(|binding| hal::pso::DescriptorRangeDesc {
-            ty: binding.ty,
-            count: binding.count,
-          }),
-      )
-      .expect("could not create descriptor pool");
-
-    Arc::new(DescriptorPool {
-      device,
-      layout: layout.clone(),
-      raw: Mutex::new(Some(pool)),
-    })
-  }
-}
-
-impl Drop for DescriptorPool {
-  fn drop(&mut self) {
-    if let Some(pool) = self.raw.lock().unwrap().take() {
-      self.device.raw().destroy_descriptor_pool(pool);
-    }
-  }
-}
-
-pub enum Descriptor<'a> {
-  Texture(&'a Image, &'a image::Sampler),
-}
-
-pub struct DescriptorSet {
-  pool: Arc<DescriptorPool>,
-  raw: Option<backend::DescriptorSet>,
-}
-
-impl DescriptorSet {
-  pub fn new(pool: &Arc<DescriptorPool>, descriptors: &[Descriptor]) -> DescriptorSet {
-    let device = pool.device.raw();
-
-    let mut raw_pool = pool.raw.lock().unwrap();
-
-    let set = raw_pool
-      .as_mut()
-      .unwrap()
-      .allocate_set(pool.layout.raw())
-      .expect("could not allocate descriptor set");
-
-    device.write_descriptor_sets(descriptors.iter().enumerate().map(|(i, descriptor)| {
-      hal::pso::DescriptorSetWrite {
-        set: &set,
-        binding: i as u32,
-        array_offset: 0,
-        descriptors: iter::once(match descriptor {
-          Descriptor::Texture(image, sampler) => hal::pso::Descriptor::CombinedImageSampler(
-            image.as_ref(),
-            hal::image::Layout::ShaderReadOnlyOptimal,
-            sampler.raw(),
-          ),
-        }),
-      }
-    }));
-
-    DescriptorSet {
-      pool: pool.clone(),
-      raw: Some(set),
-    }
-  }
-
-  pub fn raw(&self) -> &backend::DescriptorSet {
-    self.raw.as_ref().unwrap()
-  }
-}
-
-impl Drop for DescriptorSet {
-  fn drop(&mut self) {
-    if let Some(set) = self.raw.take() {
-      self
-        .pool
-        .raw
-        .lock()
-        .unwrap()
-        .as_mut()
-        .unwrap()
-        .free_sets(iter::once(set));
-    }
   }
 }

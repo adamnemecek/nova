@@ -23,8 +23,8 @@ pub mod pso {
 
   use super::Backend;
 
-  pub type GraphicsShaderSet<'a> = gfx_hal::pso::GraphicsShaderSet<'a, Backend>;
   pub type EntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
+  pub type GraphicsShaderSet<'a> = gfx_hal::pso::GraphicsShaderSet<'a, Backend>;
 }
 
 pub mod command {

@@ -1,138 +1,72 @@
-use super::Hierarchy;
-use crate::graphics::Window;
+use super::Dimension;
+use super::Panel;
 use nova::ecs::*;
-use nova::math::Rect;
+use nova::math::{Point2, Rect, Size};
 
-/// Component that stores layout state for a panel entity.
-#[derive(Component)]
-#[storage(BTreeStorage)]
-pub struct Layout {
-  /// Dimension indicating distance between the top of the entity's parent and
-  /// the top of the entity.
-  pub top: Dimension,
-  /// Dimension indicating distance between the left side of the entity's parent
-  /// and the left side of the entity.
-  pub left: Dimension,
-  /// Dimension indicating distance between the bottom of the entity's parent
-  /// and the bottom of the entity.
-  pub bottom: Dimension,
-  /// Dimension indicating distance between the right side of the entity's
-  /// parent and the right side of the entity.
-  pub right: Dimension,
-  /// Dimension indicating the size of the entity in the x direction.
-  pub width: Dimension,
-  /// Dimension indicating the size of the entity in the y direction.
-  pub height: Dimension,
-  /// Rect describing the location of the entity relative to its parent's rect.
-  rect: Rect<f32>,
-  /// Rect describing the absolute location of the entity.
-  absolute_rect: Rect<f32>,
-}
-
-impl Layout {
-  /// Gets the rect describing the absolute location of the entity.
-  pub fn absolute_rect(&self) -> &Rect<f32> {
-    &self.absolute_rect
-  }
-}
-
-impl Default for Layout {
-  fn default() -> Self {
-    Layout {
-      top: Dimension::Auto,
-      left: Dimension::Auto,
-      bottom: Dimension::Auto,
-      right: Dimension::Auto,
-      width: Dimension::Auto,
-      height: Dimension::Auto,
-      rect: Rect::default(),
-      absolute_rect: Rect::default(),
-    }
-  }
-}
-
-/// One of the possible dimension definitions for a panel measurement.
-pub enum Dimension {
-  /// Dimension is automatically calculated from available space.
-  Auto,
-  /// Dimension is fixed to a specific value.
-  Fixed(f32),
-}
-
-/// System that computes absolute location and size of every panel based on
-/// layout dimensions.
-pub struct LayoutSolver {
-  /// Root entity to solve from.
-  pub root: Entity,
-  /// Stack used in traversing the hierarchy.
+pub struct LayoutUpdater {
   stack: Vec<(Entity, Rect<f32>)>,
+  size: Size<f32>,
 }
 
-impl LayoutSolver {
-  /// Creates a new solver for the given root entity.
-  pub fn new(root: Entity) -> Self {
-    LayoutSolver {
-      root,
+impl LayoutUpdater {
+  pub fn new(size: Size<f32>) -> Self {
+    LayoutUpdater {
       stack: Vec::new(),
+      size,
     }
   }
 }
 
-impl<'a> System<'a> for LayoutSolver {
-  type SystemData = (
-    ReadResource<'a, Window>,
-    ReadStorage<'a, Hierarchy>,
-    WriteStorage<'a, Layout>,
-  );
+impl<'a> System<'a> for LayoutUpdater {
+  type Data = (ReadEntities<'a>, WriteStorage<'a, Panel>);
 
-  fn run(&mut self, (window, hierarchy, mut layouts): Self::SystemData) {
-    // Begin with a stack containing the root element and a rectangle the size
-    // of the entire engine window.
+  fn run(&mut self, (entities, mut panels): Self::Data) {
+    // Begin with a stack of all root panels using the entire viewport as the
+    // parent rect.
     self.stack.clear();
-    self.stack.push((
-      self.root,
-      Rect {
-        pos: Point2::origin(),
-        size: window.size(),
-      },
-    ));
+
+    let viewport = Rect {
+      pos: Point2::origin(),
+      size: self.size,
+    };
+
+    self.stack.extend(
+      (&entities, &panels)
+        .join()
+        .filter(|(_, p)| p.parent.is_none())
+        .map(|(e, _)| (e, viewport)),
+    );
 
     // Pop an entity and parent rect off of the stack until it is empty.
     while let Some((entity, parent_rect)) = self.stack.pop() {
-      // If the entity has a layout…
-      if let Some(layout) = layouts.get_mut(entity) {
-        // Compute its x and y dimensions relative to the parent rect.
-        let x = solve_dimensions(
-          parent_rect.size.x,
-          &layout.left,
-          &layout.width,
-          &layout.right,
-        );
+      let panel = panels.get_mut(entity).unwrap();
 
-        let y = solve_dimensions(
-          parent_rect.size.y,
-          &layout.top,
-          &layout.height,
-          &layout.bottom,
-        );
+      // Compute its x and y dimensions relative to the parent rect.
+      let x = solve_dimensions(
+        parent_rect.size.height(),
+        &panel.left,
+        &panel.width,
+        &panel.right,
+      );
 
-        // Set its local rect with those dimensions.
-        layout.rect = Rect {
-          pos: Point2::new(x.0, y.0),
-          size: Vector2::new(x.1, y.1),
-        };
+      let y = solve_dimensions(
+        parent_rect.size.width(),
+        &panel.top,
+        &panel.height,
+        &panel.bottom,
+      );
 
-        // Offset the local rect by the parent's position to get the absolute
-        // rect.
-        layout.absolute_rect = layout.rect.offset(parent_rect.pos.coords);
+      // Set its local rect with those dimensions.
+      panel.rect = Rect::new(x.0, y.0, x.1, y.1);
 
-        // If this element has children, push them each onto the stack with that
-        // absolute rect.
-        if let Some(node) = hierarchy.get(entity) {
-          for child in node.children() {
-            self.stack.push((*child, layout.absolute_rect));
-          }
-        }
+      // Offset the local rect by the parent's position to get the absolute
+      // rect.
+      panel.absolute_rect = panel.rect + parent_rect.pos.coords;
+
+      // Add all children of this panel to the stack with this rect as the
+      // parent rect.
+      for child in &panel.children {
+        self.stack.push((*child, panel.absolute_rect));
       }
     }
   }

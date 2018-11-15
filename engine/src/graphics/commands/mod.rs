@@ -180,7 +180,7 @@ impl Commands {
     self.buffer.bind_graphics_descriptor_sets(
       pipeline.layout(),
       index,
-      iter::once(set.raw()),
+      iter::once(set.as_ref()),
       &[0],
     );
   }
