@@ -135,7 +135,7 @@ impl Swapchain {
   pub fn acquire_image(&mut self, semaphore: &Semaphore) -> Result<usize, AcquireImageError> {
     let index = self
       .raw
-      .acquire_image(!0, hal::FrameSync::Semaphore(semaphore.raw()))
+      .acquire_image(!0, hal::FrameSync::Semaphore(semaphore.as_ref()))
       .map_err(|err| match err {
         hal::AcquireError::OutOfDate => AcquireImageError::OutOfDate,
         hal::AcquireError::NotReady => panic!("Swapchain::acquire_image timed out."),

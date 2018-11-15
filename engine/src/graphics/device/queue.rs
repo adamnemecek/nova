@@ -67,7 +67,7 @@ impl Queue {
   ) -> Result<(), ()> {
     self.raw.present(
       images.into_iter().map(|(sc, i)| (sc.as_ref(), i)),
-      wait_for.into_iter().map(Semaphore::raw),
+      wait_for.into_iter().map(AsRef::as_ref),
     )
   }
 

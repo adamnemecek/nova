@@ -99,10 +99,10 @@ impl Renderer {
         device::queue::RawSubmission {
           cmd_buffers: self.commands.iter().map(AsRef::as_ref),
           wait_semaphores: &[(
-            acquire_semaphore.raw(),
+            acquire_semaphore.as_ref(),
             pipeline::Stage::COLOR_ATTACHMENT_OUTPUT,
           )],
-          signal_semaphores: &[render_semaphore.raw()],
+          signal_semaphores: &[render_semaphore.as_ref()],
         },
         Some(self.fence.as_ref()),
       );
