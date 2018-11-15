@@ -98,13 +98,11 @@ impl Spirv {
     let mut output =
       glsl_to_spirv::compile(source.as_ref(), kind.clone()).expect("Could not compile shader");
 
-    let mut spirv = Vec::with_capacity(output.metadata().map(|m| m.len()).unwrap_or(1024) as usize);
+    let mut spirv = Vec::with_capacity(output.metadata().map(|m| m.len()).unwrap_or(8192) as usize);
 
     output
       .read_to_end(&mut spirv)
       .expect("Could not read compiled shader");
-
-    println!("{}", spirv.len());
 
     Spirv(kind, spirv)
   }
