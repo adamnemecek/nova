@@ -144,7 +144,10 @@ impl Commands {
   ///
   /// Subsequent draw commands will use this pipeline.
   pub fn bind_pipeline(&mut self, pipeline: &Arc<Pipeline>) {
-    self.buffer.bind_graphics_pipeline(pipeline.raw());
+    self
+      .buffer
+      .bind_graphics_pipeline(pipeline.as_ref().as_ref());
+
     self.pipelines.push(pipeline.clone());
   }
 
@@ -157,7 +160,7 @@ impl Commands {
       .last()
       .expect("A pipeline must be bound to push constant values.");
 
-    let (stages, range) = pipeline.push_constant(index);
+    let (stages, range) = pipeline.raw_push_constant(index);
 
     // Convert the constant to a slice of `u32` as vulkan/gfx-hal expects.
     let constants =
@@ -165,7 +168,7 @@ impl Commands {
 
     self
       .buffer
-      .push_graphics_constants(pipeline.layout(), stages, range.start, constants);
+      .push_graphics_constants(pipeline.raw_layout(), stages, range.start, constants);
   }
 
   /// Records a command to bind a descriptor set to the given binding index.
@@ -178,7 +181,7 @@ impl Commands {
       .expect("A pipeline must be bound to bind a descriptor set.");
 
     self.buffer.bind_graphics_descriptor_sets(
-      pipeline.layout(),
+      pipeline.raw_layout(),
       index,
       iter::once(set.as_ref()),
       &[0],

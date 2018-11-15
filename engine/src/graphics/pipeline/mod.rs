@@ -6,201 +6,75 @@ pub mod descriptor;
 pub mod shader;
 pub mod vertex;
 
+mod builder;
+
+pub use self::builder::PipelineBuilder;
 pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
 pub use self::vertex::{VertexAttribute, VertexData};
 pub use gfx_hal::pso::PipelineStage as Stage;
 
-use super::RenderPass;
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
-use crate::graphics::Device;
+use super::backend;
+use super::hal::prelude::*;
+use super::Device;
+use crate::utils::Droppable;
 use std::ops::Range;
 use std::sync::Arc;
 
+/// A graphics pipeline that configures rendering with input descriptors, push
+/// constants, and shaders.
 pub struct Pipeline {
   device: Arc<Device>,
-  raw: Option<backend::GraphicsPipeline>,
-  layout: Option<backend::PipelineLayout>,
+  raw: Droppable<(backend::GraphicsPipeline, backend::PipelineLayout)>,
   push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
   descriptor_layouts: Vec<Arc<DescriptorLayout>>,
   shaders: ShaderSet,
 }
 
 impl Pipeline {
+  /// Creates a new pipeline from the returned [`PipelineBuilder`].
   pub fn new() -> PipelineBuilder {
     PipelineBuilder::default()
   }
 
-  pub fn layout(&self) -> &backend::PipelineLayout {
-    self.layout.as_ref().expect("pipeline layout was destroyed")
+  /// Gets a reference to the raw backend layout of the pipeline.
+  pub fn raw_layout(&self) -> &backend::PipelineLayout {
+    &self.raw.1
   }
 
-  pub fn push_constant(&self, index: usize) -> (hal::pso::ShaderStageFlags, Range<u32>) {
+  /// Gets the raw constant range and shader stages of a defined push constant
+  /// by index.
+  pub fn raw_push_constant(&self, index: usize) -> (hal::pso::ShaderStageFlags, Range<u32>) {
     self.push_constants[index].clone()
   }
 
+  /// Gets a list of references to the descriptor layouts defined in the
+  /// pipeline.
   pub fn descriptor_layouts(&self) -> &[Arc<DescriptorLayout>] {
     &self.descriptor_layouts
   }
 
+  /// Gets a reference to the shader set used in the pipeline.
   pub fn shaders(&self) -> &ShaderSet {
     &self.shaders
   }
+}
 
-  pub fn raw(&self) -> &backend::GraphicsPipeline {
-    self.raw.as_ref().expect("pipeline was destroyed")
+// Implement `AsRef` to expose the raw backend graphics pipeline.
+impl AsRef<backend::GraphicsPipeline> for Pipeline {
+  fn as_ref(&self) -> &backend::GraphicsPipeline {
+    &self.raw.0
   }
 }
 
+/// Implement `Drop` to destroy the raw backend resources.
 impl Drop for Pipeline {
   fn drop(&mut self) {
     let device = self.device.raw();
 
-    if let Some(layout) = self.layout.take() {
+    if let Some((pipeline, layout)) = self.raw.take() {
       device.destroy_pipeline_layout(layout);
-    }
-
-    if let Some(pipeline) = self.raw.take() {
       device.destroy_graphics_pipeline(pipeline);
     }
-  }
-}
-
-#[derive(Default)]
-pub struct PipelineBuilder {
-  render_pass: Option<Arc<RenderPass>>,
-  shaders: Option<ShaderSet>,
-  vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
-  vertex_attributes: Vec<hal::pso::AttributeDesc>,
-  push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
-  descriptor_layouts: Vec<Arc<DescriptorLayout>>,
-}
-
-impl PipelineBuilder {
-  pub fn render_pass(mut self, pass: &Arc<RenderPass>) -> Self {
-    self.render_pass = Some(pass.clone());
-    self
-  }
-
-  pub fn vertex_buffer<T: VertexData>(mut self) -> Self {
-    let binding = self.vertex_buffers.len() as u32;
-
-    self.vertex_buffers.push(hal::pso::VertexBufferDesc {
-      binding,
-      stride: T::stride(),
-      rate: 0,
-    });
-
-    let mut offset = 0;
-
-    self
-      .vertex_attributes
-      .extend(T::attributes().iter().enumerate().map(|(i, attr)| {
-        let desc = hal::pso::AttributeDesc {
-          location: i as u32,
-          binding,
-          element: hal::pso::Element {
-            format: attr.into(),
-            offset,
-          },
-        };
-
-        offset += attr.size();
-
-        desc
-      }));
-
-    self
-  }
-
-  pub fn push_constant<T>(mut self) -> Self {
-    let size = std::mem::size_of::<T>();
-
-    assert!(
-      size % 4 == 0,
-      "Push constants must be a multiple of 4 bytes in size."
-    );
-
-    let start = self.push_constants.last().map(|r| r.1.end).unwrap_or(0);
-    let end = start + size as u32 / 4;
-
-    assert!(
-      end <= 32,
-      "Push constants should not exceed 128 bytes total."
-    );
-
-    self
-      .push_constants
-      .push((hal::pso::ShaderStageFlags::VERTEX, start..end));
-
-    self
-  }
-
-  pub fn descriptor_layout(mut self, layout: &Arc<DescriptorLayout>) -> Self {
-    self.descriptor_layouts.push(layout.clone());
-    self
-  }
-
-  pub fn shaders(mut self, shaders: ShaderSet) -> Self {
-    self.shaders = Some(shaders);
-    self
-  }
-
-  pub fn build(self, device: &Arc<Device>) -> Arc<Pipeline> {
-    let render_pass = self.render_pass.expect("A render pass is required.");
-    let shaders = self.shaders.expect("A shader set is required.");
-
-    let subpass = hal::pass::Subpass {
-      index: 0,
-      main_pass: render_pass.raw(),
-    };
-
-    let layout = device
-      .raw()
-      .create_pipeline_layout(
-        self
-          .descriptor_layouts
-          .iter()
-          .map(AsRef::as_ref)
-          .map(AsRef::as_ref),
-        &self.push_constants,
-      )
-      .expect("Could not create pipeline layout");
-
-    let mut pipeline_desc = hal::pso::GraphicsPipelineDesc::new(
-      (&shaders).into(),
-      hal::Primitive::TriangleList,
-      hal::pso::Rasterizer::FILL,
-      &layout,
-      subpass,
-    );
-
-    pipeline_desc.blender.targets.push(hal::pso::ColorBlendDesc(
-      hal::pso::ColorMask::ALL,
-      hal::pso::BlendState::ALPHA,
-    ));
-
-    pipeline_desc
-      .vertex_buffers
-      .extend(self.vertex_buffers.into_iter());
-
-    pipeline_desc
-      .attributes
-      .extend(self.vertex_attributes.into_iter());
-
-    let pipeline = device
-      .raw()
-      .create_graphics_pipeline(&pipeline_desc, None)
-      .expect("could not create graphics pipeline");
-
-    Arc::new(Pipeline {
-      device: device.clone(),
-      raw: Some(pipeline),
-      layout: Some(layout),
-      push_constants: self.push_constants,
-      descriptor_layouts: self.descriptor_layouts,
-      shaders,
-    })
   }
 }
