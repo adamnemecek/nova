@@ -1,6 +1,6 @@
 use super::buffer::{self, Buffer};
 use super::pipeline::vertex::*;
-use super::{Color, Device};
+use super::{Color4, Device};
 use nova::math::Vector2;
 use std::sync::Arc;
 
@@ -47,7 +47,7 @@ impl Mesh {
 #[repr(C)]
 pub struct Vertex {
   pub pos: Vector2<f32>,
-  pub color: Color,
+  pub color: Color4,
   pub tex_pos: Vector2<f32>,
 }
 

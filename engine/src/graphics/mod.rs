@@ -20,7 +20,7 @@ mod surface;
 
 pub use self::backend::Backend;
 pub use self::buffer::Buffer;
-pub use self::color::Color;
+pub use self::color::Color4;
 pub use self::commands::{CommandPool, Commands};
 pub use self::device::Device;
 pub use self::fence::Fence;

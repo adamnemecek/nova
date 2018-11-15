@@ -5,26 +5,26 @@
 use derive_more::*;
 
 #[derive(Debug, Clone, Copy, From)]
-pub struct Color {
+pub struct Color4 {
   pub r: f32,
   pub g: f32,
   pub b: f32,
   pub a: f32,
 }
 
-impl Color {
-  pub const TRANSPARENT: Self = Color::new(0.0, 0.0, 0.0, 0.0);
-  pub const WHITE: Self = Color::new(1.0, 1.0, 1.0, 1.0);
+impl Color4 {
+  pub const TRANSPARENT: Self = Color4::new(0.0, 0.0, 0.0, 0.0);
+  pub const WHITE: Self = Color4::new(1.0, 1.0, 1.0, 1.0);
 
   /// Creates a new color with the given component values.
   pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
-    Color { r, g, b, a }
+    Color4 { r, g, b, a }
   }
 }
 
 // Implement `From` to convert from arrays of color components.
-impl From<[f32; 4]> for Color {
+impl From<[f32; 4]> for Color4 {
   fn from(values: [f32; 4]) -> Self {
-    Color::new(values[0], values[1], values[2], values[3])
+    Color4::new(values[0], values[1], values[2], values[3])
   }
 }

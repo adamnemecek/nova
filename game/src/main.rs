@@ -120,7 +120,7 @@ pub fn main() -> Result<(), String> {
 
     cmd.bind_pipeline(&pipeline);
 
-    cmd.push_constant(0, &graphics::Color::new(1.0, 1.0, 1.0, 1.0));
+    cmd.push_constant(0, &graphics::Color4::new(1.0, 1.0, 1.0, 1.0));
     cmd.push_constant(1, &Matrix4::<f32>::identity());
 
     cmd.bind_descriptor_set(0, &descriptor_set);
