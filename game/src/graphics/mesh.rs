@@ -55,7 +55,7 @@ impl Vertex {
   pub fn new(pos: [f32; 2], color: [f32; 4], tex_pos: [f32; 2]) -> Self {
     Vertex {
       pos: Vector2::new(pos[0], pos[1]),
-      color: Color(color),
+      color: color.into(),
       tex_pos: Vector2::new(tex_pos[0], tex_pos[1]),
     }
   }
