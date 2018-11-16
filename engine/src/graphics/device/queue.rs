@@ -7,7 +7,8 @@ pub use gfx_hal::queue::RawSubmission;
 use super::Device;
 use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::{Semaphore, Swapchain};
+use crate::graphics::window::Swapchain;
+use crate::graphics::Semaphore;
 use std::sync::Arc;
 
 /// A device queue for submitting [`Commands`] or presenting [`Swapchain`]

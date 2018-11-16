@@ -7,9 +7,9 @@ mod graphics;
 
 use self::graphics::image;
 use self::graphics::pipeline;
+use self::graphics::window::Window;
 use self::graphics::{Mesh, Vertex};
 use self::math::Matrix4;
-use self::window::Window;
 use std::iter;
 use std::sync::Arc;
 use std::time;
@@ -32,22 +32,22 @@ pub fn main() -> Result<(), String> {
     .trace("Created backend.")
     .with("name", &graphics::backend::NAME);
 
-  let (window, mut event_source) =
-    Window::new().map_err(|err| format!("Could not create window: {}", err))?;
+  let (mut window, mut event_source) =
+    Window::new(&backend).map_err(|err| format!("Could not create window: {}", err))?;
 
   log
     .trace("Created window.")
     .with("width", &window.size().width())
     .with("height", &window.size().height());
 
-  let mut gpu = graphics::device::Gpu::new(&backend)
+  let mut gpu = graphics::device::Gpu::new(&backend, window.surface())
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log
     .trace("Created graphics device.")
     .with("name", &gpu.device.name());
 
-  let mut renderer = graphics::Renderer::new(&gpu.queues.graphics, &window, &log);
+  let mut renderer = graphics::Renderer::new(&gpu.queues.graphics, &mut window, &log);
 
   log.trace("Created renderer.");
 

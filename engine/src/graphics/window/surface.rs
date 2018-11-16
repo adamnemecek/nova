@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::backend;
-use crate::window::Window;
+use super::Window;
 use std::sync::Arc;
 
 /// A rendering surface created from a [`Window`].
@@ -16,7 +16,7 @@ pub struct Surface {
 
 impl Surface {
   /// Creates a new surface from a window with the given backend instance.
-  pub fn new(backend: &Arc<backend::Instance>, window: &Window) -> Surface {
+  pub(crate) fn new(backend: &Arc<backend::Instance>, window: &Window) -> Surface {
     let surface = backend.create_surface(window.as_ref());
 
     Surface {
@@ -31,7 +31,13 @@ impl Surface {
   }
 }
 
-// Implement `AsMut` to expose a mutable reference to the raw backend surface.
+// Implement `AsRef` and `AsMut` to expose the raw backend surface.
+impl AsRef<backend::Surface> for Surface {
+  fn as_ref(&self) -> &backend::Surface {
+    &self.raw
+  }
+}
+
 impl AsMut<backend::Surface> for Surface {
   fn as_mut(&mut self) -> &mut backend::Surface {
     &mut self.raw

@@ -1,11 +1,11 @@
 use super::device;
 use super::hal::prelude::*;
 use super::pipeline;
-use super::swapchain::{self, Swapchain};
-use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore, Surface};
+use super::window::swapchain::{self, Swapchain};
+use super::window::{Surface, Window};
+use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
 use nova::math::Size;
 use nova::utils::{Droppable, Ring};
-use nova::window::Window;
 use std::iter;
 use std::sync::Arc;
 
@@ -24,10 +24,10 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(queue: &device::Queue, window: &Window, log: &bflog::Logger) -> Self {
+  pub fn new(queue: &device::Queue, window: &mut Window, log: &bflog::Logger) -> Self {
     let device = queue.device();
 
-    let surface = Surface::new(device.backend(), window);
+    let surface = window.take_surface();
 
     let render_pass = RenderPass::new(device);
 
