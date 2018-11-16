@@ -72,10 +72,15 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad mesh.");
 
-  let mut image_loader = image::Loader::new(&gpu.queues.transfer);
+  let mut image_loader =
+    image::Loader::new(gpu.queues.transfer.as_ref().unwrap_or(&gpu.queues.graphics));
 
   let image = image_loader.load(
-    &mut gpu.queues.transfer,
+    gpu
+      .queues
+      .transfer
+      .as_mut()
+      .unwrap_or(&mut gpu.queues.graphics),
     &image::Source::from_bytes(include_bytes!("../assets/do-it.jpg"))
       .map_err(|err| format!("Could not load image data: {}", err))?,
   );

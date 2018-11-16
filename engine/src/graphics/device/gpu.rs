@@ -21,7 +21,7 @@ pub struct GpuQueues {
   /// window surface.
   pub graphics: Queue,
   /// Transfer queue for copying to and from buffers and images.
-  pub transfer: Queue,
+  pub transfer: Option<Queue>,
 }
 
 impl Gpu {
@@ -34,10 +34,14 @@ impl Gpu {
     // Determine queue families to open.
     let (graphics_family, transfer_family) = select_queue_families(&adapter);
 
+    let mut queue_req = vec![(&graphics_family, &[1.0f32][..])];
+
+    if let Some(ref transfer_family) = transfer_family {
+      queue_req.push((transfer_family, &[1.0]))
+    }
+
     // Open the physical device with the selected queues.
-    let mut raw = adapter
-      .physical_device
-      .open(&[(&graphics_family, &[1.0]), (&transfer_family, &[1.0])])?;
+    let mut raw = adapter.physical_device.open(&queue_req)?;
 
     // Create a device from the raw device.
     let device = Arc::new(unsafe { Device::from_raw(raw.device, adapter, backend) });
@@ -45,7 +49,10 @@ impl Gpu {
     // Create a set of queues from the raw queues.
     let queues = GpuQueues {
       graphics: unsafe { Queue::from_raw(&device, &mut raw.queues, graphics_family) },
-      transfer: unsafe { Queue::from_raw(&device, &mut raw.queues, transfer_family) },
+      transfer: match transfer_family {
+        Some(f) => Some(unsafe { Queue::from_raw(&device, &mut raw.queues, f) }),
+        None => None,
+      },
     };
 
     Ok(Gpu {
@@ -68,7 +75,7 @@ pub fn select_best_adapter(instance: &backend::Instance) -> Option<hal::Adapter>
 
       // Prefer discrete graphics devices over integrated ones.
       if adapter.info.device_type == hal::adapter::DeviceType::DiscreteGpu {
-        score += 1000;
+        score -= 1000;
       }
 
       score
@@ -77,7 +84,9 @@ pub fn select_best_adapter(instance: &backend::Instance) -> Option<hal::Adapter>
 
 /// Selects a queue family for graphics queues and a queue family for transfer
 /// queues from the given backend adapter info.
-fn select_queue_families(adapter: &hal::Adapter) -> (backend::QueueFamily, backend::QueueFamily) {
+fn select_queue_families(
+  adapter: &hal::Adapter,
+) -> (backend::QueueFamily, Option<backend::QueueFamily>) {
   let graphics = adapter
     .queue_families
     .iter()
@@ -91,8 +100,7 @@ fn select_queue_families(adapter: &hal::Adapter) -> (backend::QueueFamily, backe
     .iter()
     .filter(|family| !family.supports_graphics())
     .next()
-    .expect("no transfer queue family")
-    .clone();
+    .map(Clone::clone);
 
   (graphics, transfer)
 }
