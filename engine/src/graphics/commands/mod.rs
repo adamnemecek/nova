@@ -77,6 +77,7 @@ impl Commands {
     // Begin the render pass.
     self.record_raw(|buffer| {
       buffer.set_viewports(0, &[viewport.clone()]);
+      buffer.set_scissors(0, &[viewport.rect]);
 
       buffer.begin_render_pass(
         render_pass.raw(),
