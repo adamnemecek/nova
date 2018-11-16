@@ -132,6 +132,8 @@ pub fn main() -> Result<(), String> {
     cmd.bind_index_buffer(quad.index_buffer());
     cmd.draw_indexed(quad.index_count());
 
+    cmd.finish_render_pass();
+
     cmd.finish();
 
     renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));

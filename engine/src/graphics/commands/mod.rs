@@ -97,6 +97,11 @@ impl Commands {
     self.render_passes.push(render_pass.clone());
   }
 
+  /// Finishes the current render pass.
+  pub fn finish_render_pass(&mut self) {
+    self.buffer.end_render_pass();
+  }
+
   /// Begins recording a new set of commands that will execute entirely within
   /// the given render pass. Can only be used with secondary commands.
   ///
