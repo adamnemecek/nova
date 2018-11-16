@@ -11,15 +11,15 @@ use std::sync::Arc;
 
 /// A set of images used by a render pass.
 pub struct Framebuffer {
+  /// Device the framebuffer was created with. Stored to prevent it from being
+  /// dropped.
+  device: Arc<Device>,
   /// Raw backend framebuffer structure.
   raw: Droppable<backend::Framebuffer>,
   /// Size of the framebuffer in pixels.
   size: Size<u32>,
   /// Images in the framebuffer. Stored to prevent them from being dropped.
-  _images: Vec<Arc<Image>>,
-  /// Device the framebuffer was created with. Stored to prevent it from being
-  /// dropped.
-  _device: Arc<Device>,
+  images: Vec<Arc<Image>>,
 }
 
 impl Framebuffer {
@@ -59,16 +59,26 @@ impl Framebuffer {
       .expect("Out of memory.");
 
     Framebuffer {
+      device: device.clone(),
       raw: framebuffer.into(),
       size: extent.into(),
-      _images: images,
-      _device: device.clone(),
+      images,
     }
+  }
+
+  /// Gets a reference to the device used to create the framebuffer.
+  pub fn device(&self) -> &Arc<Device> {
+    &self.device
   }
 
   /// Gets the size of the framebuffer in pixels.
   pub fn size(&self) -> Size<u32> {
     self.size
+  }
+
+  /// Gets a reference to all of the images attched to the framebuffer.
+  pub fn images(&self) -> &[Arc<Image>] {
+    &self.images
   }
 }
 
