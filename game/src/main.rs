@@ -22,6 +22,8 @@ pub fn main() -> Result<(), String> {
     bflog::LevelFilter::Trace,
   );
 
+  bflog::Logger::new(&sink).make_global().unwrap();
+
   let mut log = bflog::Logger::new(&sink).with_src("game");
 
   let backend = graphics::backend::Instance::create("nova-game", 1).into();
@@ -142,10 +144,10 @@ pub fn main() -> Result<(), String> {
         &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
       );
     } else if duration < time::Duration::from_millis(1) {
-      log.warn("Short frame.").with(
-        "duration",
-        &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
-      );
+      // log.warn("Short frame.").with(
+      //   "duration",
+      //   &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
+      // );
 
       std::thread::yield_now();
     }
