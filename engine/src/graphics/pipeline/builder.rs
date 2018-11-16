@@ -15,7 +15,7 @@ pub struct PipelineBuilder {
   shaders: Option<ShaderSet>,
   vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<hal::pso::AttributeDesc>,
-  push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
+  push_constants: Vec<Range<u32>>,
   descriptor_layouts: Vec<Arc<DescriptorLayout>>,
 }
 
@@ -72,12 +72,7 @@ impl PipelineBuilder {
       "Push constants must be a multiple of 4 bytes in size."
     );
 
-    let start = self
-      .push_constants
-      .last()
-      .map(|(_, range)| range.end)
-      .unwrap_or(0);
-
+    let start = self.push_constants.last().map(|r| r.end).unwrap_or(0);
     let end = start + size as u32 / 4;
 
     assert!(
@@ -85,10 +80,7 @@ impl PipelineBuilder {
       "Push constants should not exceed 128 bytes total."
     );
 
-    self.push_constants.push((
-      hal::pso::ShaderStageFlags::VERTEX | hal::pso::ShaderStageFlags::FRAGMENT,
-      start..end,
-    ));
+    self.push_constants.push(start..end);
 
     self
   }
@@ -118,6 +110,15 @@ impl PipelineBuilder {
       main_pass: render_pass.raw(),
     };
 
+    let push_constants = if self.push_constants.len() > 0 {
+      vec![(
+        gfx_hal::pso::ShaderStageFlags::VERTEX | gfx_hal::pso::ShaderStageFlags::FRAGMENT,
+        self.push_constants.first().unwrap().start..self.push_constants.last().unwrap().end,
+      )]
+    } else {
+      Vec::new()
+    };
+
     let layout = device
       .raw()
       .create_pipeline_layout(
@@ -126,7 +127,7 @@ impl PipelineBuilder {
           .iter()
           .map(AsRef::as_ref)
           .map(AsRef::as_ref),
-        &self.push_constants,
+        &push_constants,
       )
       .expect("Could not create pipeline layout");
 

@@ -26,7 +26,7 @@ use std::sync::Arc;
 pub struct Pipeline {
   device: Arc<Device>,
   raw: Droppable<(backend::GraphicsPipeline, backend::PipelineLayout)>,
-  push_constants: Vec<(hal::pso::ShaderStageFlags, Range<u32>)>,
+  push_constants: Vec<Range<u32>>,
   descriptor_layouts: Vec<Arc<DescriptorLayout>>,
   shaders: ShaderSet,
 }
@@ -42,9 +42,8 @@ impl Pipeline {
     &self.raw.1
   }
 
-  /// Gets the raw constant range and shader stages of a defined push constant
-  /// by index.
-  pub fn raw_push_constant(&self, index: usize) -> (hal::pso::ShaderStageFlags, Range<u32>) {
+  /// Gets the range of a push constant by index.
+  pub fn push_constant_range(&self, index: usize) -> Range<u32> {
     self.push_constants[index].clone()
   }
 

@@ -166,15 +166,18 @@ impl Commands {
       .last()
       .expect("A pipeline must be bound to push constant values.");
 
-    let (stages, range) = pipeline.raw_push_constant(index);
+    let range = pipeline.push_constant_range(index);
 
     // Convert the constant to a slice of `u32` as vulkan/gfx-hal expects.
     let constants =
       unsafe { std::slice::from_raw_parts(value as *const T as *const u32, range.len()) };
 
-    self
-      .buffer
-      .push_graphics_constants(pipeline.raw_layout(), stages, range.start, constants);
+    self.buffer.push_graphics_constants(
+      pipeline.raw_layout(),
+      gfx_hal::pso::ShaderStageFlags::VERTEX | gfx_hal::pso::ShaderStageFlags::FRAGMENT,
+      range.start,
+      constants,
+    );
   }
 
   /// Records a command to bind a descriptor set to the given binding index.
