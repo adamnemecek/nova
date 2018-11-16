@@ -189,7 +189,7 @@ impl Commands {
       pipeline.raw_layout(),
       index,
       iter::once(set.as_ref()),
-      &[0],
+      &[],
     );
   }
 
