@@ -161,3 +161,14 @@ impl Renderer {
     self.log.trace("Destroyed swapchain.");
   }
 }
+
+// Implement `Drop` to destroy the swapchain because this must happen before the
+// surface is dropped and destroyed.
+//
+// TODO: Figure out how to ensure that a surface is not destroyed until after
+//       the swapchain is destroyed.
+impl Drop for Renderer {
+  fn drop(&mut self) {
+    self.destroy_swapchain();
+  }
+}

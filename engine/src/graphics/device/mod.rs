@@ -82,6 +82,19 @@ impl Device {
   pub fn raw(&self) -> &backend::Device {
     &self.raw
   }
+
+  /// Waits for all command submissions to complete on all queues and for the
+  /// device to become completely idle.
+  ///
+  /// This function should be avoided in favor of other synchronizaton
+  /// primitives or methods, but is useful prior to exiting the application or
+  /// dropping the device.
+  pub fn wait_idle(&self) {
+    self
+      .raw
+      .wait_idle()
+      .expect("Could not wait for the device to be idle");
+  }
 }
 
 // Implement `Drop` to dispose the memory allocator and free allocated memory.

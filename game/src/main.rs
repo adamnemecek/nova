@@ -153,5 +153,7 @@ pub fn main() -> Result<(), String> {
     }
   }
 
+  gpu.device.wait_idle();
+
   Ok(())
 }

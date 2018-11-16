@@ -88,3 +88,12 @@ impl AsRef<backend::Framebuffer> for Framebuffer {
     &self.raw
   }
 }
+
+// Implement `Drop` to destroy the raw backend framebuffer.
+impl Drop for Framebuffer {
+  fn drop(&mut self) {
+    if let Some(framebuffer) = self.raw.take() {
+      self.device.raw().destroy_framebuffer(framebuffer);
+    }
+  }
+}
