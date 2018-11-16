@@ -85,7 +85,7 @@ impl Binding {
       count: 1,
       immutable_samplers: false,
       ty: match self {
-        Binding::Texture => hal::pso::DescriptorType::SampledImage,
+        Binding::Texture => hal::pso::DescriptorType::CombinedImageSampler,
       },
       stage_flags: match self {
         Binding::Texture => {
