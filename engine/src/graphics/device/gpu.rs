@@ -90,7 +90,7 @@ pub fn select_best_adapter(
 
       // Prefer discrete graphics devices over integrated ones.
       if adapter.info.device_type == hal::adapter::DeviceType::DiscreteGpu {
-        score -= 1000;
+        score += 1000;
       }
 
       score
