@@ -148,6 +148,10 @@ impl Renderer {
   }
 
   fn destroy_swapchain(&mut self) {
+    if self.swapchain.is_dropped() {
+      return;
+    }
+
     self.render_pass.device().wait_idle();
 
     self.framebuffers.clear();
