@@ -10,6 +10,7 @@ use crate::graphics::hal::prelude::*;
 use crate::utils::Droppable;
 use gfx_memory::{Block, Factory};
 use std::mem;
+use std::ptr;
 use std::sync::Arc;
 
 /// Value returned from the device allocator's `create_buffer` method.
@@ -21,8 +22,6 @@ pub struct Buffer<T> {
   device: Arc<Device>,
   /// Raw backend buffer and memory allocated by the device.
   inner: Droppable<Allocation>,
-  /// Size of the buffer in bytes.
-  size: u64,
   /// A phantom data marker so that buffers can be generic on their contents.
   _marker: std::marker::PhantomData<T>,
 }
@@ -49,7 +48,6 @@ impl<T: Copy> Buffer<T> {
     Buffer {
       device: device.clone(),
       inner: inner.into(),
-      size,
       _marker: std::marker::PhantomData,
     }
   }
@@ -63,10 +61,16 @@ impl<T: Copy> Buffer<T> {
     let range = self.inner.range();
 
     let mut dest = device
-      .acquire_mapping_writer::<T>(&memory, range.start..range.start + self.size)
+      .acquire_mapping_writer::<T>(&memory, range)
       .expect("Could not acquire mapping writer");
 
-    dest.copy_from_slice(values);
+    unsafe {
+      ptr::copy_nonoverlapping(
+        values.as_ptr(),
+        dest.as_mut_ptr(),
+        values.len() * mem::size_of::<T>(),
+      );
+    }
 
     device
       .release_mapping_writer(dest)
