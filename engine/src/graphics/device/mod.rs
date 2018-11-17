@@ -105,7 +105,7 @@ impl Drop for Device {
         .into_inner()
         .unwrap()
         .dispose(&self.raw)
-        .expect("could not dispose allocator");
+        .or_else(|_| panic!("Device dropped before all resources have been freed."));
     }
   }
 }
