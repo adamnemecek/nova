@@ -4,7 +4,6 @@ use super::pipeline;
 use super::window::swapchain::{self, Swapchain};
 use super::window::{Surface, Window};
 use super::{Commands, Fence, Framebuffer, RenderPass, Semaphore};
-use nova::math::Size;
 use nova::utils::{Droppable, Ring};
 use std::iter;
 use std::sync::Arc;
@@ -19,7 +18,6 @@ pub struct Renderer {
   commands: Vec<Commands>,
   framebuffers: Vec<Arc<Framebuffer>>,
   frame: usize,
-  size: Size<u32>,
   log: bflog::Logger,
 }
 
@@ -43,7 +41,6 @@ impl Renderer {
       swapchain: Droppable::dropped(),
       framebuffers: Vec::new(),
       frame: 0,
-      size: window.size(),
       log: log.with_src("game::graphics::Renderer"),
     }
   }
@@ -53,19 +50,22 @@ impl Renderer {
   }
 
   pub fn begin_frame(&mut self, window: &mut Window) -> Arc<Framebuffer> {
+    self.semaphores.next();
+
     for _ in 0..5 {
       self.ensure_swapchain(window);
 
-      let (semaphore, _) = self.semaphores.next();
-
-      match self.swapchain.acquire_image(semaphore) {
+      match self.swapchain.acquire_image(&self.semaphores.current().0) {
         Ok(index) => {
           self.frame = index;
 
           return self.framebuffers[index].clone();
         }
 
-        Err(swapchain::AcquireImageError::OutOfDate) => self.destroy_swapchain(),
+        Err(swapchain::AcquireImageError::OutOfDate) => {
+          self.log.trace("Swapchain out of date.");
+          self.destroy_swapchain();
+        }
       }
     }
 
@@ -114,23 +114,18 @@ impl Renderer {
     );
 
     if result.is_err() {
+      self.log.trace("Presentation failed.");
       self.destroy_swapchain();
     }
   }
 
   fn ensure_swapchain(&mut self, window: &mut Window) {
-    let size = window.size();
-
-    if size != self.size {
-      self.size = size;
-      self.swapchain.drop();
-    }
-
     if !self.swapchain.is_dropped() {
       return;
     }
 
-    self.swapchain = Swapchain::new(self.render_pass.device(), &mut self.surface, size).into();
+    self.swapchain =
+      Swapchain::new(self.render_pass.device(), &mut self.surface, window.size()).into();
 
     self.log.trace("Created swapchain.").with(
       "present_mode",
@@ -153,6 +148,8 @@ impl Renderer {
   }
 
   fn destroy_swapchain(&mut self) {
+    self.render_pass.device().wait_idle();
+
     self.framebuffers.clear();
     self.frame = 0;
 
