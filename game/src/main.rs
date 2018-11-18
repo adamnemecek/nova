@@ -33,14 +33,14 @@ pub fn main() -> Result<(), String> {
     .with("name", &graphics::backend::NAME);
 
   let (mut window, mut event_source) =
-    Window::new(&backend).map_err(|err| format!("Could not create window: {}", err))?;
+    Window::create(&backend).map_err(|err| format!("Could not create window: {}", err))?;
 
   log
     .trace("Created window.")
     .with("width", &window.size().width())
     .with("height", &window.size().height());
 
-  let mut gpu = graphics::device::Gpu::new(&backend, window.surface())
+  let mut gpu = graphics::device::Gpu::create(&backend, window.surface())
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log
@@ -51,11 +51,12 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created renderer.");
 
-  let command_pool = graphics::CommandPool::new(&gpu.queues.graphics);
+  let command_pool = Arc::new(graphics::CommandPool::new(&gpu.queues.graphics));
 
   log.trace("Created command pool.");
 
-  let pipeline = graphics::pipeline::create_default(renderer.render_pass());
+  let pipeline = graphics::pipeline::create_default(renderer.render_pass())
+    .map_err(|err| format!("Could not create graphics pipeline: {}", err))?;
 
   log.trace("Created graphics pipeline.");
 
@@ -99,7 +100,7 @@ pub fn main() -> Result<(), String> {
   log.trace("Created quad texture descriptor set.");
 
   let ctx = &mut ecs::Context::new();
-  let mut dispatcher = ecs::Dispatcher::new().setup(ctx);
+  let mut dispatcher = ecs::DispatcherBuilder::new().build(ctx);
 
   ecs::put_resource(ctx, window);
 
@@ -148,7 +149,7 @@ pub fn main() -> Result<(), String> {
     if duration > time::Duration::from_millis(20) {
       log.warn("Long frame.").with(
         "duration",
-        &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
+        &(duration.as_secs() as f64 + f64::from(duration.subsec_nanos()) * 1e-9),
       );
     } else if duration < time::Duration::from_millis(1) {
       // log.warn("Short frame.").with(

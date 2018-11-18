@@ -23,7 +23,7 @@ pub struct DescriptorLayout {
 
 impl DescriptorLayout {
   /// Creates a new descriptor layout on the device with the given bindings.
-  pub fn new(device: &Arc<Device>, bindings: &[Binding]) -> Arc<Self> {
+  pub fn new(device: &Arc<Device>, bindings: &[Binding]) -> Self {
     let bindings = bindings
       .into_iter()
       .enumerate()
@@ -35,11 +35,11 @@ impl DescriptorLayout {
       .create_descriptor_set_layout(&bindings, &[])
       .expect("Could not create backend descriptor set layout");
 
-    Arc::new(DescriptorLayout {
+    DescriptorLayout {
       device: device.clone(),
       raw: layout.into(),
       bindings,
-    })
+    }
   }
 
   /// Gets the device the descriptor layout was created with.

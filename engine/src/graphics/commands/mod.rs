@@ -202,7 +202,7 @@ impl Commands {
     assert!(self.recording, "The command buffer is not recording.");
 
     assert!(
-      self.pipelines.len() > 0,
+      !self.pipelines.is_empty(),
       "A pipeline must be bound to bind a vertex buffer.",
     );
 
@@ -216,7 +216,7 @@ impl Commands {
     assert!(self.recording, "The command buffer is not recording.");
 
     assert!(
-      self.pipelines.len() > 0,
+      !self.pipelines.is_empty(),
       "A pipeline must be bound to bind an index buffer.",
     );
 
@@ -233,7 +233,7 @@ impl Commands {
     assert!(self.recording, "The command buffer is not recording.");
 
     assert!(
-      self.pipelines.len() > 0,
+      !self.pipelines.is_empty(),
       "A pipeline must be bound to draw indices.",
     );
 

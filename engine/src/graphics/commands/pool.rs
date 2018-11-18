@@ -25,7 +25,7 @@ pub struct CommandPool {
 
 impl CommandPool {
   /// Creates a new command pool for the given device queue.
-  pub fn new(queue: &device::Queue) -> Arc<CommandPool> {
+  pub fn new(queue: &device::Queue) -> CommandPool {
     let pool = queue
       .device()
       .raw()
@@ -35,12 +35,12 @@ impl CommandPool {
       )
       .expect("Could not create command pool.");
 
-    Arc::new(CommandPool {
+    CommandPool {
       device: queue.device().clone(),
       raw: Mutex::new(pool).into(),
       recording: AtomicBool::new(false),
       queue_family_id: queue.family_id(),
-    })
+    }
   }
 
   /// Gets the ID of the device queue family this command pool was created for.

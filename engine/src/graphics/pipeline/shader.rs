@@ -8,6 +8,7 @@ use crate::graphics::backend;
 use crate::graphics::hal::prelude::*;
 use crate::graphics::Device;
 use crate::utils::Droppable;
+use derive_more::*;
 use std::sync::Arc;
 
 /// A compiled shader module on the graphics device.
@@ -19,17 +20,17 @@ pub struct Shader {
 
 impl Shader {
   /// Creates a new shader on the device from the given compiled SPIR-V.
-  pub fn new(device: &Arc<Device>, spirv: &Spirv) -> Arc<Shader> {
+  pub fn new(device: &Arc<Device>, spirv: &Spirv) -> Shader {
     let module = device
       .raw()
       .create_shader_module(&spirv.1)
       .expect("Could not create backend shader module");
 
-    Arc::new(Shader {
+    Shader {
       device: device.clone(),
       raw: module.into(),
       kind: spirv.0.clone(),
-    })
+    }
   }
 
   /// Gets the kind of shader.
@@ -55,14 +56,15 @@ impl Drop for Shader {
 }
 
 /// A reference to an entry point function in a particular shader.
-pub struct EntryPoint(pub Arc<Shader>, pub &'static str);
+#[derive(From)]
+pub struct EntryPoint(pub Arc<Shader>, pub String);
 
 // Implement `From` to convert `&EntryPoint` to the equivalent gfx-hal structure.
 impl<'a> From<&'a EntryPoint> for hal::pso::EntryPoint<'a> {
   fn from(point: &'a EntryPoint) -> Self {
     hal::pso::EntryPoint {
       module: point.0.as_ref().as_ref(),
-      entry: point.1,
+      entry: &point.1,
       specialization: Default::default(),
     }
   }
@@ -82,7 +84,7 @@ impl<'a> From<&'a ShaderSet> for hal::pso::GraphicsShaderSet<'a> {
       hull: None,
       domain: None,
       geometry: None,
-      fragment: set.fragment.as_ref().map(From::from),
+      fragment: set.fragment.as_ref().map(Into::into),
     }
   }
 }

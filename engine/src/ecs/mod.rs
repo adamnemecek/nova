@@ -20,6 +20,7 @@ pub use self::storages::*;
 pub use self::systems::*;
 
 /// Container for all ECS resources including entities and components.
+#[derive(Default)]
 pub struct Context {
   world: specs::World,
 }

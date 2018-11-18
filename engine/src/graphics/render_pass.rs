@@ -15,7 +15,7 @@ pub struct RenderPass {
 }
 
 impl RenderPass {
-  pub fn new(device: &Arc<Device>) -> Arc<Self> {
+  pub fn new(device: &Arc<Device>) -> Self {
     let format = image::Format::Bgra8Unorm;
 
     let color_attachment = hal::pass::Attachment {
@@ -50,11 +50,11 @@ impl RenderPass {
       .create_render_pass(&[color_attachment], &[subpass], &[dependency])
       .expect("could not create render pass");
 
-    Arc::new(RenderPass {
+    RenderPass {
       device: device.clone(),
       raw: Some(pass),
       format,
-    })
+    }
   }
 
   pub fn device(&self) -> &Arc<Device> {

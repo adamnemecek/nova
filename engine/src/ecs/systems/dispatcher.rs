@@ -11,19 +11,14 @@ use derive_more::*;
 pub struct Dispatcher<'a, 'b>(specs::Dispatcher<'a, 'b>);
 
 impl<'a, 'b> Dispatcher<'a, 'b> {
-  /// Creates a new dispatcher with the returned [`DispatcherBuilder`].
-  pub fn new() -> DispatcherBuilder<'a, 'b> {
-    DispatcherBuilder::new()
-  }
-
   /// Runs all systems once in parallel on a thread pool.
   pub fn dispatch(&mut self, ecs: &mut Context) {
-    self.0.dispatch(&mut ecs.world.res);
+    self.0.dispatch(&ecs.world.res);
   }
 }
 
 /// Builder for constructing a [`Dispatcher`].
-#[derive(From)]
+#[derive(From, Default)]
 pub struct DispatcherBuilder<'a, 'b>(specs::DispatcherBuilder<'a, 'b>);
 
 impl<'a, 'b> DispatcherBuilder<'a, 'b> {
@@ -50,7 +45,7 @@ impl<'a, 'b> DispatcherBuilder<'a, 'b> {
 
   /// Runs `System::setup` for every system in dependency order and then builds
   /// and returns a new [`Dispatcher`].
-  pub fn setup(self, ctx: &mut Context) -> Dispatcher<'a, 'b> {
+  pub fn build(self, ctx: &mut Context) -> Dispatcher<'a, 'b> {
     let mut dispatcher = self.0.build();
 
     dispatcher.setup(&mut ctx.world.res);

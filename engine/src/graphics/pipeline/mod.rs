@@ -8,7 +8,7 @@ pub mod vertex;
 
 mod builder;
 
-pub use self::builder::PipelineBuilder;
+pub use self::builder::{BuildError, PipelineBuilder};
 pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
 pub use self::vertex::{VertexAttribute, VertexData};
@@ -32,11 +32,6 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
-  /// Creates a new pipeline from the returned [`PipelineBuilder`].
-  pub fn new() -> PipelineBuilder {
-    PipelineBuilder::default()
-  }
-
   /// Gets a reference to the raw backend layout of the pipeline.
   pub fn raw_layout(&self) -> &backend::PipelineLayout {
     &self.raw.1

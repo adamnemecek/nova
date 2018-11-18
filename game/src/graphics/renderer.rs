@@ -24,17 +24,14 @@ pub struct Renderer {
 impl Renderer {
   pub fn new(queue: &device::Queue, window: &mut Window, log: &bflog::Logger) -> Self {
     let device = queue.device();
-
     let surface = window.take_surface();
-
     let render_pass = RenderPass::new(device);
-
     let semaphores = Ring::new(3, |_| (Semaphore::new(&device), Semaphore::new(&device)));
 
     Renderer {
       queue_family_id: queue.family_id(),
       surface,
-      render_pass,
+      render_pass: Arc::new(render_pass),
       fence: Fence::new(&device),
       semaphores,
       commands: Vec::new(),
@@ -50,7 +47,7 @@ impl Renderer {
   }
 
   pub fn begin_frame(&mut self, window: &mut Window) -> Arc<Framebuffer> {
-    self.semaphores.next();
+    self.semaphores.advance();
 
     for _ in 0..5 {
       self.ensure_swapchain(window);
@@ -157,7 +154,7 @@ impl Renderer {
     self.framebuffers.clear();
     self.frame = 0;
 
-    self.swapchain.drop();
+    self.swapchain = Droppable::dropped();
 
     self.log.trace("Destroyed swapchain.");
   }

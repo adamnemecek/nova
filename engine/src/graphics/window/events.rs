@@ -28,20 +28,20 @@ impl EventSource {
 
     events.clear();
 
-    self.events_loop.poll_events(|event| match event {
-      winit::Event::WindowEvent { event, .. } => match event {
-        winit::WindowEvent::CloseRequested => {
-          events.push(Event::CloseRequested);
+    self.events_loop.poll_events(|event| {
+      if let winit::Event::WindowEvent { event, .. } = event {
+        match event {
+          winit::WindowEvent::CloseRequested => {
+            events.push(Event::CloseRequested);
+          }
+
+          winit::WindowEvent::Resized(_) => {
+            events.push(Event::Resized);
+          }
+
+          _ => {}
         }
-
-        winit::WindowEvent::Resized(_) => {
-          events.push(Event::Resized);
-        }
-
-        _ => {}
-      },
-
-      _ => {}
+      }
     });
   }
 }

@@ -28,7 +28,7 @@ pub struct GpuQueues {
 impl Gpu {
   /// Initializes a new graphics device with a set of queues for submitting
   /// commands and presenting to a window surface.
-  pub fn new(
+  pub fn create(
     backend: &Arc<backend::Instance>,
     surface: Option<&Surface>,
   ) -> Result<Gpu, CreationError> {
@@ -106,21 +106,19 @@ fn select_queue_families(
   let graphics = adapter
     .queue_families
     .iter()
-    .filter(|family| family.supports_graphics())
-    .filter(|family| {
-      surface
-        .map(|s| s.supports_queue_family(family))
-        .unwrap_or(true)
+    .find(|family| {
+      family.supports_graphics()
+        && surface
+          .map(|s| s.supports_queue_family(family))
+          .unwrap_or(true)
     })
-    .next()
     .expect("no graphics queue family")
     .clone();
 
   let transfer = adapter
     .queue_families
     .iter()
-    .filter(|family| !family.supports_graphics())
-    .next()
+    .find(|family| !family.supports_graphics())
     .map(Clone::clone);
 
   (graphics, transfer)

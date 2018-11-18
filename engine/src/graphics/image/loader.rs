@@ -21,7 +21,7 @@ impl Loader {
   pub fn new(queue: &device::Queue) -> Self {
     Loader {
       device: queue.device().clone(),
-      command_pool: CommandPool::new(&queue),
+      command_pool: Arc::new(CommandPool::new(&queue)),
     }
   }
 

@@ -37,7 +37,7 @@ impl<T> Ring<T> {
   }
 
   /// Moves to the next item and returns a mutable reference to it.
-  pub fn next(&mut self) -> &mut T {
+  pub fn advance(&mut self) -> &mut T {
     self.index += 1;
     self.index %= self.items.len();
 

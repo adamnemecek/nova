@@ -12,8 +12,8 @@ pub struct Mesh {
 
 impl Mesh {
   pub fn new(device: &Arc<Device>, vertices: &[Vertex], indices: &[u16]) -> Mesh {
-    assert!(vertices.len() > 0, "mesh has no vertices");
-    assert!(indices.len() > 0, "mesh has no indices");
+    assert!(!vertices.is_empty(), "mesh has no vertices");
+    assert!(!indices.is_empty(), "mesh has no indices");
 
     let mut vertex_buffer = Buffer::new(device, vertices.len(), buffer::Usage::VERTEX);
 

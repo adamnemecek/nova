@@ -12,11 +12,11 @@ fn main() {
   // Create a new dispatcher. A dispatcher creates an execution plan so that
   // systems that do not mutate the same resources can run simultaneously on
   // separate threads.
-  let mut dispatcher = ecs::Dispatcher::new()
+  let mut dispatcher = ecs::DispatcherBuilder::new()
     // Add a `Greeter` as a new system named `"Greeter"` with no dependencies.
     .system("Greeter", &[], Greeter)
     // Set up the dispatcher and all of its systems. Calls `Greeter::setup()`.
-    .setup(ctx);
+    .build(ctx);
 
   // Dispatches all systems once. In this case, it calls `Greeter::run` which
   // prints `"Hello world."`, the default message.

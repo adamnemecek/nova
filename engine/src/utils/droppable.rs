@@ -32,11 +32,6 @@ impl<T> Droppable<T> {
   pub fn take(&mut self) -> Option<T> {
     self.value.take()
   }
-
-  /// Drops the value.
-  pub fn drop(&mut self) {
-    self.value = None;
-  }
 }
 
 // Implement `From` to convert from a bare value.

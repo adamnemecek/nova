@@ -4,32 +4,29 @@ use super::{Color4, RenderPass, Vertex};
 use nova::math::Matrix4;
 use std::sync::Arc;
 
-pub fn create_default(pass: &Arc<RenderPass>) -> Arc<Pipeline> {
+pub fn create_default(pass: &Arc<RenderPass>) -> Result<Arc<Pipeline>, BuildError> {
   let device = pass.device();
 
   let descriptor_layout = DescriptorLayout::new(&device, &[descriptor::Binding::Texture]);
 
-  Pipeline::new()
-    .render_pass(&pass)
-    .vertex_buffer::<Vertex>()
-    .push_constant::<Color4>()
-    .push_constant::<Matrix4<f32>>()
-    .descriptor_layout(&descriptor_layout)
-    .shaders(ShaderSet {
-      vertex: shader::EntryPoint(
-        Shader::new(
-          device,
-          &shader::Spirv::from_glsl(ShaderKind::Vertex, include_str!("shaders/default.vert")),
-        ),
-        "main",
-      ),
-      fragment: Some(shader::EntryPoint(
-        Shader::new(
-          device,
-          &shader::Spirv::from_glsl(ShaderKind::Fragment, include_str!("shaders/default.frag")),
-        ),
-        "main",
-      )),
-    })
-    .build(device)
+  let vertex_shader = Shader::new(
+    device,
+    &shader::Spirv::from_glsl(ShaderKind::Vertex, include_str!("shaders/default.vert")),
+  );
+
+  let fragment_shader = Shader::new(
+    device,
+    &shader::Spirv::from_glsl(ShaderKind::Fragment, include_str!("shaders/default.frag")),
+  );
+
+  PipelineBuilder::new()
+    .set_render_pass(&pass)
+    .set_vertex_shader(&Arc::new(vertex_shader), "main")
+    .set_fragment_shader(&Arc::new(fragment_shader), "main")
+    .add_vertex_buffer::<Vertex>()
+    .add_push_constant::<Color4>()
+    .add_push_constant::<Matrix4<f32>>()
+    .add_descriptor_layout(&Arc::new(descriptor_layout))
+    .build()
+    .map(Arc::new)
 }

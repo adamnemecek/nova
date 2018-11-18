@@ -60,7 +60,7 @@ impl Swapchain {
 
     // Select the best available present mode and the image count needed for
     // that mode.
-    let present_mode = select_present_mode(present_modes);
+    let present_mode = select_present_mode(&present_modes);
 
     let image_count = if present_mode == hal::window::PresentMode::Mailbox {
       // Mailbox should use three images if possible.
@@ -166,7 +166,7 @@ impl Drop for Swapchain {
 }
 
 /// Selects the best available present mode from the given choices.
-fn select_present_mode(modes: Vec<PresentMode>) -> PresentMode {
+fn select_present_mode(modes: &[PresentMode]) -> PresentMode {
   // If mailbox is avaliable use it (for triple buffering).
   if modes.contains(&PresentMode::Mailbox) {
     PresentMode::Mailbox

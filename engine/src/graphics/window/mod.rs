@@ -34,7 +34,7 @@ impl Window {
   ///
   /// This function returns a `Window` and an [`EventSource`] which can be used
   /// to poll window events.
-  pub fn new(backend: &Arc<backend::Instance>) -> Result<(Window, EventSource), CreationError> {
+  pub fn create(backend: &Arc<backend::Instance>) -> Result<(Window, EventSource), CreationError> {
     let events_loop = winit::EventsLoop::new();
 
     let raw = winit::WindowBuilder::new()
