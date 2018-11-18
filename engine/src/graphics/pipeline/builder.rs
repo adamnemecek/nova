@@ -116,9 +116,7 @@ impl PipelineBuilder {
 
   /// Builds the pipeline for the given device.
   pub fn build(self) -> Result<Pipeline, BuildError> {
-    let render_pass = self
-      .render_pass
-      .expect("Could not build pipeline: a render pass is required.");
+    let render_pass = self.render_pass.ok_or(BuildError::RenderPassRequired)?;
 
     let device = render_pass.device();
 
