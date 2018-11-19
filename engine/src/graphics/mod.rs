@@ -13,6 +13,7 @@ pub mod window;
 
 mod color;
 mod fence;
+mod gpu;
 mod semaphore;
 
 pub use self::backend::Backend;
@@ -21,6 +22,7 @@ pub use self::color::Color4;
 pub use self::commands::{CommandPool, Commands};
 pub use self::device::Device;
 pub use self::fence::Fence;
+pub use self::gpu::Gpu;
 pub use self::image::Image;
 pub use self::semaphore::Semaphore;
 

@@ -43,7 +43,7 @@ pub fn main() -> Result<(), String> {
     .with("width", &window.size().width())
     .with("height", &window.size().height());
 
-  let mut gpu = graphics::device::Gpu::create(&backend, window.surface())
+  let mut gpu = graphics::Gpu::create(&backend, window.surface())
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log
@@ -59,7 +59,10 @@ pub fn main() -> Result<(), String> {
 
   let mut submission = graphics::commands::Submission::new();
 
-  let command_pool = Arc::new(graphics::CommandPool::new(&gpu.queues.graphics));
+  let command_pool = Arc::new(graphics::CommandPool::new(
+    &gpu.device,
+    gpu.queues.graphics.family_id(),
+  ));
 
   log.trace("Created command pool.");
 
@@ -81,8 +84,15 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad mesh.");
 
-  let mut image_loader =
-    image::Loader::new(gpu.queues.transfer.as_ref().unwrap_or(&gpu.queues.graphics));
+  let mut image_loader = image::Loader::new(
+    &gpu.device,
+    gpu
+      .queues
+      .transfer
+      .as_ref()
+      .unwrap_or(&gpu.queues.graphics)
+      .family_id(),
+  );
 
   let image = image_loader.load(
     gpu

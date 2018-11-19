@@ -4,16 +4,14 @@
 
 pub use gfx_hal::queue::RawSubmission;
 
-use super::Device;
-use crate::graphics::commands::Submission;
+use super::Submission;
 use crate::graphics::prelude::*;
-use crate::graphics::Fence;
+use crate::graphics::{Device, Fence};
 use smallvec::SmallVec;
 use std::sync::Arc;
 
-/// A device queue for submitting [`Commands`] or presenting [`Swapchain`]
-/// images.
-pub struct Queue {
+/// A queue for submitting [`Commands`] to a [`Device`].
+pub struct CommandQueue {
   /// Raw backend queue family information.
   family: backend::QueueFamily,
   /// Raw backend queue structure.
@@ -22,7 +20,7 @@ pub struct Queue {
   device: Arc<Device>,
 }
 
-impl Queue {
+impl CommandQueue {
   /// Creates a new queue from the given raw backend structures.
   ///
   /// Unsafe because this function does not verify that the given queues belong
@@ -39,7 +37,7 @@ impl Queue {
       .next()
       .expect("Expected device queue was missing.");
 
-    Queue {
+    CommandQueue {
       family,
       raw,
       device: device.clone(),

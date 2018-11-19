@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Level;
-use crate::graphics::device::{self, Device};
 use crate::graphics::prelude::*;
+use crate::graphics::Device;
 use crate::utils::Droppable;
 use gfx_hal::pool::CommandPoolCreateFlags as CreateFlags;
 use std::sync::atomic::AtomicBool;
@@ -23,22 +23,21 @@ pub struct CommandPool {
 }
 
 impl CommandPool {
-  /// Creates a new command pool for the given device queue.
-  pub fn new(queue: &device::Queue) -> CommandPool {
-    let pool = queue
-      .device()
+  /// Creates a new command pool for the given queue family.
+  pub fn new(device: &Arc<Device>, queue_family_id: usize) -> CommandPool {
+    let pool = device
       .raw()
       .create_command_pool(
-        hal::queue::QueueFamilyId(queue.family_id()),
+        hal::queue::QueueFamilyId(queue_family_id),
         CreateFlags::TRANSIENT,
       )
       .expect("Could not create command pool.");
 
     CommandPool {
-      device: queue.device().clone(),
+      device: device.clone(),
       raw: Mutex::new(pool).into(),
       recording: AtomicBool::new(false),
-      queue_family_id: queue.family_id(),
+      queue_family_id,
     }
   }
 

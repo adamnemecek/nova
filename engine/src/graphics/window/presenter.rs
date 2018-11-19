@@ -4,9 +4,9 @@
 
 use super::swapchain::{AcquireImageError, Swapchain};
 use super::{Surface, Window};
-use crate::graphics::device::{self, Device};
+use crate::graphics::commands::CommandQueue;
 use crate::graphics::prelude::*;
-use crate::graphics::{Image, Semaphore};
+use crate::graphics::{Device, Image, Semaphore};
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::iter;
@@ -76,7 +76,7 @@ impl Presenter {
   fn finish<'a>(
     &mut self,
     image: usize,
-    queue: &mut device::Queue,
+    queue: &mut CommandQueue,
     wait_for: impl IntoIterator<Item = &'a Arc<Semaphore>>,
   ) {
     debug_assert!(image < self.swapchain.images().len());
@@ -114,7 +114,7 @@ impl<'a> Backbuffer<'a> {
 
   pub fn present<'b>(
     self,
-    queue: &mut device::Queue,
+    queue: &mut CommandQueue,
     wait_for: impl IntoIterator<Item = &'b Arc<Semaphore>>,
   ) {
     self.presenter.finish(self.image, queue, wait_for)

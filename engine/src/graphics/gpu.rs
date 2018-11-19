@@ -2,9 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Device, Queue};
+use crate::graphics::commands::CommandQueue;
 use crate::graphics::prelude::*;
 use crate::graphics::window::Surface;
+use crate::graphics::Device;
 use crate::utils::quick_error;
 use std::sync::Arc;
 
@@ -19,9 +20,9 @@ pub struct Gpu {
 pub struct GpuQueues {
   /// Graphics queue for submitting rendering commands and presenting to a
   /// window surface.
-  pub graphics: Queue,
+  pub graphics: CommandQueue,
   /// Transfer queue for copying to and from buffers and images.
-  pub transfer: Option<Queue>,
+  pub transfer: Option<CommandQueue>,
 }
 
 impl Gpu {
@@ -54,9 +55,9 @@ impl Gpu {
 
     // Create a set of queues from the raw queues.
     let queues = GpuQueues {
-      graphics: unsafe { Queue::from_raw(&device, &mut raw.queues, graphics_family) },
+      graphics: unsafe { CommandQueue::from_raw(&device, &mut raw.queues, graphics_family) },
       transfer: match transfer_family {
-        Some(f) => Some(unsafe { Queue::from_raw(&device, &mut raw.queues, f) }),
+        Some(f) => Some(unsafe { CommandQueue::from_raw(&device, &mut raw.queues, f) }),
         None => None,
       },
     };
