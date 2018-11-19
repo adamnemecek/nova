@@ -8,8 +8,7 @@ pub mod queue;
 pub use self::gpu::Gpu;
 pub use self::queue::Queue;
 
-use super::backend::{self, Backend};
-use super::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use gfx_memory::{MemoryAllocator, SmartAllocator};
 use std::sync::{Arc, Mutex, MutexGuard};

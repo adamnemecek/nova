@@ -5,9 +5,8 @@
 pub use gfx_hal::queue::RawSubmission;
 
 use super::Device;
-use crate::graphics::backend;
 use crate::graphics::commands::Submission;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::Fence;
 use smallvec::SmallVec;
 use std::sync::Arc;

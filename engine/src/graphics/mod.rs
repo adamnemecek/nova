@@ -23,3 +23,18 @@ pub use self::device::Device;
 pub use self::fence::Fence;
 pub use self::image::Image;
 pub use self::semaphore::Semaphore;
+
+pub mod prelude {
+  pub use super::backend::{self, Backend};
+  pub use super::hal;
+  pub use super::hal::command::RawCommandBuffer as AbstractRawCommandBuffer;
+  pub use super::hal::pool::RawCommandPool as AbstractRawCommandPool;
+  pub use super::hal::queue::QueueFamily as AbstractQueueFamily;
+  pub use super::hal::queue::RawCommandQueue as AbstractRawCommandQueue;
+  pub use super::hal::DescriptorPool as AbstractDescriptorPool;
+  pub use super::hal::Device as AbstractDevice;
+  pub use super::hal::Instance as AbstractInstance;
+  pub use super::hal::PhysicalDevice as AbstractPhysicalDevice;
+  pub use super::hal::Surface as AbstractSurface;
+  pub use super::hal::Swapchain as AbstractSwapchain;
+}

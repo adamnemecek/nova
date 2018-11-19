@@ -3,8 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Device, Queue};
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::window::Surface;
 use crate::utils::quick_error;
 use std::sync::Arc;

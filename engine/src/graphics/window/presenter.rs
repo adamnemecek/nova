@@ -4,9 +4,8 @@
 
 use super::swapchain::{AcquireImageError, Swapchain};
 use super::{Surface, Window};
-use crate::graphics::backend;
 use crate::graphics::device::{self, Device};
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::{Image, Semaphore};
 use crate::math::Size;
 use crate::utils::Droppable;

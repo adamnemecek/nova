@@ -9,8 +9,7 @@ pub use gfx_hal::pso::PipelineStage;
 
 use super::descriptor::DescriptorLayout;
 use super::shader::ShaderSet;
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::Device;
 use crate::utils::Droppable;
 use std::ops::Range;

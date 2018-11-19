@@ -5,8 +5,7 @@
 pub use gfx_hal::buffer::Usage;
 
 use super::device::{self, Device};
-use crate::graphics::backend::{self, Backend};
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use gfx_memory::{Block, Factory};
 use std::mem;

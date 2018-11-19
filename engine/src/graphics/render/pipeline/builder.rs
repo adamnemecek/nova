@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Pipeline;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::render::shader::{self, Shader, ShaderSet};
 use crate::graphics::render::{DescriptorLayout, RenderPass, VertexData};
 use crate::utils::quick_error;

@@ -3,9 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Level;
-use crate::graphics::backend;
 use crate::graphics::device::{self, Device};
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use gfx_hal::pool::CommandPoolCreateFlags as CreateFlags;
 use std::sync::atomic::AtomicBool;

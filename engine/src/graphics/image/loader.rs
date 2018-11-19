@@ -6,7 +6,7 @@ use super::{Backing, Format, Image, Source};
 use crate::graphics::buffer::{self, Buffer};
 use crate::graphics::commands::{self, CommandPool, Commands};
 use crate::graphics::device::{self, Device};
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use gfx_memory::Factory;
 use std::borrow::Borrow;
 use std::iter;

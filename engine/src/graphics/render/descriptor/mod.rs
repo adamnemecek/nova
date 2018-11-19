@@ -8,9 +8,8 @@ mod set;
 pub use self::layout::*;
 pub use self::set::*;
 
-use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
-use crate::graphics::Backend;
+use crate::graphics::prelude::*;
 use std::sync::Arc;
 
 /// A reference to data that can be bound to a command buffer and used in

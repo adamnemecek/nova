@@ -3,8 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Descriptor, DescriptorLayout};
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use crossbeam::queue::MsQueue;
 use std::iter;

@@ -2,9 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
 use crate::graphics::image;
+use crate::graphics::prelude::*;
 use crate::graphics::Device;
 use std::sync::Arc;
 

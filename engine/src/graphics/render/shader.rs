@@ -4,8 +4,7 @@
 
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
+use crate::graphics::prelude::*;
 use crate::graphics::Device;
 use crate::utils::Droppable;
 use derive_more::*;

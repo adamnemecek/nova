@@ -5,9 +5,8 @@
 pub use gfx_hal::window::PresentMode;
 
 use super::Surface;
-use crate::graphics::backend;
-use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};
+use crate::graphics::prelude::*;
 use crate::graphics::{Device, Semaphore};
 use crate::math::Size;
 use crate::utils::{quick_error, Droppable};
