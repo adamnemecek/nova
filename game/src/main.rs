@@ -17,7 +17,7 @@ use nova::graphics::render;
 use nova::graphics::render::descriptor::{Descriptor, DescriptorPool};
 use nova::graphics::sync;
 use nova::graphics::window::{self, Window};
-use nova::graphics::{Color4, Gpu};
+use nova::graphics::Color4;
 use nova::math::Matrix4;
 use std::sync::Arc;
 use std::time;
@@ -46,7 +46,7 @@ pub fn main() -> Result<(), String> {
     .with("width", &window.size().width())
     .with("height", &window.size().height());
 
-  let mut gpu = Gpu::create(&backend, window.surface())
+  let mut gpu = nova::graphics::Context::create(&backend, window.surface())
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log

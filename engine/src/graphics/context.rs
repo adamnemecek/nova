@@ -11,13 +11,13 @@ use std::sync::Arc;
 
 /// Initialization helper structure for creating a device and a set of queues
 /// for submitting commands.
-pub struct Gpu {
+pub struct Context {
   pub device: Arc<Device>,
-  pub queues: GpuQueues,
+  pub queues: Queues,
 }
 
 /// Set of queues created by [`Gpu::new`].
-pub struct GpuQueues {
+pub struct Queues {
   /// Graphics queue for submitting rendering commands and presenting to a
   /// window surface.
   pub graphics: CommandQueue,
@@ -25,13 +25,13 @@ pub struct GpuQueues {
   pub transfer: Option<CommandQueue>,
 }
 
-impl Gpu {
+impl Context {
   /// Initializes a new graphics device with a set of queues for submitting
   /// commands and presenting to a window surface.
   pub fn create(
     backend: &Arc<backend::Instance>,
     surface: Option<&Surface>,
-  ) -> Result<Gpu, CreationError> {
+  ) -> Result<Context, CreationError> {
     let surface = surface.map(AsRef::as_ref);
 
     // Select the best available adapter.
@@ -54,7 +54,7 @@ impl Gpu {
     let device = Arc::new(unsafe { Device::from_raw(raw.device, adapter, backend) });
 
     // Create a set of queues from the raw queues.
-    let queues = GpuQueues {
+    let queues = Queues {
       graphics: unsafe { CommandQueue::from_raw(&device, &mut raw.queues, graphics_family) },
       transfer: match transfer_family {
         Some(f) => Some(unsafe { CommandQueue::from_raw(&device, &mut raw.queues, f) }),
@@ -62,7 +62,7 @@ impl Gpu {
       },
     };
 
-    Ok(Gpu {
+    Ok(Context {
       device: device,
       queues,
     })

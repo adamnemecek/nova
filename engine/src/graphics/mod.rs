@@ -12,12 +12,12 @@ pub mod sync;
 pub mod window;
 
 mod color;
+mod context;
 mod device;
-mod gpu;
 
-pub use self::color::*;
-pub use self::device::*;
-pub use self::gpu::*;
+pub use self::color::Color4;
+pub use self::context::Context;
+pub use self::device::Device;
 
 pub mod prelude {
   pub use super::backend::{self, Backend};
