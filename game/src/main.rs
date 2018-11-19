@@ -122,8 +122,8 @@ pub fn main() -> Result<(), String> {
 
   ecs::put_resource(ctx, window);
 
-  let mut fence = graphics::Fence::new(&gpu.device);
-  let semaphore = Arc::new(graphics::Semaphore::new(&gpu.device));
+  let mut fence = graphics::sync::Fence::new(&gpu.device);
+  let semaphore = Arc::new(graphics::sync::Semaphore::new(&gpu.device));
 
   loop {
     let start_time = time::Instant::now();

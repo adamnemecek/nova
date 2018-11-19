@@ -5,26 +5,23 @@
 pub mod backend;
 pub mod buffer;
 pub mod commands;
-pub mod device;
 pub mod hal;
 pub mod image;
 pub mod render;
+pub mod sync;
 pub mod window;
 
 mod color;
-mod fence;
+mod device;
 mod gpu;
-mod semaphore;
 
 pub use self::backend::Backend;
 pub use self::buffer::Buffer;
-pub use self::color::Color4;
+pub use self::color::*;
 pub use self::commands::{CommandPool, Commands};
-pub use self::device::Device;
-pub use self::fence::Fence;
-pub use self::gpu::Gpu;
+pub use self::device::*;
+pub use self::gpu::*;
 pub use self::image::Image;
-pub use self::semaphore::Semaphore;
 
 pub mod prelude {
   pub use super::backend::{self, Backend};

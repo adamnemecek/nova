@@ -4,7 +4,7 @@
 
 use super::Commands;
 use crate::graphics::render::PipelineStage;
-use crate::graphics::Semaphore;
+use crate::graphics::sync::Semaphore;
 use std::sync::Arc;
 
 /// A prepared set of commands with optional semaphores for synchronization.
