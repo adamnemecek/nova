@@ -60,9 +60,12 @@ impl<T> Deref for Droppable<T> {
   }
 }
 
-impl<T> AsRef<T> for Droppable<T> {
+impl<T, S> AsRef<T> for Droppable<S>
+where
+  S: AsRef<T>,
+{
   fn as_ref(&self) -> &T {
-    self.deref()
+    self.deref().as_ref()
   }
 }
 
@@ -76,8 +79,11 @@ impl<T> DerefMut for Droppable<T> {
   }
 }
 
-impl<T> AsMut<T> for Droppable<T> {
+impl<T, S> AsMut<T> for Droppable<S>
+where
+  S: AsMut<T>,
+{
   fn as_mut(&mut self) -> &mut T {
-    self.deref_mut()
+    self.deref_mut().as_mut()
   }
 }

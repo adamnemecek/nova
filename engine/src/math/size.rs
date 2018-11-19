@@ -57,6 +57,15 @@ impl From<graphics::hal::window::Extent2D> for Size<u32> {
   }
 }
 
+impl From<Size<u32>> for graphics::hal::window::Extent2D {
+  fn from(size: Size<u32>) -> Self {
+    graphics::hal::window::Extent2D {
+      width: size.width(),
+      height: size.height(),
+    }
+  }
+}
+
 // Implement `Default` to provide a zero size.
 impl<T: Scalar + Num> Default for Size<T> {
   fn default() -> Self {

@@ -25,11 +25,8 @@ pub struct Framebuffer {
 impl Framebuffer {
   /// Creates a new framebuffer from a set of images that is compatible with the
   /// given render pass.
-  pub fn new(render_pass: &Arc<RenderPass>, images: impl IntoIterator<Item = Arc<Image>>) -> Self {
+  pub fn new(render_pass: &Arc<RenderPass>, images: Vec<Arc<Image>>) -> Self {
     let device = render_pass.device();
-
-    // Collect the images to store them.
-    let images = images.into_iter().collect::<Vec<_>>();
 
     // Get the extent (size) of the images, panicing if any differ.
     let extent = {

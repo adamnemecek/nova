@@ -6,9 +6,10 @@ pub use gfx_hal::queue::RawSubmission;
 
 use super::Device;
 use crate::graphics::backend;
+use crate::graphics::commands::Submission;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::window::Swapchain;
-use crate::graphics::Semaphore;
+use crate::graphics::Fence;
+use smallvec::SmallVec;
 use std::sync::Arc;
 
 /// A device queue for submitting [`Commands`] or presenting [`Swapchain`]
@@ -56,24 +57,51 @@ impl Queue {
     self.family.id().0
   }
 
-  /// Presents swapchain images. Presentation will wait for all of the given
-  /// semaphores.
-  ///
-  /// Swapchain images are specified with a tuple containing a reference to the
-  /// swapchain and the index of the image to present.
-  pub fn present<'a>(
-    &mut self,
-    images: impl IntoIterator<Item = (&'a Swapchain, u32)>,
-    wait_for: impl IntoIterator<Item = &'a Semaphore>,
-  ) -> Result<(), ()> {
-    self.raw.present(
-      images.into_iter().map(|(sc, i)| (sc.as_ref(), i)),
-      wait_for.into_iter().map(AsRef::as_ref),
-    )
-  }
-
   /// Gets a mutable reference to the raw backend queue.
   pub fn raw_mut(&mut self) -> &mut backend::CommandQueue {
     &mut self.raw
+  }
+
+  /// Submits a prepared set of commands with synchronization using any number
+  /// of semaphores and an optional fence.
+  ///
+  /// Pipeline stages will not execute until all of the associated semaphores in
+  /// [`Submission::wait_semaphores`] have been signaled.
+  ///
+  /// After all of the submitted commands have executed, all of the semaphores
+  /// in [`Submission::signal_semaphores`] will be signaled. If a fence is
+  /// given, that will also be signaled.
+  pub fn submit(&mut self, submission: &Submission, fence: Option<&Fence>) {
+    // Create a temporary storage of references to the wait semaphores.
+    let mut wait_semaphores = SmallVec::<[_; 1]>::new();
+
+    wait_semaphores.extend(
+      submission
+        .wait_semaphores
+        .iter()
+        .map(|(semph, stage)| (semph.as_ref().as_ref(), *stage)),
+    );
+
+    // Create a temporary storage of references to the signal semaphores.
+    let mut signal_semaphores = SmallVec::<[_; 16]>::new();
+
+    signal_semaphores.extend(
+      submission
+        .signal_semaphores
+        .iter()
+        .map(AsRef::as_ref)
+        .map(AsRef::as_ref),
+    );
+
+    unsafe {
+      self.raw.submit_raw(
+        hal::queue::RawSubmission {
+          cmd_buffers: submission.commands.iter().map(AsRef::as_ref),
+          wait_semaphores: &wait_semaphores,
+          signal_semaphores: &signal_semaphores,
+        },
+        fence.map(AsRef::as_ref),
+      );
+    }
   }
 }

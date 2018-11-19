@@ -15,6 +15,7 @@ mod color;
 mod fence;
 mod framebuffer;
 mod render_pass;
+mod renderer;
 mod semaphore;
 
 pub use self::backend::Backend;
@@ -27,4 +28,5 @@ pub use self::framebuffer::Framebuffer;
 pub use self::image::Image;
 pub use self::pipeline::Pipeline;
 pub use self::render_pass::RenderPass;
+pub use self::renderer::Renderer;
 pub use self::semaphore::Semaphore;

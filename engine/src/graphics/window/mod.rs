@@ -2,12 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod presenter;
 pub mod swapchain;
 
 mod events;
 mod surface;
 
 pub use self::events::{Event, EventSource};
+pub use self::presenter::Presenter;
 pub use self::surface::Surface;
 pub use self::swapchain::Swapchain;
 pub use winit::CreationError;
@@ -19,7 +21,7 @@ use std::sync::Arc;
 /// Represents a platform-specfic window.
 pub struct Window {
   /// Raw winit window structure.
-  raw: winit::Window,
+  raw: Arc<winit::Window>,
   /// Surface created from the window. Stored in an `Option` so that a renderer
   /// can eventually take ownership.
   surface: Option<Surface>,
@@ -37,14 +39,14 @@ impl Window {
   pub fn create(backend: &Arc<backend::Instance>) -> Result<(Window, EventSource), CreationError> {
     let events_loop = winit::EventsLoop::new();
 
-    let raw = winit::WindowBuilder::new()
+    let window = winit::WindowBuilder::new()
       .with_title("nova")
       .build(&events_loop)?;
 
-    let size = pixel_size_of(&raw);
+    let size = pixel_size_of(&window);
 
     let mut window = Window {
-      raw,
+      raw: Arc::new(window),
       surface: None,
       size,
       closing: false,

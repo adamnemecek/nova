@@ -10,7 +10,6 @@ use self::graphics::pipeline;
 use self::graphics::window::Window;
 use self::graphics::{Mesh, Vertex};
 use self::math::Matrix4;
-use std::iter;
 use std::sync::Arc;
 use std::time;
 
@@ -47,15 +46,20 @@ pub fn main() -> Result<(), String> {
     .trace("Created graphics device.")
     .with("name", &gpu.device.name());
 
-  let mut renderer = graphics::Renderer::new(&gpu.queues.graphics, &mut window, &log);
+  let mut presenter = graphics::window::Presenter::new(&gpu.device, &mut window);
+
+  let render_pass = Arc::new(graphics::RenderPass::new(&gpu.device));
+  let mut renderer = graphics::Renderer::new(&render_pass);
 
   log.trace("Created renderer.");
+
+  let mut submission = graphics::commands::Submission::new();
 
   let command_pool = Arc::new(graphics::CommandPool::new(&gpu.queues.graphics));
 
   log.trace("Created command pool.");
 
-  let pipeline = graphics::pipeline::create_default(renderer.render_pass())
+  let pipeline = graphics::pipeline::create_default(renderer.pass())
     .map_err(|err| format!("Could not create graphics pipeline: {}", err))?;
 
   log.trace("Created graphics pipeline.");
@@ -104,6 +108,9 @@ pub fn main() -> Result<(), String> {
 
   ecs::put_resource(ctx, window);
 
+  let mut fence = graphics::Fence::new(&gpu.device);
+  let semaphore = Arc::new(graphics::Semaphore::new(&gpu.device));
+
   loop {
     let start_time = time::Instant::now();
     let window: &mut Window = ecs::get_resource_mut(ctx);
@@ -116,17 +123,19 @@ pub fn main() -> Result<(), String> {
       break;
     }
 
-    let framebuffer = renderer.begin_frame(window);
-
     dispatcher.dispatch(ctx);
 
     ctx.update();
+
+    let backbuffer = presenter.begin();
+
+    renderer.attach(&backbuffer);
 
     let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
 
     cmd.begin();
 
-    cmd.begin_render_pass(renderer.render_pass(), &framebuffer);
+    renderer.begin(&mut cmd);
 
     cmd.bind_pipeline(&pipeline);
 
@@ -138,11 +147,26 @@ pub fn main() -> Result<(), String> {
     cmd.bind_index_buffer(quad.index_buffer());
     cmd.draw_indexed(quad.index_count());
 
-    cmd.finish_render_pass();
+    renderer.finish(&mut cmd);
 
     cmd.finish();
 
-    renderer.submit_frame(&mut gpu.queues.graphics, iter::once(cmd));
+    fence.wait_and_reset();
+
+    submission.clear();
+
+    submission.add_commands(cmd);
+
+    submission.wait_on(
+      backbuffer.semaphore(),
+      graphics::pipeline::Stage::COLOR_ATTACHMENT_OUTPUT,
+    );
+
+    submission.signal(&semaphore);
+
+    gpu.queues.graphics.submit(&submission, Some(&fence));
+
+    backbuffer.present(&mut gpu.queues.graphics, &submission.signal_semaphores);
 
     let duration = time::Instant::now() - start_time;
 
@@ -152,10 +176,10 @@ pub fn main() -> Result<(), String> {
         &(duration.as_secs() as f64 + f64::from(duration.subsec_nanos()) * 1e-9),
       );
     } else if duration < time::Duration::from_millis(1) {
-      // log.warn("Short frame.").with(
-      //   "duration",
-      //   &(duration.as_secs() as f64 + duration.subsec_nanos() as f64 * 1e-9),
-      // );
+      log.warn("Short frame.").with(
+        "duration",
+        &(duration.as_secs() as f64 + f64::from(duration.subsec_nanos()) * 1e-9),
+      );
 
       std::thread::yield_now();
     }

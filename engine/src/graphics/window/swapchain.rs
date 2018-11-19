@@ -25,8 +25,6 @@ pub struct Swapchain {
   images: SmallVec<[Arc<Image>; 3]>, // No swapchain needs more than 3 images.
   /// Size of the swapchain in pixels.
   size: Size<u32>,
-  /// Present mode of the swapchain.
-  present_mode: PresentMode,
 }
 
 impl Swapchain {
@@ -39,41 +37,24 @@ impl Swapchain {
       "Device and surface were created with different backend instances."
     );
 
-    // Get a reference to the raw backend surface.
     let surface: &mut backend::Surface = surface.as_mut();
+    let (caps, _, _) = surface.compatibility(&device.adapter().physical_device);
 
-    // Determine surface capabilities and settings as well as available present
-    // modes.
-    let (caps, _, present_modes) = surface.compatibility(&device.adapter().physical_device);
+    let format = image::Format::Bgra8Unorm;
 
-    // Determine the best available extent of the swapchain.
-    let extent = hal::window::Extent2D {
-      width: cmp::max(
-        caps.extents.start.width,
-        cmp::min(size.width(), caps.extents.end.width),
-      ),
-      height: cmp::max(
-        caps.extents.start.height,
-        cmp::min(size.height(), caps.extents.end.height),
-      ),
+    let extent = match caps.current_extent {
+      Some(e) => e,        // Use the actual size of the surface.
+      None => size.into(), // Any size is allowed. Use the given size.
     };
 
-    // Select the best available present mode and the image count needed for
-    // that mode.
-    let present_mode = select_present_mode(&present_modes);
-
-    let image_count = if present_mode == hal::window::PresentMode::Mailbox {
-      // Mailbox should use three images if possible.
-      cmp::min(caps.image_count.start, cmp::min(3, caps.image_count.end))
-    } else {
-      // Otherwise use the minimum number of images, which is always 2.
-      caps.image_count.start
+    let image_count = match caps.image_count.end {
+      0 => 2, // Any number of images is allowed. Only need two.
+      x => cmp::min(x, 2),
     };
 
-    // Create a swapchain with the above config values.
     let config = hal::SwapchainConfig {
-      present_mode,
-      format: image::Format::Bgra8Unorm,
+      present_mode: hal::window::PresentMode::Fifo,
+      format,
       extent,
       image_count,
       image_layers: 1,
@@ -90,7 +71,6 @@ impl Swapchain {
       raw: raw.into(),
       images: SmallVec::new(),
       size: extent.into(),
-      present_mode,
     };
 
     // Extract the raw images from the enum result and create `Image` structs
@@ -124,11 +104,6 @@ impl Swapchain {
     self.size
   }
 
-  /// Gets the present mode of the swapchain.
-  pub fn present_mode(&self) -> PresentMode {
-    self.present_mode
-  }
-
   /// Acquires an available image from the device for rendering. Returns the
   /// index of the image in the [`images()`] slice.
   ///
@@ -157,22 +132,15 @@ impl AsRef<backend::Swapchain> for Swapchain {
 // Implement `Drop` to destroy the swapchain.
 impl Drop for Swapchain {
   fn drop(&mut self) {
+    // Wait for all queues to be empty so the swapchain is definitely not in
+    // use.
+    self.device.wait_idle();
+
     self.images.clear();
 
     if let Some(swapchain) = self.raw.take() {
       self.device.raw().destroy_swapchain(swapchain);
     }
-  }
-}
-
-/// Selects the best available present mode from the given choices.
-fn select_present_mode(modes: &[PresentMode]) -> PresentMode {
-  // If mailbox is avaliable use it (for triple buffering).
-  if modes.contains(&PresentMode::Mailbox) {
-    PresentMode::Mailbox
-  } else {
-    // Fifo is always available.
-    PresentMode::Fifo
   }
 }
 
