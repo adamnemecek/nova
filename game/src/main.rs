@@ -1,3 +1,7 @@
+// TODO: Remove when RLS supports it.
+extern crate bflog;
+extern crate nova;
+
 use nova::*;
 
 //mod clock;
@@ -6,7 +10,7 @@ mod graphics;
 //mod panels;
 
 use self::graphics::image;
-use self::graphics::pipeline;
+use self::graphics::render::descriptor::{Descriptor, DescriptorPool};
 use self::graphics::window::Window;
 use self::graphics::{Mesh, Vertex};
 use self::math::Matrix4;
@@ -48,8 +52,8 @@ pub fn main() -> Result<(), String> {
 
   let mut presenter = graphics::window::Presenter::new(&gpu.device, &mut window);
 
-  let render_pass = Arc::new(graphics::RenderPass::new(&gpu.device));
-  let mut renderer = graphics::Renderer::new(&render_pass);
+  let render_pass = Arc::new(graphics::render::RenderPass::new(&gpu.device));
+  let mut renderer = graphics::render::Renderer::new(&render_pass);
 
   log.trace("Created renderer.");
 
@@ -94,9 +98,9 @@ pub fn main() -> Result<(), String> {
 
   log.trace("Created quad texture.");
 
-  let mut descriptor_pool = pipeline::DescriptorPool::new(&pipeline.descriptor_layouts()[0], 1);
+  let mut descriptor_pool = DescriptorPool::new(&pipeline.descriptor_layouts()[0], 1);
 
-  let descriptor_set = descriptor_pool.allocate_set(vec![pipeline::Descriptor::Texture(
+  let descriptor_set = descriptor_pool.allocate_set(vec![Descriptor::Texture(
     Arc::new(image),
     Arc::new(sampler),
   )]);
@@ -159,7 +163,7 @@ pub fn main() -> Result<(), String> {
 
     submission.wait_on(
       backbuffer.semaphore(),
-      graphics::pipeline::Stage::COLOR_ATTACHMENT_OUTPUT,
+      graphics::render::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
     );
 
     submission.signal(&semaphore);

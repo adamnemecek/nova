@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Commands;
-use crate::graphics::pipeline;
+use crate::graphics::render::PipelineStage;
 use crate::graphics::Semaphore;
 use std::sync::Arc;
 
@@ -13,7 +13,7 @@ pub struct Submission {
   /// Commands to execute.
   pub commands: Vec<Commands>,
   /// Semaphores to wait on before executing the specified pipeline stage.
-  pub wait_semaphores: Vec<(Arc<Semaphore>, pipeline::Stage)>,
+  pub wait_semaphores: Vec<(Arc<Semaphore>, PipelineStage)>,
   /// Semaphores to signal after all commands have executed.
   pub signal_semaphores: Vec<Arc<Semaphore>>,
 }
@@ -33,7 +33,7 @@ impl Submission {
   ///
   /// The given pipeline stage will not execute until this semaphore has been
   /// signaled.
-  pub fn wait_on(&mut self, semaphore: &Arc<Semaphore>, pipeline_stage: pipeline::Stage) {
+  pub fn wait_on(&mut self, semaphore: &Arc<Semaphore>, pipeline_stage: PipelineStage) {
     self
       .wait_semaphores
       .push((semaphore.clone(), pipeline_stage));

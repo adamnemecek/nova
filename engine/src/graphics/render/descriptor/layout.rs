@@ -23,9 +23,9 @@ pub struct DescriptorLayout {
 
 impl DescriptorLayout {
   /// Creates a new descriptor layout on the device with the given bindings.
-  pub fn new(device: &Arc<Device>, bindings: &[Binding]) -> Self {
+  pub fn new(device: &Arc<Device>, bindings: &[DescriptorBinding]) -> Self {
     let bindings = bindings
-      .into_iter()
+      .iter()
       .enumerate()
       .map(|(i, binding)| binding.into_hal(i))
       .collect();
@@ -71,12 +71,12 @@ impl Drop for DescriptorLayout {
 
 /// One of the possible bindings in a descriptor layout.
 #[derive(Clone, Copy)]
-pub enum Binding {
+pub enum DescriptorBinding {
   /// A combination of an [`Image`] and a [`Sampler`].
   Texture,
 }
 
-impl Binding {
+impl DescriptorBinding {
   /// Converts this binding into the equivalent gfx-hal structure using the
   /// given binding index.
   fn into_hal(self, index: usize) -> hal::pso::DescriptorSetLayoutBinding {
@@ -85,10 +85,10 @@ impl Binding {
       count: 1,
       immutable_samplers: false,
       ty: match self {
-        Binding::Texture => hal::pso::DescriptorType::CombinedImageSampler,
+        DescriptorBinding::Texture => hal::pso::DescriptorType::CombinedImageSampler,
       },
       stage_flags: match self {
-        Binding::Texture => {
+        DescriptorBinding::Texture => {
           hal::pso::ShaderStageFlags::FRAGMENT | hal::pso::ShaderStageFlags::VERTEX
         }
       },

@@ -11,11 +11,11 @@
 
 // Use DirectX 12 on Windows, Metal on MacOS, and Vulkan on Linux.
 #[cfg(windows)]
-pub use gfx_backend_dx12::*;
+pub use gfx_backend_dx12::{Backend, Instance};
 #[cfg(target_os = "macos")]
-pub use gfx_backend_metal::*;
+pub use gfx_backend_metal::{Backend, Instance};
 #[cfg(all(unix, not(target_os = "macos")))]
-pub use gfx_backend_vulkan::*;
+pub use gfx_backend_vulkan::{Backend, Instance};
 
 #[cfg(windows)]
 pub const NAME: &str = "DirectX 12";
@@ -25,6 +25,7 @@ pub const NAME: &str = "Metal";
 pub const NAME: &str = "Vulkan";
 
 pub type Device = <Backend as gfx_hal::Backend>::Device;
+pub type QueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
 
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
 pub type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;

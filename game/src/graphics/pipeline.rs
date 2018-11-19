@@ -1,13 +1,15 @@
-pub use nova::graphics::pipeline::*;
-
-use super::{Color4, RenderPass, Vertex};
+use super::render::descriptor::{DescriptorBinding, DescriptorLayout};
+use super::render::pipeline::{self, Pipeline, PipelineBuilder};
+use super::render::shader::{self, Shader, ShaderKind};
+use super::render::RenderPass;
+use super::{Color4, Vertex};
 use nova::math::Matrix4;
 use std::sync::Arc;
 
-pub fn create_default(pass: &Arc<RenderPass>) -> Result<Arc<Pipeline>, BuildError> {
+pub fn create_default(pass: &Arc<RenderPass>) -> Result<Arc<Pipeline>, pipeline::BuildError> {
   let device = pass.device();
 
-  let descriptor_layout = DescriptorLayout::new(&device, &[descriptor::Binding::Texture]);
+  let descriptor_layout = DescriptorLayout::new(&device, &[DescriptorBinding::Texture]);
 
   let vertex_shader = Shader::new(
     device,

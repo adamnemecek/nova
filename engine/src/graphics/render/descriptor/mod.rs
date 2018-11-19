@@ -5,8 +5,8 @@
 mod layout;
 mod set;
 
-pub use self::layout::{Binding, DescriptorLayout};
-pub use self::set::{DescriptorPool, DescriptorSet};
+pub use self::layout::*;
+pub use self::set::*;
 
 use crate::graphics::hal::prelude::*;
 use crate::graphics::image::{self, Image};

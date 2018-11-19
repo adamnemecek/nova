@@ -5,7 +5,6 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
-bflog = "0.3"
 crossbeam = "0.5"
 derive_more = "0.13"
 gfx-hal = { version = "0.1", git = "https://github.com/gfx-rs/gfx", rev = "41e96117203fcd55ba4b2168d6d3737a2f3ff541" }

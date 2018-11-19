@@ -9,10 +9,10 @@ pub use self::pool::CommandPool;
 pub use self::submission::Submission;
 pub use gfx_hal::command::RawLevel as Level;
 
-use super::backend;
-use super::hal::prelude::*;
-use super::pipeline::{DescriptorSet, Pipeline};
-use super::{Buffer, Framebuffer, RenderPass};
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
+use crate::graphics::render::{DescriptorSet, Framebuffer, Pipeline, RenderPass};
+use crate::graphics::Buffer;
 use crate::utils::Droppable;
 use std::iter;
 use std::sync::atomic;

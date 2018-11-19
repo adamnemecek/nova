@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::shader::{self, Shader, ShaderSet};
-use super::{DescriptorLayout, Pipeline, VertexData};
+use super::Pipeline;
 use crate::graphics::hal::prelude::*;
-use crate::graphics::RenderPass;
+use crate::graphics::render::shader::{self, Shader, ShaderSet};
+use crate::graphics::render::{DescriptorLayout, RenderPass, VertexData};
 use crate::utils::quick_error;
 use std::ops::Range;
 use std::sync::Arc;

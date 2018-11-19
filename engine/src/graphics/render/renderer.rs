@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::window::presenter::Backbuffer;
-use super::{Commands, Framebuffer, RenderPass};
+use super::{Framebuffer, RenderPass};
+use crate::graphics::window::presenter::Backbuffer;
+use crate::graphics::Commands;
 use std::sync::Arc;
 
 /// Executes a render pass with framebuffers lazily created from attached

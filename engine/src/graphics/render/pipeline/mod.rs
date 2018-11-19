@@ -2,21 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod descriptor;
-pub mod shader;
-pub mod vertex;
-
 mod builder;
 
 pub use self::builder::{BuildError, PipelineBuilder};
-pub use self::descriptor::{Descriptor, DescriptorLayout, DescriptorPool, DescriptorSet};
-pub use self::shader::{Shader, ShaderKind, ShaderSet};
-pub use self::vertex::{VertexAttribute, VertexData};
-pub use gfx_hal::pso::PipelineStage as Stage;
+pub use gfx_hal::pso::PipelineStage;
 
-use super::backend;
-use super::hal::prelude::*;
-use super::Device;
+use super::descriptor::DescriptorLayout;
+use super::shader::ShaderSet;
+use crate::graphics::backend;
+use crate::graphics::hal::prelude::*;
+use crate::graphics::Device;
 use crate::utils::Droppable;
 use std::ops::Range;
 use std::sync::Arc;

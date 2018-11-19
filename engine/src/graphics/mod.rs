@@ -8,14 +8,11 @@ pub mod commands;
 pub mod device;
 pub mod hal;
 pub mod image;
-pub mod pipeline;
+pub mod render;
 pub mod window;
 
 mod color;
 mod fence;
-mod framebuffer;
-mod render_pass;
-mod renderer;
 mod semaphore;
 
 pub use self::backend::Backend;
@@ -24,9 +21,5 @@ pub use self::color::Color4;
 pub use self::commands::{CommandPool, Commands};
 pub use self::device::Device;
 pub use self::fence::Fence;
-pub use self::framebuffer::Framebuffer;
 pub use self::image::Image;
-pub use self::pipeline::Pipeline;
-pub use self::render_pass::RenderPass;
-pub use self::renderer::Renderer;
 pub use self::semaphore::Semaphore;
