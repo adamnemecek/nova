@@ -6,12 +6,12 @@ pub use specs::Component;
 pub use specs::{Join, ParJoin};
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
-use super::Context;
+use crate::Engine;
 
-pub fn read_components<T: Component>(ctx: &Context) -> ReadComponents<T> {
-  ctx.world.read_storage()
+pub fn read_components<T: Component>(engine: &Engine) -> ReadComponents<T> {
+  engine.world.read_storage()
 }
 
-pub fn write_components<T: Component>(ctx: &Context) -> WriteComponents<T> {
-  ctx.world.write_storage()
+pub fn write_components<T: Component>(engine: &Engine) -> WriteComponents<T> {
+  engine.world.write_storage()
 }

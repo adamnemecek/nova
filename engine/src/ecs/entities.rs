@@ -7,10 +7,10 @@ pub use specs::Builder as BuildEntity;
 pub use specs::Entities as ReadEntities;
 pub use specs::{Entity, EntityBuilder};
 
-use super::Context;
+use crate::Engine;
 
-/// Creates a new entity in the given ECS context using the returned
+/// Creates a new entity in the given engine instance using the returned
 /// `EntityBuilder`.
-pub fn new_entity(ctx: &mut Context) -> EntityBuilder {
-  ctx.world.create_entity()
+pub fn new_entity(engine: &mut Engine) -> EntityBuilder {
+  engine.world.create_entity()
 }

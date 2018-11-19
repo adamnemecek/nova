@@ -5,9 +5,8 @@
 use nova::ecs;
 
 fn main() {
-  // Create a new ECS context. This represents the state of all ECS resources,
-  // including entities and components.
-  let ctx = &mut ecs::Context::new();
+  // Create a new engine instance. This contains a base set of ECS resources.
+  let mut engine = nova::Engine::new();
 
   // Create a new dispatcher. A dispatcher creates an execution plan so that
   // systems that do not mutate the same resources can run simultaneously on
@@ -16,19 +15,19 @@ fn main() {
     // Add a `Greeter` as a new system named `"Greeter"` with no dependencies.
     .system("Greeter", &[], Greeter)
     // Set up the dispatcher and all of its systems. Calls `Greeter::setup()`.
-    .build(ctx);
+    .build(&mut engine);
 
   // Dispatches all systems once. In this case, it calls `Greeter::run` which
   // prints `"Hello world."`, the default message.
-  dispatcher.dispatch(ctx);
+  dispatcher.dispatch(&mut engine);
 
   // Gets a mutable reference to the `Greeting` resource to change its message.
-  let greeting: &mut Greeting = ecs::get_resource_mut(ctx);
+  let greeting: &mut Greeting = ecs::get_resource_mut(&mut engine);
 
   greeting.message = "Hallo Welt!".into();
 
   // This time, `Greeter::run` will print `"Hallo Welt!"`.
-  dispatcher.dispatch(ctx);
+  dispatcher.dispatch(&mut engine);
 }
 
 // A resource read by `Greeter` to determine what to print on the screen.
@@ -42,10 +41,10 @@ struct Greeter;
 impl<'a> ecs::System<'a> for Greeter {
   type Data = ecs::ReadResource<'a, Greeting>;
 
-  fn setup(&mut self, ctx: &mut ecs::Context) {
+  fn setup(&mut self, engine: &mut nova::Engine) {
     // Add a `Greeting` resource with a default message.
     ecs::put_resource(
-      ctx,
+      engine,
       Greeting {
         message: "Hello world.".into(),
       },

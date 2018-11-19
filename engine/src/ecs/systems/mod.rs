@@ -7,7 +7,7 @@ mod dispatcher;
 pub use self::dispatcher::{Dispatcher, DispatcherBuilder};
 pub use specs::SystemData;
 
-use super::Context;
+use crate::Engine;
 
 /// An ECS system that can be run on a set of resources.
 ///
@@ -16,12 +16,12 @@ use super::Context;
 pub trait System<'a> {
   type Data: SystemData<'a>;
 
-  /// Sets up the ECS context for running this system.
+  /// Sets up the engine instance for running this system.
   ///
-  /// Components required by the system are automatically registered in the ECS
-  /// context before this function is called, but all other resources must be
-  /// manually added unless they are expected to already exist.
-  fn setup(&mut self, _ctx: &mut Context) {}
+  /// Components required by the system are automatically registered in the
+  /// engine instance before this function is called, but all other resources
+  /// must be manually added unless they are expected to already exist.
+  fn setup(&mut self, _engine: &mut Engine) {}
 
   /// Runs the system on the given data.
   fn run(&mut self, data: Self::Data);

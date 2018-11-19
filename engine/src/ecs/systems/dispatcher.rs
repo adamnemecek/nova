@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{System, SystemData};
-use crate::ecs::Context;
+use crate::Engine;
 use derive_more::*;
 
 /// A dispatcher for running systems in parallel on an ECS context.
@@ -12,8 +12,8 @@ pub struct Dispatcher<'a, 'b>(specs::Dispatcher<'a, 'b>);
 
 impl<'a, 'b> Dispatcher<'a, 'b> {
   /// Runs all systems once in parallel on a thread pool.
-  pub fn dispatch(&mut self, ecs: &mut Context) {
-    self.0.dispatch(&ecs.world.res);
+  pub fn dispatch(&mut self, engine: &mut Engine) {
+    self.0.dispatch(&engine.world.res);
   }
 }
 
@@ -45,10 +45,10 @@ impl<'a, 'b> DispatcherBuilder<'a, 'b> {
 
   /// Runs `System::setup` for every system in dependency order and then builds
   /// and returns a new [`Dispatcher`].
-  pub fn build(self, ctx: &mut Context) -> Dispatcher<'a, 'b> {
+  pub fn build(self, engine: &mut Engine) -> Dispatcher<'a, 'b> {
     let mut dispatcher = self.0.build();
 
-    dispatcher.setup(&mut ctx.world.res);
+    dispatcher.setup(&mut engine.world.res);
     dispatcher.into()
   }
 }

@@ -6,21 +6,21 @@ pub use specs::shred::Resource;
 pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
 pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 
-use super::Context;
+use crate::Engine;
 
-/// Adds a resource to the ECS context. If the resource already existed, the old
-/// value is overwritten.
-pub fn put_resource(ctx: &mut Context, resource: impl Resource) {
-  ctx.world.res.insert(resource);
+/// Adds a resource to the engine instance. If the resource already existed, the
+/// old value is overwritten.
+pub fn put_resource(engine: &mut Engine, resource: impl Resource) {
+  engine.world.res.insert(resource);
 }
 
-/// Gets a mutable reference to a resource in an ECS context. If the resource
-/// does not exist, this function will panic.
+/// Gets a mutable reference to a resource in an engine instance. If the
+/// resource does not exist, this function will panic.
 ///
 /// This is faster than fetching the resource but requires a mutable reference
-/// to the context.
-pub fn get_resource_mut<T: Resource>(ctx: &mut Context) -> &mut T {
-  ctx
+/// to the engine.
+pub fn get_resource_mut<T: Resource>(engine: &mut Engine) -> &mut T {
+  engine
     .world
     .res
     .get_mut()
