@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use gfx_hal::buffer::Usage;
+pub use gfx_hal::buffer::Usage as BufferUsage;
 
 use super::device::{self, Device};
 use crate::graphics::prelude::*;
@@ -27,7 +27,7 @@ pub struct Buffer<T> {
 
 impl<T: Copy> Buffer<T> {
   /// Creates a new buffer large enough for `len` elements.
-  pub fn new(device: &Arc<Device>, len: usize, usage: Usage) -> Self {
+  pub fn new(device: &Arc<Device>, len: usize, usage: BufferUsage) -> Self {
     let size = mem::size_of::<T>() as u64 * len as u64;
 
     let inner = device

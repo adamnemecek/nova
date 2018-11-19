@@ -15,13 +15,9 @@ mod color;
 mod device;
 mod gpu;
 
-pub use self::backend::Backend;
-pub use self::buffer::Buffer;
 pub use self::color::*;
-pub use self::commands::{CommandPool, Commands};
 pub use self::device::*;
 pub use self::gpu::*;
-pub use self::image::Image;
 
 pub mod prelude {
   pub use super::backend::{self, Backend};

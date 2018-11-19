@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::RenderPass;
+use crate::graphics::image::Image;
 use crate::graphics::prelude::*;
-use crate::graphics::{Device, Image};
+use crate::graphics::Device;
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::sync::Arc;

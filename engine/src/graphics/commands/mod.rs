@@ -9,11 +9,13 @@ mod submission;
 pub use self::pool::CommandPool;
 pub use self::queue::CommandQueue;
 pub use self::submission::Submission;
-pub use gfx_hal::command::RawLevel as Level;
+pub use gfx_hal::command::RawLevel as CommandLevel;
 
+use crate::graphics::buffer::Buffer;
 use crate::graphics::prelude::*;
-use crate::graphics::render::{DescriptorSet, Framebuffer, Pipeline, RenderPass};
-use crate::graphics::Buffer;
+use crate::graphics::render::descriptor::DescriptorSet;
+use crate::graphics::render::pipeline::Pipeline;
+use crate::graphics::render::{Framebuffer, RenderPass};
 use crate::utils::Droppable;
 use std::iter;
 use std::sync::atomic;
@@ -37,7 +39,7 @@ pub struct Commands {
 
 impl Commands {
   /// Creates a new set of commands stored in the given command pool.
-  pub fn new(pool: &Arc<CommandPool>, level: Level) -> Commands {
+  pub fn new(pool: &Arc<CommandPool>, level: CommandLevel) -> Commands {
     let buffer = pool.allocate_raw(level);
 
     Commands {

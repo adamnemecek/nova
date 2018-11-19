@@ -11,10 +11,6 @@ mod framebuffer;
 mod pass;
 mod renderer;
 
-pub use self::descriptor::*;
 pub use self::framebuffer::*;
 pub use self::pass::*;
-pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 pub use self::renderer::*;
-pub use self::shader::{Shader, ShaderKind, ShaderSet};
-pub use self::vertex::*;

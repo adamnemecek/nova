@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Level;
+use super::CommandLevel;
 use crate::graphics::prelude::*;
 use crate::graphics::Device;
 use crate::utils::Droppable;
@@ -47,7 +47,7 @@ impl CommandPool {
   }
 
   /// Allocates a raw command buffer with the given level from the pool.
-  pub(super) fn allocate_raw(&self, level: Level) -> backend::CommandBuffer {
+  pub(super) fn allocate_raw(&self, level: CommandLevel) -> backend::CommandBuffer {
     self
       .raw
       .lock()

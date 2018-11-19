@@ -4,8 +4,10 @@
 
 use super::Pipeline;
 use crate::graphics::prelude::*;
+use crate::graphics::render::descriptor::DescriptorLayout;
 use crate::graphics::render::shader::{self, Shader, ShaderSet};
-use crate::graphics::render::{DescriptorLayout, RenderPass, VertexData};
+use crate::graphics::render::vertex::VertexData;
+use crate::graphics::render::RenderPass;
 use crate::utils::quick_error;
 use std::ops::Range;
 use std::sync::Arc;

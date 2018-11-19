@@ -14,7 +14,7 @@
 
 pub use gfx_hal::*;
 
-use super::Backend;
+use super::backend::Backend;
 
 pub type Adapter = gfx_hal::Adapter<Backend>;
 

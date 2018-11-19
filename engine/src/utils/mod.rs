@@ -4,10 +4,9 @@
 
 //! The `utils` module provides common utility functions and types.
 
-pub mod ring;
-
 mod droppable;
+mod ring;
 
-pub use self::droppable::Droppable;
-pub use self::ring::Ring;
+pub use self::droppable::*;
+pub use self::ring::*;
 pub use quick_error::quick_error;

@@ -2,16 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod presenter;
 pub mod swapchain;
 
 mod events;
+mod presenter;
 mod surface;
 
-pub use self::events::{Event, EventSource};
-pub use self::presenter::Presenter;
-pub use self::surface::Surface;
-pub use self::swapchain::Swapchain;
+pub use self::events::*;
+pub use self::presenter::*;
+pub use self::surface::*;
 pub use winit::CreationError;
 
 use super::backend;

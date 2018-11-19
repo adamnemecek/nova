@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Framebuffer, RenderPass};
-use crate::graphics::window::presenter::Backbuffer;
-use crate::graphics::Commands;
+use crate::graphics::commands::Commands;
+use crate::graphics::window::Backbuffer;
 use std::sync::Arc;
 
 /// Executes a render pass with framebuffers lazily created from attached

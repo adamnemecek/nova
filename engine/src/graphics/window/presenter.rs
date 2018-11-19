@@ -5,9 +5,10 @@
 use super::swapchain::{AcquireImageError, Swapchain};
 use super::{Surface, Window};
 use crate::graphics::commands::CommandQueue;
+use crate::graphics::image::Image;
 use crate::graphics::prelude::*;
 use crate::graphics::sync::Semaphore;
-use crate::graphics::{Device, Image};
+use crate::graphics::Device;
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::iter;

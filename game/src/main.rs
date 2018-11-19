@@ -9,11 +9,16 @@ mod graphics;
 //mod ui;
 //mod panels;
 
-use self::graphics::image;
-use self::graphics::render::descriptor::{Descriptor, DescriptorPool};
-use self::graphics::window::Window;
 use self::graphics::{Mesh, Vertex};
-use self::math::Matrix4;
+use nova::graphics::backend;
+use nova::graphics::commands;
+use nova::graphics::image;
+use nova::graphics::render;
+use nova::graphics::render::descriptor::{Descriptor, DescriptorPool};
+use nova::graphics::sync;
+use nova::graphics::window::{self, Window};
+use nova::graphics::{Color4, Gpu};
+use nova::math::Matrix4;
 use std::sync::Arc;
 use std::time;
 
@@ -29,11 +34,9 @@ pub fn main() -> Result<(), String> {
 
   let mut log = bflog::Logger::new(&sink).with_src("game");
 
-  let backend = graphics::backend::Instance::create("nova-game", 1).into();
+  let backend = backend::Instance::create("nova-game", 1).into();
 
-  log
-    .trace("Created backend.")
-    .with("name", &graphics::backend::NAME);
+  log.trace("Created backend.").with("name", &backend::NAME);
 
   let (mut window, mut event_source) =
     Window::create(&backend).map_err(|err| format!("Could not create window: {}", err))?;
@@ -43,23 +46,23 @@ pub fn main() -> Result<(), String> {
     .with("width", &window.size().width())
     .with("height", &window.size().height());
 
-  let mut gpu = graphics::Gpu::create(&backend, window.surface())
+  let mut gpu = Gpu::create(&backend, window.surface())
     .map_err(|err| format!("Could not create graphics device: {}", err))?;
 
   log
     .trace("Created graphics device.")
     .with("name", &gpu.device.name());
 
-  let mut presenter = graphics::window::Presenter::new(&gpu.device, &mut window);
+  let mut presenter = window::Presenter::new(&gpu.device, &mut window);
 
-  let render_pass = Arc::new(graphics::render::RenderPass::new(&gpu.device));
-  let mut renderer = graphics::render::Renderer::new(&render_pass);
+  let render_pass = Arc::new(render::RenderPass::new(&gpu.device));
+  let mut renderer = render::Renderer::new(&render_pass);
 
   log.trace("Created renderer.");
 
-  let mut submission = graphics::commands::Submission::new();
+  let mut submission = commands::Submission::new();
 
-  let command_pool = Arc::new(graphics::CommandPool::new(
+  let command_pool = Arc::new(commands::CommandPool::new(
     &gpu.device,
     gpu.queues.graphics.family_id(),
   ));
@@ -122,8 +125,8 @@ pub fn main() -> Result<(), String> {
 
   ecs::put_resource(ctx, window);
 
-  let mut fence = graphics::sync::Fence::new(&gpu.device);
-  let semaphore = Arc::new(graphics::sync::Semaphore::new(&gpu.device));
+  let mut fence = sync::Fence::new(&gpu.device);
+  let semaphore = Arc::new(sync::Semaphore::new(&gpu.device));
 
   loop {
     let start_time = time::Instant::now();
@@ -145,7 +148,7 @@ pub fn main() -> Result<(), String> {
 
     renderer.attach(&backbuffer);
 
-    let mut cmd = graphics::Commands::new(&command_pool, graphics::commands::Level::Primary);
+    let mut cmd = commands::Commands::new(&command_pool, commands::CommandLevel::Primary);
 
     cmd.begin();
 
@@ -153,7 +156,7 @@ pub fn main() -> Result<(), String> {
 
     cmd.bind_pipeline(&pipeline);
 
-    cmd.push_constant(0, &graphics::Color4::new(1.0, 1.0, 1.0, 1.0));
+    cmd.push_constant(0, &Color4::new(1.0, 1.0, 1.0, 1.0));
     cmd.push_constant(1, &Matrix4::<f32>::identity());
 
     cmd.bind_descriptor_set(0, &descriptor_set);
@@ -173,7 +176,7 @@ pub fn main() -> Result<(), String> {
 
     submission.wait_on(
       backbuffer.semaphore(),
-      graphics::render::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+      render::pipeline::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
     );
 
     submission.signal(&semaphore);

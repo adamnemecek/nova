@@ -1,6 +1,6 @@
-use super::buffer::{self, Buffer};
-use super::render::vertex::*;
-use super::{Color4, Device};
+use nova::graphics::buffer::{Buffer, BufferUsage};
+use nova::graphics::render::vertex::*;
+use nova::graphics::{Color4, Device};
 use nova::math::Vector2;
 use std::sync::Arc;
 
@@ -15,11 +15,11 @@ impl Mesh {
     assert!(!vertices.is_empty(), "mesh has no vertices");
     assert!(!indices.is_empty(), "mesh has no indices");
 
-    let mut vertex_buffer = Buffer::new(device, vertices.len(), buffer::Usage::VERTEX);
+    let mut vertex_buffer = Buffer::new(device, vertices.len(), BufferUsage::VERTEX);
 
     vertex_buffer.write(&vertices);
 
-    let mut index_buffer = Buffer::new(device, indices.len(), buffer::Usage::INDEX);
+    let mut index_buffer = Buffer::new(device, indices.len(), BufferUsage::INDEX);
 
     index_buffer.write(&indices);
 

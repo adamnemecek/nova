@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Backing, Format, Image, Source};
-use crate::graphics::buffer::{self, Buffer};
-use crate::graphics::commands::{self, CommandPool, CommandQueue, Commands};
+use crate::graphics::buffer::{Buffer, BufferUsage};
+use crate::graphics::commands::{CommandLevel, CommandPool, CommandQueue, Commands};
 use crate::graphics::prelude::*;
 use crate::graphics::Device;
 use gfx_memory::Factory;
@@ -33,11 +33,11 @@ impl Loader {
     );
 
     let device = &self.device;
-    let mut cmd = Commands::new(&self.command_pool, commands::Level::Primary);
+    let mut cmd = Commands::new(&self.command_pool, CommandLevel::Primary);
 
     let size = source.size();
 
-    let mut buffer = Buffer::new(device, source.bytes().len(), buffer::Usage::TRANSFER_SRC);
+    let mut buffer = Buffer::new(device, source.bytes().len(), BufferUsage::TRANSFER_SRC);
 
     buffer.write(source.bytes());
 

@@ -1,8 +1,9 @@
-use super::render::descriptor::{DescriptorBinding, DescriptorLayout};
-use super::render::pipeline::{self, Pipeline, PipelineBuilder};
-use super::render::shader::{self, Shader, ShaderKind};
-use super::render::RenderPass;
-use super::{Color4, Vertex};
+use super::Vertex;
+use nova::graphics::render::descriptor::{DescriptorBinding, DescriptorLayout};
+use nova::graphics::render::pipeline::{self, Pipeline, PipelineBuilder};
+use nova::graphics::render::shader::{self, Shader, ShaderKind};
+use nova::graphics::render::RenderPass;
+use nova::graphics::Color4;
 use nova::math::Matrix4;
 use std::sync::Arc;
 

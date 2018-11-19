@@ -8,8 +8,8 @@
 mod rect;
 mod size;
 
-pub use self::rect::Rect;
-pub use self::size::Size;
+pub use self::rect::*;
+pub use self::size::*;
 pub use nalgebra::Matrix4;
 pub use nalgebra::{Point2, Point3};
 pub use nalgebra::{Real, Scalar};

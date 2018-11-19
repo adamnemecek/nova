@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Commands;
-use crate::graphics::render::PipelineStage;
+use crate::graphics::render::pipeline::PipelineStage;
 use crate::graphics::sync::Semaphore;
 use std::sync::Arc;
 
