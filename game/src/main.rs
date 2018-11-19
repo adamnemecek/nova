@@ -7,17 +7,17 @@ use std::fmt;
 
 /// Main entry point of the program.
 pub fn main() {
-  let mut log = log::Logger::new();
-
-  log.source.push_str("game");
-
-  log.set_as_default();
+  let mut engine = nova::Engine::new();
 
   trace!("Log integration works.");
 
-  log.warn("Warning 1.");
+  let log = log::get_logger(&mut engine).with_source("game");
 
-  log.warn("Warning 2.").with("test", Test { x: 4, y: 10 });
+  log.trace("Hello.");
+  log.debug("Hello.");
+  log.info("Hello.");
+  log.warn("Hello.");
+  log.error("Hello.");
 }
 
 pub struct Test {

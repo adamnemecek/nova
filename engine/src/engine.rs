@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use crate::log;
+
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
 pub struct Engine {
@@ -11,9 +13,13 @@ pub struct Engine {
 impl Engine {
   /// Creates a new engine instance.
   pub fn new() -> Self {
-    let world = specs::World::new();
+    let mut engine = Engine {
+      world: specs::World::new(),
+    };
 
-    Engine { world }
+    log::setup(&mut engine);
+
+    engine
   }
 
   /// Maintains engine state. Should be called at the end of each frame or
