@@ -25,5 +25,6 @@ extern crate winit;
 
 pub mod ecs;
 pub mod graphics;
+pub mod log;
 pub mod math;
 pub mod utils;

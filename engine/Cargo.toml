@@ -5,12 +5,14 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+chrono = "0.4"
 crossbeam = "0.5"
 derive_more = "0.13"
 gfx-hal = { version = "0.1", git = "https://github.com/gfx-rs/gfx", rev = "41e96117203fcd55ba4b2168d6d3737a2f3ff541" }
 gfx-memory = { version = "0.1", git = "https://gitlab.com/bfrydl/gfx-memory", rev = "1ad0cc365e57d0b2fdba28a997c81369eaba2ec3" }
 glsl-to-spirv = "0.1"
 image = "0.20"
+log = "0.4"
 nalgebra = "0.16"
 num-traits = "0.2"
 quick-error = "1.2"
