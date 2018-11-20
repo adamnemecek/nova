@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Surface;
+use crate::graphics::device::DeviceHandle;
 use crate::graphics::image::{self, Image};
 use crate::graphics::prelude::*;
 use crate::graphics::sync::Semaphore;
-use crate::graphics::Device;
 use crate::math::Size;
 use crate::utils::{quick_error, Droppable};
 use smallvec::SmallVec;
@@ -16,7 +16,7 @@ use std::sync::Arc;
 /// A set of backbuffer images that can be presented to a [`Surface`].
 pub struct Swapchain {
   /// Reference to the device the swapchain was created with.
-  device: Arc<Device>,
+  device: DeviceHandle,
   /// Raw backend swapchain structure.
   raw: Droppable<backend::Swapchain>,
   /// Images in the swapchain.
@@ -27,11 +27,8 @@ pub struct Swapchain {
 
 impl Swapchain {
   /// Creates a new swapchain for the given device.
-  pub fn new(device: &Arc<Device>, surface: &mut Surface) -> Self {
-    assert!(
-      Arc::ptr_eq(device.backend(), surface.backend()),
-      "Device and surface were created with different backend instances."
-    );
+  pub fn new(surface: &mut Surface) -> Self {
+    let device = surface.device().clone();
 
     let (caps, _, _) = surface
       .as_mut()
@@ -75,7 +72,7 @@ impl Swapchain {
       hal::Backbuffer::Images(images) => {
         for image in images {
           swapchain.images.push(Arc::new(Image::from_raw(
-            device,
+            &device,
             image::Backing::Swapchain(image),
             image::Format::Bgra8Unorm,
             extent.into(),

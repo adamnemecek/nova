@@ -3,12 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod pool;
-mod queue;
-mod submission;
 
 pub use self::pool::CommandPool;
-pub use self::queue::CommandQueue;
-pub use self::submission::Submission;
 pub use gfx_hal::command::RawLevel as CommandLevel;
 
 use crate::graphics::buffer::Buffer;

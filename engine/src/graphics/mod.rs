@@ -5,6 +5,7 @@
 pub mod backend;
 pub mod buffer;
 pub mod commands;
+pub mod device;
 pub mod hal;
 pub mod image;
 pub mod present;
@@ -12,12 +13,9 @@ pub mod render;
 pub mod sync;
 
 mod color;
-mod context;
-mod device;
 
 pub use self::color::Color4;
-pub use self::context::Context;
-pub use self::device::Device;
+pub use self::device::{Device, DeviceHandle};
 
 pub mod prelude {
   pub use super::backend::{self, Backend};

@@ -4,34 +4,28 @@
 
 use super::{Backing, Format, Image, Source};
 use crate::graphics::buffer::{Buffer, BufferUsage};
-use crate::graphics::commands::{CommandLevel, CommandPool, CommandQueue, Commands};
+use crate::graphics::commands::{CommandLevel, CommandPool, Commands};
+use crate::graphics::device::{self, DeviceHandle};
 use crate::graphics::prelude::*;
-use crate::graphics::Device;
 use gfx_memory::Factory;
 use std::borrow::Borrow;
 use std::iter;
 use std::sync::Arc;
 
 pub struct Loader {
-  device: Arc<Device>,
+  device: DeviceHandle,
   command_pool: Arc<CommandPool>,
 }
 
 impl Loader {
-  pub fn new(device: &Arc<Device>, queue_family_id: usize) -> Self {
+  pub fn new(device: &DeviceHandle, queue_family_id: usize) -> Self {
     Loader {
       device: device.clone(),
       command_pool: Arc::new(CommandPool::new(device, queue_family_id)),
     }
   }
 
-  pub fn load(&mut self, queue: &mut CommandQueue, source: &Source) -> Image {
-    assert!(
-      self.command_pool.queue_family_id() == queue.family_id(),
-      "Images must be loaded with a queue in family {}.",
-      self.command_pool.queue_family_id()
-    );
-
+  pub fn load(&mut self, queue: &mut device::Queue, source: &Source) -> Image {
     let device = &self.device;
     let mut cmd = Commands::new(&self.command_pool, CommandLevel::Primary);
 

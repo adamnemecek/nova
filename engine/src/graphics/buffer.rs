@@ -4,13 +4,12 @@
 
 pub use gfx_hal::buffer::Usage as BufferUsage;
 
-use super::device::{self, Device};
+use super::device::{self, DeviceHandle};
 use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use gfx_memory::{Block, Factory};
 use std::mem;
 use std::ptr;
-use std::sync::Arc;
 
 /// Value returned from the device allocator's `create_buffer` method.
 type Allocation = <device::Allocator as Factory<Backend>>::Buffer;
@@ -18,7 +17,7 @@ type Allocation = <device::Allocator as Factory<Backend>>::Buffer;
 /// A buffer of device-accessible memory.
 pub struct Buffer<T> {
   /// Device the buffer was created with.
-  device: Arc<Device>,
+  device: DeviceHandle,
   /// Raw backend buffer and memory allocated by the device.
   inner: Droppable<Allocation>,
   /// A phantom data marker so that buffers can be generic on their contents.
@@ -27,7 +26,7 @@ pub struct Buffer<T> {
 
 impl<T: Copy> Buffer<T> {
   /// Creates a new buffer large enough for `len` elements.
-  pub fn new(device: &Arc<Device>, len: usize, usage: BufferUsage) -> Self {
+  pub fn new(device: &DeviceHandle, len: usize, usage: BufferUsage) -> Self {
     let size = mem::size_of::<T>() as u64 * len as u64;
 
     let inner = device

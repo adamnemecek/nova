@@ -3,35 +3,32 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::graphics::backend;
+use crate::graphics::device::DeviceHandle;
 use crate::math::Size;
 use crate::window::{self, Window};
-use std::sync::Arc;
 
 /// A rendering surface created from a [`Window`].
 pub struct Surface {
-  /// Raw backend surface structure.
   raw: backend::Surface,
-  /// Handle to the window the surface was created from.
   window: window::Handle,
-  /// Reference to the backend instance the surface was created with.
-  backend: Arc<backend::Instance>,
+  device: DeviceHandle,
 }
 
 impl Surface {
   /// Creates a new surface from a window with the given backend instance.
-  pub fn new(backend: &Arc<backend::Instance>, window: &Window) -> Surface {
-    let surface = backend.create_surface(window.handle());
+  pub fn new(device: &DeviceHandle, window: &Window) -> Surface {
+    let surface = device.backend().create_surface(window.handle());
 
     Surface {
       raw: surface,
       window: window.handle().clone(),
-      backend: backend.clone(),
+      device: device.clone(),
     }
   }
 
-  /// Gets a reference to tho backend instance the surface was created with.
-  pub fn backend(&self) -> &Arc<backend::Instance> {
-    &self.backend
+  /// Gets a reference to the device the surface was created with.
+  pub fn device(&self) -> &DeviceHandle {
+    &self.device
   }
 
   /// Determines the current size of the surface in pixels.

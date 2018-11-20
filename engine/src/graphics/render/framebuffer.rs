@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::RenderPass;
+use crate::graphics::device::DeviceHandle;
 use crate::graphics::image::Image;
 use crate::graphics::prelude::*;
-use crate::graphics::Device;
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::sync::Arc;
@@ -14,7 +14,7 @@ use std::sync::Arc;
 pub struct Framebuffer {
   /// Device the framebuffer was created with. Stored to prevent it from being
   /// dropped.
-  device: Arc<Device>,
+  device: DeviceHandle,
   /// Raw backend framebuffer structure.
   raw: Droppable<backend::Framebuffer>,
   /// Size of the framebuffer in pixels.
@@ -65,7 +65,7 @@ impl Framebuffer {
   }
 
   /// Gets a reference to the device used to create the framebuffer.
-  pub fn device(&self) -> &Arc<Device> {
+  pub fn device(&self) -> &DeviceHandle {
     &self.device
   }
 

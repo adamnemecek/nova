@@ -3,19 +3,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::CommandLevel;
+use crate::graphics::device::DeviceHandle;
 use crate::graphics::prelude::*;
-use crate::graphics::Device;
 use crate::utils::Droppable;
 use gfx_hal::pool::CommandPoolCreateFlags as CreateFlags;
 use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 /// A pool of buffer space to store data for [`Commands`].
 pub struct CommandPool {
   /// The raw backend command pool in a mutex for synchronized access.
   raw: Droppable<Mutex<backend::CommandPool>>,
   /// The device the pool was created with.
-  device: Arc<Device>,
+  device: DeviceHandle,
   /// An atomic flag indicating whether any [`Commands`] are recording.
   pub(super) recording: AtomicBool,
   /// ID of the device queue family this command pool was created for.
@@ -24,7 +24,7 @@ pub struct CommandPool {
 
 impl CommandPool {
   /// Creates a new command pool for the given queue family.
-  pub fn new(device: &Arc<Device>, queue_family_id: usize) -> CommandPool {
+  pub fn new(device: &DeviceHandle, queue_family_id: usize) -> CommandPool {
     let pool = device
       .raw()
       .create_command_pool(

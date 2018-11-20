@@ -4,22 +4,22 @@
 
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
+use crate::graphics::device::DeviceHandle;
 use crate::graphics::prelude::*;
-use crate::graphics::Device;
 use crate::utils::Droppable;
 use derive_more::*;
 use std::sync::Arc;
 
 /// A compiled shader module on the graphics device.
 pub struct Shader {
-  device: Arc<Device>,
+  device: DeviceHandle,
   raw: Droppable<backend::ShaderModule>,
   kind: ShaderKind,
 }
 
 impl Shader {
   /// Creates a new shader on the device from the given compiled SPIR-V.
-  pub fn new(device: &Arc<Device>, spirv: &Spirv) -> Shader {
+  pub fn new(device: &DeviceHandle, spirv: &Spirv) -> Shader {
     let module = device
       .raw()
       .create_shader_module(&spirv.1)

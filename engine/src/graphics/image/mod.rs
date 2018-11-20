@@ -12,24 +12,28 @@ pub use self::source::Source;
 pub use gfx_hal::format::Format;
 pub use gfx_hal::image::Layout;
 
-use super::device::{self, Device};
+use super::device::{self, DeviceHandle};
 use crate::graphics::prelude::*;
 use crate::math::Size;
 use crate::utils::Droppable;
 use gfx_memory::Factory;
-use std::sync::Arc;
 
 type AllocatorImage = <device::Allocator as Factory<Backend>>::Image;
 
 pub struct Image {
-  device: Arc<Device>,
+  device: DeviceHandle,
   backing: Droppable<Backing>,
   view: Droppable<backend::ImageView>,
   size: Size<u32>,
 }
 
 impl Image {
-  pub fn from_raw(device: &Arc<Device>, backing: Backing, format: Format, size: Size<u32>) -> Self {
+  pub fn from_raw(
+    device: &DeviceHandle,
+    backing: Backing,
+    format: Format,
+    size: Size<u32>,
+  ) -> Self {
     let view = device
       .raw()
       .create_image_view(
@@ -84,7 +88,7 @@ pub enum Backing {
 }
 
 impl Backing {
-  fn destroy(self, device: &Device) {
+  fn destroy(self, device: &DeviceHandle) {
     match self {
       Backing::Swapchain(_) => {}
       Backing::Allocated(image) => device.allocator().destroy_image(device.raw(), image),

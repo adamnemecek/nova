@@ -2,19 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use crate::graphics::device::DeviceHandle;
 use crate::graphics::image;
 use crate::graphics::prelude::*;
-use crate::graphics::Device;
-use std::sync::Arc;
 
 pub struct RenderPass {
-  device: Arc<Device>,
+  device: DeviceHandle,
   raw: Option<backend::RenderPass>,
   format: image::Format,
 }
 
 impl RenderPass {
-  pub fn new(device: &Arc<Device>) -> Self {
+  pub fn new(device: &DeviceHandle) -> Self {
     let format = image::Format::Bgra8Unorm;
 
     let color_attachment = hal::pass::Attachment {
@@ -56,7 +55,7 @@ impl RenderPass {
     }
   }
 
-  pub fn device(&self) -> &Arc<Device> {
+  pub fn device(&self) -> &DeviceHandle {
     &self.device
   }
 

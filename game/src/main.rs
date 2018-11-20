@@ -1,13 +1,13 @@
-#![feature(duration_float)]
-
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
 use nova::ecs;
+use nova::graphics;
 use nova::log;
 use nova::time;
 use nova::window::Window;
 use std::process::exit;
+use std::sync::Arc;
 use std::thread;
 
 pub fn main() {
@@ -19,6 +19,30 @@ pub fn main() {
     log.error(format_args!("Could not create window: {}", err));
     exit(1)
   });
+
+  let device = graphics::Device::create().unwrap_or_else(|err| {
+    log
+      .error(format_args!("Could not create device: {}", err))
+      .with("backend", graphics::backend::NAME);
+
+    exit(1)
+  });
+
+  let graphics_queue = graphics::device::get_graphics_queue(&device);
+
+  let mut presenter = graphics::present::Presenter::new(&device, &window);
+
+  let render_pass = Arc::new(graphics::render::RenderPass::new(&device));
+  let mut renderer = graphics::render::Renderer::new(&render_pass);
+
+  let command_pool = Arc::new(graphics::commands::CommandPool::new(
+    &device,
+    graphics_queue.family_id(),
+  ));
+
+  let mut submission = graphics::device::Submission::new();
+  let mut fence = graphics::sync::Fence::new(&device);
+  let semaphore = Arc::new(graphics::sync::Semaphore::new(&device));
 
   ecs::put_resource(&mut engine, window);
   ecs::put_resource(&mut engine, time::Clock::new());
@@ -48,9 +72,42 @@ pub fn main() {
       break;
     }
 
+    let backbuffer = presenter.begin();
+
+    renderer.attach(&backbuffer);
+
+    // Run game logic.
+
     ecs::maintain(&mut engine);
 
     frame_timer.end_frame();
+
+    let mut cmd =
+      graphics::commands::Commands::new(&command_pool, graphics::commands::CommandLevel::Primary);
+
+    cmd.begin();
+    renderer.begin(&mut cmd);
+
+    // Draw things.
+
+    renderer.finish(&mut cmd);
+    cmd.finish();
+
+    fence.wait_and_reset();
+    submission.clear();
+
+    submission.add_commands(cmd);
+
+    submission.wait_on(
+      backbuffer.semaphore(),
+      graphics::render::pipeline::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+    );
+
+    submission.signal(&semaphore);
+
+    graphics_queue.lock().submit(&submission, Some(&fence));
+
+    backbuffer.present(&submission.signal_semaphores);
 
     log
       .trace("Frame ended.")

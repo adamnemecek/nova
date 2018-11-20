@@ -3,45 +3,43 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{AcquireImageError, Surface, Swapchain};
-use crate::graphics::commands::CommandQueue;
+use crate::graphics::device::{self, DeviceHandle};
 use crate::graphics::image::Image;
 use crate::graphics::prelude::*;
 use crate::graphics::sync::Semaphore;
-use crate::graphics::Device;
 use crate::utils::Droppable;
+use crate::window::Window;
 use std::iter;
 use std::sync::Arc;
 
 pub struct Presenter {
-  device: Arc<Device>,
   surface: Surface,
-  swapchain: Droppable<Swapchain>,
+  queue: device::QueueHandle,
   semaphores: Vec<Arc<Semaphore>>,
+  swapchain: Droppable<Swapchain>,
 }
 
 impl Presenter {
-  pub fn new(device: &Arc<Device>, surface: Surface) -> Presenter {
-    assert!(
-      Arc::ptr_eq(device.backend(), surface.backend()),
-      "Device and surface must be created with the same backend instance."
-    );
+  pub fn new(device: &DeviceHandle, window: &Window) -> Presenter {
+    let surface = Surface::new(device, window);
+    let queue = device::get_present_queue(&surface);
 
-    let semaphores = iter::repeat_with(|| Arc::new(Semaphore::new(&device)))
+    let semaphores = iter::repeat_with(|| Arc::new(Semaphore::new(device)))
       .take(3)
       .collect();
 
     Presenter {
-      device: device.clone(),
       surface,
-      swapchain: Droppable::dropped(),
+      queue,
       semaphores,
+      swapchain: Droppable::dropped(),
     }
   }
 
   pub fn begin(&mut self) -> Backbuffer {
     for _ in 0..1 {
       if self.swapchain.is_dropped() {
-        self.swapchain = Swapchain::new(&self.device, &mut self.surface).into();
+        self.swapchain = Swapchain::new(&mut self.surface).into();
       }
 
       let result = self
@@ -69,17 +67,10 @@ impl Presenter {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  fn finish<'a>(
-    &mut self,
-    image: usize,
-    queue: &mut CommandQueue,
-    wait_for: impl IntoIterator<Item = &'a Arc<Semaphore>>,
-  ) {
+  fn finish<'a>(&mut self, image: usize, wait_for: impl IntoIterator<Item = &'a Arc<Semaphore>>) {
     debug_assert!(image < self.swapchain.images().len());
 
-    let queue: &mut backend::CommandQueue = queue.raw_mut();
-
-    let result = queue.present(
+    let result = self.queue.lock().raw_mut().present(
       iter::once((self.swapchain.as_ref(), image as u32)),
       wait_for.into_iter().map(AsRef::as_ref).map(AsRef::as_ref),
     );
@@ -108,11 +99,7 @@ impl<'a> Backbuffer<'a> {
     self.presenter.semaphores.first().unwrap()
   }
 
-  pub fn present<'b>(
-    self,
-    queue: &mut CommandQueue,
-    wait_for: impl IntoIterator<Item = &'b Arc<Semaphore>>,
-  ) {
-    self.presenter.finish(self.image, queue, wait_for)
+  pub fn present<'b>(self, wait_for: impl IntoIterator<Item = &'b Arc<Semaphore>>) {
+    self.presenter.finish(self.image, wait_for)
   }
 }
