@@ -4,7 +4,7 @@
 
 use super::{Framebuffer, RenderPass};
 use crate::graphics::commands::Commands;
-use crate::graphics::window::Backbuffer;
+use crate::graphics::present::Backbuffer;
 use std::sync::Arc;
 
 /// Executes a render pass with framebuffers lazily created from attached

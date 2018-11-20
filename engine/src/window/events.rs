@@ -23,7 +23,7 @@ impl EventSource {
   ///
   /// Previous events are removed. This structure is intended to store only one
   /// “frame” of events at a time.
-  pub fn update(&mut self) {
+  pub fn poll(&mut self) {
     let events = &mut self.events;
 
     events.clear();

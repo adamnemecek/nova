@@ -2,14 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::swapchain::{AcquireImageError, Swapchain};
-use super::{Surface, Window};
+use super::{AcquireImageError, Surface, Swapchain};
 use crate::graphics::commands::CommandQueue;
 use crate::graphics::image::Image;
 use crate::graphics::prelude::*;
 use crate::graphics::sync::Semaphore;
 use crate::graphics::Device;
-use crate::math::Size;
 use crate::utils::Droppable;
 use std::iter;
 use std::sync::Arc;
@@ -17,18 +15,15 @@ use std::sync::Arc;
 pub struct Presenter {
   device: Arc<Device>,
   surface: Surface,
-  size: Size<u32>,
   swapchain: Droppable<Swapchain>,
   semaphores: Vec<Arc<Semaphore>>,
 }
 
 impl Presenter {
-  pub fn new(device: &Arc<Device>, window: &mut Window) -> Presenter {
-    let surface = window.take_surface();
-
+  pub fn new(device: &Arc<Device>, surface: Surface) -> Presenter {
     assert!(
       Arc::ptr_eq(device.backend(), surface.backend()),
-      "Device and window must be created with the same backend instance."
+      "Device and surface must be created with the same backend instance."
     );
 
     let semaphores = iter::repeat_with(|| Arc::new(Semaphore::new(&device)))
@@ -38,7 +33,6 @@ impl Presenter {
     Presenter {
       device: device.clone(),
       surface,
-      size: window.size(),
       swapchain: Droppable::dropped(),
       semaphores,
     }
@@ -47,7 +41,7 @@ impl Presenter {
   pub fn begin(&mut self) -> Backbuffer {
     for _ in 0..1 {
       if self.swapchain.is_dropped() {
-        self.swapchain = Swapchain::new(&self.device, &mut self.surface, self.size).into();
+        self.swapchain = Swapchain::new(&self.device, &mut self.surface).into();
       }
 
       let result = self

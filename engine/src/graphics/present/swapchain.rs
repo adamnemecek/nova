@@ -26,24 +26,22 @@ pub struct Swapchain {
 }
 
 impl Swapchain {
-  /// Creates a new swapchain with the given device.
-  ///
-  /// The returned swapchain may not be the same size as requested.
-  pub fn new(device: &Arc<Device>, surface: &mut Surface, size: Size<u32>) -> Self {
+  /// Creates a new swapchain for the given device.
+  pub fn new(device: &Arc<Device>, surface: &mut Surface) -> Self {
     assert!(
       Arc::ptr_eq(device.backend(), surface.backend()),
       "Device and surface were created with different backend instances."
     );
 
-    let surface: &mut backend::Surface = surface.as_mut();
-    let (caps, _, _) = surface.compatibility(&device.adapter().physical_device);
+    let (caps, _, _) = surface
+      .as_mut()
+      .compatibility(&device.adapter().physical_device);
 
     let format = image::Format::Bgra8Unorm;
 
-    let extent = match caps.current_extent {
-      Some(e) => e,        // Use the actual size of the surface.
-      None => size.into(), // Any size is allowed. Use the given size.
-    };
+    let extent = caps
+      .current_extent
+      .unwrap_or_else(|| surface.calculate_size().into());
 
     let image_count = match caps.image_count.end {
       0 => 2, // Any number of images is allowed. Only need two.
@@ -61,7 +59,7 @@ impl Swapchain {
 
     let (raw, backbuffer) = device
       .raw()
-      .create_swapchain(surface, config, None)
+      .create_swapchain(surface.as_mut(), config, None)
       .expect("Could not create swapchain");
 
     let mut swapchain = Swapchain {

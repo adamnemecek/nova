@@ -7,9 +7,9 @@ pub mod buffer;
 pub mod commands;
 pub mod hal;
 pub mod image;
+pub mod present;
 pub mod render;
 pub mod sync;
-pub mod window;
 
 mod color;
 mod context;

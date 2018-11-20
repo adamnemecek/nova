@@ -15,31 +15,21 @@ use std::io::{self, Write};
 #[derive(Default)]
 pub struct ContextBuilder<'a> {
   out: Option<io::StdoutLock<'a>>,
-  /// Whether anything has been written yet.
-  wrote_once: bool,
 }
 
 impl<'a> ContextBuilder<'a> {
   /// Creates a new builder writing to the given locked stdout.
   pub fn new(out: io::StdoutLock<'a>) -> Self {
-    ContextBuilder {
-      out: Some(out),
-      ..Default::default()
-    }
+    ContextBuilder { out: Some(out) }
   }
 
   /// Appends contextual information to the log message with a given key and
   /// value.
-  pub fn with(&mut self, key: impl fmt::Display, value: impl fmt::Debug) {
+  pub fn with(&mut self, key: impl fmt::Display, value: impl fmt::Debug) -> &mut Self {
     if let Some(ref mut out) = self.out {
-      if !self.wrote_once {
-        write!(out, " ").ok();
-        self.wrote_once = true;
-      }
-
       write!(
         out,
-        "{}{}:{} {:?}{}",
+        " {}{}:{} {:?}{}",
         Color::Cyan,
         key,
         Color::BrightCyan,
@@ -48,6 +38,8 @@ impl<'a> ContextBuilder<'a> {
       )
       .ok();
     }
+
+    self
   }
 }
 

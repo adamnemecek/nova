@@ -27,7 +27,9 @@ pub mod ecs;
 pub mod graphics;
 pub mod log;
 pub mod math;
+pub mod time;
 pub mod utils;
+pub mod window;
 
 mod engine;
 

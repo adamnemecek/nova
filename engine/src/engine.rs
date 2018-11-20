@@ -4,6 +4,13 @@
 
 use crate::log;
 
+#[cfg(target_os = "windows")]
+const OS_NAME: &str = "Windows";
+#[cfg(target_os = "macos")]
+const OS_NAME: &str = "MacOS";
+#[cfg(target_os = "linux")]
+const OS_NAME: &str = "Linux";
+
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
 pub struct Engine {
@@ -19,13 +26,11 @@ impl Engine {
 
     log::setup(&mut engine);
 
-    engine
-  }
+    let log = log::get_logger(&mut engine).with_source("nova::Engine");
 
-  /// Maintains engine state. Should be called at the end of each frame or
-  /// update.
-  pub fn maintain(&mut self) {
-    self.world.maintain();
+    log.info("Initialized.").with("os", log::Display(OS_NAME));
+
+    engine
   }
 }
 

@@ -4,7 +4,7 @@
 
 use crate::graphics::commands::CommandQueue;
 use crate::graphics::prelude::*;
-use crate::graphics::window::Surface;
+use crate::graphics::present::Surface;
 use crate::graphics::Device;
 use crate::utils::quick_error;
 use std::sync::Arc;
