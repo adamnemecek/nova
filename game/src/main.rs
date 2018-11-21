@@ -118,4 +118,6 @@ pub fn main() {
       thread::sleep(std::time::Duration::from_millis(1));
     }
   }
+
+  device.wait_idle();
 }

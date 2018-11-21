@@ -13,10 +13,10 @@ use std::iter;
 use std::sync::Arc;
 
 pub struct Presenter {
+  swapchain: Droppable<Swapchain>,
   surface: Surface,
   queue: device::QueueHandle,
   semaphores: Vec<Arc<Semaphore>>,
-  swapchain: Droppable<Swapchain>,
 }
 
 impl Presenter {
@@ -29,10 +29,10 @@ impl Presenter {
       .collect();
 
     Presenter {
+      swapchain: Droppable::dropped(),
       surface,
       queue,
       semaphores,
-      swapchain: Droppable::dropped(),
     }
   }
 
