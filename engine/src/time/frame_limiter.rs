@@ -15,11 +15,11 @@ use std::thread;
 /// amount of CPU.
 #[derive(Debug)]
 pub struct FrameLimiter {
-  /// Interval to wait between calls.
+  /// Target frame duration.
   interval: Duration,
   /// How long to sleep before switching to yields.
   sleep_threshold: Duration,
-  /// How long to yield until the interval is considered reached.
+  /// How long to yield before finishing.
   yield_threshold: Duration,
   /// Last time the `begin_frame()` function was called.
   frame_began: Instant,
@@ -28,31 +28,32 @@ pub struct FrameLimiter {
 }
 
 impl FrameLimiter {
-  /// Creates a new frame limiter with the given interval.
-  pub fn new(engine: &Engine, interval: Duration) -> Self {
-    assert!(
-      interval.as_secs() >= 0.003,
-      "Interval must be at least three milliseconds."
-    );
-
-    FrameLimiter {
-      interval,
-      sleep_threshold: interval - Duration::ONE_MILLI * 2.0,
-      yield_threshold: interval - Duration::ONE_MICRO * 250.0,
+  /// Creates a new frame limiter with the given target FPS.
+  pub fn new(engine: &Engine, target_fps: f64) -> Self {
+    let mut limiter = FrameLimiter {
+      interval: Duration::ONE_SEC,
+      sleep_threshold: Duration::ONE_SEC,
+      yield_threshold: Duration::ONE_SEC,
       frame_began: Instant::now(),
       log: log::fetch_logger(engine).with_source("time::RateLimiter"),
-    }
+    };
+
+    limiter.set_target_fps(target_fps);
+
+    limiter
   }
 
-  /// Sets the interval of the frame limiter.
-  ///
-  /// The `wait()` function will block so that it can only be called once per
-  /// interval.
-  pub fn set_interval(&mut self, interval: Duration) {
+  /// Sets the target FPS of the frame limiter.
+  pub fn set_target_fps(&mut self, target_fps: f64) {
+    assert!(target_fps.is_finite(), "Target FPS must be finite.");
+    assert!(target_fps > 0.0, "Target FPS must be positive.");
+
     assert!(
-      interval.as_secs() >= 0.003,
-      "Interval must be at least three milliseconds."
+      target_fps <= 244.0,
+      "Target FPS must be less than or equal to 244.",
     );
+
+    let interval = Duration::from_secs(target_fps.recip());
 
     self.interval = interval;
     self.sleep_threshold = interval - Duration::ONE_MILLI * 2.0;

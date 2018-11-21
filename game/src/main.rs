@@ -48,7 +48,7 @@ pub fn main() {
 
   ecs::put_resource(&mut engine, window);
 
-  let mut frame_limiter = time::FrameLimiter::new(&engine, time::Duration::ONE_60TH_SEC);
+  let mut frame_limiter = time::FrameLimiter::new(&engine, 60.0);
 
   while !window::is_closing(&mut engine) {
     let submission = submissions.advance();
