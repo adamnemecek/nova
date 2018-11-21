@@ -5,10 +5,10 @@ use nova::ecs;
 use nova::graphics;
 use nova::log;
 use nova::time;
-use nova::window::Window;
+use nova::utils::Ring;
+use nova::window::{self, Window};
 use std::process::exit;
 use std::sync::Arc;
-use std::thread;
 
 pub fn main() {
   let mut engine = nova::Engine::new();
@@ -40,46 +40,33 @@ pub fn main() {
     graphics_queue.family_id(),
   ));
 
-  let mut submission = graphics::device::Submission::new();
-  let mut fence = graphics::sync::Fence::new(&device);
-  let semaphore = Arc::new(graphics::sync::Semaphore::new(&device));
+  let mut submissions = Ring::new(2, |_| {
+    graphics::device::FencedSubmission::new(&graphics_queue)
+  });
+
+  let mut semaphores = Ring::new(2, |_| Arc::new(graphics::sync::Semaphore::new(&device)));
 
   ecs::put_resource(&mut engine, window);
-  ecs::put_resource(&mut engine, time::Clock::new());
 
-  let mut frame_timer = time::FrameTimer::new(&engine);
+  let mut frame_limiter = time::FrameLimiter::new(&engine, time::Duration::ONE_60TH_SEC);
 
-  frame_timer.long_delta_time = Some(time::Duration::ONE_60TH_SEC * 1.1);
-  frame_timer.long_frame_time = Some(time::Duration::ONE_144TH_SEC);
+  while !window::is_closing(&mut engine) {
+    let submission = submissions.advance();
 
-  loop {
-    // Acquire a backbuffer from the presenter. This is first because it may
-    // block until a vertical refresh.
-    let backbuffer = presenter.begin();
+    submission.clear(); // May block if a previous frame is executing.
+
+    let backbuffer = presenter.begin(); // May block for vsync.
+
+    frame_limiter.begin_frame();
 
     renderer.attach(&backbuffer);
 
-    let clock: &mut time::Clock = ecs::get_resource_mut(&mut engine);
-
-    frame_timer.begin_frame();
-
-    clock.elapse(frame_timer.delta_time());
-
-    let window: &mut Window = ecs::get_resource_mut(&mut engine);
-
     event_source.poll();
+    window::process_events(&mut engine, event_source.events());
 
-    window.process_events(event_source.events());
-
-    if window.is_closing() {
-      break;
-    }
-
-    // Run game logic.
+    // TODO: Run game logic.
 
     ecs::maintain(&mut engine);
-
-    frame_timer.end_frame();
 
     let mut cmd =
       graphics::commands::Commands::new(&command_pool, graphics::commands::CommandLevel::Primary);
@@ -87,31 +74,21 @@ pub fn main() {
     cmd.begin();
     renderer.begin(&mut cmd);
 
-    // Draw things.
+    // TODO: Draw things.
 
     renderer.finish(&mut cmd);
     cmd.finish();
 
-    fence.wait_and_reset();
-    submission.clear();
-
     submission.add_commands(cmd);
+    submission.wait_for_output(&backbuffer);
+    submission.signal_finished(semaphores.advance());
+    submission.submit();
 
-    submission.wait_on(
-      backbuffer.semaphore(),
-      graphics::render::pipeline::PipelineStage::COLOR_ATTACHMENT_OUTPUT,
-    );
+    backbuffer.present(submission.signal_semaphores());
 
-    submission.signal(&semaphore);
-
-    graphics_queue.lock().submit(&submission, Some(&fence));
-
-    backbuffer.present(&submission.signal_semaphores);
-
-    if frame_timer.frame_time() < time::Duration::ONE_MILLI {
-      thread::sleep(std::time::Duration::from_millis(1));
-    }
+    frame_limiter.end_frame(); // May block if frame was shorter than vsync.
   }
 
+  // Wait for the device to be idle before exiting.
   device.wait_idle();
 }

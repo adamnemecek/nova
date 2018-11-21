@@ -83,6 +83,10 @@ pub struct QueueHandle {
 }
 
 impl QueueHandle {
+  pub fn device(&self) -> &DeviceHandle {
+    &self.device
+  }
+
   pub fn family_id(&self) -> usize {
     self.device.adapter.queue_families[self.index].id().0
   }
