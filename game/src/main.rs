@@ -51,13 +51,13 @@ pub fn main() {
   let mut frame_limiter = time::FrameLimiter::new(&engine, 60.0);
 
   while !window::is_closing(&mut engine) {
-    let submission = submissions.advance();
-
-    submission.clear(); // May block if a previous frame is executing.
-
     let backbuffer = presenter.begin(); // May block for vsync.
 
     frame_limiter.begin_frame();
+
+    let submission = submissions.advance();
+
+    submission.clear(); // May block if a previous frame is executing.
 
     renderer.attach(&backbuffer);
 
