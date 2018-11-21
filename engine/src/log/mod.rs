@@ -40,3 +40,8 @@ pub fn setup(engine: &mut Engine) {
 pub fn get_logger(engine: &mut Engine) -> &Logger {
   ecs::get_resource_mut(engine)
 }
+
+/// Fetches the [`Logger`] resource registered to the engine instance.
+pub fn fetch_logger(engine: &Engine) -> ecs::FetchResource<Logger> {
+  ecs::fetch_resource(engine)
+}

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::fmt;
-use std::ops::Div;
+use std::ops::{Div, Mul};
 use std::time::Duration as StdDuration;
 
 use derive_more::*;
@@ -42,15 +42,6 @@ impl Duration {
   }
 }
 
-// Implement `Div` so durations can be divided by a scalar dividend.
-impl Div<f64> for Duration {
-  type Output = Self;
-
-  fn div(self, rhs: f64) -> Self {
-    Duration::from_secs(self.0 / rhs)
-  }
-}
-
 // Implement `From` to convert to and from standard `Duration` structs.
 impl From<Duration> for StdDuration {
   fn from(secs: Duration) -> Self {
@@ -67,6 +58,23 @@ impl From<Duration> for StdDuration {
 impl From<StdDuration> for Duration {
   fn from(duration: StdDuration) -> Self {
     Duration((duration.as_secs() as f64) + f64::from(duration.subsec_nanos()) / 1e9)
+  }
+}
+
+// Implement multiplication of durations with scalar values.
+impl Mul<f64> for Duration {
+  type Output = Duration;
+
+  fn mul(self, rhs: f64) -> Self::Output {
+    Duration::from_secs(self.0 * rhs)
+  }
+}
+
+impl Div<f64> for Duration {
+  type Output = Self;
+
+  fn div(self, rhs: f64) -> Self {
+    Duration::from_secs(self.0 / rhs)
   }
 }
 

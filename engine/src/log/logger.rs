@@ -13,6 +13,7 @@ use std::io::{self, Write};
 
 /// Writes formatted log messages to stdout with optional contextual
 /// information.
+#[derive(Debug)]
 pub struct Logger {
   out: io::Stdout,
   /// Name describing the source of the messages. For example, the standard log

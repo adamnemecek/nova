@@ -47,20 +47,23 @@ pub fn main() {
   ecs::put_resource(&mut engine, window);
   ecs::put_resource(&mut engine, time::Clock::new());
 
-  let mut frame_timer = time::FrameTimer::new();
+  let mut frame_timer = time::FrameTimer::new(&engine);
+
+  frame_timer.long_delta_time = Some(time::Duration::ONE_60TH_SEC * 1.1);
+  frame_timer.long_frame_time = Some(time::Duration::ONE_144TH_SEC);
 
   loop {
+    // Acquire a backbuffer from the presenter. This is first because it may
+    // block until a vertical refresh.
+    let backbuffer = presenter.begin();
+
+    renderer.attach(&backbuffer);
+
     let clock: &mut time::Clock = ecs::get_resource_mut(&mut engine);
 
     frame_timer.begin_frame();
 
     clock.elapse(frame_timer.delta_time());
-
-    log
-      .trace("Frame began.")
-      .with("delta_time", frame_timer.delta_time())
-      .with("average", frame_timer.avg_delta_time())
-      .with("fps", frame_timer.avg_fps());
 
     let window: &mut Window = ecs::get_resource_mut(&mut engine);
 
@@ -71,10 +74,6 @@ pub fn main() {
     if window.is_closing() {
       break;
     }
-
-    let backbuffer = presenter.begin();
-
-    renderer.attach(&backbuffer);
 
     // Run game logic.
 
@@ -108,11 +107,6 @@ pub fn main() {
     graphics_queue.lock().submit(&submission, Some(&fence));
 
     backbuffer.present(&submission.signal_semaphores);
-
-    log
-      .trace("Frame ended.")
-      .with("frame_time", frame_timer.frame_time())
-      .with("average", frame_timer.avg_frame_time());
 
     if frame_timer.frame_time() < time::Duration::ONE_MILLI {
       thread::sleep(std::time::Duration::from_millis(1));

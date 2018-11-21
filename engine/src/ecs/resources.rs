@@ -14,11 +14,22 @@ pub fn put_resource(engine: &mut Engine, resource: impl Resource) {
   engine.world.res.insert(resource);
 }
 
-/// Gets a mutable reference to a resource in an engine instance. If the
-/// resource does not exist, this function will panic.
+/// Fetches a reference to a resource in the engine instance.
 ///
-/// This is faster than fetching the resource but requires a mutable reference
-/// to the engine.
+/// # Panics
+///
+/// This function panics if the resource does not exist or is currently fetched
+/// mutably.
+pub fn fetch_resource<T: Resource>(engine: &Engine) -> FetchResource<T> {
+  engine.world.res.fetch()
+}
+
+/// Gets a mutable reference to a resource in an engine instance. This is more
+/// efficient than fetching a resource.
+///
+/// # Panics
+///
+/// This function panics if the resource does not exist.
 pub fn get_resource_mut<T: Resource>(engine: &mut Engine) -> &mut T {
   engine
     .world

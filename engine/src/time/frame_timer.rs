@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Duration, Instant};
+use crate::log;
+use crate::Engine;
 use std::collections::VecDeque;
 
 const AVG_WINDOW: usize = 100;
@@ -14,8 +16,18 @@ const AVG_WINDOW: usize = 100;
 /// - Time between each frame (the “delta time”)
 /// - Averages of both times
 /// - Average frames per second
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct FrameTimer {
+  /// Duration of a “long” frame time.
+  ///
+  /// Long frames are logged as warnings. If this is set to `None`, long frames
+  /// are ignored.
+  pub long_frame_time: Option<Duration>,
+  /// Duration of a “long” delta time.
+  ///
+  /// Long deltas are logged as warnings. If this is set to `None`, long deltas
+  /// are ignored.
+  pub long_delta_time: Option<Duration>,
   /// Instant when the current frame began.
   frame_began: Option<Instant>,
   /// Time info for the current frame.
@@ -27,6 +39,8 @@ pub struct FrameTimer {
   /// Average frames per second. This is the reciprocal of the average delta
   /// time.
   avg_fps: f64,
+  /// Logger to use for writing long duration warnings.
+  log: log::Logger,
 }
 
 /// Time info for a single frame.
@@ -41,8 +55,17 @@ struct Frame {
 
 impl FrameTimer {
   /// Creates a new frame timer with initially empty stats.
-  pub fn new() -> Self {
-    FrameTimer::default()
+  pub fn new(engine: &Engine) -> Self {
+    FrameTimer {
+      long_frame_time: None,
+      long_delta_time: None,
+      frame_began: None,
+      frame: Frame::default(),
+      frames: VecDeque::new(),
+      avg_frame: Frame::default(),
+      avg_fps: 0.0,
+      log: log::fetch_logger(engine).with_source("time::FrameTimer"),
+    }
   }
 
   /// Gets the duration of time between the beginning and end of the most recent
@@ -97,6 +120,13 @@ impl FrameTimer {
 
       self.frame.delta_time = delta;
 
+      // Log long delta times as warnings.
+      if let Some(long) = self.long_delta_time {
+        if delta > long {
+          self.log.warn("Long delta time.").with("duration", delta);
+        }
+      }
+
       // Add the frame to the average window.
       self.frames.push_front(self.frame);
 
@@ -143,6 +173,18 @@ impl FrameTimer {
       .frame_began
       .expect("The `end_frame()` function was called before `begin_frame()`.");
 
-    self.frame.frame_time = Instant::now() - began;
+    let frame_time = Instant::now() - began;
+
+    self.frame.frame_time = frame_time;
+
+    // Log long frame times as warnings.
+    if let Some(long) = self.long_frame_time {
+      if frame_time > long {
+        self
+          .log
+          .warn("Long frame time.")
+          .with("duration", frame_time);
+      }
+    }
   }
 }
