@@ -33,7 +33,7 @@ impl DispatcherBuilder {
   /// existing system names.
   ///
   /// The system will run after all of its dependencies have finished running.
-  pub fn system<S>(self, name: &str, dependencies: &[&str], system: S) -> Self
+  pub fn add_system<S>(self, name: &str, dependencies: &[&str], system: S) -> Self
   where
     S: for<'a> System<'a> + Send + 'static,
   {
