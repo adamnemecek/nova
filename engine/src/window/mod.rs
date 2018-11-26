@@ -26,8 +26,6 @@ impl Window {
   /// To control the window settings, add a [`Settings`] resource to the engine
   /// before calling this function.
   pub fn create(engine: &mut Engine) -> Result<Window, CreationError> {
-    engine.put_resource(Events::default());
-
     let settings: &mut Settings = engine.ensure_resource();
 
     let events_loop = winit::EventsLoop::new();
@@ -52,10 +50,16 @@ impl Window {
 
     settings.size = handle.get_size();
 
+    let event_source = events_loop.into();
+    let settings = settings.clone();
+
+    engine.put_resource(Events::default());
+    engine.put_resource(handle.clone());
+
     Ok(Window {
-      event_source: events_loop.into(),
+      event_source,
       handle,
-      settings: settings.clone(),
+      settings,
     })
   }
 
