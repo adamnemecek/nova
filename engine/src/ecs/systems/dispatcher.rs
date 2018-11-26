@@ -8,9 +8,9 @@ use derive_more::*;
 
 /// A dispatcher for running systems in parallel on an ECS context.
 #[derive(From)]
-pub struct Dispatcher<'a, 'b>(specs::Dispatcher<'a, 'b>);
+pub struct Dispatcher(specs::Dispatcher<'static, 'static>);
 
-impl<'a, 'b> Dispatcher<'a, 'b> {
+impl Dispatcher {
   /// Runs all systems once in parallel on a thread pool.
   pub fn dispatch(&mut self, engine: &mut Engine) {
     self.0.dispatch(&engine.world.res);
@@ -19,11 +19,11 @@ impl<'a, 'b> Dispatcher<'a, 'b> {
 
 /// Builder for constructing a [`Dispatcher`].
 #[derive(From, Default)]
-pub struct DispatcherBuilder<'a, 'b>(specs::DispatcherBuilder<'a, 'b>);
+pub struct DispatcherBuilder(specs::DispatcherBuilder<'static, 'static>);
 
-impl<'a, 'b> DispatcherBuilder<'a, 'b> {
+impl DispatcherBuilder {
   /// Creates a new builder.
-  pub fn new() -> DispatcherBuilder<'a, 'b> {
+  pub fn new() -> Self {
     specs::DispatcherBuilder::new().into()
   }
 
@@ -35,7 +35,7 @@ impl<'a, 'b> DispatcherBuilder<'a, 'b> {
   /// The system will run after all of its dependencies have finished running.
   pub fn system<S>(self, name: &str, dependencies: &[&str], system: S) -> Self
   where
-    S: for<'c> System<'c> + Send + 'a,
+    S: for<'a> System<'a> + Send + 'static,
   {
     self
       .0
@@ -45,7 +45,7 @@ impl<'a, 'b> DispatcherBuilder<'a, 'b> {
 
   /// Runs `System::setup` for every system in dependency order and then builds
   /// and returns a new [`Dispatcher`].
-  pub fn build(self, engine: &mut Engine) -> Dispatcher<'a, 'b> {
+  pub fn build(self, engine: &mut Engine) -> Dispatcher {
     let mut dispatcher = self.0.build();
 
     dispatcher.setup(&mut engine.world.res);
