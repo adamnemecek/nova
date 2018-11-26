@@ -26,6 +26,8 @@ impl Window {
   /// To control the window settings, add a [`Settings`] resource to the engine
   /// before calling this function.
   pub fn create(engine: &mut Engine) -> Result<Window, CreationError> {
+    engine.ensure_resource::<Events>();
+
     let settings: &mut Settings = engine.ensure_resource();
 
     let events_loop = winit::EventsLoop::new();
@@ -49,8 +51,6 @@ impl Window {
     handle.set_fullscreen(settings.fullscreen);
 
     settings.size = handle.get_size();
-
-    engine.put_resource(Events::default());
 
     Ok(Window {
       event_source: events_loop.into(),
