@@ -31,13 +31,3 @@ pub use specs::{Entity, EntityBuilder};
 pub use specs::shred::Resource;
 pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
 pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};
-
-use crate::Engine;
-
-/// Maintains the core ECS state.
-///
-/// This performs clean up operations, such as removing components of
-/// destroyed entities, and should be run once per frame or update.
-pub fn maintain(engine: &mut Engine) {
-  engine.world.maintain();
-}

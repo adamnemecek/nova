@@ -4,9 +4,4 @@
 
 extern crate nova;
 
-use nova::ecs;
-use nova::log;
-
-fn main() {
-  let mut engine = nova::Engine::new();
-}
+fn main() {}

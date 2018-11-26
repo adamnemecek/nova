@@ -2,10 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod clock;
 mod duration;
-mod frame_limiter;
+mod rate_limiter;
 mod instant;
+mod settings;
 
+pub use self::clock::*;
 pub use self::duration::*;
-pub use self::frame_limiter::*;
+pub use self::rate_limiter::*;
 pub use self::instant::*;
+pub use self::settings::*;

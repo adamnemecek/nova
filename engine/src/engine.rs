@@ -28,6 +28,12 @@ impl Engine {
     self.world.res.has_value::<T>()
   }
 
+  /// Adds a resource to the engine instance. If the resource already existed,
+  /// the old value is overwritten.
+  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
+    self.world.res.insert(resource);
+  }
+
   /// Checks that a resource of type `T` exists in the engine. If it does not,
   /// the [`Default`] value of `T` is added to the engine.
   ///
@@ -40,12 +46,6 @@ impl Engine {
     self.get_resource_mut()
   }
 
-  /// Adds a resource to the engine instance. If the resource already existed,
-  /// the old value is overwritten.
-  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
-    self.world.res.insert(resource);
-  }
-
   /// Fetches a reference to a resource in the engine instance.
   ///
   /// # Panics
@@ -54,6 +54,16 @@ impl Engine {
   /// fetched mutably.
   pub fn fetch_resource<T: ecs::Resource>(&self) -> ecs::FetchResource<T> {
     self.world.res.fetch()
+  }
+
+  /// Fetches a mutable reference to a resource in the engine instance.
+  ///
+  /// # Panics
+  ///
+  /// This function panics if the resource does not exist or is already
+  /// fetched mutably.
+  pub fn fetch_resource_mut<T: ecs::Resource>(&self) -> ecs::FetchResourceMut<T> {
+    self.world.res.fetch_mut()
   }
 
   /// Gets a mutable reference to a resource in an engine instance. This is more

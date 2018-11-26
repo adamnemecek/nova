@@ -3,16 +3,17 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::fmt;
-use std::ops::{Div, Mul};
+use std::ops::{Div, Mul, Sub, SubAssign};
 use std::time::Duration as StdDuration;
 
 use derive_more::*;
 
 /// Represents a duration of time.
-#[derive(Copy, Clone, PartialEq, PartialOrd, Add, AddAssign, Sub, SubAssign, Neg, Default)]
+#[derive(Copy, Clone, PartialEq, PartialOrd, Add, AddAssign, Neg, Default)]
 pub struct Duration(f64);
 
 impl Duration {
+  pub const ZERO: Self = Duration(0.0);
   pub const ONE_SEC: Self = Duration(1.0);
   pub const ONE_60TH_SEC: Self = Duration(1.0 / 60.0);
   pub const ONE_120TH_SEC: Self = Duration(1.0 / 120.0);
@@ -59,6 +60,21 @@ impl From<Duration> for StdDuration {
 impl From<StdDuration> for Duration {
   fn from(duration: StdDuration) -> Self {
     Duration((duration.as_secs() as f64) + f64::from(duration.subsec_nanos()) / 1e9)
+  }
+}
+
+// Implement subtraction of durations to never go below 0.
+impl Sub<Self> for Duration {
+  type Output = Self;
+
+  fn sub(self, rhs: Self) -> Self::Output {
+    Duration((self.0 - rhs.0).max(0.0))
+  }
+}
+
+impl SubAssign<Self> for Duration {
+  fn sub_assign(&mut self, rhs: Self) {
+    self.0 = (self.0 - rhs.0).max(0.0);
   }
 }
 
