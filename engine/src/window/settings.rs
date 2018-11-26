@@ -8,8 +8,8 @@ use crate::math::Size;
 pub struct Settings {
   pub title: String,
   pub resizable: bool,
-  pub fullscreen: bool,
   pub size: Size<u32>,
+  pub fullscreen: bool,
 }
 
 impl Settings {
@@ -23,8 +23,8 @@ impl Default for Settings {
     Settings {
       title: "Nova".into(),
       resizable: true,
-      fullscreen: false,
       size: Size::new(640, 360),
+      fullscreen: false,
     }
   }
 }

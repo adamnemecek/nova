@@ -3,11 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod events;
-mod raw;
+mod handle;
 mod settings;
 
 pub use self::events::*;
-pub use self::raw::*;
+pub use self::handle::*;
 pub use self::settings::*;
 pub use winit::CreationError;
 
@@ -16,7 +16,7 @@ use crate::Engine;
 /// Represents a platform-specfic window.
 pub struct Window {
   event_source: EventSource,
-  handle: RawHandle,
+  handle: Handle,
   settings: Settings,
 }
 
@@ -40,19 +40,17 @@ impl Window {
     let mut builder = winit::WindowBuilder::new()
       .with_title(settings.title.clone())
       .with_resizable(settings.resizable)
-      .with_fullscreen(match settings.fullscreen {
-        true => Some(events_loop.get_primary_monitor()),
-        false => None,
-      })
       .with_min_dimensions(size);
 
     if !settings.resizable {
       builder = builder.with_max_dimensions(size);
     }
 
-    let handle: RawHandle = builder.build(&events_loop)?.into();
+    let handle = Handle::from(builder.build(&events_loop)?);
 
-    settings.size = handle.get_inner_size();
+    handle.set_fullscreen(settings.fullscreen);
+
+    settings.size = handle.get_size();
 
     Ok(Window {
       event_source: events_loop.into(),
@@ -62,7 +60,7 @@ impl Window {
   }
 
   /// Gets a reference to the platform-specific window handle.
-  pub fn handle(&self) -> &RawHandle {
+  pub fn handle(&self) -> &Handle {
     &self.handle
   }
 
@@ -80,18 +78,14 @@ impl Window {
       self.settings.resizable = settings.resizable;
     }
 
-    if settings.fullscreen != self.settings.fullscreen {
-      self.handle.set_fullscreen(match settings.fullscreen {
-        true => Some(self.handle.get_current_monitor()),
-        false => None,
-      });
-
-      self.settings.fullscreen = settings.fullscreen;
+    if settings.size != self.settings.size {
+      self.handle.set_size(settings.size);
+      self.settings.size = settings.size;
     }
 
-    if settings.size != self.settings.size {
-      self.handle.set_inner_size(settings.size);
-      self.settings.size = settings.size;
+    if settings.fullscreen != self.settings.fullscreen {
+      self.handle.set_fullscreen(self.settings.fullscreen);
+      self.settings.fullscreen = settings.fullscreen;
     }
 
     // Poll events into the events resource.
@@ -103,7 +97,7 @@ impl Window {
 
     // Now update the settings resource with any changes to the window.
     if events.latest.contains(&Event::Resized) {
-      let size = self.handle.get_inner_size();
+      let size = self.handle.get_size();
       let settings: &mut Settings = engine.get_resource_mut();
 
       settings.size = size;

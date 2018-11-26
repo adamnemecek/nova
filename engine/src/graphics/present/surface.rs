@@ -10,14 +10,14 @@ use crate::window::{self, Window};
 /// A rendering surface created from a [`Window`].
 pub struct Surface {
   raw: backend::Surface,
-  window: window::RawHandle,
+  window: window::Handle,
   device: DeviceHandle,
 }
 
 impl Surface {
   /// Creates a new surface from a window with the given backend instance.
   pub fn new(device: &DeviceHandle, window: &Window) -> Surface {
-    let surface = device.backend().create_surface(window.handle());
+    let surface = device.backend().create_surface(window.handle().as_ref());
 
     Surface {
       raw: surface,
@@ -33,7 +33,7 @@ impl Surface {
 
   /// Determines the current size of the surface in pixels.
   pub fn get_size(&self) -> Size<u32> {
-    self.window.get_inner_size()
+    self.window.get_size()
   }
 }
 
