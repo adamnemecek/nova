@@ -50,16 +50,12 @@ impl Window {
 
     settings.size = handle.get_size();
 
-    let event_source = events_loop.into();
-    let settings = settings.clone();
-
     engine.put_resource(Events::default());
-    engine.put_resource(handle.clone());
 
     Ok(Window {
-      event_source,
+      event_source: events_loop.into(),
       handle,
-      settings,
+      settings: settings.clone(),
     })
   }
 
