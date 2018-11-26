@@ -7,7 +7,6 @@ use crate::graphics::commands::Commands;
 use crate::graphics::present::Backbuffer;
 use crate::graphics::render::pipeline::PipelineStage;
 use crate::graphics::sync::{Fence, Semaphore};
-use std::borrow::ToOwned;
 use std::sync::Arc;
 
 /// A prepared set of commands with optional semaphores for synchronization.

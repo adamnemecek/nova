@@ -38,7 +38,7 @@ impl Swapchain {
 
     let extent = caps
       .current_extent
-      .unwrap_or_else(|| surface.calculate_size().into());
+      .unwrap_or_else(|| surface.get_size().into());
 
     let image_count = match caps.image_count.end {
       0 => 2, // Any number of images is allowed. Only need two.

@@ -1,33 +1,30 @@
+use derive_more::*;
+
 /// One of the possible window events.
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Event {
   Resized,
   CloseRequested,
+}
+
+/// A resource containing the latest events received by an engine window.
+#[derive(Default, From, Deref, DerefMut)]
+pub struct Events {
+  pub latest: Vec<Event>,
 }
 
 /// A source that window events can be pulled from.
 ///
 /// This is returned along with [`Window`] from [`Window::new`] and will poll
 /// events for that window.
+#[derive(From)]
 pub struct EventSource {
-  events: Vec<Event>,
   events_loop: winit::EventsLoop,
 }
 
 impl EventSource {
-  /// Events that occurred on the last update.
-  pub fn events(&self) -> &[Event] {
-    &self.events
-  }
-
-  /// Updates the event source by polling for new events.
-  ///
-  /// Previous events are removed. This structure is intended to store only one
-  /// “frame” of events at a time.
-  pub fn poll(&mut self) {
-    let events = &mut self.events;
-
-    events.clear();
-
+  /// Polls events from the events loop and adds them to the given `Vec`.
+  pub fn poll_into(&mut self, events: &mut Vec<Event>) {
     self.events_loop.poll_events(|event| {
       if let winit::Event::WindowEvent { event, .. } = event {
         match event {
@@ -43,15 +40,5 @@ impl EventSource {
         }
       }
     });
-  }
-}
-
-// Implement `From` to create event sources from winit events loops.
-impl From<winit::EventsLoop> for EventSource {
-  fn from(events_loop: winit::EventsLoop) -> Self {
-    EventSource {
-      events: Vec::new(),
-      events_loop,
-    }
   }
 }

@@ -55,11 +55,6 @@ impl<'a, 'b> DispatcherBuilder<'a, 'b> {
 
 /// A wrapper struct that implements `specs::System` to convert nova systems to
 /// specs systems.
-///
-/// ## Why not just use `specs::System`?
-///
-/// To avoid that awkward moment in `System::setup` when you have a
-/// `&mut shred::Resources` but you want a `&mut specs::World`.
 struct AsSpecsSystem<T>(pub T);
 
 impl<'a, T> specs::System<'a> for AsSpecsSystem<T>

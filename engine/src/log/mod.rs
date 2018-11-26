@@ -33,15 +33,15 @@ pub fn setup(engine: &mut Engine) {
       .warn("Could not set the logger as default: a logging implementation has already been initialized. Logging macros will continue to target the existing implementation.");
   }
 
-  ecs::put_resource(engine, logger);
+  engine.put_resource(logger);
 }
 
 /// Gets the [`Logger`] resource registered to the engine instance.
 pub fn get_logger(engine: &mut Engine) -> &Logger {
-  ecs::get_resource_mut(engine)
+  engine.get_resource_mut()
 }
 
 /// Fetches the [`Logger`] resource registered to the engine instance.
 pub fn fetch_logger(engine: &Engine) -> ecs::FetchResource<Logger> {
-  ecs::fetch_resource(engine)
+  engine.fetch_resource()
 }

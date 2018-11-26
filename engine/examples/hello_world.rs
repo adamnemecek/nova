@@ -2,7 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use specs::storage::{
-  BTreeStorage, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage, ReadStorage,
-  VecStorage, WriteStorage,
-};
+extern crate nova;
+
+use nova::ecs;
+use nova::log;
+
+fn main() {
+  let mut engine = nova::Engine::new();
+}

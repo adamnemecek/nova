@@ -6,18 +6,31 @@
 //!
 //! [1]: https://github.com/slide-rs/specs
 
-pub mod components;
 pub mod derive;
-pub mod entities;
-pub mod resources;
-pub mod storages;
 pub mod systems;
 
-pub use self::components::*;
-pub use self::entities::*;
-pub use self::resources::*;
+pub mod storages {
+  pub use specs::storage::{
+    BTreeStorage, DenseVecStorage, FlaggedStorage, HashMapStorage, NullStorage, ReadStorage,
+    VecStorage, WriteStorage,
+  };
+}
+
 pub use self::storages::*;
 pub use self::systems::*;
+
+pub use specs::Component;
+pub use specs::{Join, ParJoin};
+pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
+
+pub use specs::world::EntitiesRes as Entities;
+pub use specs::Builder as BuildEntity;
+pub use specs::Entities as ReadEntities;
+pub use specs::{Entity, EntityBuilder};
+
+pub use specs::shred::Resource;
+pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
+pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 
 use crate::Engine;
 

@@ -2,14 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use crate::ecs;
 use crate::log;
-
-#[cfg(target_os = "windows")]
-const OS_NAME: &str = "Windows";
-#[cfg(target_os = "macos")]
-const OS_NAME: &str = "MacOS";
-#[cfg(target_os = "linux")]
-const OS_NAME: &str = "Linux";
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
@@ -26,11 +20,60 @@ impl Engine {
 
     log::setup(&mut engine);
 
-    let log = log::get_logger(&mut engine).with_source("nova::Engine");
-
-    log.info("Initialized.").with("os", log::Display(OS_NAME));
-
     engine
+  }
+
+  /// Gets whether or not the engine has a resource of type `T`.
+  pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
+    self.world.res.has_value::<T>()
+  }
+
+  /// Checks that a resource of type `T` exists in the engine. If it does not,
+  /// the [`Default`] value of `T` is added to the engine.
+  ///
+  /// This function returns a mutable reference to the new or existing resource.
+  pub fn ensure_resource<T: ecs::Resource + Default>(&mut self) -> &mut T {
+    if !self.has_resource::<T>() {
+      self.put_resource(T::default());
+    }
+
+    self.get_resource_mut()
+  }
+
+  /// Adds a resource to the engine instance. If the resource already existed,
+  /// the old value is overwritten.
+  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
+    self.world.res.insert(resource);
+  }
+
+  /// Fetches a reference to a resource in the engine instance.
+  ///
+  /// # Panics
+  ///
+  /// This function panics if the resource does not exist or is currently
+  /// fetched mutably.
+  pub fn fetch_resource<T: ecs::Resource>(&self) -> ecs::FetchResource<T> {
+    self.world.res.fetch()
+  }
+
+  /// Gets a mutable reference to a resource in an engine instance. This is more
+  /// efficient than fetching a resource.
+  ///
+  /// # Panics
+  ///
+  /// This function panics if the resource does not exist.
+  pub fn get_resource_mut<T: ecs::Resource>(&mut self) -> &mut T {
+    self
+      .world
+      .res
+      .get_mut()
+      .expect("The specified resource does not exist.")
+  }
+
+  /// Performs deferred tasks and other engine maintenance. Should be called
+  /// once per frame.
+  pub fn maintain(&mut self) {
+    self.world.maintain()
   }
 }
 

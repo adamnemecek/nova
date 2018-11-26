@@ -17,7 +17,6 @@ extern crate glsl_to_spirv;
 extern crate image;
 extern crate nalgebra;
 extern crate num_traits;
-extern crate quick_error;
 extern crate smallvec;
 extern crate specs;
 extern crate specs_derive;

@@ -10,7 +10,7 @@ use crate::window::{self, Window};
 /// A rendering surface created from a [`Window`].
 pub struct Surface {
   raw: backend::Surface,
-  window: window::Handle,
+  window: window::RawHandle,
   device: DeviceHandle,
 }
 
@@ -32,8 +32,8 @@ impl Surface {
   }
 
   /// Determines the current size of the surface in pixels.
-  pub fn calculate_size(&self) -> Size<u32> {
-    self.window.calculate_inner_size()
+  pub fn get_size(&self) -> Size<u32> {
+    self.window.get_inner_size()
   }
 }
 

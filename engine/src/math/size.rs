@@ -1,6 +1,7 @@
 use super::{Num, Scalar, Vector2};
 use crate::graphics;
 use derive_more::*;
+use std::fmt;
 
 /// Two-dimensional size with width and height.
 #[derive(Clone, Copy, PartialEq, Eq, From)]
@@ -70,5 +71,11 @@ impl From<Size<u32>> for graphics::hal::window::Extent2D {
 impl<T: Scalar + Num> Default for Size<T> {
   fn default() -> Self {
     Size::new(T::zero(), T::zero())
+  }
+}
+
+impl<T: Scalar + Num> fmt::Debug for Size<T> {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "({:?}, {:?})", self.width(), self.height())
   }
 }

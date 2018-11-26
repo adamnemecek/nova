@@ -49,8 +49,8 @@ impl FrameLimiter {
     assert!(target_fps > 0.0, "Target FPS must be positive.");
 
     assert!(
-      target_fps <= 244.0,
-      "Target FPS must be less than or equal to 244.",
+      target_fps <= 288.0,
+      "Target FPS must be less than or equal to 288.",
     );
 
     let interval = Duration::from_secs(target_fps.recip());
