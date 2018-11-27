@@ -11,6 +11,7 @@ pub use self::handle::*;
 pub use self::settings::*;
 pub use winit::CreationError;
 
+use crate::math::Size;
 use crate::Engine;
 
 /// Represents a platform-specfic window.
@@ -59,11 +60,18 @@ impl Window {
     })
   }
 
-  /// Gets a reference to the platform-specific window handle.
+  /// Gets a handle to the underlying window which can be cloned to share
+  /// access.
   pub fn handle(&self) -> &Handle {
     &self.handle
   }
 
+  /// Updates the window using resources from the given engine instance.
+  ///
+  /// This function updates the underlying window from any changes made to the
+  /// [`Settings`] resource, polls events and stores them in the [`Events`]
+  /// resource, then updates the [`Settings`] resource with the modified state of
+  /// the underlying window.
   pub fn update(&mut self, engine: &mut Engine) {
     // Update the window with any changes to settings.
     let settings: &mut Settings = engine.get_resource_mut();
@@ -104,4 +112,16 @@ impl Window {
       self.settings.size = size;
     }
   }
+}
+
+/// Converts the given winit logical size to a pixel [`Size`].
+fn physical_size(size: winit::dpi::LogicalSize, dpi: f64) -> Size<u32> {
+  let size: (u32, u32) = size.to_physical(dpi).into();
+
+  Size::new(size.0, size.1)
+}
+
+/// Converts the given pixel [`Size`] to a winit logical size.
+fn logical_size(size: Size<u32>, dpi: f64) -> winit::dpi::LogicalSize {
+  winit::dpi::LogicalSize::from_physical((size.width(), size.height()), dpi)
 }

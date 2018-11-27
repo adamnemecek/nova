@@ -19,7 +19,7 @@ impl Duration {
   pub const ONE_120TH_SEC: Self = Duration(1.0 / 120.0);
   pub const ONE_144TH_SEC: Self = Duration(1.0 / 144.0);
   pub const ONE_MILLI: Self = Duration(0.001);
-  pub const ONE_MICRO: Self = Duration(0.000001);
+  pub const ONE_MICRO: Self = Duration(0.000_001);
 
   /// Creates a new duration from the given number of seconds.
   ///

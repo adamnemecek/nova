@@ -7,40 +7,72 @@ use crate::utils::lazy_static;
 use std::thread;
 
 lazy_static! {
+  /// Remaining duration before the rate limiter should stop using
+  /// `thread::sleep()`.
+  ///
+  /// This is set to 2.5ms because the rate limiter sleeps in 1ms increments,
+  /// but sleep timeouts aren't very accurate.
   static ref SLEEP_UNTIL: Duration = Duration::ONE_MILLI * 2.5;
+
+  /// Remaining duration before the rate limiter should stop using
+  /// `thread::yield_now()`.
+  ///
+  /// This is set to 25μs to get “close enough” without a high chance of going
+  /// over the target duration when the OS doesn't schedule the thread fast
+  /// enough.
   static ref YIELD_UNTIL: Duration = Duration::ONE_MICRO * 25.0;
 }
 
-/// Limits the rate at which an operation completes by ensuring that it takes a
-/// certain minimum amount of time.
+/// Limits the rate at which an operation is completed.
+///
+/// This can be used to limit the rate of a fast loop, such as limiting the main
+/// game loop to 60 Hz for a fixed time step, or polling for input at 144 Hz to
+/// save CPU time.
 #[derive(Debug)]
 pub struct RateLimiter {
-  started: Instant,
+  timer_began: Instant,
 }
 
 impl RateLimiter {
   /// Creates a new frame limiter with the given target FPS.
   pub fn new() -> Self {
     RateLimiter {
-      started: Instant::now(),
+      timer_began: Instant::now(),
     }
   }
 
+  /// Begin the timer now. The next call to [`wait_for_min_duration()`] will be
+  /// based on this start time.
   pub fn begin(&mut self) {
-    self.started = Instant::now();
+    self.timer_began = Instant::now();
   }
 
-  pub fn wait_for_min_duration(&mut self, min: Duration) {
-    let threshold = min - *SLEEP_UNTIL;
+  /// Blocks the current thread until the given duration of time has elapsed
+  /// since the previous call to [`begin()`].
+  ///
+  /// If [`begin()`] has not been called, the time since the rate limiter was
+  /// created is used instead.
+  pub fn wait_for_full_duration(&mut self, duration: Duration) {
+    // Repeatedly sleep until `SLEEP_UNTIL` time is left before the duration
+    // elapses.
+    let threshold = duration - *SLEEP_UNTIL;
 
-    while Instant::now() - self.started < threshold {
+    while Instant::now() - self.timer_began < threshold {
       thread::sleep(std::time::Duration::from_millis(1));
     }
 
-    let threshold = min - *YIELD_UNTIL;
+    // Repeatedly yield until `YIELD_UNTIL` time is left before the duration
+    // elapses.
+    let threshold = duration - *YIELD_UNTIL;
 
-    while Instant::now() - self.started < threshold {
+    while Instant::now() - self.timer_began < threshold {
       thread::yield_now();
     }
+  }
+}
+
+impl Default for RateLimiter {
+  fn default() -> Self {
+    Self::new()
   }
 }

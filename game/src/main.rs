@@ -28,6 +28,6 @@ pub fn main() {
 
     window.update(&mut engine);
 
-    rate_limiter.wait_for_min_duration(time::Duration::ONE_60TH_SEC);
+    rate_limiter.wait_for_full_duration(time::Duration::ONE_60TH_SEC);
   }
 }

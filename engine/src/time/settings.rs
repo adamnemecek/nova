@@ -4,8 +4,25 @@
 
 use super::Duration;
 
+/// A resource that stores the time settings for an engine instance.
 pub struct Settings {
+  /// The minimum duration of time that must elapse with each clock update.
+  ///
+  /// Set this to a short duration to prevent very short delta times which could
+  /// introduce imprecision when used to scale larger floating point values.
+  ///
+  /// Set the minimum and maximum delta time to the same duration for a fixed
+  /// time step when determinism is important.
   pub min_delta_time: Duration,
+  /// The maximum duration of time that can elapse with each clock update.
+  ///
+  /// Set this to a short duration to prevent large delta times from breaking
+  /// logic that expects smaller increments. For example, a game designed to run
+  /// at 60 Hz might behave in unexpected ways if the player's computer lags and
+  /// the game experiences a sudden one-second jump in time.
+  ///
+  /// Set the minimum and maximum delta time to the same duration for a fixed
+  /// time step when determinism is important.
   pub max_delta_time: Duration,
 }
 
