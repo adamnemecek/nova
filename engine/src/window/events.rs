@@ -13,10 +13,8 @@ pub struct Events {
   pub latest: Vec<Event>,
 }
 
-/// A source that window events can be pulled from.
-///
-/// This is returned along with [`Window`] from [`Window::new`] and will poll
-/// events for that window.
+/// A structure that can be used to poll events for a window and store them in
+/// a `Vec`.
 #[derive(From)]
 pub struct EventSource {
   events_loop: winit::EventsLoop,

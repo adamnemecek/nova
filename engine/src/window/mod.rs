@@ -70,8 +70,8 @@ impl Window {
   ///
   /// This function updates the underlying window from any changes made to the
   /// [`Settings`] resource, polls events and stores them in the [`Events`]
-  /// resource, then updates the [`Settings`] resource with the modified state of
-  /// the underlying window.
+  /// resource, then updates the [`Settings`] resource with the modified state
+  /// of the underlying window.
   pub fn update(&mut self, engine: &mut Engine) {
     // Update the window with any changes to settings.
     let settings: &mut Settings = engine.get_resource_mut();
