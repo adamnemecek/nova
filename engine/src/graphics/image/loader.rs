@@ -5,7 +5,7 @@
 use super::{Backing, Format, Image, Source};
 use crate::graphics::buffer::{Buffer, BufferUsage};
 use crate::graphics::commands::{CommandLevel, CommandPool, Commands};
-use crate::graphics::device::{self, DeviceHandle};
+use crate::graphics::device;
 use crate::graphics::prelude::*;
 use gfx_memory::Factory;
 use std::borrow::Borrow;
@@ -13,12 +13,12 @@ use std::iter;
 use std::sync::Arc;
 
 pub struct Loader {
-  device: DeviceHandle,
+  device: device::Handle,
   command_pool: Arc<CommandPool>,
 }
 
 impl Loader {
-  pub fn new(device: &DeviceHandle, queue_family_id: usize) -> Self {
+  pub fn new(device: &device::Handle, queue_family_id: usize) -> Self {
     Loader {
       device: device.clone(),
       command_pool: Arc::new(CommandPool::new(device, queue_family_id)),

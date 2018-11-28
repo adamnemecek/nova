@@ -9,7 +9,7 @@ pub use gfx_hal::pso::PipelineStage;
 
 use super::descriptor::DescriptorLayout;
 use super::shader::ShaderSet;
-use crate::graphics::device::DeviceHandle;
+use crate::graphics::device;
 use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 use std::ops::Range;
@@ -18,7 +18,7 @@ use std::sync::Arc;
 /// A graphics pipeline that configures rendering with input descriptors, push
 /// constants, and shaders.
 pub struct Pipeline {
-  device: DeviceHandle,
+  device: device::Handle,
   raw: Droppable<(backend::GraphicsPipeline, backend::PipelineLayout)>,
   push_constants: Vec<Range<u32>>,
   descriptor_layouts: Vec<Arc<DescriptorLayout>>,

@@ -8,14 +8,12 @@ pub mod commands;
 pub mod device;
 pub mod hal;
 pub mod image;
-pub mod present;
-pub mod render;
+pub mod renderer;
 pub mod sync;
 
 mod color;
 
-pub use self::color::Color4;
-pub use self::device::{Device, DeviceHandle};
+pub use self::color::*;
 
 pub mod prelude {
   pub use super::backend::{self, Backend};

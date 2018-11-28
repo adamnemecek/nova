@@ -12,7 +12,7 @@ pub use self::source::Source;
 pub use gfx_hal::format::Format;
 pub use gfx_hal::image::Layout;
 
-use super::device::{self, DeviceHandle};
+use super::device;
 use crate::graphics::prelude::*;
 use crate::math::Size;
 use crate::utils::Droppable;
@@ -21,7 +21,7 @@ use gfx_memory::Factory;
 type AllocatorImage = <device::Allocator as Factory<Backend>>::Image;
 
 pub struct Image {
-  device: DeviceHandle,
+  device: device::Handle,
   backing: Droppable<Backing>,
   view: Droppable<backend::ImageView>,
   size: Size<u32>,
@@ -29,7 +29,7 @@ pub struct Image {
 
 impl Image {
   pub fn from_raw(
-    device: &DeviceHandle,
+    device: &device::Handle,
     backing: Backing,
     format: Format,
     size: Size<u32>,
@@ -88,7 +88,7 @@ pub enum Backing {
 }
 
 impl Backing {
-  fn destroy(self, device: &DeviceHandle) {
+  fn destroy(self, device: &device::Handle) {
     match self {
       Backing::Swapchain(_) => {}
       Backing::Allocated(image) => device.allocator().destroy_image(device.raw(), image),

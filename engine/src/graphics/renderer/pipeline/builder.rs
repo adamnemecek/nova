@@ -3,11 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Pipeline;
+use crate::graphics::device;
 use crate::graphics::prelude::*;
-use crate::graphics::render::descriptor::DescriptorLayout;
-use crate::graphics::render::shader::{self, Shader, ShaderSet};
-use crate::graphics::render::vertex::VertexData;
-use crate::graphics::render::RenderPass;
+use crate::graphics::renderer::descriptor::DescriptorLayout;
+use crate::graphics::renderer::shader::{self, Shader, ShaderSet};
+use crate::graphics::renderer::vertex::VertexData;
 use crate::utils::quick_error;
 use std::ops::Range;
 use std::sync::Arc;
@@ -15,7 +15,6 @@ use std::sync::Arc;
 /// Builds a new [`Pipeline`].
 #[derive(Default)]
 pub struct PipelineBuilder {
-  render_pass: Option<Arc<RenderPass>>,
   vertex_shader: Option<shader::EntryPoint>,
   fragment_shader: Option<shader::EntryPoint>,
   vertex_buffers: Vec<hal::pso::VertexBufferDesc>,
@@ -28,12 +27,6 @@ impl PipelineBuilder {
   /// Creates a new builder.
   pub fn new() -> Self {
     Self::default()
-  }
-
-  /// Sets the render pass of the pipeline.
-  pub fn set_render_pass(mut self, pass: &Arc<RenderPass>) -> Self {
-    self.render_pass = Some(pass.clone());
-    self
   }
 
   /// Sets the vertex shader the pipeline will use.
@@ -117,11 +110,11 @@ impl PipelineBuilder {
   }
 
   /// Builds the pipeline for the given device.
-  pub fn build(self) -> Result<Pipeline, BuildError> {
-    let render_pass = self.render_pass.ok_or(BuildError::RenderPassRequired)?;
-
-    let device = render_pass.device();
-
+  pub fn build(
+    self,
+    device: &device::Handle,
+    render_pass: &backend::RenderPass,
+  ) -> Result<Pipeline, BuildError> {
     let shaders = ShaderSet {
       vertex: self.vertex_shader.ok_or(BuildError::VertexShaderRequired)?,
       fragment: self.fragment_shader,

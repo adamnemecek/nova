@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::device::DeviceHandle;
+use crate::graphics::device;
 use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 
@@ -14,13 +14,13 @@ use crate::utils::Droppable;
 /// completion. Other operations accept a list of semaphores to wait on before
 /// executing.
 pub struct Semaphore {
-  device: DeviceHandle,
+  device: device::Handle,
   raw: Droppable<backend::Semaphore>,
 }
 
 impl Semaphore {
   /// Creates a new semaphore with the given device.
-  pub fn new(device: &DeviceHandle) -> Self {
+  pub fn new(device: &device::Handle) -> Self {
     let semaphore = device
       .raw()
       .create_semaphore()
@@ -53,14 +53,14 @@ impl Drop for Semaphore {
 /// operation.
 pub struct Fence {
   /// Device the fence was created for.
-  device: DeviceHandle,
+  device: device::Handle,
   /// Raw backend fence structure.
   raw: Droppable<backend::Fence>,
 }
 
 impl Fence {
   /// Creates a new fence for the given device.
-  pub fn new(device: &DeviceHandle) -> Self {
+  pub fn new(device: &device::Handle) -> Self {
     let fence = device
       .raw()
       .create_fence(true) // Initially signaled.

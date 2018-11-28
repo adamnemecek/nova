@@ -4,12 +4,21 @@
 
 mod clock;
 mod duration;
-mod rate_limiter;
 mod instant;
+mod rate_limiter;
 mod settings;
 
 pub use self::clock::*;
 pub use self::duration::*;
-pub use self::rate_limiter::*;
 pub use self::instant::*;
+pub use self::rate_limiter::*;
 pub use self::settings::*;
+
+use crate::Engine;
+
+/// Sets up the `time` module for the given engine instance by ensuring the
+/// required resources exist.
+pub fn setup(engine: &mut Engine) {
+  engine.ensure_resource::<Clock>();
+  engine.ensure_resource::<Settings>();
+}

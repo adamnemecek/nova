@@ -7,14 +7,12 @@ use nova::window::Window;
 
 pub fn main() {
   let mut engine = nova::Engine::new();
-
-  engine.put_resource(time::Clock::new());
-  engine.put_resource(time::Settings::default());
-
   let log = log::get_logger(&mut engine).with_source("game");
 
-  let mut window = Window::create(&mut engine).expect("Could not create window");
+  time::setup(&mut engine);
+
   let mut rate_limiter = time::RateLimiter::new();
+  let mut window = Window::create(&mut engine).expect("Could not create window");
 
   loop {
     rate_limiter.begin();

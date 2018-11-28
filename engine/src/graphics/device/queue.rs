@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{DeviceHandle, Submission};
+use super::Submission;
 use crate::graphics::prelude::*;
-use crate::graphics::present::Surface;
+use crate::graphics::renderer;
 use crate::graphics::sync::Fence;
 use smallvec::SmallVec;
 use std::sync::MutexGuard;
@@ -78,12 +78,12 @@ impl Queue {
 
 #[derive(Clone)]
 pub struct QueueHandle {
-  device: DeviceHandle,
+  device: super::Handle,
   index: usize,
 }
 
 impl QueueHandle {
-  pub fn device(&self) -> &DeviceHandle {
+  pub fn device(&self) -> &super::Handle {
     &self.device
   }
 
@@ -99,14 +99,8 @@ impl QueueHandle {
 }
 
 /// Gets a handle to a queue suitable for graphics commands.
-pub fn get_graphics_queue(device: &DeviceHandle) -> QueueHandle {
-  // Use the first queue that supports graphics.
-  let index = device
-    .adapter
-    .queue_families
-    .iter()
-    .position(|family| family.supports_graphics())
-    .expect("Could not find a graphics queue.");
+pub fn get_graphics_queue(device: &super::Handle) -> QueueHandle {
+  let index = get_graphics_queue_family_id(device);
 
   QueueHandle {
     device: device.clone(),
@@ -114,23 +108,31 @@ pub fn get_graphics_queue(device: &DeviceHandle) -> QueueHandle {
   }
 }
 
+pub fn get_graphics_queue_family_id(device: &super::Handle) -> usize {
+  device
+    .adapter
+    .queue_families
+    .iter()
+    .position(|family| family.supports_graphics())
+    .expect("Could not find a graphics queue.")
+}
+
 /// Gets a handle to a queue suitable for presenting the given surface.
-pub fn get_present_queue(surface: &Surface) -> QueueHandle {
+pub fn get_present_queue(surface: &renderer::Surface) -> QueueHandle {
   let device = surface.device().clone();
 
-  // Use the first queue that supports graphics.
   let index = device
     .adapter
     .queue_families
     .iter()
-    .position(|family| surface.as_ref().supports_queue_family(family))
+    .position(|family| surface.supports_queue_family(family))
     .expect("Could not find a present queue.");
 
   QueueHandle { device, index }
 }
 
 /// Gets a handle to a queue suitable for transfer commands.
-pub fn get_transfer_queue(device: &DeviceHandle) -> QueueHandle {
+pub fn get_transfer_queue(device: &super::Handle) -> QueueHandle {
   // Use a queue that supports neither graphics nor compute, since it may be
   // specialized for transfer.
   let index = device

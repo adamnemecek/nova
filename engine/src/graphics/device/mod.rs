@@ -27,7 +27,7 @@ pub struct Device {
 }
 
 impl Device {
-  pub fn create() -> Result<DeviceHandle, CreationError> {
+  pub fn create() -> Result<Handle, CreationError> {
     let instance = backend::Instance::create("nova", 1);
 
     // Select the best available adapter.
@@ -65,7 +65,7 @@ impl Device {
       256 * 1024 * 1024, // 256 MB maximum chunk size.
     ));
 
-    Ok(DeviceHandle(Arc::new(Device {
+    Ok(Handle(Arc::new(Device {
       raw: raw.device,
       adapter,
       instance,
@@ -129,7 +129,7 @@ impl Drop for Device {
 }
 
 #[derive(Clone, Deref)]
-pub struct DeviceHandle(Arc<Device>);
+pub struct Handle(Arc<Device>);
 
 /// Scores an adapter. The highest scoring adapter is used.
 fn score_adapter(adapter: &hal::Adapter) -> usize {

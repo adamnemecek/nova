@@ -9,9 +9,8 @@ pub use gfx_hal::command::RawLevel as CommandLevel;
 
 use crate::graphics::buffer::Buffer;
 use crate::graphics::prelude::*;
-use crate::graphics::render::descriptor::DescriptorSet;
-use crate::graphics::render::pipeline::Pipeline;
-use crate::graphics::render::{Framebuffer, RenderPass};
+use crate::graphics::renderer::descriptor::DescriptorSet;
+use crate::graphics::renderer::pipeline::Pipeline;
 use crate::utils::Droppable;
 use std::iter;
 use std::sync::atomic;
@@ -25,10 +24,6 @@ pub struct Commands {
   buffer: Droppable<backend::CommandBuffer>,
   /// Whether or not commands are being recorded.
   recording: bool,
-  /// Render passes referenced by the commands.
-  render_passes: Vec<Arc<RenderPass>>,
-  /// Pipelines referenced by the commands.
-  pipelines: Vec<Arc<Pipeline>>,
   /// Secondary commands executed by the commands.
   children: Vec<Arc<Commands>>,
 }
@@ -42,8 +37,6 @@ impl Commands {
       pool: pool.clone(),
       buffer: buffer.into(),
       recording: false,
-      render_passes: Vec::new(),
-      pipelines: Vec::new(),
       children: Vec::new(),
     }
   }
@@ -58,7 +51,11 @@ impl Commands {
   }
 
   /// Records a command to begin a render pass with the given framebuffer.
-  pub fn begin_render_pass(&mut self, render_pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
+  pub fn begin_render_pass(
+    &mut self,
+    render_pass: &backend::RenderPass,
+    framebuffer: &backend::Framebuffer,
+  ) {
     assert!(self.recording, "The command buffer is not recording.");
 
     // Convert the framebuffer size from `u32` to `i16`.
@@ -81,7 +78,7 @@ impl Commands {
       buffer.set_scissors(0, &[viewport.rect]);
 
       buffer.begin_render_pass(
-        render_pass.raw(),
+        render_pass,
         framebuffer.as_ref(),
         viewport.rect,
         &[
@@ -102,30 +99,6 @@ impl Commands {
   /// Finishes the current render pass.
   pub fn finish_render_pass(&mut self) {
     self.buffer.end_render_pass();
-  }
-
-  /// Begins recording a new set of commands that will execute entirely within
-  /// the given render pass. Can only be used with secondary commands.
-  ///
-  /// This will reset any previously recorded commands and clear all referenced
-  /// resources.
-  pub fn begin_in_render_pass(&mut self, pass: &Arc<RenderPass>, framebuffer: &Framebuffer) {
-    self.start_recording();
-
-    self.buffer.begin(
-      Default::default(),
-      hal::command::CommandBufferInheritanceInfo {
-        subpass: Some(hal::pass::Subpass {
-          index: 0,
-          main_pass: pass.raw(),
-        }),
-        framebuffer: Some(framebuffer.as_ref()),
-        ..Default::default()
-      },
-    );
-
-    // Store a reference to the render pass so that it isn't dropped.
-    self.render_passes.push(pass.clone());
   }
 
   /// Records commands to execute the given secondary commands.

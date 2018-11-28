@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::device::DeviceHandle;
+use crate::graphics::device;
 use crate::graphics::prelude::*;
 use crate::utils::Droppable;
 
@@ -12,7 +12,7 @@ use crate::utils::Droppable;
 /// data.
 pub struct DescriptorLayout {
   /// Device the descriptor layout was created with.
-  device: DeviceHandle,
+  device: device::Handle,
   /// Raw backend descriptor layout struct.
   raw: Droppable<backend::DescriptorSetLayout>,
   /// Raw list of bindings in the descriptor layout.
@@ -21,7 +21,7 @@ pub struct DescriptorLayout {
 
 impl DescriptorLayout {
   /// Creates a new descriptor layout on the device with the given bindings.
-  pub fn new(device: &DeviceHandle, bindings: &[DescriptorBinding]) -> Self {
+  pub fn new(device: &device::Handle, bindings: &[DescriptorBinding]) -> Self {
     let bindings = bindings
       .iter()
       .enumerate()
@@ -41,7 +41,7 @@ impl DescriptorLayout {
   }
 
   /// Gets the device the descriptor layout was created with.
-  pub fn device(&self) -> &DeviceHandle {
+  pub fn device(&self) -> &device::Handle {
     &self.device
   }
 

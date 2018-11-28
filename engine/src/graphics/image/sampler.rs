@@ -2,16 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::device::DeviceHandle;
+use crate::graphics::device;
 use crate::graphics::prelude::*;
 
 pub struct Sampler {
   raw: Option<backend::Sampler>,
-  device: DeviceHandle,
+  device: device::Handle,
 }
 
 impl Sampler {
-  pub fn new(device: &DeviceHandle) -> Self {
+  pub fn new(device: &device::Handle) -> Self {
     let sampler = device
       .raw()
       .create_sampler(hal::image::SamplerInfo::new(
