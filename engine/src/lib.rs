@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(futures_api, drain_filter, arbitrary_self_types)]
+#![feature(futures_api, drain_filter, arbitrary_self_types, const_fn)]
 
 // TODO: Remove when RLS supports it.
 extern crate derive_more;
@@ -16,6 +16,7 @@ use std::rc::Rc;
 pub mod ecs;
 pub mod log;
 pub mod process;
+pub mod time;
 
 mod context;
 
@@ -38,7 +39,7 @@ impl EngineHandle {
   }
 }
 
-pub fn start<F>(init: impl FnOnce(EngineHandle) -> F)
+pub fn start<F>(main: impl FnOnce(EngineHandle) -> F)
 where
   F: Future<Output = ()> + 'static,
 {
@@ -47,23 +48,24 @@ where
   };
 
   log::setup(&mut engine);
+  time::setup(&mut engine);
 
   let engine = EngineHandle(Rc::new(RefCell::new(engine)));
-  let mut executor = process::Executor::new(&engine);
 
-  let future = init(engine.clone());
+  let mut process_executor = process::Executor::new(&engine);
+  let mut rate_limiter = time::RateLimiter::new();
 
-  engine.execute(|ctx| {
-    process::spawn(ctx, future);
-  });
+  let main = main(engine.clone());
+
+  engine.execute(|ctx| process::spawn(ctx, main));
 
   loop {
-    executor.tick();
+    rate_limiter.begin();
 
-    engine.execute_mut(|ctx| {
-      ctx.world.maintain();
-    });
+    engine.execute(time::tick);
+    process_executor.tick();
+    engine.execute_mut(Context::maintain);
 
-    std::thread::sleep_ms(1000);
+    rate_limiter.wait_for_full_duration(time::Duration::from_hz(60));
   }
 }

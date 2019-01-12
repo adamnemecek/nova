@@ -67,6 +67,10 @@ impl Context {
       .get_mut()
       .expect("The specified resource does not exist.")
   }
+
+  pub(crate) fn maintain(&mut self) {
+    self.world.maintain();
+  }
 }
 
 // Implement conversions to and from references of equivalent types.

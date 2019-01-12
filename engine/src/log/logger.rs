@@ -87,7 +87,7 @@ impl Logger {
     // Output a timestamp and colorized level.
     write!(
       out,
-      "{}{:04}-{:02}-{:02} {:02}:{:02}:{:02} {}",
+      "{}{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03} {}",
       Color::BrightBlack,
       time.year(),
       time.month(),
@@ -95,6 +95,7 @@ impl Logger {
       time.hour(),
       time.minute(),
       time.second(),
+      time.nanosecond() / 1_000_000,
       PrettyLevel(level),
     )
     .unwrap();

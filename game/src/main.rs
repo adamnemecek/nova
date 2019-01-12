@@ -5,6 +5,7 @@ extern crate nova;
 
 use nova::log;
 use nova::process;
+use nova::time;
 
 pub fn main() {
   nova::start(run);
@@ -13,9 +14,11 @@ pub fn main() {
 async fn run(engine: nova::EngineHandle) {
   let log = engine.execute(|ctx| log::fetch_logger(ctx).with_source("tvb"));
 
-  log.info("Hello from async.");
+  loop {
+    let delta_time = engine.execute(time::delta);
 
-  await!(process::next_tick());
+    log.trace("Frame.").with("delta_time", delta_time);
 
-  log.info("Second frame.");
+    await!(process::next_tick());
+  }
 }
