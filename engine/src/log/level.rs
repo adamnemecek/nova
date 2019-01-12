@@ -13,11 +13,11 @@ pub struct PrettyLevel(pub Level);
 impl fmt::Display for PrettyLevel {
   fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
     match self.0 {
-      Level::Trace => write!(f, "{}… TRCE{}", Color::White, Color::Reset),
-      Level::Debug => write!(f, "{} DEBG{}", Color::BrightMagenta, Color::Reset),
-      Level::Info => write!(f, "{} INFO{}", Color::BrightBlue, Color::Reset),
-      Level::Warn => write!(f, "{} WARN{}", Color::BrightYellow, Color::Reset),
-      Level::Error => write!(f, "{} ERRO{}", Color::BrightRed, Color::Reset),
+      Level::Trace => write!(f, "{}… TRACE{}", Color::White, Color::Reset),
+      Level::Debug => write!(f, "{} DEBUG{}", Color::BrightMagenta, Color::Reset),
+      Level::Info => write!(f, "{}  INFO{}", Color::BrightBlue, Color::Reset),
+      Level::Warn => write!(f, "{}  WARN{}", Color::BrightYellow, Color::Reset),
+      Level::Error => write!(f, "{} ERROR {}", Color::BrightRed, Color::Reset),
     }
   }
 }

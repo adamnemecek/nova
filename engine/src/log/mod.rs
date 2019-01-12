@@ -18,13 +18,13 @@ pub use log::{debug, error, info, trace, warn};
 
 use self::color::*;
 use crate::ecs;
-use crate::Engine;
+use crate::Context;
 
 /// Sets up the engine instance for logging.
 ///
 /// This will add a [`Logger`] resource that can be retrieved with
 /// [`get_logger()`].
-pub fn setup(engine: &mut Engine) {
+pub(crate) fn setup(engine: &mut Context) {
   let logger = Logger::default();
 
   if logger.set_as_default().is_err() {
@@ -36,12 +36,12 @@ pub fn setup(engine: &mut Engine) {
   engine.put_resource(logger);
 }
 
-/// Gets the [`Logger`] resource registered to the engine instance.
-pub fn get_logger(engine: &mut Engine) -> &Logger {
-  engine.get_resource_mut()
+/// Gets the main [`Logger`] resource for the given context.
+pub fn get_logger(engine: &mut Context) -> &mut Logger {
+  engine.get_resource()
 }
 
-/// Fetches the [`Logger`] resource registered to the engine instance.
-pub fn fetch_logger(engine: &Engine) -> ecs::FetchResource<Logger> {
+/// Fetches the main [`Logger`] resource for the given context.
+pub fn fetch_logger(engine: &Context) -> ecs::FetchResource<Logger> {
   engine.fetch_resource()
 }

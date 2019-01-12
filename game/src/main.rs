@@ -1,31 +1,21 @@
+#![feature(async_await, futures_api, await_macro)]
+
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
 use nova::log;
-use nova::time;
-use nova::window::Window;
+use nova::process;
 
 pub fn main() {
-  let mut engine = nova::Engine::new();
-  let log = log::get_logger(&mut engine).with_source("game");
+  nova::start(run);
+}
 
-  time::setup(&mut engine);
+async fn run(engine: nova::EngineHandle) {
+  let log = engine.execute(|ctx| log::fetch_logger(ctx).with_source("tvb"));
 
-  let mut rate_limiter = time::RateLimiter::new();
-  let mut window = Window::create(&mut engine).expect("Could not create window");
+  log.info("Hello from async.");
 
-  loop {
-    rate_limiter.begin();
+  await!(process::next_tick());
 
-    time::update_clock(&mut engine);
-
-    log.trace("Frame.").with(
-      "delta_time",
-      engine.get_resource_mut::<time::Clock>().delta_time,
-    );
-
-    window.update(&mut engine);
-
-    rate_limiter.wait_for_full_duration(time::Duration::ONE_60TH_SEC);
-  }
+  log.info("Second frame.");
 }

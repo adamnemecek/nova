@@ -2,34 +2,64 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#![feature(futures_api, drain_filter, arbitrary_self_types)]
+
 // TODO: Remove when RLS supports it.
-extern crate crossbeam;
 extern crate derive_more;
-#[cfg(windows)]
-extern crate gfx_backend_dx12;
-#[cfg(target_os = "macos")]
-extern crate gfx_backend_metal;
-#[cfg(all(unix, not(target_os = "macos")))]
-extern crate gfx_backend_vulkan;
-extern crate gfx_hal;
-extern crate gfx_memory;
-extern crate glsl_to_spirv;
-extern crate image;
-extern crate nalgebra;
-extern crate num_traits;
-extern crate smallvec;
 extern crate specs;
 extern crate specs_derive;
-extern crate winit;
+
+use std::cell::RefCell;
+use std::future::Future;
+use std::rc::Rc;
 
 pub mod ecs;
-pub mod graphics;
 pub mod log;
-pub mod math;
-pub mod time;
-pub mod utils;
-pub mod window;
+pub mod process;
 
-mod engine;
+mod context;
 
-pub use self::engine::Engine;
+pub use self::context::*;
+
+#[derive(Clone)]
+pub struct EngineHandle(Rc<RefCell<Context>>);
+
+impl EngineHandle {
+  pub fn execute<R>(&self, func: impl FnOnce(&Context) -> R) -> R {
+    let mut engine = self.0.borrow();
+
+    func(&mut engine)
+  }
+
+  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut Context) -> R) -> R {
+    let mut engine = self.0.borrow_mut();
+
+    func(&mut engine)
+  }
+}
+
+pub fn start<F>(init: impl FnOnce(EngineHandle) -> F)
+where
+  F: Future<Output = ()> + 'static,
+{
+  let mut engine = Context {
+    world: specs::World::new(),
+  };
+
+  log::setup(&mut engine);
+
+  let engine = EngineHandle(Rc::new(RefCell::new(engine)));
+  let mut executor = process::Executor::new(&engine);
+
+  process::spawn_fn(&engine, init);
+
+  loop {
+    executor.tick();
+
+    engine.execute_mut(|ctx| {
+      ctx.world.maintain();
+    });
+
+    std::thread::sleep_ms(1000);
+  }
+}

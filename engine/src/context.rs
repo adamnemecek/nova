@@ -3,26 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::ecs;
-use crate::log;
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
-pub struct Engine {
+pub struct Context {
   pub(crate) world: specs::World,
 }
 
-impl Engine {
-  /// Creates a new engine instance.
-  pub fn new() -> Self {
-    let mut engine = Engine {
-      world: specs::World::new(),
-    };
-
-    log::setup(&mut engine);
-
-    engine
-  }
-
+impl Context {
   /// Gets whether or not the engine has a resource of type `T`.
   pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
     self.world.res.has_value::<T>()
@@ -43,7 +31,7 @@ impl Engine {
       self.put_resource(T::default());
     }
 
-    self.get_resource_mut()
+    self.get_resource()
   }
 
   /// Fetches a reference to a resource in the engine instance.
@@ -67,48 +55,40 @@ impl Engine {
   }
 
   /// Gets a mutable reference to a resource in an engine instance. This is more
-  /// efficient than fetching a resource.
+  /// efficient than fetching a resource but requires a `&mut Context`.
   ///
   /// # Panics
   ///
   /// This function panics if the resource does not exist.
-  pub fn get_resource_mut<T: ecs::Resource>(&mut self) -> &mut T {
+  pub fn get_resource<T: ecs::Resource>(&mut self) -> &mut T {
     self
       .world
       .res
       .get_mut()
       .expect("The specified resource does not exist.")
   }
-
-  /// Performs deferred tasks and other engine maintenance. Should be called
-  /// once per frame.
-  pub fn maintain(&mut self) {
-    self.world.maintain()
-  }
 }
 
 // Implement conversions to and from references of equivalent types.
-//
-// These conversions are safe because they are all the same in memory.
-impl AsMut<Engine> for specs::Resources {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
+impl AsMut<Context> for specs::Resources {
+  fn as_mut(&mut self) -> &mut Context {
+    unsafe { &mut *(self as *mut Self as *mut Context) }
   }
 }
 
-impl AsMut<Engine> for specs::World {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
+impl AsMut<Context> for specs::World {
+  fn as_mut(&mut self) -> &mut Context {
+    unsafe { &mut *(self as *mut Self as *mut Context) }
   }
 }
 
-impl AsMut<specs::Resources> for Engine {
+impl AsMut<specs::Resources> for Context {
   fn as_mut(&mut self) -> &mut specs::Resources {
     unsafe { &mut *(self as *mut Self as *mut specs::Resources) }
   }
 }
 
-impl AsMut<specs::World> for Engine {
+impl AsMut<specs::World> for Context {
   fn as_mut(&mut self) -> &mut specs::World {
     unsafe { &mut *(self as *mut Self as *mut specs::World) }
   }

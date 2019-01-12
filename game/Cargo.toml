@@ -1,9 +1,8 @@
 [package]
-name = "nova-game"
+name = "tvb"
 version = "0.1.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
-bflog = "0.3"
 nova = { path = "../engine" }
