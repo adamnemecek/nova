@@ -51,7 +51,11 @@ where
   let engine = EngineHandle(Rc::new(RefCell::new(engine)));
   let mut executor = process::Executor::new(&engine);
 
-  process::spawn_fn(&engine, init);
+  let future = init(engine.clone());
+
+  engine.execute(|ctx| {
+    process::spawn(ctx, future);
+  });
 
   loop {
     executor.tick();
