@@ -7,7 +7,6 @@ use nova::assets;
 use nova::log::Logger;
 use nova::tasks;
 use nova::time;
-use std::io::{self, prelude::*};
 use std::thread;
 
 const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
@@ -29,8 +28,9 @@ pub fn main() {
 async fn run(engine: nova::EngineHandle) {
   let log = Logger::new("tvb");
 
-  let text: io::Result<String> = await!(assets::load(&engine, "test.txt", |file| {
-    let mut file: std::fs::File = file?;
+  let text = await!(assets::load(&engine, "test.txt", |mut file| {
+    use std::io::Read;
+
     let mut string = String::new();
 
     file.read_to_string(&mut string)?;

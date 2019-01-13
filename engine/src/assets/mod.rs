@@ -22,8 +22,8 @@ pub fn init(engine: &EngineHandle, fs: OverlayFs) {
 pub fn load<R: Send + 'static>(
   engine: &EngineHandle,
   path: impl Into<PathBuf>,
-  loader: impl FnMut(io::Result<File>) -> R + Send + 'static,
-) -> tasks::Completion<R> {
+  loader: impl FnMut(File) -> Result<R, LoadError> + Send + 'static,
+) -> tasks::Completion<Result<R, LoadError>> {
   engine.execute(|ctx| {
     let asset_loader = ctx.fetch_resource::<AssetLoader>();
 
