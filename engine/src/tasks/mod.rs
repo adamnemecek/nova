@@ -24,13 +24,6 @@ pub fn spawn(engine: &EngineHandle, future: impl Future<Output = ()> + 'static) 
   });
 }
 
-pub fn spawn_fn<F>(engine: &EngineHandle, func: impl FnOnce(EngineHandle) -> F)
-where
-  F: Future<Output = ()> + 'static,
-{
-  spawn(engine, func(engine.clone()));
-}
-
 pub(crate) fn init(engine: &EngineHandle) {
   engine.execute_mut(|ctx| {
     ctx.ensure_resource::<TaskList>();
