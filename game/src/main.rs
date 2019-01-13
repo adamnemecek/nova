@@ -4,20 +4,30 @@
 extern crate nova;
 
 use nova::log::Logger;
+use nova::process;
 use nova::time;
+use std::thread;
+
+const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 
 pub fn main() {
-  nova::start(run);
+  let engine = nova::init();
+
+  process::spawn(&engine, run());
+
+  loop {
+    engine.tick();
+
+    thread::sleep(FRAME_TIME.into());
+  }
 }
 
-async fn run(engine: nova::EngineHandle) {
+async fn run() {
   let log = Logger::new("tvb");
 
   loop {
-    log
-      .trace("Frame.")
-      .with("delta_time", time::delta_time(&engine));
+    log.trace("Tick.");
 
-    await!(time::delay(&engine, time::Duration::from_secs(1)));
+    await!(process::next_tick());
   }
 }

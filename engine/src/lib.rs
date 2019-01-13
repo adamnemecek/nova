@@ -10,7 +10,6 @@ extern crate specs;
 extern crate specs_derive;
 
 use std::cell::RefCell;
-use std::future::Future;
 use std::rc::Rc;
 
 pub mod ecs;
@@ -41,39 +40,19 @@ impl EngineHandle {
 
     func(&mut engine)
   }
+
+  pub fn tick(&self) {
+    process::tick_all(&self);
+
+    self.execute_mut(Context::maintain)
+  }
 }
 
-pub fn create_engine() -> EngineHandle {
+pub fn init() -> EngineHandle {
+  let _ = log::set_as_default();
   let engine = EngineHandle::new(Context::new());
 
-  time::setup(&engine);
-  process::setup(&engine);
+  process::init(&engine);
 
   engine
-}
-
-pub fn start<F>(main: impl FnOnce(EngineHandle) -> F)
-where
-  F: Future<Output = ()> + 'static,
-{
-  let _ = log::set_as_default();
-  let engine = create_engine();
-
-  process::spawn_fn(&engine, main);
-
-  let mut rate_limiter = time::RateLimiter::new();
-
-  loop {
-    rate_limiter.begin();
-
-    time::tick(&engine);
-
-    process::tick_all(&engine);
-
-    engine.execute_mut(|ctx| {
-      ctx.maintain();
-    });
-
-    rate_limiter.wait_until(time::Duration::from_hz(60));
-  }
 }

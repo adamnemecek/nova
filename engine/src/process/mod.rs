@@ -31,15 +31,15 @@ where
   spawn(engine, func(engine.clone()));
 }
 
-pub(crate) fn setup(engine: &EngineHandle) {
+pub(crate) fn init(engine: &EngineHandle) {
   engine.execute_mut(|ctx| {
     ctx.ensure_resource::<ProcessList>();
   });
 }
 
 pub(crate) fn tick_all(engine: &EngineHandle) {
-  let mut processes = engine.execute(|ctx| {
-    let mut process_list = ctx.fetch_resource_mut::<ProcessList>();
+  let mut processes = engine.execute_mut(|ctx| {
+    let process_list = ctx.get_resource::<ProcessList>();
 
     process_list.acquire()
   });
@@ -55,8 +55,8 @@ pub(crate) fn tick_all(engine: &EngineHandle) {
     }
   });
 
-  engine.execute(|ctx| {
-    let mut process_list = ctx.fetch_resource_mut::<ProcessList>();
+  engine.execute_mut(|ctx| {
+    let process_list = ctx.get_resource::<ProcessList>();
 
     process_list.release(processes);
   })
