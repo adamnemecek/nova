@@ -3,9 +3,11 @@
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
+use nova::assets;
 use nova::log::Logger;
 use nova::tasks;
 use nova::time;
+use std::io::{self, prelude::*};
 use std::thread;
 
 const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
@@ -13,7 +15,9 @@ const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 pub fn main() {
   let engine = nova::create();
 
-  tasks::spawn(&engine, run());
+  assets::init(&engine, Default::default());
+
+  tasks::spawn(&engine, run(engine.clone()));
 
   loop {
     nova::tick(&engine, FRAME_TIME);
@@ -22,12 +26,25 @@ pub fn main() {
   }
 }
 
-async fn run() {
+async fn run(engine: nova::EngineHandle) {
   let log = Logger::new("tvb");
 
-  loop {
-    log.trace("Tick.");
+  let text: io::Result<String> = await!(assets::load(&engine, "test.txt", |file| {
+    let mut file: std::fs::File = file?;
+    let mut string = String::new();
 
-    await!(tasks::next_tick());
-  }
+    file.read_to_string(&mut string)?;
+
+    Ok(string)
+  }));
+
+  match text {
+    Ok(text) => {
+      log.info(text);
+    }
+
+    Err(err) => {
+      log.error("Error loading file.").with("err", err);
+    }
+  };
 }

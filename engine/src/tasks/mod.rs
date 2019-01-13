@@ -3,10 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod atomic_wake;
+mod completion;
 mod next_tick;
 mod task_list;
 
 use self::atomic_wake::*;
+pub use self::completion::*;
 pub use self::next_tick::*;
 pub use self::task_list::*;
 use super::EngineHandle;

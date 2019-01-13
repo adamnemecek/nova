@@ -260,6 +260,7 @@ name = "nova"
 version = "0.2.0"
 dependencies = [
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crossbeam 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
