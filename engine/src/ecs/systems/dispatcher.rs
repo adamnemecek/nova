@@ -13,7 +13,7 @@ pub struct Dispatcher(specs::Dispatcher<'static, 'static>);
 impl Dispatcher {
   /// Runs all systems once in parallel on a thread pool.
   pub fn dispatch(&mut self, engine: &mut Context) {
-    self.0.dispatch(&engine.world.res);
+    self.0.dispatch(engine.as_mut());
   }
 }
 
@@ -48,7 +48,7 @@ impl DispatcherBuilder {
   pub fn build(self, engine: &mut Context) -> Dispatcher {
     let mut dispatcher = self.0.build();
 
-    dispatcher.setup(&mut engine.world.res);
+    dispatcher.setup(engine.as_mut());
     dispatcher.into()
   }
 }

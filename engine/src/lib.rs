@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#![feature(futures_api, drain_filter, arbitrary_self_types, const_fn)]
+#![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
 // TODO: Remove when RLS supports it.
 extern crate derive_more;
@@ -26,16 +26,20 @@ pub use self::context::*;
 pub struct EngineHandle(Rc<RefCell<Context>>);
 
 impl EngineHandle {
-  pub fn execute<R>(&self, func: impl FnOnce(&Context) -> R) -> R {
-    let mut engine = self.0.borrow();
-
-    func(&mut engine)
+  pub(crate) fn new(ctx: Context) -> Self {
+    EngineHandle(Rc::new(RefCell::new(ctx)))
   }
 
-  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut Context) -> R) -> R {
+  pub fn execute(&self, func: impl FnOnce(&Context)) {
+    let mut engine = self.0.borrow();
+
+    func(&mut engine);
+  }
+
+  pub fn execute_mut(&self, func: impl FnOnce(&mut Context)) {
     let mut engine = self.0.borrow_mut();
 
-    func(&mut engine)
+    func(&mut engine);
   }
 }
 
@@ -43,29 +47,31 @@ pub fn start<F>(main: impl FnOnce(EngineHandle) -> F)
 where
   F: Future<Output = ()> + 'static,
 {
-  let mut engine = Context {
-    world: specs::World::new(),
-  };
+  let _ = log::set_as_default();
 
-  log::setup(&mut engine);
-  time::setup(&mut engine);
+  let engine = EngineHandle::new(Context::new());
 
-  let engine = EngineHandle(Rc::new(RefCell::new(engine)));
-
-  let mut process_executor = process::Executor::new(&engine);
   let mut rate_limiter = time::RateLimiter::new();
+  let mut process_executor = process::Executor::new(&engine);
 
-  let main = main(engine.clone());
-
-  engine.execute(|ctx| process::spawn(ctx, main));
+  process::spawn_fn(&engine, main);
 
   loop {
     rate_limiter.begin();
 
-    engine.execute(time::tick);
-    process_executor.tick();
-    engine.execute_mut(Context::maintain);
+    engine.execute_mut(|ctx| {
+      let mut clock = ctx.fetch_resource_mut::<time::Clock>();
+      let settings = ctx.fetch_resource_mut::<time::Settings>();
 
-    rate_limiter.wait_for_full_duration(time::Duration::from_hz(60));
+      clock.tick(&settings);
+    });
+
+    process_executor.tick();
+
+    engine.execute_mut(|ctx| {
+      ctx.maintain();
+    });
+
+    rate_limiter.wait_until(time::Duration::from_hz(60));
   }
 }

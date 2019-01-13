@@ -7,18 +7,19 @@ mod duration;
 mod instant;
 mod rate_limiter;
 mod settings;
+mod timer;
 
 pub use self::clock::*;
 pub use self::duration::*;
 pub use self::instant::*;
 pub use self::rate_limiter::*;
 pub use self::settings::*;
+pub use self::timer::*;
 
-use super::Context;
+use super::EngineHandle;
 
-/// Sets up the `time` module for the given context by ensuring the required
-/// resources exist.
-pub(crate) fn setup(ctx: &mut Context) {
-  ctx.ensure_resource::<Clock>();
-  ctx.ensure_resource::<Settings>();
+pub async fn delay(engine: &EngineHandle, duration: Duration) {
+  let mut timer = Timer::new(engine);
+
+  await!(timer.until(duration));
 }

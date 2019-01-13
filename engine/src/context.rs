@@ -3,14 +3,28 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::ecs;
+use crate::process;
+use crate::time;
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
 pub struct Context {
-  pub(crate) world: specs::World,
+  world: specs::World,
 }
 
 impl Context {
+  pub(crate) fn new() -> Self {
+    let mut ctx = Context {
+      world: specs::World::new(),
+    };
+
+    ctx.ensure_resource::<time::Settings>();
+    ctx.ensure_resource::<time::Clock>();
+    ctx.ensure_resource::<process::Processes>();
+
+    ctx
+  }
+
   /// Gets whether or not the engine has a resource of type `T`.
   pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
     self.world.res.has_value::<T>()
@@ -68,7 +82,7 @@ impl Context {
       .expect("The specified resource does not exist.")
   }
 
-  pub(crate) fn maintain(&mut self) {
+  pub fn maintain(&mut self) {
     self.world.maintain();
   }
 }

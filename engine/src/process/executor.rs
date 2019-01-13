@@ -17,10 +17,6 @@ struct Item {
 
 impl Executor {
   pub fn new(engine: &EngineHandle) -> Executor {
-    engine.execute_mut(|ctx| {
-      ctx.ensure_resource::<Processes>();
-    });
-
     Executor {
       engine: engine.clone(),
       items: Vec::new(),

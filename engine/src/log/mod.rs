@@ -14,34 +14,17 @@ pub use self::context::*;
 pub use self::formats::*;
 pub use self::level::*;
 pub use self::logger::*;
-pub use log::{debug, error, info, trace, warn};
+pub use log::{debug, error, info, trace, warn, SetLoggerError};
 
 use self::color::*;
-use crate::ecs;
-use crate::Context;
 
 /// Sets up the engine instance for logging.
 ///
 /// This will add a [`Logger`] resource that can be retrieved with
 /// [`get_logger()`].
-pub(crate) fn setup(engine: &mut Context) {
-  let logger = Logger::default();
+pub fn set_as_default() -> Result<(), SetLoggerError> {
+  let logger = Box::new(Logger::new(""));
 
-  if logger.set_as_default().is_err() {
-    logger
-      .with_source("nova::log")
-      .warn("Could not set the logger as default: a logging implementation has already been initialized. Logging macros will continue to target the existing implementation.");
-  }
-
-  engine.put_resource(logger);
-}
-
-/// Gets the main [`Logger`] resource for the given context.
-pub fn get_logger(engine: &mut Context) -> &mut Logger {
-  engine.get_resource()
-}
-
-/// Fetches the main [`Logger`] resource for the given context.
-pub fn fetch_logger(engine: &Context) -> ecs::FetchResource<Logger> {
-  engine.fetch_resource()
+  log::set_max_level(logger.max_level);
+  log::set_boxed_logger(logger)
 }

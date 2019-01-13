@@ -33,22 +33,6 @@ impl Logger {
     }
   }
 
-  /// Sets this logger as the global default implementation for the standard log
-  /// macros.
-  pub fn set_as_default(&self) -> Result<(), SetAsDefaultError> {
-    log::set_max_level(self.max_level);
-    log::set_boxed_logger(Box::new(self.clone()))
-  }
-
-  /// Creates a new logger with a different source name but the same settings.
-  pub fn with_source(&self, name: impl Into<String>) -> Self {
-    Logger {
-      out: io::stdout(),
-      source: name.into(),
-      max_level: self.max_level,
-    }
-  }
-
   /// Outputs a trace level message.
   pub fn trace(&self, msg: impl fmt::Display) -> ContextBuilder {
     self.log(&self.source, Level::Trace, msg)
@@ -110,13 +94,6 @@ impl Logger {
 
     // Return a context builder so the caller can add more information.
     ContextBuilder::new(out)
-  }
-}
-
-// Implement `Default` to create a new logger with no source name.
-impl Default for Logger {
-  fn default() -> Self {
-    Logger::new(String::default())
   }
 }
 

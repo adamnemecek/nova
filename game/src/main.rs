@@ -3,7 +3,7 @@
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
-use nova::log;
+use nova::log::Logger;
 use nova::process;
 use nova::time;
 
@@ -12,13 +12,13 @@ pub fn main() {
 }
 
 async fn run(engine: nova::EngineHandle) {
-  let log = engine.execute(|ctx| log::fetch_logger(ctx).with_source("tvb"));
+  let log = Logger::new("tvb");
 
   loop {
-    let delta_time = engine.execute(time::delta);
+    engine.execute(|ctx| {
+      log.trace("Frame.").with("delta_time", time::delta(ctx));
+    });
 
-    log.trace("Frame.").with("delta_time", delta_time);
-
-    await!(process::next_tick());
+    await!(time::delay(&engine, time::Duration::from_secs(1)));
   }
 }

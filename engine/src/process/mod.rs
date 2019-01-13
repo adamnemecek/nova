@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Context;
+use super::EngineHandle;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -19,7 +19,7 @@ pub struct Processes {
 }
 
 impl Processes {
-  pub fn start(&mut self, process: impl Future<Output = ()> + 'static) {
+  pub fn spawn(&mut self, process: impl Future<Output = ()> + 'static) {
     self.pending.push(Process(Box::pin(process)));
   }
 }
@@ -33,6 +33,17 @@ struct Process(Pin<Box<dyn Future<Output = ()>>>);
 unsafe impl Send for Process {}
 unsafe impl Sync for Process {}
 
-pub fn spawn(ctx: &Context, future: impl Future<Output = ()> + 'static) {
-  Processes::start(&mut ctx.fetch_resource_mut(), future);
+pub fn spawn(engine: &EngineHandle, future: impl Future<Output = ()> + 'static) {
+  engine.execute(|ctx| {
+    let mut processes = ctx.fetch_resource_mut::<Processes>();
+
+    processes.spawn(future);
+  });
+}
+
+pub fn spawn_fn<F>(engine: &EngineHandle, func: impl FnOnce(EngineHandle) -> F)
+where
+  F: Future<Output = ()> + 'static,
+{
+  spawn(engine, func(engine.clone()));
 }
