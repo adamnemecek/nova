@@ -23,3 +23,26 @@ pub async fn delay(engine: &EngineHandle, duration: Duration) {
 
   await!(timer.until(duration));
 }
+
+pub fn delta_time(engine: &EngineHandle) -> Duration {
+  engine.execute(|ctx| ctx.fetch_resource::<Clock>().delta_time)
+}
+
+pub(crate) fn setup(engine: &EngineHandle) {
+  engine.execute_mut(|ctx| {
+    ctx.ensure_resource::<Settings>();
+    ctx.ensure_resource::<Clock>();
+  });
+}
+
+/// Updates the [`Clock`] resource of the given engine with the current time.
+///
+/// The clock is updated using the settings in the [`Settings`] resource.
+pub(crate) fn tick(engine: &EngineHandle) {
+  engine.execute(|ctx| {
+    let settings = ctx.fetch_resource::<Settings>();
+    let mut clock = ctx.fetch_resource_mut::<Clock>();
+
+    clock.tick(&settings);
+  });
+}

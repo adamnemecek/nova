@@ -6,7 +6,7 @@ use std::sync::atomic::{self, AtomicBool};
 use std::sync::Arc;
 use std::task::Wake;
 
-pub struct AtomicWake(AtomicBool);
+pub(super) struct AtomicWake(AtomicBool);
 
 impl AtomicWake {
   pub fn new() -> Self {

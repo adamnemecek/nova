@@ -49,7 +49,7 @@ impl RateLimiter {
   ///
   /// If [`begin()`] has not been called, the time since the rate limiter was
   /// created is used instead.
-  pub fn wait_for_full_duration(&mut self, duration: Duration) {
+  pub fn wait_until(&mut self, duration: Duration) {
     // Repeatedly sleep until `SLEEP_UNTIL` time is left before the duration
     // elapses.
     let threshold = duration - SLEEP_UNTIL;

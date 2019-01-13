@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Duration, Instant, Settings};
-use crate::Context;
 
 /// A resource that stores time information for an engine loop.
 pub struct Clock {
@@ -47,19 +46,4 @@ impl Default for Clock {
   fn default() -> Self {
     Clock::new()
   }
-}
-
-/// Updates the [`Clock`] resource of the given engine instance with the current
-/// time.
-///
-/// The clock is updated using the settings in the [`Settings`] resource.
-pub fn tick(ctx: &Context) {
-  let settings = ctx.fetch_resource::<Settings>();
-  let mut clock = ctx.fetch_resource_mut::<Clock>();
-
-  clock.tick(&settings);
-}
-
-pub fn delta(ctx: &Context) -> Duration {
-  ctx.fetch_resource::<Clock>().delta_time
 }

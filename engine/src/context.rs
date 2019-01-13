@@ -3,8 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::ecs;
-use crate::process;
-use crate::time;
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
@@ -14,15 +12,9 @@ pub struct Context {
 
 impl Context {
   pub(crate) fn new() -> Self {
-    let mut ctx = Context {
+    Context {
       world: specs::World::new(),
-    };
-
-    ctx.ensure_resource::<time::Settings>();
-    ctx.ensure_resource::<time::Clock>();
-    ctx.ensure_resource::<process::Processes>();
-
-    ctx
+    }
   }
 
   /// Gets whether or not the engine has a resource of type `T`.

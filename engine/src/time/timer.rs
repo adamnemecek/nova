@@ -20,16 +20,12 @@ impl Timer {
   }
 
   pub async fn until(&mut self, duration: Duration) {
-    let mut elapsed = self.elapsed;
-
-    while elapsed < duration {
+    while self.elapsed < duration {
       await!(process::next_tick());
 
-      self.engine.execute(|ctx| {
-        elapsed += super::delta(ctx);
-      })
+      self.elapsed += super::delta_time(&self.engine);
     }
 
-    self.elapsed = elapsed - duration;
+    self.elapsed -= duration;
   }
 }

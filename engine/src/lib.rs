@@ -30,17 +30,26 @@ impl EngineHandle {
     EngineHandle(Rc::new(RefCell::new(ctx)))
   }
 
-  pub fn execute(&self, func: impl FnOnce(&Context)) {
+  pub fn execute<R>(&self, func: impl FnOnce(&Context) -> R) -> R {
     let mut engine = self.0.borrow();
 
-    func(&mut engine);
+    func(&mut engine)
   }
 
-  pub fn execute_mut(&self, func: impl FnOnce(&mut Context)) {
+  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut Context) -> R) -> R {
     let mut engine = self.0.borrow_mut();
 
-    func(&mut engine);
+    func(&mut engine)
   }
+}
+
+pub fn create_engine() -> EngineHandle {
+  let engine = EngineHandle::new(Context::new());
+
+  time::setup(&engine);
+  process::setup(&engine);
+
+  engine
 }
 
 pub fn start<F>(main: impl FnOnce(EngineHandle) -> F)
@@ -48,25 +57,18 @@ where
   F: Future<Output = ()> + 'static,
 {
   let _ = log::set_as_default();
-
-  let engine = EngineHandle::new(Context::new());
-
-  let mut rate_limiter = time::RateLimiter::new();
-  let mut process_executor = process::Executor::new(&engine);
+  let engine = create_engine();
 
   process::spawn_fn(&engine, main);
+
+  let mut rate_limiter = time::RateLimiter::new();
 
   loop {
     rate_limiter.begin();
 
-    engine.execute_mut(|ctx| {
-      let mut clock = ctx.fetch_resource_mut::<time::Clock>();
-      let settings = ctx.fetch_resource_mut::<time::Settings>();
+    time::tick(&engine);
 
-      clock.tick(&settings);
-    });
-
-    process_executor.tick();
+    process::tick_all(&engine);
 
     engine.execute_mut(|ctx| {
       ctx.maintain();
