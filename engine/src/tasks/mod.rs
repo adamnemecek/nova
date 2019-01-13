@@ -4,11 +4,11 @@
 
 mod atomic_wake;
 mod next_tick;
-mod process_list;
+mod task_list;
 
 use self::atomic_wake::*;
 pub use self::next_tick::*;
-pub use self::process_list::*;
+pub use self::task_list::*;
 use super::EngineHandle;
 use std::future::Future;
 use std::pin::Pin;
@@ -18,9 +18,9 @@ use std::task::Poll;
 
 pub fn spawn(engine: &EngineHandle, future: impl Future<Output = ()> + 'static) {
   engine.execute(|ctx| {
-    let mut processes = ctx.fetch_resource_mut::<ProcessList>();
+    let mut task_list = ctx.fetch_resource_mut::<TaskList>();
 
-    processes.spawn(future);
+    task_list.spawn(future);
   });
 }
 
@@ -33,42 +33,42 @@ where
 
 pub(crate) fn init(engine: &EngineHandle) {
   engine.execute_mut(|ctx| {
-    ctx.ensure_resource::<ProcessList>();
+    ctx.ensure_resource::<TaskList>();
   });
 }
 
 pub(crate) fn tick_all(engine: &EngineHandle) {
-  let mut processes = engine.execute_mut(|ctx| {
-    let process_list = ctx.get_resource::<ProcessList>();
+  let mut tasks = engine.execute_mut(|ctx| {
+    let task_list = ctx.get_resource::<TaskList>();
 
-    process_list.acquire()
+    task_list.acquire()
   });
 
-  processes.drain_filter(|process| {
-    if !process.is_awake() {
+  tasks.drain_filter(|task| {
+    if !task.is_awake() {
       return false;
     }
 
-    match process.poll() {
+    match task.poll() {
       Poll::Ready(_) => true,
       Poll::Pending => false,
     }
   });
 
   engine.execute_mut(|ctx| {
-    let process_list = ctx.get_resource::<ProcessList>();
+    let task_list = ctx.get_resource::<TaskList>();
 
-    process_list.release(processes);
+    task_list.release(tasks);
   })
 }
 
-struct Process {
+struct Task {
   future: Pin<Box<dyn Future<Output = ()>>>,
   wake: Arc<AtomicWake>,
   local_waker: LocalWaker,
 }
 
-impl Process {
+impl Task {
   pub fn is_awake(&self) -> bool {
     self.wake.is_awake()
   }
@@ -79,9 +79,9 @@ impl Process {
   }
 }
 
-// A `Process` is temporarily stored in the `Processes` resource until it is
-// taken by an `Executor` on the next frame. Because the `Process` isn't
-// accessed or modified in the meantime, it can be safely treated as
-// `Send + Sync` even though it is neither.
-unsafe impl Send for Process {}
-unsafe impl Sync for Process {}
+// A `Task` is temporarily stored in the `TaskList` resource until it is taken
+// with `acquire`. Because the `Task` isn't accessed or modified in the
+// meantime, it can be safely treated as `Send + Sync` even though it is
+// neither.
+unsafe impl Send for Task {}
+unsafe impl Sync for Task {}

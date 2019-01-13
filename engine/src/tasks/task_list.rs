@@ -2,46 +2,46 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{AtomicWake, Process};
+use super::{AtomicWake, Task};
 use std::future::Future;
 use std::sync::Arc;
 use std::task;
 
-pub struct ProcessList {
-  spawning: Vec<Process>,
-  running: Option<Vec<Process>>,
+pub struct TaskList {
+  spawning: Vec<Task>,
+  running: Option<Vec<Task>>,
 }
 
-impl ProcessList {
+impl TaskList {
   pub fn spawn(&mut self, future: impl Future<Output = ()> + 'static) {
     let wake = Arc::new(AtomicWake::new());
     let local_waker = task::local_waker_from_nonlocal(wake.clone());
 
-    self.spawning.push(Process {
+    self.spawning.push(Task {
       future: Box::pin(future),
       wake,
       local_waker,
     });
   }
 
-  pub(super) fn acquire(&mut self) -> Vec<Process> {
+  pub(super) fn acquire(&mut self) -> Vec<Task> {
     let mut running = self
       .running
       .take()
-      .expect("The process list has already been acquired.");
+      .expect("The task list has already been acquired.");
 
     running.extend(self.spawning.drain(..));
     running
   }
 
-  pub(super) fn release(&mut self, running: Vec<Process>) {
+  pub(super) fn release(&mut self, running: Vec<Task>) {
     self.running = Some(running);
   }
 }
 
-impl Default for ProcessList {
+impl Default for TaskList {
   fn default() -> Self {
-    ProcessList {
+    TaskList {
       spawning: Vec::new(),
       running: Some(Vec::new()),
     }

@@ -14,7 +14,7 @@ use std::rc::Rc;
 
 pub mod ecs;
 pub mod log;
-pub mod process;
+pub mod tasks;
 pub mod time;
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ impl EngineHandle {
   }
 
   pub fn tick(&self) {
-    process::tick_all(&self);
+    tasks::tick_all(&self);
 
     self.execute_mut(ecs::Context::maintain)
   }
@@ -48,7 +48,7 @@ pub fn create_engine() -> EngineHandle {
   let _ = log::set_as_default();
   let engine = EngineHandle::new(ecs::Context::new());
 
-  process::init(&engine);
+  tasks::init(&engine);
 
   engine
 }

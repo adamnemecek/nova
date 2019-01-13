@@ -4,7 +4,7 @@
 extern crate nova;
 
 use nova::log::Logger;
-use nova::process;
+use nova::tasks;
 use nova::time;
 use std::thread;
 
@@ -13,7 +13,7 @@ const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 pub fn main() {
   let engine = nova::create_engine();
 
-  process::spawn(&engine, run());
+  tasks::spawn(&engine, run());
 
   loop {
     engine.tick();
@@ -28,6 +28,6 @@ async fn run() {
   loop {
     log.trace("Tick.");
 
-    await!(process::next_tick());
+    await!(tasks::next_tick());
   }
 }
