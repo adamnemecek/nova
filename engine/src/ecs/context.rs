@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::ecs;
+use super::{FetchResource, FetchResourceMut, Resource};
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
@@ -18,13 +18,13 @@ impl Context {
   }
 
   /// Gets whether or not the engine has a resource of type `T`.
-  pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
+  pub fn has_resource<T: Resource>(&mut self) -> bool {
     self.world.res.has_value::<T>()
   }
 
   /// Adds a resource to the engine instance. If the resource already existed,
   /// the old value is overwritten.
-  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
+  pub fn put_resource(&mut self, resource: impl Resource) {
     self.world.res.insert(resource);
   }
 
@@ -32,7 +32,7 @@ impl Context {
   /// the [`Default`] value of `T` is added to the engine.
   ///
   /// This function returns a mutable reference to the new or existing resource.
-  pub fn ensure_resource<T: ecs::Resource + Default>(&mut self) -> &mut T {
+  pub fn ensure_resource<T: Resource + Default>(&mut self) -> &mut T {
     if !self.has_resource::<T>() {
       self.put_resource(T::default());
     }
@@ -46,7 +46,7 @@ impl Context {
   ///
   /// This function panics if the resource does not exist or is currently
   /// fetched mutably.
-  pub fn fetch_resource<T: ecs::Resource>(&self) -> ecs::FetchResource<T> {
+  pub fn fetch_resource<T: Resource>(&self) -> FetchResource<T> {
     self.world.res.fetch()
   }
 
@@ -56,7 +56,7 @@ impl Context {
   ///
   /// This function panics if the resource does not exist or is already
   /// fetched mutably.
-  pub fn fetch_resource_mut<T: ecs::Resource>(&self) -> ecs::FetchResourceMut<T> {
+  pub fn fetch_resource_mut<T: Resource>(&self) -> FetchResourceMut<T> {
     self.world.res.fetch_mut()
   }
 
@@ -66,7 +66,7 @@ impl Context {
   /// # Panics
   ///
   /// This function panics if the resource does not exist.
-  pub fn get_resource<T: ecs::Resource>(&mut self) -> &mut T {
+  pub fn get_resource<T: Resource>(&mut self) -> &mut T {
     self
       .world
       .res

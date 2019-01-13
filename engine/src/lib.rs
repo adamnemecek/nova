@@ -17,25 +17,21 @@ pub mod log;
 pub mod process;
 pub mod time;
 
-mod context;
-
-pub use self::context::*;
-
 #[derive(Clone)]
-pub struct EngineHandle(Rc<RefCell<Context>>);
+pub struct EngineHandle(Rc<RefCell<ecs::Context>>);
 
 impl EngineHandle {
-  pub(crate) fn new(ctx: Context) -> Self {
+  pub(crate) fn new(ctx: ecs::Context) -> Self {
     EngineHandle(Rc::new(RefCell::new(ctx)))
   }
 
-  pub fn execute<R>(&self, func: impl FnOnce(&Context) -> R) -> R {
+  pub fn execute<R>(&self, func: impl FnOnce(&ecs::Context) -> R) -> R {
     let mut engine = self.0.borrow();
 
     func(&mut engine)
   }
 
-  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut Context) -> R) -> R {
+  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut ecs::Context) -> R) -> R {
     let mut engine = self.0.borrow_mut();
 
     func(&mut engine)
@@ -44,13 +40,13 @@ impl EngineHandle {
   pub fn tick(&self) {
     process::tick_all(&self);
 
-    self.execute_mut(Context::maintain)
+    self.execute_mut(ecs::Context::maintain)
   }
 }
 
-pub fn init() -> EngineHandle {
+pub fn create_engine() -> EngineHandle {
   let _ = log::set_as_default();
-  let engine = EngineHandle::new(Context::new());
+  let engine = EngineHandle::new(ecs::Context::new());
 
   process::init(&engine);
 

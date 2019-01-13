@@ -11,7 +11,7 @@ use std::thread;
 const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 
 pub fn main() {
-  let engine = nova::init();
+  let engine = nova::create_engine();
 
   process::spawn(&engine, run());
 

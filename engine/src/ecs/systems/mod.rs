@@ -5,9 +5,8 @@
 mod dispatcher;
 
 pub use self::dispatcher::{Dispatcher, DispatcherBuilder};
+use super::Context;
 pub use specs::SystemData;
-
-use crate::Context;
 
 /// An ECS system that can be run on a set of resources.
 ///
