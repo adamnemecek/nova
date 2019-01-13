@@ -15,12 +15,13 @@ pub use specs::SystemData;
 pub trait System<'a> {
   type Data: SystemData<'a>;
 
-  /// Sets up the engine instance for running this system.
-  ///
-  /// Components required by the system are automatically registered in the
-  /// engine instance before this function is called, but all other resources
-  /// must be manually added unless they are expected to already exist.
-  fn setup(&mut self, _engine: &mut Context) {}
+  fn setup(&mut self, ctx: &mut Context) {
+    Self::setup_data(ctx);
+  }
+
+  fn setup_data(ctx: &mut Context) {
+    Self::Data::setup(ctx.as_mut());
+  }
 
   /// Runs the system on the given data.
   fn run(&mut self, data: Self::Data);

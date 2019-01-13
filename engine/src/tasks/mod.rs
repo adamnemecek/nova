@@ -37,7 +37,7 @@ pub(crate) fn init(engine: &EngineHandle) {
   });
 }
 
-pub(crate) fn tick_all(engine: &EngineHandle) {
+pub fn tick_all(engine: &EngineHandle) {
   let mut tasks = engine.execute_mut(|ctx| {
     let task_list = ctx.get_resource::<TaskList>();
 

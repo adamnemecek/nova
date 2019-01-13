@@ -6,9 +6,9 @@
 //!
 //! [1]: https://github.com/slide-rs/specs
 
+mod context;
 pub mod derive;
 pub mod systems;
-mod context;
 
 pub mod storages {
   pub use specs::storage::{
@@ -17,16 +17,29 @@ pub mod storages {
   };
 }
 
+pub mod prelude {
+  pub use super::derive::*;
+  pub use super::{
+    Component, Join, ParJoin, ReadComponents, ReadEntities, ReadResource, Resource, System,
+    SystemData, WriteComponents, WriteResource,
+  };
+}
+
+pub use self::context::*;
 pub use self::storages::*;
 pub use self::systems::*;
-pub use self::context::*;
-pub use specs::Component;
-pub use specs::{Join, ParJoin};
-pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
-pub use specs::world::EntitiesRes as Entities;
-pub use specs::Builder as BuildEntity;
-pub use specs::Entities as ReadEntities;
-pub use specs::{Entity, EntityBuilder};
+use super::EngineHandle;
 pub use specs::shred::Resource;
 pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
+pub use specs::world::EntitiesRes as Entities;
+pub use specs::Builder as BuildEntity;
+pub use specs::Component;
+pub use specs::Entities as ReadEntities;
+pub use specs::{Entity, EntityBuilder};
+pub use specs::{Join, ParJoin};
 pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};
+pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
+
+pub fn maintain(engine: &EngineHandle) {
+  engine.execute_mut(Context::maintain);
+}

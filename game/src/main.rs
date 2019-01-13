@@ -11,12 +11,12 @@ use std::thread;
 const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 
 pub fn main() {
-  let engine = nova::create_engine();
+  let engine = nova::create();
 
   tasks::spawn(&engine, run());
 
   loop {
-    engine.tick();
+    nova::tick(&engine, FRAME_TIME);
 
     thread::sleep(FRAME_TIME.into());
   }

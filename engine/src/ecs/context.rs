@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{FetchResource, FetchResourceMut, Resource};
+use super::{Component, FetchResource, FetchResourceMut, Resource, System, SystemData};
 
 /// Container for all ECS resources including entities and components.
 #[derive(Default)]
@@ -74,6 +74,17 @@ impl Context {
       .expect("The specified resource does not exist.")
   }
 
+  pub fn register<C: Component>(&mut self)
+  where
+    C::Storage: Default,
+  {
+    self.world.register::<C>();
+  }
+
+  pub fn run_system<S: for<'a> System<'a>>(&self, system: &mut S) {
+    system.run(S::Data::fetch(self.as_ref()));
+  }
+
   pub fn maintain(&mut self) {
     self.world.maintain();
   }
@@ -89,6 +100,12 @@ impl AsMut<Context> for specs::Resources {
 impl AsMut<Context> for specs::World {
   fn as_mut(&mut self) -> &mut Context {
     unsafe { &mut *(self as *mut Self as *mut Context) }
+  }
+}
+
+impl AsRef<specs::Resources> for Context {
+  fn as_ref(&self) -> &specs::Resources {
+    unsafe { &*(self as *const Self as *const specs::Resources) }
   }
 }
 

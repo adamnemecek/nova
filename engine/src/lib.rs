@@ -9,46 +9,28 @@ extern crate derive_more;
 extern crate specs;
 extern crate specs_derive;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 pub mod ecs;
+mod handle;
 pub mod log;
 pub mod tasks;
 pub mod time;
 
-#[derive(Clone)]
-pub struct EngineHandle(Rc<RefCell<ecs::Context>>);
+pub use self::handle::*;
 
-impl EngineHandle {
-  pub(crate) fn new(ctx: ecs::Context) -> Self {
-    EngineHandle(Rc::new(RefCell::new(ctx)))
-  }
-
-  pub fn execute<R>(&self, func: impl FnOnce(&ecs::Context) -> R) -> R {
-    let mut engine = self.0.borrow();
-
-    func(&mut engine)
-  }
-
-  pub fn execute_mut<R>(&self, func: impl FnOnce(&mut ecs::Context) -> R) -> R {
-    let mut engine = self.0.borrow_mut();
-
-    func(&mut engine)
-  }
-
-  pub fn tick(&self) {
-    tasks::tick_all(&self);
-
-    self.execute_mut(ecs::Context::maintain)
-  }
-}
-
-pub fn create_engine() -> EngineHandle {
+pub fn create() -> EngineHandle {
   let _ = log::set_as_default();
   let engine = EngineHandle::new(ecs::Context::new());
 
   tasks::init(&engine);
+  time::clocks::init(&engine);
 
   engine
+}
+
+pub fn tick(engine: &EngineHandle, delta_time: time::Duration) {
+  tasks::tick_all(engine);
+
+  ecs::maintain(engine);
+
+  time::clocks::tick(engine, delta_time);
 }

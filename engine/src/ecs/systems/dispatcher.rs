@@ -65,10 +65,6 @@ where
   fn setup(&mut self, res: &mut specs::Resources) {
     // Always set up the data.
     T::Data::setup(res);
-
-    let engine: &mut Context = res.as_mut();
-
-    System::setup(&mut self.0, engine);
   }
 
   fn run(&mut self, data: Self::SystemData) {
