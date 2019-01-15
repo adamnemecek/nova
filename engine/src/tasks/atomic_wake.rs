@@ -6,7 +6,7 @@ use std::sync::atomic::{self, AtomicBool};
 use std::sync::Arc;
 use std::task::Wake;
 
-pub(super) struct AtomicWake(AtomicBool);
+pub struct AtomicWake(AtomicBool);
 
 impl AtomicWake {
   pub fn new() -> Self {
@@ -25,5 +25,11 @@ impl AtomicWake {
 impl Wake for AtomicWake {
   fn wake(arc_self: &Arc<Self>) {
     arc_self.0.store(true, atomic::Ordering::Relaxed);
+  }
+}
+
+impl Default for AtomicWake {
+  fn default() -> Self {
+    AtomicWake::new()
   }
 }

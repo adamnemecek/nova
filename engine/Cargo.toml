@@ -9,5 +9,8 @@ chrono = "0.4"
 crossbeam = "0.4"
 derive_more = "0.13"
 log = { version = "0.4", features = ["std"] }
+nalgebra = "*"
+num-traits = "*"
 specs = "0.14"
 specs-derive = "0.3"
+winit = "0.18"

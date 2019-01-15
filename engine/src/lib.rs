@@ -9,30 +9,12 @@ extern crate crossbeam;
 extern crate derive_more;
 extern crate specs;
 extern crate specs_derive;
+extern crate winit;
 
 pub mod assets;
 pub mod ecs;
-mod handle;
 pub mod log;
+pub mod math;
 pub mod tasks;
 pub mod time;
-
-pub use self::handle::*;
-
-pub fn create() -> EngineHandle {
-  let _ = log::set_as_default();
-  let engine = EngineHandle::new(ecs::Context::new());
-
-  tasks::init(&engine);
-  time::clocks::init(&engine);
-
-  engine
-}
-
-pub fn tick(engine: &EngineHandle, delta_time: time::Duration) {
-  tasks::tick_all(engine);
-
-  ecs::maintain(engine);
-
-  time::clocks::tick(engine, delta_time);
-}
+pub mod window;

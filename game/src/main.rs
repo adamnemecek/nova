@@ -4,47 +4,36 @@
 extern crate nova;
 
 use nova::assets;
-use nova::log::Logger;
-use nova::tasks;
-use nova::time;
+use nova::ecs::prelude::*;
+use nova::log;
+use nova::time::{self, Time};
+use nova::window::{self, Window};
 use std::thread;
 
 const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
 
-pub fn main() {
-  let engine = nova::create();
+pub fn main() -> Result<(), Box<dyn std::error::Error>> {
+  log::set_as_default().ok();
 
-  assets::init(&engine, Default::default());
+  let log = log::Logger::new("tvb");
 
-  tasks::spawn(&engine, run(engine.clone()));
+  let mut world = World::new();
+
+  world.add_resource(assets::OverlayFs::default());
+  world.add_resource(Time::default());
+
+  let mut ticker = time::Ticker::new(time::RealTime::new());
+  let mut window = Window::create(window::Options::default())?;
 
   loop {
-    nova::tick(&engine, FRAME_TIME);
+    window.update();
+
+    ecs::run(&world.res, &mut ticker);
+
+    log
+      .info("Frame.")
+      .with("delta_time", world.read_resource::<Time>().delta);
 
     thread::sleep(FRAME_TIME.into());
   }
-}
-
-async fn run(engine: nova::EngineHandle) {
-  let log = Logger::new("tvb");
-
-  let text = await!(assets::load(&engine, "test.txt", |mut file| {
-    use std::io::Read;
-
-    let mut string = String::new();
-
-    file.read_to_string(&mut string)?;
-
-    Ok(string)
-  }));
-
-  match text {
-    Ok(text) => {
-      log.info(text);
-    }
-
-    Err(err) => {
-      log.error("Error loading file.").with("err", err);
-    }
-  };
 }

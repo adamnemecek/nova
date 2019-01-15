@@ -7,11 +7,11 @@ use std::pin::Pin;
 use std::task::LocalWaker;
 use std::task::Poll;
 
-pub struct NextTick {
+pub struct YieldOnce {
   polled: bool,
 }
 
-impl Future for NextTick {
+impl Future for YieldOnce {
   type Output = ();
 
   fn poll(self: Pin<&mut Self>, waker: &LocalWaker) -> Poll<Self::Output> {
@@ -26,6 +26,6 @@ impl Future for NextTick {
   }
 }
 
-pub fn next_tick() -> NextTick {
-  NextTick { polled: false }
+pub fn yield_once() -> YieldOnce {
+  YieldOnce { polled: false }
 }

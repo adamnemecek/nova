@@ -19,21 +19,27 @@ impl OverlayFs {
 
 impl OverlayFs {
   pub fn read(&self, relative_path: &Path) -> io::Result<File> {
-    let log = crate::log::Logger::new("OverlayFs::read");
-
     for mut path in self.paths.iter().cloned() {
       path.push(relative_path);
 
-      log.trace("Trying:").with("path", &path);
+      match File::open(path) {
+        Ok(file) => {
+          return Ok(file);
+        }
 
-      if let Ok(file) = File::open(path) {
-        return Ok(file);
+        Err(err) => {
+          if err.kind() == io::ErrorKind::NotFound {
+            continue;
+          }
+
+          return Err(err);
+        }
       }
     }
 
     Err(io::Error::new(
       io::ErrorKind::NotFound,
-      "Could not open the given path relative to any paths in the overlay fs.",
+      "Could not open the given path relative to any paths in the OverlayFS.",
     ))
   }
 }

@@ -4,9 +4,31 @@
 
 mod duration;
 mod instant;
+mod source;
+mod ticker;
 
-pub mod clocks;
-
-pub use self::clocks::{Clock, ClockTicker};
 pub use self::duration::*;
 pub use self::instant::*;
+pub use self::source::*;
+pub use self::ticker::*;
+
+use crate::ecs::prelude::*;
+
+pub fn tick(res: &Resources, delta_time: Duration) {
+  ecs::run_once(&res, Ticker::new(delta_time));
+}
+
+#[derive(Debug, Default)]
+pub struct Time {
+  pub ticks: u64,
+  pub total: Duration,
+  pub delta: Duration,
+}
+
+impl Time {
+  pub fn tick(&mut self, delta: Duration) {
+    self.delta = delta;
+    self.total += delta;
+    self.ticks += 1;
+  }
+}
