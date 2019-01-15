@@ -15,6 +15,5 @@ pub mod assets;
 pub mod ecs;
 pub mod log;
 pub mod math;
-pub mod tasks;
 pub mod time;
 pub mod window;
