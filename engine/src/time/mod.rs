@@ -14,10 +14,6 @@ pub use self::ticker::*;
 
 use crate::ecs;
 
-pub fn tick(res: &ecs::Resources, delta_time: Duration) {
-  ecs::run(&res, &mut Ticker::new(delta_time));
-}
-
 #[derive(Debug, Default)]
 pub struct Time {
   pub ticks: u64,

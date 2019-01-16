@@ -3,40 +3,38 @@
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
-use nova::ecs;
+use nova::ecs::prelude::*;
 use nova::log;
-use nova::time;
-use nova::window;
+use nova::time::{self, Time};
+use nova::window::{self, Window};
 use std::thread;
 
-const FRAME_TIME: time::Duration = time::Duration::from_hz(60);
-
 pub fn main() {
-  let log = log::Logger::new("tvb");
-
   log::set_as_default().ok();
 
+  let log = log::Logger::new("tvb");
   let res = &mut ecs::Resources::new();
 
   ecs::init(res);
 
+  let mut events_loop = window::EventsLoop::new();
   let mut ticker = time::Ticker::new(time::RealTime::new());
 
-  ecs::setup(res, &mut ticker);
+  events_loop.setup(res);
+  ticker.setup(res);
 
-  let mut events_loop = window::EventsLoop::new();
-
-  ecs::setup(res, &mut events_loop);
-
-  window::set_title(res, "tvb");
-  window::open(res);
+  Window::fetch_mut(res).set_title("tvb").open();
 
   log.info("Initialized.");
 
-  while !window::is_closed(res) {
-    ecs::run(res, &mut events_loop);
-    ecs::run(res, &mut ticker);
+  while !Window::fetch(res).is_closed() {
+    events_loop.run_now(res);
+    ticker.run_now(res);
 
-    thread::sleep(FRAME_TIME.into());
+    ecs::maintain(res);
+
+    if Time::fetch(res).delta < time::Duration::from_millis(1) {
+      thread::sleep(std::time::Duration::from_millis(1));
+    }
   }
 }

@@ -34,7 +34,7 @@ impl<'a> ecs::System<'a> for EventsLoop {
   type SystemData = ecs::WriteResource<'a, Window>;
 
   fn setup(&mut self, res: &mut ecs::Resources) {
-    ecs::ensure_resource::<Window>(res);
+    res.entry().or_insert_with(Window::default);
   }
 
   fn run(&mut self, mut window: Self::SystemData) {

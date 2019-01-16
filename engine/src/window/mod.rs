@@ -7,20 +7,7 @@ mod events_loop;
 pub use self::events_loop::*;
 pub use winit::{CreationError, WindowEvent};
 
-use crate::ecs;
 use crate::events;
-
-pub fn is_closed(res: &ecs::Resources) -> bool {
-  res.fetch::<Window>().is_closed()
-}
-
-pub fn open(res: &ecs::Resources) {
-  res.fetch_mut::<Window>().open()
-}
-
-pub fn set_title(res: &ecs::Resources, title: &str) {
-  res.fetch_mut::<Window>().set_title(title);
-}
 
 pub struct Window {
   status: Status,
@@ -81,8 +68,9 @@ impl Window {
     &self.title
   }
 
-  pub fn set_title(&mut self, title: &str) {
+  pub fn set_title(&mut self, title: &str) -> &mut Self {
     self.title.replace_range(.., title);
+    self
   }
 }
 

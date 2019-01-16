@@ -20,7 +20,7 @@ impl<'a, S: Source> ecs::System<'a> for Ticker<S> {
   type SystemData = ecs::WriteResource<'a, Time>;
 
   fn setup(&mut self, res: &mut ecs::Resources) {
-    ecs::ensure_resource::<Time>(res);
+    res.entry().or_insert_with(Time::default);
   }
 
   fn run(&mut self, mut time: ecs::WriteResource<'a, Time>) {

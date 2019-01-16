@@ -8,9 +8,8 @@
 //!
 pub use specs::join::{Join, ParJoin};
 
-pub use specs::shred::{AsyncDispatcher, Dispatcher, DispatcherBuilder};
 pub use specs::shred::{DynamicSystemData, System, SystemData};
-pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
+pub use specs::shred::{Fetch, FetchMut};
 pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 pub use specs::shred::{Resource, Resources};
 
@@ -31,37 +30,39 @@ pub use specs::world::{EntitiesRes as Entities, Entity};
 pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
+pub type Dispatcher = specs::Dispatcher<'static, 'static>;
+pub type DispatcherBuilder = specs::DispatcherBuilder<'static, 'static>;
+
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
 
-pub fn ensure_resource<R: Resource + Default>(res: &mut Resources) -> FetchResourceMut<R> {
-  res.entry().or_insert_with(R::default)
+pub trait ResourceFetch: Resource + Sized {
+  fn fetch(res: &Resources) -> Fetch<Self> {
+    res.fetch()
+  }
+
+  fn fetch_mut(res: &Resources) -> FetchMut<Self> {
+    res.fetch_mut()
+  }
 }
 
-pub fn setup<'a, S: System<'a>>(res: &'a mut Resources, system: &mut S) {
-  system.setup(res);
+impl<T: Resource + Sized> ResourceFetch for T {}
+
+pub trait SystemRunNow {
+  fn run_now(&mut self, res: &Resources);
 }
 
-pub fn run<'a, S: System<'a>>(res: &'a Resources, system: &mut S) {
-  let data = S::SystemData::fetch(&system.accessor(), res);
+impl<T: for<'a> System<'a>> SystemRunNow for T {
+  fn run_now(&mut self, res: &Resources) {
+    let data = T::SystemData::fetch(&self.accessor(), res);
 
-  system.run(data);
-}
-
-pub fn exec<'a, D, F, R>(res: &'a Resources, mut func: F) -> R
-where
-  D: SystemData<'a>,
-  F: FnMut(D) -> R,
-{
-  let data = D::fetch(res);
-
-  func(data)
+    self.run(data);
+  }
 }
 
 pub mod prelude {
   pub use crate::ecs::{
-    self, AsyncDispatcher, BitSet, BuildEntity, Component, Dispatcher, DispatcherBuilder,
-    DynamicSystemData, Entity, EntityBuilder, FetchResource, FetchResourceMut, Join, ParJoin,
-    ReadComponents, ReadResource, Resource, Resources, System, SystemData, WriteComponents,
-    WriteResource,
+    self, BuildEntity, Component, ComponentEvent, DynamicSystemData, Join, ParJoin, ReadComponents,
+    ReadEntities, ReadResource, Resource, ResourceFetch, Resources, System, SystemData,
+    SystemRunNow, WriteComponents, WriteResource,
   };
 }
