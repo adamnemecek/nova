@@ -69,12 +69,9 @@ impl<'a> ecs::System<'a> for EventsLoop {
 
         let close_on_request = self.close_on_request;
         let was_closing = window.is_closing();
-        let log = &self.log;
 
         self.events_loop.poll_events(|event| {
           if let winit::Event::WindowEvent { event, .. } = event {
-            log.trace("Event.").with("event", &event);
-
             if let WindowEvent::CloseRequested = &event {
               if close_on_request {
                 window.status = Status::Closing;
