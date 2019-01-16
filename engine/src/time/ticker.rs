@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Source, Time};
-use crate::ecs::prelude::*;
+use crate::ecs;
 
 #[derive(Debug)]
 pub struct Ticker<S: Source> {
@@ -16,10 +16,14 @@ impl<S: Source> Ticker<S> {
   }
 }
 
-impl<'a, S: Source> System<'a> for Ticker<S> {
-  type SystemData = WriteResource<'a, Time>;
+impl<'a, S: Source> ecs::System<'a> for Ticker<S> {
+  type SystemData = ecs::WriteResource<'a, Time>;
 
-  fn run(&mut self, mut time: WriteResource<'a, Time>) {
+  fn setup(&mut self, res: &mut ecs::Resources) {
+    ecs::ensure_resource::<Time>(res);
+  }
+
+  fn run(&mut self, mut time: ecs::WriteResource<'a, Time>) {
     time.tick(self.source.delta_time());
   }
 }

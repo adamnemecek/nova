@@ -17,3 +17,7 @@ pub mod log;
 pub mod math;
 pub mod time;
 pub mod window;
+
+pub mod events {
+  pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
+}

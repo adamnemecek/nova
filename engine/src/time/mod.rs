@@ -12,10 +12,10 @@ pub use self::instant::*;
 pub use self::source::*;
 pub use self::ticker::*;
 
-use crate::ecs::prelude::*;
+use crate::ecs;
 
-pub fn tick(res: &Resources, delta_time: Duration) {
-  ecs::run_once(&res, Ticker::new(delta_time));
+pub fn tick(res: &ecs::Resources, delta_time: Duration) {
+  ecs::run(&res, &mut Ticker::new(delta_time));
 }
 
 #[derive(Debug, Default)]
@@ -31,4 +31,8 @@ impl Time {
     self.total += delta;
     self.ticks += 1;
   }
+}
+
+pub fn delta(res: &ecs::Resources) -> Duration {
+  res.fetch::<Time>().delta
 }

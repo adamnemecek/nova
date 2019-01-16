@@ -11,6 +11,7 @@ derive_more = "0.13"
 log = { version = "0.4", features = ["std"] }
 nalgebra = "*"
 num-traits = "*"
-specs = "0.14"
+shrev = "1.0"
+specs = { git = "https://github.com/bfrydl/specs" }
 specs-derive = "0.3"
 winit = "0.18"
