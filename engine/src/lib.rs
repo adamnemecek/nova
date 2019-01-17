@@ -13,6 +13,7 @@ extern crate winit;
 
 pub mod assets;
 pub mod ecs;
+pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod time;
@@ -20,4 +21,8 @@ pub mod window;
 
 pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
+}
+
+pub mod thread {
+  pub use rayon::{ThreadPool, ThreadPoolBuilder};
 }

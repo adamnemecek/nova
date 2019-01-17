@@ -8,7 +8,8 @@
 //!
 pub use specs::join::{Join, ParJoin};
 
-pub use specs::shred::{DynamicSystemData, System, SystemData};
+pub use specs::shred::{par, seq, Par, ParSeq as Dispatcher, RunWithPool as Dispatchable, Seq};
+pub use specs::shred::{DynamicSystemData, RunNow as Runnable, System, SystemData};
 pub use specs::shred::{Fetch, FetchMut};
 pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 pub use specs::shred::{Resource, Resources};
@@ -30,10 +31,26 @@ pub use specs::world::{EntitiesRes as Entities, Entity};
 pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
-pub type Dispatcher = specs::Dispatcher<'static, 'static>;
-pub type DispatcherBuilder = specs::DispatcherBuilder<'static, 'static>;
+use crate::thread::ThreadPool;
+use std::borrow::BorrowMut;
 
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
+
+pub fn setup<D: for<'a> Dispatchable<'a>>(res: &mut Resources, dispatchable: &mut D) {
+  dispatchable.setup(res);
+}
+
+pub fn run<R: for<'a> Runnable<'a>>(res: &Resources, system: &mut R) {
+  system.run_now(res);
+}
+
+pub fn dispatch<D: for<'a> Dispatchable<'a>>(
+  res: &mut Resources,
+  dispatchable: &mut D,
+  pool: &ThreadPool,
+) {
+  dispatchable.run(res, pool);
+}
 
 pub trait ResourceFetch: Resource + Sized {
   fn fetch(res: &Resources) -> Fetch<Self> {
@@ -46,23 +63,3 @@ pub trait ResourceFetch: Resource + Sized {
 }
 
 impl<T: Resource + Sized> ResourceFetch for T {}
-
-pub trait SystemRunNow {
-  fn run_now(&mut self, res: &Resources);
-}
-
-impl<T: for<'a> System<'a>> SystemRunNow for T {
-  fn run_now(&mut self, res: &Resources) {
-    let data = T::SystemData::fetch(&self.accessor(), res);
-
-    self.run(data);
-  }
-}
-
-pub mod prelude {
-  pub use crate::ecs::{
-    self, BuildEntity, Component, ComponentEvent, DynamicSystemData, Join, ParJoin, ReadComponents,
-    ReadEntities, ReadResource, Resource, ResourceFetch, Resources, System, SystemData,
-    SystemRunNow, WriteComponents, WriteResource,
-  };
-}

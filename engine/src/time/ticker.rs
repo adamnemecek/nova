@@ -2,21 +2,29 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Source, Time};
+use super::{RealTime, Source, Time};
 use crate::ecs;
 
 #[derive(Debug)]
-pub struct Ticker<S: Source> {
-  pub source: S,
+pub struct Ticker {
+  source: Box<dyn Source>,
 }
 
-impl<S: Source> Ticker<S> {
-  pub fn new(source: S) -> Self {
-    Ticker { source }
+impl Ticker {
+  pub fn new(source: impl Source + 'static) -> Self {
+    Ticker {
+      source: Box::new(source),
+    }
   }
 }
 
-impl<'a, S: Source> ecs::System<'a> for Ticker<S> {
+impl Default for Ticker {
+  fn default() -> Self {
+    Ticker::new(RealTime::default())
+  }
+}
+
+impl<'a> ecs::System<'a> for Ticker {
   type SystemData = ecs::WriteResource<'a, Time>;
 
   fn setup(&mut self, res: &mut ecs::Resources) {

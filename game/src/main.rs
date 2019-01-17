@@ -3,38 +3,52 @@
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
-use nova::ecs::prelude::*;
+use nova::ecs::{self, ResourceFetch};
+use nova::graphics::{self, BackendInstanceExt, PhysicalDeviceExt};
 use nova::log;
-use nova::time::{self, Time};
-use nova::window::{self, Window};
-use std::thread;
+use nova::thread::ThreadPoolBuilder;
+use nova::time;
 
 pub fn main() {
   log::set_as_default().ok();
 
   let log = log::Logger::new("tvb");
+
+  let pool = &ThreadPoolBuilder::new()
+    .build()
+    .expect("thread pool creation failed");
+
   let res = &mut ecs::Resources::new();
 
   ecs::init(res);
 
-  let mut events_loop = window::EventsLoop::new();
-  let mut ticker = time::Ticker::new(time::RealTime::new());
+  let systems = &mut ecs::seq![time::Ticker::new(time::Duration::from_hz(60)),];
 
-  events_loop.setup(res);
-  ticker.setup(res);
+  ecs::setup(res, systems);
+  ecs::dispatch(res, systems, pool);
 
-  Window::fetch_mut(res).set_title("tvb").open();
+  log
+    .info("Tick.")
+    .with("delta", time::Time::fetch(res).delta);
 
-  log.info("Initialized.");
+  let instance = graphics::BackendInstance::create("tvb", 1);
+  let adapters = instance.enumerate_adapters();
+  let mut id = 0;
 
-  while !Window::fetch(res).is_closed() {
-    events_loop.run_now(res);
-    ticker.run_now(res);
+  for (i, adapter) in adapters.iter().enumerate() {
+    log
+      .info("Detected adapter.")
+      .with("id", i)
+      .with("info", &adapter.info)
+      .with("limits", adapter.physical_device.limits())
+      .with("features", adapter.physical_device.features());
 
-    ecs::maintain(res);
-
-    if Time::fetch(res).delta < time::Duration::from_millis(1) {
-      thread::sleep(std::time::Duration::from_millis(1));
+    if let graphics::DeviceType::DiscreteGpu = adapter.info.device_type {
+      id = i;
     }
   }
+
+  let adapter = &adapters[id];
+
+  log.info("Selected adapter.").with("id", id);
 }
