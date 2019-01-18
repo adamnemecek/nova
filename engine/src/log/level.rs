@@ -15,8 +15,8 @@ impl fmt::Display for PrettyLevel {
     match self.0 {
       Level::Trace => write!(f, "{}… TRACE{}", Color::White, Color::Reset),
       Level::Debug => write!(f, "{} DEBUG{}", Color::BrightMagenta, Color::Reset),
-      Level::Info => write!(f, "{}  INFO{}", Color::BrightBlue, Color::Reset),
-      Level::Warn => write!(f, "{}  WARN{}", Color::BrightYellow, Color::Reset),
+      Level::Info => write!(f, "{}  INFO{}", Color::BrightBlue, Color::Reset),
+      Level::Warn => write!(f, "{}  WARN{}", Color::BrightYellow, Color::Reset),
       Level::Error => write!(f, "{} ERROR {}", Color::BrightRed, Color::Reset),
     }
   }
