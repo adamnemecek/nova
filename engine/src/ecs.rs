@@ -22,7 +22,7 @@ pub use specs::world::is_entity_alive;
 pub use specs::world::Component;
 pub use specs::world::{create_entity, delete_all_entities, delete_entities, delete_entity};
 pub use specs::world::{entities, entities_mut};
-pub use specs::world::{init, maintain};
+pub use specs::world::{init as setup, maintain};
 pub use specs::world::{read_storage as read_components, write_storage as write_components};
 pub use specs::world::{register, register_with_storage};
 pub use specs::world::{Builder as BuildEntity, EntityBuilder};
@@ -31,26 +31,7 @@ pub use specs::world::{EntitiesRes as Entities, Entity};
 pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
-use crate::thread::ThreadPool;
-use std::borrow::BorrowMut;
-
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
-
-pub fn setup<D: for<'a> Dispatchable<'a>>(res: &mut Resources, dispatchable: &mut D) {
-  dispatchable.setup(res);
-}
-
-pub fn run<R: for<'a> Runnable<'a>>(res: &Resources, system: &mut R) {
-  system.run_now(res);
-}
-
-pub fn dispatch<D: for<'a> Dispatchable<'a>>(
-  res: &mut Resources,
-  dispatchable: &mut D,
-  pool: &ThreadPool,
-) {
-  dispatchable.run(res, pool);
-}
 
 pub trait ResourceFetch: Resource + Sized {
   fn fetch(res: &Resources) -> Fetch<Self> {
@@ -63,3 +44,27 @@ pub trait ResourceFetch: Resource + Sized {
 }
 
 impl<T: Resource + Sized> ResourceFetch for T {}
+
+pub fn exec_fn<'a, D>(func: impl FnMut(D) + 'static) -> ExecFn<D>
+where
+  D: SystemData<'a>,
+{
+  ExecFn {
+    func: Box::new(func),
+  }
+}
+
+pub struct ExecFn<D> {
+  func: Box<dyn FnMut(D)>,
+}
+
+impl<'a, D> System<'a> for ExecFn<D>
+where
+  D: SystemData<'a>,
+{
+  type SystemData = D;
+
+  fn run(&mut self, data: D) {
+    (self.func)(data)
+  }
+}

@@ -13,7 +13,6 @@ extern crate winit;
 
 pub mod assets;
 pub mod ecs;
-pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod time;
@@ -25,4 +24,10 @@ pub mod events {
 
 pub mod thread {
   pub use rayon::{ThreadPool, ThreadPoolBuilder};
+
+  pub fn create_pool() -> ThreadPool {
+    ThreadPoolBuilder::new()
+      .build()
+      .expect("Could not create ThreadPool")
+  }
 }

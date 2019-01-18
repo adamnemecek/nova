@@ -4,31 +4,55 @@
 
 mod duration;
 mod instant;
-mod source;
-mod ticker;
 
 pub use self::duration::*;
 pub use self::instant::*;
-pub use self::source::*;
-pub use self::ticker::*;
 
 use crate::ecs;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Time {
-  pub ticks: u64,
-  pub total: Duration,
   pub delta: Duration,
+  pub max_delta: Duration,
 }
 
-impl Time {
-  pub fn tick(&mut self, delta: Duration) {
-    self.delta = delta;
-    self.total += delta;
-    self.ticks += 1;
+impl Default for Time {
+  fn default() -> Self {
+    Time {
+      delta: Duration::ZERO,
+      max_delta: Duration::from_hz(20),
+    }
   }
 }
 
-pub fn delta(res: &ecs::Resources) -> Duration {
-  res.fetch::<Time>().delta
+pub fn elapse() -> Elapse {
+  Elapse { previous: None }
+}
+
+#[derive(Debug)]
+pub struct Elapse {
+  previous: Option<Instant>,
+}
+
+impl<'a> ecs::System<'a> for Elapse {
+  type SystemData = ecs::WriteResource<'a, Time>;
+
+  fn setup(&mut self, res: &mut ecs::Resources) {
+    res.entry().or_insert_with(Time::default);
+  }
+
+  fn run(&mut self, mut time: ecs::WriteResource<'a, Time>) {
+    let now = Instant::now();
+
+    time.delta = match self.previous {
+      Some(previous) => now - previous,
+      None => Duration::ZERO,
+    };
+
+    if time.delta > time.max_delta {
+      time.delta = time.max_delta;
+    }
+
+    self.previous = Some(now);
+  }
 }

@@ -18,10 +18,7 @@ pub use log::{debug, error, info, trace, warn, SetLoggerError};
 
 use self::color::*;
 
-/// Sets up the engine instance for logging.
-///
-/// This will add a [`Logger`] resource that can be retrieved with
-/// [`get_logger()`].
+/// Makes this `log` module the default log handler.
 pub fn set_as_default() -> Result<(), SetLoggerError> {
   let logger = Box::new(Logger::new(""));
 

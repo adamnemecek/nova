@@ -3,52 +3,32 @@
 // TODO: Remove when RLS supports it.
 extern crate nova;
 
-use nova::ecs::{self, ResourceFetch};
-use nova::graphics::{self, BackendInstanceExt, PhysicalDeviceExt};
+use nova::ecs;
 use nova::log;
-use nova::thread::ThreadPoolBuilder;
+use nova::thread;
 use nova::time;
 
 pub fn main() {
-  log::set_as_default().ok();
+  log::set_as_default().unwrap();
 
-  let log = log::Logger::new("tvb");
+  let mut res = ecs::Resources::new();
 
-  let pool = &ThreadPoolBuilder::new()
-    .build()
-    .expect("thread pool creation failed");
+  ecs::setup(&mut res);
 
-  let res = &mut ecs::Resources::new();
+  let thread_pool = thread::create_pool();
+  let mut on_update = ecs::Dispatcher::new(update(), &thread_pool);
 
-  ecs::init(res);
+  on_update.setup(&mut res);
 
-  let systems = &mut ecs::seq![time::Ticker::new(time::Duration::from_hz(60)),];
+  loop {
+    on_update.dispatch(&res);
 
-  ecs::setup(res, systems);
-  ecs::dispatch(res, systems, pool);
+    ecs::maintain(&mut res);
 
-  log
-    .info("Tick.")
-    .with("delta", time::Time::fetch(res).delta);
-
-  let instance = graphics::BackendInstance::create("tvb", 1);
-  let adapters = instance.enumerate_adapters();
-  let mut id = 0;
-
-  for (i, adapter) in adapters.iter().enumerate() {
-    log
-      .info("Detected adapter.")
-      .with("id", i)
-      .with("info", &adapter.info)
-      .with("limits", adapter.physical_device.limits())
-      .with("features", adapter.physical_device.features());
-
-    if let graphics::DeviceType::DiscreteGpu = adapter.info.device_type {
-      id = i;
-    }
+    std::thread::sleep(std::time::Duration::from_millis(1));
   }
+}
 
-  let adapter = &adapters[id];
-
-  log.info("Selected adapter.").with("id", id);
+fn update() -> impl for<'a> ecs::Dispatchable<'a> {
+  ecs::seq![time::elapse(),]
 }
