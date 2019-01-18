@@ -2,35 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Status, Window, WindowEvent};
+use super::{Status, Window};
 use crate::ecs;
 use crate::log;
 
-pub struct EventsLoop {
-  pub close_on_request: bool,
+pub fn update() -> Update {
+  Update {
+    events_loop: winit::EventsLoop::new(),
+    log: log::Logger::new("nova::window::update"),
+  }
+}
+
+pub struct Update {
   events_loop: winit::EventsLoop,
-  handle: Option<winit::Window>,
   log: log::Logger,
 }
 
-impl EventsLoop {
-  pub fn new() -> Self {
-    EventsLoop {
-      close_on_request: true,
-      events_loop: winit::EventsLoop::new(),
-      handle: None,
-      log: log::Logger::new("nova::window::EventsLoop"),
-    }
-  }
-}
-
-impl Default for EventsLoop {
-  fn default() -> Self {
-    EventsLoop::new()
-  }
-}
-
-impl<'a> ecs::System<'a> for EventsLoop {
+impl<'a> ecs::System<'a> for Update {
   type SystemData = ecs::WriteResource<'a, Window>;
 
   fn setup(&mut self, res: &mut ecs::Resources) {
@@ -45,11 +33,10 @@ impl<'a> ecs::System<'a> for EventsLoop {
 
         match result {
           Ok(handle) => {
-            self.handle = Some(handle);
-
+            window.handle = Some(handle);
             window.status = Status::Open;
 
-            self.log.info("Opened.");
+            self.log.info("Opened window.");
           }
 
           Err(err) => {
@@ -63,31 +50,21 @@ impl<'a> ecs::System<'a> for EventsLoop {
       }
 
       Status::Open | Status::Closing => {
-        let handle = self.handle.as_ref().unwrap();
+        let handle = window.handle.as_ref().unwrap();
 
         handle.set_title(&window.title);
 
-        let close_on_request = self.close_on_request;
-        let was_closing = window.is_closing();
-
         self.events_loop.poll_events(|event| {
           if let winit::Event::WindowEvent { event, .. } = event {
-            if let WindowEvent::CloseRequested = &event {
-              if close_on_request {
-                window.status = Status::Closing;
-              }
-            }
-
             window.events.single_write(event);
           }
         });
 
-        if was_closing {
-          self.handle = None;
-
+        if let Status::Closing = window.status {
+          window.handle = None;
           window.status = Status::Closed;
 
-          self.log.info("Closed.");
+          self.log.info("Closed window.");
         }
       }
 

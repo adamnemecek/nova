@@ -32,39 +32,3 @@ pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
-
-pub trait ResourceFetch: Resource + Sized {
-  fn fetch(res: &Resources) -> Fetch<Self> {
-    res.fetch()
-  }
-
-  fn fetch_mut(res: &Resources) -> FetchMut<Self> {
-    res.fetch_mut()
-  }
-}
-
-impl<T: Resource + Sized> ResourceFetch for T {}
-
-pub fn exec_fn<'a, D>(func: impl FnMut(D) + 'static) -> ExecFn<D>
-where
-  D: SystemData<'a>,
-{
-  ExecFn {
-    func: Box::new(func),
-  }
-}
-
-pub struct ExecFn<D> {
-  func: Box<dyn FnMut(D)>,
-}
-
-impl<'a, D> System<'a> for ExecFn<D>
-where
-  D: SystemData<'a>,
-{
-  type SystemData = D;
-
-  fn run(&mut self, data: D) {
-    (self.func)(data)
-  }
-}

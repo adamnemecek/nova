@@ -19,9 +19,9 @@ pub use log::{debug, error, info, trace, warn, SetLoggerError};
 use self::color::*;
 
 /// Makes this `log` module the default log handler.
-pub fn set_as_default() -> Result<(), SetLoggerError> {
+pub fn set_as_default() {
   let logger = Box::new(Logger::new(""));
 
   log::set_max_level(logger.max_level);
-  log::set_boxed_logger(logger)
+  log::set_boxed_logger(logger).expect("Could not set nova::log as the default logger");
 }

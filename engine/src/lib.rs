@@ -25,9 +25,15 @@ pub mod events {
 pub mod thread {
   pub use rayon::{ThreadPool, ThreadPoolBuilder};
 
+  use crate::time;
+
   pub fn create_pool() -> ThreadPool {
     ThreadPoolBuilder::new()
       .build()
       .expect("Could not create ThreadPool")
+  }
+
+  pub fn sleep(duration: time::Duration) {
+    std::thread::sleep(duration.into())
   }
 }

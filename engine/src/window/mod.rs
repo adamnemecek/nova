@@ -2,14 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod events_loop;
+mod update;
 
-pub use self::events_loop::*;
+pub use self::update::*;
 pub use winit::{CreationError, WindowEvent};
 
 use crate::events;
 
 pub struct Window {
+  handle: Option<winit::Window>,
   status: Status,
   events: events::Channel<WindowEvent>,
   title: String,
@@ -18,9 +19,10 @@ pub struct Window {
 impl Window {
   pub fn new() -> Window {
     Window {
+      handle: None,
       status: Status::Closed,
       events: events::Channel::new(),
-      title: "nova".to_owned(),
+      title: String::new(),
     }
   }
 
@@ -76,7 +78,15 @@ impl Window {
 
 impl Default for Window {
   fn default() -> Window {
-    Window::new()
+    let mut window = Window::new();
+
+    if let Ok(exe) = std::env::current_exe() {
+      if let Some(stem) = exe.file_stem() {
+        window.set_title(&stem.to_string_lossy());
+      }
+    }
+
+    window
   }
 }
 

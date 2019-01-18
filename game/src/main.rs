@@ -7,28 +7,31 @@ use nova::ecs;
 use nova::log;
 use nova::thread;
 use nova::time;
+use nova::window::{self, Window};
 
 pub fn main() {
-  log::set_as_default().unwrap();
+  log::set_as_default();
 
   let mut res = ecs::Resources::new();
 
   ecs::setup(&mut res);
 
   let thread_pool = thread::create_pool();
-  let mut on_update = ecs::Dispatcher::new(update(), &thread_pool);
+  let mut updater = ecs::Dispatcher::new(update(), &thread_pool);
 
-  on_update.setup(&mut res);
+  updater.setup(&mut res);
 
-  loop {
-    on_update.dispatch(&res);
+  res.fetch_mut::<Window>().open();
+
+  while !res.fetch::<Window>().is_closed() {
+    updater.dispatch(&res);
 
     ecs::maintain(&mut res);
 
-    std::thread::sleep(std::time::Duration::from_millis(1));
+    thread::sleep(time::Duration::from_millis(1));
   }
 }
 
 fn update() -> impl for<'a> ecs::Dispatchable<'a> {
-  ecs::seq![time::elapse(),]
+  ecs::seq![window::update(), time::elapse(),]
 }
