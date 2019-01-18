@@ -21,8 +21,6 @@ pub fn main() {
 
   updater.setup(&mut res);
 
-  res.fetch_mut::<Window>().open();
-
   while !res.fetch::<Window>().is_closed() {
     updater.dispatch(&res);
 

@@ -20,7 +20,7 @@ impl Window {
   pub fn new() -> Window {
     Window {
       handle: None,
-      status: Status::Closed,
+      status: Status::Opening,
       events: events::Channel::new(),
       title: String::new(),
     }
