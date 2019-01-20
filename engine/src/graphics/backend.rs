@@ -11,11 +11,11 @@
 
 // Use DirectX 12 on Windows, Metal on MacOS, and Vulkan on Linux.
 #[cfg(windows)]
-pub use gfx_backend_dx12::{Backend, Instance};
+pub use gfx_backend_dx12::*;
 #[cfg(target_os = "macos")]
-pub use gfx_backend_metal::{Backend, Instance};
+pub use gfx_backend_metal::*;
 #[cfg(all(unix, not(target_os = "macos")))]
-pub use gfx_backend_vulkan::{Backend, Instance};
+pub use gfx_backend_vulkan::*;
 
 pub use gfx_hal::Instance as InstanceExt;
 

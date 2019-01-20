@@ -5,12 +5,17 @@
 use super::{Backend, Instance, InstanceExt};
 use gfx_hal::adapter::DeviceType;
 use gfx_hal::adapter::PhysicalDevice as PhysicalDeviceExt;
+use gfx_hal::queue::QueueFamily as QueueFamilyExt;
 use std::ops::Deref;
 use std::sync::Arc;
 
 pub use gfx_hal::AdapterInfo;
 
-pub fn open(instance: &Arc<Instance>) -> DeviceHandle {
+pub type Adapter = gfx_hal::Adapter<Backend>;
+pub type Device = <Backend as gfx_hal::Backend>::Device;
+pub type Queue = <Backend as gfx_hal::Backend>::CommandQueue;
+
+pub fn open(instance: &Arc<Instance>) -> (DeviceHandle, Vec<Queue>) {
   // Select the best adapter according to `score_adapter()`.
   let mut adapters = instance.enumerate_adapters();
 
@@ -30,7 +35,7 @@ pub fn open(instance: &Arc<Instance>) -> DeviceHandle {
     .collect::<Vec<_>>();
 
   // Open the physical device.
-  let gpu = unsafe {
+  let mut gpu = unsafe {
     // This is not “unsafe” in the traditional sense. gfx_hal enforces some
     // Vulkan requirements with the type system and marks functions that do
     // not use those types as `unsafe`. In this case, it's because the “safe”
@@ -44,17 +49,30 @@ pub fn open(instance: &Arc<Instance>) -> DeviceHandle {
       .expect("Could not create graphics device")
   };
 
-  // Return a new, cloneable handle for the device.
-  DeviceHandle(Arc::new(Inner {
+  let queues = adapter
+    .queue_families
+    .iter()
+    .map(|f| {
+      gpu
+        .queues
+        .take_raw(f.id())
+        .expect("Adapter did not open all requested queue groups.")
+        .into_iter()
+        .next()
+        .expect("Adapter did not open a queue for one or more requested queue groups.")
+    })
+    .collect();
+
+  let device = DeviceHandle(Arc::new(Inner {
     instance: instance.clone(),
     adapter,
     device: gpu.device,
-  }))
+  }));
+
+  (device, queues)
 }
 
-pub type Adapter = gfx_hal::Adapter<Backend>;
-pub type Device = <Backend as gfx_hal::Backend>::Device;
-
+#[derive(Clone)]
 pub struct DeviceHandle(Arc<Inner>);
 
 struct Inner {

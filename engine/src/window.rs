@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::ecs;
-use crate::log;
 use crate::thread;
 use crossbeam::channel;
 
@@ -125,11 +124,7 @@ impl<'a> ecs::System<'a> for PollEvents {
   type SystemData = ecs::WriteResource<'a, Window>;
 
   fn run(&mut self, mut window: Self::SystemData) {
-    let log = log::Logger::new("nova::window::PollEvents::run");
-
     while let Ok(event) = window.event_receiver.try_recv() {
-      log.trace("Event received.").with("event", &event);
-
       window.events.single_write(event);
     }
   }
