@@ -37,7 +37,7 @@ pub fn setup(res: &mut ecs::Resources, options: Options) {
 
       events_loop.run_forever(|event| {
         if let winit::Event::WindowEvent { event, .. } = event {
-          if let Err(_) = send_event.send(event) {
+          if send_event.send(event).is_err() {
             return winit::ControlFlow::Break;
           }
         }

@@ -1,7 +1,5 @@
 #![feature(async_await, futures_api, await_macro)]
 
-extern crate nova;
-
 use nova::ecs;
 use nova::graphics;
 use nova::log;

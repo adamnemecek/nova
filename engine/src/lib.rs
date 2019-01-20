@@ -4,13 +4,6 @@
 
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
-// TODO: Remove when RLS supports it.
-extern crate crossbeam;
-extern crate derive_more;
-extern crate specs;
-extern crate specs_derive;
-extern crate winit;
-
 pub mod assets;
 pub mod ecs;
 pub mod graphics;
