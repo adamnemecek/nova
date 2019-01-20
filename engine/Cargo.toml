@@ -4,6 +4,11 @@ version = "0.2.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
+[features]
+default = ["graphics", "window"]
+graphics = []
+window = ["graphics"]
+
 [dependencies]
 chrono = "0.4"
 crossbeam = "0.6"

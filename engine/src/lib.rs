@@ -6,10 +6,12 @@
 
 pub mod assets;
 pub mod ecs;
+#[cfg(feature = "graphics")]
 pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod time;
+#[cfg(feature = "window")]
 pub mod window;
 
 pub mod events {
