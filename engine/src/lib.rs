@@ -25,6 +25,7 @@ pub mod events {
 
 pub mod thread {
   pub use rayon::{ThreadPool, ThreadPoolBuilder};
+  pub use std::thread::*;
 
   use crate::time;
 

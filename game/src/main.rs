@@ -7,7 +7,7 @@ use nova::graphics;
 use nova::log;
 use nova::thread;
 use nova::time;
-use nova::window::{self, Window};
+use nova::window;
 
 pub fn main() {
   log::set_as_default();
@@ -15,6 +15,7 @@ pub fn main() {
   let mut res = ecs::Resources::new();
 
   ecs::setup(&mut res);
+  window::setup(&mut res, Default::default());
   graphics::setup(&mut res);
 
   let thread_pool = thread::create_pool();
@@ -22,7 +23,7 @@ pub fn main() {
 
   updater.setup(&mut res);
 
-  while !res.fetch::<Window>().is_closed() {
+  loop {
     updater.dispatch(&res);
 
     ecs::maintain(&mut res);
@@ -32,5 +33,5 @@ pub fn main() {
 }
 
 fn update() -> impl for<'a> ecs::Dispatchable<'a> {
-  ecs::seq![window::update(), time::elapse(),]
+  ecs::seq![window::poll_events(), time::elapse(),]
 }
