@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-extern crate log;
-
-pub use log::SetLoggerError as SetAsDefaultError;
-
 use super::{Color, ContextBuilder, Level, LevelFilter, PrettyLevel};
 use chrono::{Datelike, Timelike};
+use std::borrow::Cow;
 use std::fmt;
 use std::io::{self, Write};
+
+pub use log::SetLoggerError as SetAsDefaultError;
 
 /// Writes formatted log messages to stdout with optional contextual
 /// information.
@@ -18,14 +17,14 @@ pub struct Logger {
   out: io::Stdout,
   /// Name describing the source of the messages. For example, the standard log
   /// macros use the current module path as the source.
-  pub source: String,
+  pub source: Cow<'static, str>,
   /// The highest level of logging that will be printed.
   pub max_level: LevelFilter,
 }
 
 impl Logger {
   /// Creates a new logger with the given source name.
-  pub fn new(source: impl Into<String>) -> Self {
+  pub fn new(source: impl Into<Cow<'static, str>>) -> Self {
     Logger {
       out: io::stdout(),
       source: source.into(),

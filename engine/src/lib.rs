@@ -13,6 +13,7 @@ extern crate winit;
 
 pub mod assets;
 pub mod ecs;
+pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod time;

@@ -3,41 +3,41 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod backend;
+mod device;
 
-pub use self::backend::*;
-pub use gfx_hal::Instance as BackendInstanceExt;
-
+use self::backend::*;
 use crate::ecs;
+use crate::log;
+use std::sync::Arc;
 
-type BackendDevice = <Backend as gfx_hal::Backend>::Device;
+pub use self::device::{Adapter, Device, DeviceHandle};
 
-pub struct Instance {
-  instance: BackendInstance,
+pub fn setup(res: &mut ecs::Resources) {
+  res.entry().or_insert_with(|| {
+    let log = log::Logger::new("nova::graphics");
+    let instance = Arc::new(Instance::create("nova", 1));
+
+    log
+      .info("Instantiated backend.")
+      .with("backend", BACKEND_NAME);
+
+    let device = device::open(&instance);
+
+    log
+      .info("Opened device.")
+      .with("adapter", device.adapter_info());
+
+    Graphics { instance, device }
+  });
 }
 
-impl Instance {
-  pub fn new() -> Self {
-    Instance {
-      instance: BackendInstance::create("nova", 1),
-    }
-  }
+pub struct Graphics {
+  device: DeviceHandle,
+  instance: Arc<Instance>,
 }
 
-impl Default for Instance {
-  fn default() -> Self {
-    Instance::new()
-  }
-}
-
-pub struct GraphicsSystem {
-  device: Option<BackendDevice>,
-}
-
-impl<'a> ecs::System<'a> for GraphicsSystem {
-  type SystemData = ecs::ReadResource<'a, Instance>;
-
-  fn setup(&mut self, res: &mut ecs::Resources) {
-    let instance = res.entry().or_insert_with(Instance::default);
-    let adapters = instance.enumerate_adapters();
+impl Graphics {
+  pub fn device(&self) -> &DeviceHandle {
+    &self.device
   }
 }
