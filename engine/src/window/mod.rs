@@ -2,10 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod backbuffer;
+
 use crate::ecs;
+use crate::math::Size;
 use crate::thread;
 use crossbeam::channel;
 
+pub use self::backbuffer::{acquire_backbuffer, Backbuffer};
 pub use winit::WindowEvent as Event;
 
 type EventChannel = crate::events::Channel<Event>;
@@ -71,6 +75,14 @@ pub struct Window {
 }
 
 impl Window {
+  pub(crate) fn handle(&self) -> &winit::Window {
+    &self.handle
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.options.size
+  }
+
   pub fn set_title(&mut self, title: &str) -> &mut Self {
     if title != self.options.title {
       self.options.set_title(title);
@@ -89,13 +101,15 @@ impl Window {
 
 #[derive(Clone)]
 pub struct Options {
-  title: String,
+  pub title: String,
+  pub size: Size<u32>,
 }
 
 impl Options {
   pub fn new() -> Self {
     Options {
       title: String::new(),
+      size: Size::new(1280, 720),
     }
   }
 
@@ -125,6 +139,12 @@ impl<'a> ecs::System<'a> for PollEvents {
 
   fn run(&mut self, mut window: Self::SystemData) {
     while let Ok(event) = window.event_receiver.try_recv() {
+      if let Event::Resized(size) = &event {
+        let size: (u32, u32) = size.to_physical(window.handle.get_hidpi_factor()).into();
+
+        window.options.size = size.into();
+      }
+
       window.events.single_write(event);
     }
   }

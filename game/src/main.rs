@@ -31,5 +31,9 @@ pub fn main() {
 }
 
 fn update() -> impl for<'a> ecs::Dispatchable<'a> {
-  ecs::seq![window::poll_events(), time::elapse(),]
+  ecs::seq![
+    window::poll_events(),
+    time::elapse(),
+    window::acquire_backbuffer(),
+  ]
 }

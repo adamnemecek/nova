@@ -2,16 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub(crate) mod backend;
 pub mod device;
 
-mod backend;
-
-use self::backend::{Backend, Instance, InstanceExt, BACKEND_NAME};
 use crate::ecs;
 use crate::log;
 use std::sync::Arc;
 
-pub use self::device::DeviceHandle;
+pub(crate) use self::backend::{Backend, Instance, InstanceExt, BACKEND_NAME};
+pub use self::device::{Device, DeviceExt, DeviceHandle};
 
 pub fn setup(res: &mut ecs::Resources) {
   res.entry().or_insert_with(|| {
@@ -46,5 +45,9 @@ pub struct Graphics {
 impl Graphics {
   pub fn device(&self) -> &DeviceHandle {
     &self.device
+  }
+
+  pub(crate) fn instance(&self) -> &Arc<Instance> {
+    &self.instance
   }
 }

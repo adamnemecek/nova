@@ -35,6 +35,37 @@ impl From<(u32, u32)> for Size<u32> {
   }
 }
 
+impl From<gfx_hal::image::Extent> for Size<u32> {
+  fn from(extent: gfx_hal::image::Extent) -> Self {
+    Size::new(extent.width, extent.height)
+  }
+}
+
+impl From<Size<u32>> for gfx_hal::image::Extent {
+  fn from(size: Size<u32>) -> Self {
+    gfx_hal::image::Extent {
+      width: size.width(),
+      height: size.height(),
+      depth: 1,
+    }
+  }
+}
+
+impl From<gfx_hal::window::Extent2D> for Size<u32> {
+  fn from(extent: gfx_hal::window::Extent2D) -> Self {
+    Size::new(extent.width, extent.height)
+  }
+}
+
+impl From<Size<u32>> for gfx_hal::window::Extent2D {
+  fn from(size: Size<u32>) -> Self {
+    gfx_hal::window::Extent2D {
+      width: size.width(),
+      height: size.height(),
+    }
+  }
+}
+
 // Implement `Default` to provide a zero size.
 impl<T: Scalar + Num> Default for Size<T> {
   fn default() -> Self {
