@@ -35,5 +35,6 @@ fn update() -> impl for<'a> ecs::Dispatchable<'a> {
     window::poll_events(),
     time::elapse(),
     window::acquire_backbuffer(),
+    window::present_backbuffer(),
   ]
 }

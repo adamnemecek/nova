@@ -47,6 +47,10 @@ impl Graphics {
     &self.device
   }
 
+  pub fn queue_mut(&mut self, index: usize) -> &mut device::Queue {
+    &mut self.queues[index]
+  }
+
   pub(crate) fn instance(&self) -> &Arc<Instance> {
     &self.instance
   }

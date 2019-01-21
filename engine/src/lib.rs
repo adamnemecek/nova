@@ -11,6 +11,7 @@ pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod time;
+pub mod utils;
 #[cfg(feature = "window")]
 pub mod window;
 

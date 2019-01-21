@@ -9,6 +9,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 pub use gfx_hal::queue::QueueFamily as QueueFamilyExt;
+pub use gfx_hal::queue::RawCommandQueue as QueueExt;
 pub use gfx_hal::AdapterInfo;
 pub use gfx_hal::Device as DeviceExt;
 

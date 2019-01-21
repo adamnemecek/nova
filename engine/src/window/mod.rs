@@ -7,9 +7,10 @@ mod backbuffer;
 use crate::ecs;
 use crate::math::Size;
 use crate::thread;
+use crate::time;
 use crossbeam::channel;
 
-pub use self::backbuffer::{acquire_backbuffer, Backbuffer};
+pub use self::backbuffer::{acquire_backbuffer, present_backbuffer, Backbuffer};
 pub use winit::WindowEvent as Event;
 
 type EventChannel = crate::events::Channel<Event>;
@@ -38,15 +39,23 @@ pub fn setup(res: &mut ecs::Resources, options: Options) {
         .send(window)
         .expect("Could not send window from events loop thread");
 
-      events_loop.run_forever(|event| {
-        if let winit::Event::WindowEvent { event, .. } = event {
-          if send_event.send(event).is_err() {
-            return winit::ControlFlow::Break;
+      loop {
+        let mut exit = false;
+
+        events_loop.poll_events(|event| {
+          if let winit::Event::WindowEvent { event, .. } = event {
+            if send_event.send(event).is_err() {
+              exit = true;
+            }
           }
+        });
+
+        if exit {
+          break;
         }
 
-        winit::ControlFlow::Continue
-      });
+        thread::sleep(time::Duration::from_millis(1));
+      }
     });
   };
 
