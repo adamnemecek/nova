@@ -25,13 +25,15 @@ impl Default for Time {
   }
 }
 
-pub fn elapse() -> Elapse {
-  Elapse { previous: None }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Elapse {
   previous: Option<Instant>,
+}
+
+impl Elapse {
+  pub fn new() -> Self {
+    Elapse::default()
+  }
 }
 
 impl<'a> ecs::System<'a> for Elapse {

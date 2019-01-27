@@ -13,28 +13,22 @@ pub fn main() {
   let mut res = ecs::Resources::new();
 
   ecs::setup(&mut res);
-  window::setup(&mut res, Default::default());
   graphics::setup(&mut res);
+  window::setup(&mut res, Default::default());
 
   let thread_pool = thread::create_pool();
-  let mut updater = ecs::Dispatcher::new(update(), &thread_pool);
 
-  updater.setup(&mut res);
+  let dispatch = ecs::seq![window::Update, time::Elapse::new(),];
+
+  let mut dispatcher = ecs::Dispatcher::new(dispatch, &thread_pool);
+
+  dispatcher.setup(&mut res);
 
   loop {
-    updater.dispatch(&res);
+    dispatcher.dispatch(&res);
 
     ecs::maintain(&mut res);
 
     thread::sleep(time::Duration::from_millis(1));
   }
-}
-
-fn update() -> impl for<'a> ecs::Dispatchable<'a> {
-  ecs::seq![
-    window::poll_events(),
-    time::elapse(),
-    window::acquire_backbuffer(),
-    window::present_backbuffer(),
-  ]
 }

@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod backbuffer;
+mod options;
+mod update;
 
 use crate::ecs;
 use crate::math::Size;
@@ -10,7 +11,8 @@ use crate::thread;
 use crate::time;
 use crossbeam::channel;
 
-pub use self::backbuffer::{acquire_backbuffer, present_backbuffer, Backbuffer};
+pub use self::options::Options;
+pub use self::update::Update;
 pub use winit::WindowEvent as Event;
 
 type EventChannel = crate::events::Channel<Event>;
@@ -72,10 +74,6 @@ pub fn setup(res: &mut ecs::Resources, options: Options) {
   });
 }
 
-pub fn poll_events() -> PollEvents {
-  PollEvents
-}
-
 pub struct Window {
   options: Options,
   handle: winit::Window,
@@ -99,62 +97,5 @@ impl Window {
     }
 
     self
-  }
-
-  pub fn poll_events(&mut self) {
-    while let Ok(event) = self.event_receiver.try_recv() {
-      self.events.single_write(event);
-    }
-  }
-}
-
-#[derive(Clone)]
-pub struct Options {
-  pub title: String,
-  pub size: Size<u32>,
-}
-
-impl Options {
-  pub fn new() -> Self {
-    Options {
-      title: String::new(),
-      size: Size::new(1280, 720),
-    }
-  }
-
-  pub fn set_title(&mut self, title: &str) {
-    self.title.replace_range(.., title);
-  }
-}
-
-impl Default for Options {
-  fn default() -> Self {
-    let mut options = Options::new();
-
-    if let Ok(exe) = std::env::current_exe() {
-      if let Some(stem) = exe.file_stem() {
-        options.set_title(&stem.to_string_lossy());
-      }
-    }
-
-    options
-  }
-}
-
-pub struct PollEvents;
-
-impl<'a> ecs::System<'a> for PollEvents {
-  type SystemData = ecs::WriteResource<'a, Window>;
-
-  fn run(&mut self, mut window: Self::SystemData) {
-    while let Ok(event) = window.event_receiver.try_recv() {
-      if let Event::Resized(size) = &event {
-        let size: (u32, u32) = size.to_physical(window.handle.get_hidpi_factor()).into();
-
-        window.options.size = size.into();
-      }
-
-      window.events.single_write(event);
-    }
   }
 }
