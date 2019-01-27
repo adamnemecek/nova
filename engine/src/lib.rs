@@ -19,19 +19,4 @@ pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
 }
 
-pub mod thread {
-  pub use rayon::{ThreadPool, ThreadPoolBuilder};
-  pub use std::thread::*;
-
-  use crate::time;
-
-  pub fn create_pool() -> ThreadPool {
-    ThreadPoolBuilder::new()
-      .build()
-      .expect("Could not create ThreadPool")
-  }
-
-  pub fn sleep(duration: time::Duration) {
-    std::thread::sleep(duration.into())
-  }
-}
+pub use rayon::{ThreadPool, ThreadPoolBuilder};

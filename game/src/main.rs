@@ -3,22 +3,26 @@
 use nova::ecs;
 use nova::graphics;
 use nova::log;
-use nova::thread;
 use nova::time;
 use nova::window;
 
-pub fn main() {
+pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   log::set_as_default();
 
   let mut res = ecs::Resources::new();
 
   ecs::setup(&mut res);
   graphics::setup(&mut res);
-  window::setup(&mut res, Default::default());
 
-  let thread_pool = thread::create_pool();
+  let events_loop = window::EventsLoop::new();
 
-  let dispatch = ecs::seq![window::Update, time::Elapse::new(),];
+  let _window = window::WindowBuilder::new()
+    .with_title("tvb")
+    .build(&events_loop)?;
+
+  let thread_pool = nova::ThreadPoolBuilder::new().build()?;
+
+  let dispatch = ecs::seq![window::PollEvents { events_loop }, time::Elapse::default(),];
 
   let mut dispatcher = ecs::Dispatcher::new(dispatch, &thread_pool);
 
@@ -29,6 +33,6 @@ pub fn main() {
 
     ecs::maintain(&mut res);
 
-    thread::sleep(time::Duration::from_millis(1));
+    std::thread::sleep(std::time::Duration::from_millis(1));
   }
 }
