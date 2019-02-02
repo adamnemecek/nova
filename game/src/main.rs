@@ -9,22 +9,18 @@ use nova::window;
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   log::set_as_default();
 
-  let mut res = ecs::Resources::new();
+  let mut res = ecs::setup();
 
-  ecs::setup(&mut res);
-  graphics::setup(&mut res);
+  let _gpu = graphics::setup();
 
-  let events_loop = window::EventsLoop::new();
-
-  let _window = window::WindowBuilder::new()
-    .with_title("tvb")
-    .build(&events_loop)?;
+  let (_window, events_loop) = window::create(Default::default());
 
   let thread_pool = nova::ThreadPoolBuilder::new().build()?;
 
-  let dispatch = ecs::seq![window::PollEvents { events_loop }, time::Elapse::default(),];
-
-  let mut dispatcher = ecs::Dispatcher::new(dispatch, &thread_pool);
+  let mut dispatcher = ecs::Dispatcher::new(
+    ecs::seq![window::PollEvents { events_loop }, time::Elapse::default(),],
+    &thread_pool,
+  );
 
   dispatcher.setup(&mut res);
 

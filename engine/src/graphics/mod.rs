@@ -12,46 +12,31 @@ use std::sync::Arc;
 pub(crate) use self::backend::{Backend, Instance, InstanceExt, BACKEND_NAME};
 pub use self::device::{Device, DeviceExt, DeviceHandle};
 
-pub fn setup(res: &mut ecs::Resources) {
-  res.entry().or_insert_with(|| {
-    let log = log::Logger::new("nova::graphics::setup");
-    let instance = Arc::new(Instance::create("nova", 1));
+pub fn setup() -> Gpu {
+  let log = log::Logger::new("nova::graphics");
+  let instance = Arc::new(Instance::create("nova", 1));
 
-    log
-      .info("Instantiated backend.")
-      .with("backend", BACKEND_NAME);
+  log
+    .info("Instantiated backend.")
+    .with("backend", BACKEND_NAME);
 
-    let (device, queues) = device::open(&instance);
+  let (device, queues) = device::open(&instance);
 
-    log
-      .info("Opened device.")
-      .with("adapter", device.adapter_info())
-      .with("queues", queues.len());
+  log
+    .info("Opened device.")
+    .with("adapter", device.adapter_info())
+    .with("queues", queues.len());
 
-    Graphics {
-      instance,
-      device,
-      queues,
-    }
-  });
+  Gpu { device, queues }
 }
 
-pub struct Graphics {
+pub struct Gpu {
   queues: Vec<device::Queue>,
   device: DeviceHandle,
-  instance: Arc<Instance>,
 }
 
-impl Graphics {
+impl Gpu {
   pub fn device(&self) -> &DeviceHandle {
     &self.device
-  }
-
-  pub fn queue_mut(&mut self, index: usize) -> &mut device::Queue {
-    &mut self.queues[index]
-  }
-
-  pub(crate) fn instance(&self) -> &Arc<Instance> {
-    &self.instance
   }
 }

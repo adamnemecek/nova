@@ -19,10 +19,10 @@ pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStor
 pub use specs::storage::{ComponentEvent, FlaggedStorage};
 
 pub use specs::world::is_entity_alive;
+pub use specs::world::maintain;
 pub use specs::world::Component;
 pub use specs::world::{create_entity, delete_all_entities, delete_entities, delete_entity};
 pub use specs::world::{entities, entities_mut};
-pub use specs::world::{init as setup, maintain};
 pub use specs::world::{read_storage as read_components, write_storage as write_components};
 pub use specs::world::{register, register_with_storage};
 pub use specs::world::{Builder as BuildEntity, EntityBuilder};
@@ -32,3 +32,11 @@ pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
+
+pub fn setup() -> Resources {
+  let mut res = Resources::new();
+
+  specs::world::init(&mut res);
+
+  res
+}
