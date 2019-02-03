@@ -10,10 +10,9 @@ type RawImage = <Backend as gfx_hal::Backend>::Image;
 type RawImageView = <Backend as gfx_hal::Backend>::ImageView;
 
 pub struct Image {
-  raw_view: RawImageView,
-  raw: RawImage,
+  raw_view: Option<RawImageView>,
+  _raw: RawImage,
   device: DeviceHandle,
-  format: ImageFormat,
 }
 
 impl Image {
@@ -37,9 +36,18 @@ impl Image {
 
     Image {
       device: device.clone(),
-      raw,
-      raw_view,
-      format,
+      _raw: raw,
+      raw_view: Some(raw_view),
+    }
+  }
+}
+
+impl Drop for Image {
+  fn drop(&mut self) {
+    if let Some(raw_view) = self.raw_view.take() {
+      unsafe {
+        self.device.raw().destroy_image_view(raw_view);
+      }
     }
   }
 }

@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod events;
+mod options;
+
 use crate::ecs::{self, Dispatchable};
 
 #[cfg(feature = "graphics")]
@@ -10,12 +13,14 @@ use crate::graphics;
 #[cfg(feature = "window")]
 use crate::window;
 
+pub use self::events::*;
+pub use self::options::*;
 pub use rayon::ThreadPool;
 
 pub struct Engine {
   resources: ecs::Resources,
   thread_pool: ThreadPool,
-  on_tick: Vec<Box<dyn for<'a> Dispatchable<'a>>>,
+  event_handlers: EventHandlers,
 }
 
 impl Engine {
@@ -27,7 +32,7 @@ impl Engine {
     let mut engine = Engine {
       resources: ecs::setup(),
       thread_pool,
-      on_tick: Vec::new(),
+      event_handlers: EventHandlers::new(),
     };
 
     #[cfg(feature = "graphics")]
@@ -42,10 +47,10 @@ impl Engine {
       if let Some(window_options) = options.window {
         let update = window::setup(&mut engine.resources, window_options);
 
-        engine.on_tick(update);
+        engine.add_dispatch(Event::Ticked, update);
 
         if options.graphics {
-          engine.on_tick(window::MaintainSurface);
+          engine.add_dispatch(Event::Ticked, window::MaintainSurface);
         }
       }
     }
@@ -57,16 +62,32 @@ impl Engine {
     &mut self.resources
   }
 
-  pub fn on_tick(&mut self, mut dispatch: impl for<'a> Dispatchable<'a> + 'static) {
+  pub fn add_dispatch(
+    &mut self,
+    event: Event,
+    mut dispatch: impl for<'a> Dispatchable<'a> + 'static,
+  ) {
     dispatch.setup(&mut self.resources);
 
-    self.on_tick.push(Box::new(dispatch));
+    self
+      .event_handlers
+      .add(event, EventHandler::RunWithPool(Box::new(dispatch)));
+  }
+
+  pub fn add_fn(
+    &mut self,
+    event: Event,
+    fn_mut: impl FnMut(&mut ecs::Resources, &ThreadPool) + 'static,
+  ) {
+    self
+      .event_handlers
+      .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
 
   pub fn tick(&mut self) {
-    for dispatchable in &mut self.on_tick {
-      dispatchable.run(&self.resources, &self.thread_pool);
-    }
+    self
+      .event_handlers
+      .run(Event::Ticked, &mut self.resources, &self.thread_pool);
 
     ecs::maintain(&mut self.resources);
   }
@@ -91,24 +112,6 @@ impl Engine {
 impl Default for Engine {
   fn default() -> Engine {
     Engine::new(Options::default())
-  }
-}
-
-pub struct Options {
-  #[cfg(feature = "graphics")]
-  graphics: bool,
-  #[cfg(feature = "window")]
-  window: Option<window::Options>,
-}
-
-impl Default for Options {
-  fn default() -> Self {
-    Options {
-      #[cfg(feature = "graphics")]
-      graphics: true,
-      #[cfg(feature = "window")]
-      window: Some(Default::default()),
-    }
   }
 }
 

@@ -7,7 +7,6 @@ use crate::ecs;
 use crate::graphics;
 use crate::graphics::{RawDeviceExt, RawQueueExt};
 use crate::math::Size;
-use smallvec::SmallVec;
 use std::cmp;
 use std::sync::{Arc, Weak};
 
@@ -184,6 +183,12 @@ impl Surface {
         self.device.raw().destroy_swapchain(swapchain);
       }
     }
+  }
+}
+
+impl Drop for Surface {
+  fn drop(&mut self) {
+    self.destroy_swapchain();
   }
 }
 

@@ -5,7 +5,6 @@
 use nova::ecs;
 use nova::graphics;
 use nova::window;
-use std::sync::Arc;
 
 pub struct Renderer {
   backbuffer_ready: graphics::Semaphore,
