@@ -6,14 +6,16 @@ use super::backend::{self, Backend};
 use std::sync::Arc;
 
 pub use gfx_hal::AdapterInfo;
+pub(crate) use gfx_hal::Device as RawDeviceExt;
 
 pub type DeviceHandle = Arc<Device>;
+pub(crate) type RawDevice = <Backend as gfx_hal::Backend>::Device;
+pub(crate) type RawPhysicalDevice = <Backend as gfx_hal::Backend>::PhysicalDevice;
 
 type RawAdapter = gfx_hal::Adapter<Backend>;
-type RawDevice = <Backend as gfx_hal::Backend>::Device;
 
 pub struct Device {
-  _raw: RawDevice,
+  raw: RawDevice,
   adapter: RawAdapter,
   backend: backend::Handle,
 }
@@ -27,8 +29,16 @@ impl Device {
     DeviceHandle::new(Device {
       backend: backend.clone(),
       adapter,
-      _raw: device,
+      raw: device,
     })
+  }
+
+  pub(crate) fn raw(&self) -> &RawDevice {
+    &self.raw
+  }
+
+  pub(crate) fn raw_physical(&self) -> &RawPhysicalDevice {
+    &self.adapter.physical_device
   }
 
   pub(crate) fn adapter_info(&self) -> &AdapterInfo {

@@ -4,7 +4,9 @@
 
 use super::backend::Backend;
 use super::device::DeviceHandle;
+
 use gfx_hal::queue::QueueFamily as RawQueueFamilyExt;
+pub(crate) use gfx_hal::queue::RawCommandQueue as RawQueueExt;
 
 type RawQueue = <Backend as gfx_hal::Backend>::CommandQueue;
 type RawQueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
@@ -12,7 +14,7 @@ type RawQueues = gfx_hal::queue::Queues<Backend>;
 
 pub struct Queues {
   queues: Vec<RawQueue>,
-  _families: Vec<RawQueueFamily>,
+  families: Vec<RawQueueFamily>,
   _device: DeviceHandle,
 }
 
@@ -36,7 +38,7 @@ impl Queues {
 
     Queues {
       _device: device.clone(),
-      _families: families,
+      families,
       queues,
     }
   }
@@ -44,4 +46,24 @@ impl Queues {
   pub fn count(&self) -> usize {
     self.queues.len()
   }
+
+  pub(crate) fn raw_mut(&mut self, index: QueueIndex) -> &mut RawQueue {
+    &mut self.queues[index.0]
+  }
+
+  pub(crate) fn find_queue_raw(
+    &self,
+    mut filter: impl FnMut(&RawQueueFamily) -> bool,
+  ) -> Option<QueueIndex> {
+    for i in 0..self.queues.len() {
+      if filter(&self.families[i]) {
+        return Some(QueueIndex(i));
+      }
+    }
+
+    None
+  }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct QueueIndex(usize);

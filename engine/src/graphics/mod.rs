@@ -3,12 +3,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub(crate) mod backend;
-pub mod device;
-pub mod queues;
 
+mod device;
+mod image;
+mod queues;
 mod setup;
+mod sync;
 
 pub use self::backend::Backend;
-pub use self::device::{Device, DeviceHandle};
-pub use self::queues::Queues;
-pub use self::setup::setup;
+pub use self::device::*;
+pub use self::image::*;
+pub use self::queues::*;
+pub use self::setup::*;
+pub use self::sync::*;

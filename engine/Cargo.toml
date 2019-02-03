@@ -22,6 +22,7 @@ shrev = "1.0"
 specs = { git = "https://github.com/bfrydl/specs" }
 specs-derive = "0.3"
 winit = "0.18"
+smallvec = "0.6.8"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.1"

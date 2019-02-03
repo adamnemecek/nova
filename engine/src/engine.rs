@@ -53,6 +53,10 @@ impl Engine {
     engine
   }
 
+  pub fn resources_mut(&mut self) -> &mut ecs::Resources {
+    &mut self.resources
+  }
+
   pub fn on_tick(&mut self, mut dispatch: impl for<'a> Dispatchable<'a> + 'static) {
     dispatch.setup(&mut self.resources);
 
