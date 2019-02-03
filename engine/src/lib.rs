@@ -4,13 +4,13 @@
 
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
+pub mod app;
 pub mod assets;
 pub mod ecs;
 #[cfg(feature = "graphics")]
 pub mod graphics;
 pub mod log;
 pub mod math;
-pub mod time;
 pub mod utils;
 #[cfg(feature = "window")]
 pub mod window;
