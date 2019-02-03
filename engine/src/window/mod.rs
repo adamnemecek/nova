@@ -13,6 +13,8 @@ pub use self::options::Options;
 pub use winit::WindowEvent as Event;
 pub use winit::{EventsLoop, Window};
 
+pub type WindowHandle = Arc<Window>;
+
 pub fn create(options: Options) -> (Arc<Window>, EventsLoop) {
   let events_loop = EventsLoop::new();
 
@@ -69,14 +71,14 @@ impl<'a> ecs::System<'a> for PollEvents {
 }
 
 #[derive(Default)]
-pub struct ExitEngineLoopOnCloseRequest {
+pub struct StopEngineOnCloseRequest {
   reader_id: Option<events::ReaderId<Event>>,
 }
 
-impl<'a> ecs::System<'a> for ExitEngineLoopOnCloseRequest {
+impl<'a> ecs::System<'a> for StopEngineOnCloseRequest {
   type SystemData = (
     ecs::ReadResource<'a, Events>,
-    ecs::WriteResource<'a, engine::LoopExit>,
+    ecs::WriteResource<'a, engine::Stop>,
   );
 
   fn setup(&mut self, res: &mut ecs::Resources) {

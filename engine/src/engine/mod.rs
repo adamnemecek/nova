@@ -15,10 +15,6 @@ pub struct Engine {
   res: ecs::Resources,
   thread_pool: ThreadPool,
   on_tick: Vec<Box<dyn for<'a> Dispatchable<'a>>>,
-  #[cfg(feature = "graphics")]
-  gpu: graphics::Gpu,
-  #[cfg(feature = "window")]
-  window: Arc<window::Window>,
 }
 
 impl Engine {
@@ -27,24 +23,32 @@ impl Engine {
       .build()
       .expect("Could not create thread pool");
 
-    #[cfg(feature = "window")]
-    let (window, events_loop) = window::create(options.window);
-
     let mut app = Engine {
       res: ecs::setup(),
       thread_pool,
       on_tick: Vec::new(),
-      #[cfg(feature = "graphics")]
-      gpu: graphics::Gpu::new(),
-      #[cfg(feature = "window")]
-      window,
     };
 
+    #[cfg(feature = "graphics")]
+    {
+      let gpu = graphics::Gpu::new();
+
+      app.res.insert(gpu);
+    }
+
     #[cfg(feature = "window")]
-    app.on_tick(ecs::seq![
-      window::PollEvents { events_loop },
-      window::ExitEngineLoopOnCloseRequest::default(),
-    ]);
+    {
+      if let Some(options) = options.window {
+        let (window, events_loop) = window::create(options);
+
+        app.res.insert(window);
+
+        app.on_tick(ecs::seq![
+          window::PollEvents { events_loop },
+          window::StopEngineOnCloseRequest::default(),
+        ]);
+      }
+    }
 
     app
   }
@@ -63,13 +67,13 @@ impl Engine {
     ecs::maintain(&mut self.res);
   }
 
-  pub fn run_loop(mut self) {
-    self.res.entry().or_insert_with(LoopExit::default).requested = false;
+  pub fn start(mut self) {
+    self.res.entry().or_insert_with(Stop::default).requested = false;
 
     loop {
       self.tick();
 
-      if self.res.get_mut::<LoopExit>().unwrap().requested {
+      if self.res.get_mut::<Stop>().unwrap().requested {
         break;
       }
     }
@@ -82,13 +86,21 @@ impl Default for Engine {
   }
 }
 
-#[derive(Default)]
 pub struct Options {
   #[cfg(feature = "window")]
-  window: window::Options,
+  window: Option<window::Options>,
+}
+
+impl Default for Options {
+  fn default() -> Self {
+    Options {
+      #[cfg(feature = "window")]
+      window: Some(Default::default()),
+    }
+  }
 }
 
 #[derive(Default)]
-pub struct LoopExit {
+pub struct Stop {
   pub requested: bool,
 }

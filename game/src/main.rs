@@ -7,7 +7,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let engine = nova::Engine::default();
 
-  engine.run_loop();
+  engine.start();
 
   Ok(())
 }
