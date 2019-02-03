@@ -8,6 +8,7 @@ pub mod queues;
 
 mod setup;
 
+pub use self::backend::Backend;
 pub use self::device::{Device, DeviceHandle};
 pub use self::queues::Queues;
 pub use self::setup::setup;

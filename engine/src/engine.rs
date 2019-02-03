@@ -39,15 +39,14 @@ impl Engine {
 
     #[cfg(feature = "window")]
     {
-      if let Some(options) = options.window {
-        let (window, events_loop) = window::create(options);
+      if let Some(window_options) = options.window {
+        let update = window::setup(&mut engine.resources, window_options);
 
-        engine.on_tick(ecs::seq![
-          window::PollEvents { events_loop },
-          window::StopEngineOnCloseRequest::default(),
-        ]);
+        engine.on_tick(update);
 
-        engine.resources.insert(window);
+        if options.graphics {
+          engine.on_tick(window::MaintainSurface);
+        }
       }
     }
 
@@ -72,13 +71,13 @@ impl Engine {
     self
       .resources
       .entry()
-      .or_insert_with(Stop::default)
+      .or_insert_with(Exit::default)
       .requested = false;
 
     loop {
       self.tick();
 
-      if self.resources.get_mut::<Stop>().unwrap().requested {
+      if self.resources.get_mut::<Exit>().unwrap().requested {
         break;
       }
     }
@@ -110,6 +109,6 @@ impl Default for Options {
 }
 
 #[derive(Default)]
-pub struct Stop {
+pub struct Exit {
   pub requested: bool,
 }

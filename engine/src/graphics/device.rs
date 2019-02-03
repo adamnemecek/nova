@@ -15,7 +15,7 @@ type RawDevice = <Backend as gfx_hal::Backend>::Device;
 pub struct Device {
   _raw: RawDevice,
   adapter: RawAdapter,
-  _backend: backend::Handle,
+  backend: backend::Handle,
 }
 
 impl Device {
@@ -25,7 +25,7 @@ impl Device {
     device: RawDevice,
   ) -> DeviceHandle {
     DeviceHandle::new(Device {
-      _backend: backend.clone(),
+      backend: backend.clone(),
       adapter,
       _raw: device,
     })
@@ -33,5 +33,9 @@ impl Device {
 
   pub(crate) fn adapter_info(&self) -> &AdapterInfo {
     &self.adapter.info
+  }
+
+  pub(crate) fn backend(&self) -> &backend::Handle {
+    &self.backend
   }
 }
