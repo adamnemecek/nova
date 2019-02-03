@@ -5,6 +5,8 @@
 mod options;
 
 use crate::ecs;
+use crate::engine;
+use crate::events;
 use std::sync::Arc;
 
 pub use self::options::Options;
@@ -36,6 +38,16 @@ pub struct Events {
   channel: EventChannel,
 }
 
+impl Events {
+  pub fn channel(&self) -> &EventChannel {
+    &self.channel
+  }
+
+  pub fn channel_mut(&mut self) -> &mut EventChannel {
+    &mut self.channel
+  }
+}
+
 pub struct PollEvents {
   pub events_loop: EventsLoop,
 }
@@ -53,5 +65,33 @@ impl<'a> ecs::System<'a> for PollEvents {
         events.channel.single_write(event);
       }
     });
+  }
+}
+
+#[derive(Default)]
+pub struct ExitEngineLoopOnCloseRequest {
+  reader_id: Option<events::ReaderId<Event>>,
+}
+
+impl<'a> ecs::System<'a> for ExitEngineLoopOnCloseRequest {
+  type SystemData = (
+    ecs::ReadResource<'a, Events>,
+    ecs::WriteResource<'a, engine::LoopExit>,
+  );
+
+  fn setup(&mut self, res: &mut ecs::Resources) {
+    self.reader_id = res
+      .get_mut::<Events>()
+      .map(|e| e.channel_mut().register_reader());
+  }
+
+  fn run(&mut self, (events, mut loop_exit): Self::SystemData) {
+    if let Some(ref mut reader_id) = self.reader_id {
+      for event in events.channel().read(reader_id) {
+        if let Event::CloseRequested = event {
+          loop_exit.requested = true;
+        }
+      }
+    }
   }
 }

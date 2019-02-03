@@ -4,9 +4,9 @@
 
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
-pub mod app;
 pub mod assets;
 pub mod ecs;
+pub mod engine;
 #[cfg(feature = "graphics")]
 pub mod graphics;
 pub mod log;
@@ -19,4 +19,4 @@ pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
 }
 
-pub use rayon::{ThreadPool, ThreadPoolBuilder};
+pub use self::engine::Engine;
