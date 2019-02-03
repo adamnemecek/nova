@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::ecs::{self, Dispatchable};
-use crate::log;
 
 #[cfg(feature = "graphics")]
 use crate::graphics;
@@ -14,55 +13,41 @@ use crate::window;
 pub use rayon::ThreadPool;
 
 pub struct Engine {
-  res: ecs::Resources,
+  resources: ecs::Resources,
   thread_pool: ThreadPool,
   on_tick: Vec<Box<dyn for<'a> Dispatchable<'a>>>,
-  log: log::Logger,
 }
 
 impl Engine {
   pub fn new(options: Options) -> Self {
-    let log = log::Logger::new("nova::Engine");
-
     let thread_pool = rayon::ThreadPoolBuilder::new()
       .build()
       .expect("Could not create thread pool");
 
     let mut engine = Engine {
-      res: ecs::setup(),
+      resources: ecs::setup(),
       thread_pool,
       on_tick: Vec::new(),
-      log,
     };
 
     #[cfg(feature = "graphics")]
     {
       if options.graphics {
-        let gpu = graphics::setup();
-
-        engine
-          .log
-          .info("Initialized graphics.")
-          .with("backend", graphics::backend::NAME)
-          .with("adapter", gpu.device().adapter_info());
-
-        engine.res.insert(gpu);
+        graphics::setup(&mut engine.resources);
       }
     }
 
     #[cfg(feature = "window")]
     {
       if let Some(options) = options.window {
-        let (handle, events_loop) = window::setup(options);
+        let (window, events_loop) = window::create(options);
 
         engine.on_tick(ecs::seq![
           window::PollEvents { events_loop },
           window::StopEngineOnCloseRequest::default(),
         ]);
 
-        engine.log.info("Initialized window.");
-
-        engine.res.insert(handle);
+        engine.resources.insert(window);
       }
     }
 
@@ -70,26 +55,30 @@ impl Engine {
   }
 
   pub fn on_tick(&mut self, mut dispatch: impl for<'a> Dispatchable<'a> + 'static) {
-    dispatch.setup(&mut self.res);
+    dispatch.setup(&mut self.resources);
 
     self.on_tick.push(Box::new(dispatch));
   }
 
   pub fn tick(&mut self) {
     for dispatchable in &mut self.on_tick {
-      dispatchable.run(&self.res, &self.thread_pool);
+      dispatchable.run(&self.resources, &self.thread_pool);
     }
 
-    ecs::maintain(&mut self.res);
+    ecs::maintain(&mut self.resources);
   }
 
-  pub fn start(mut self) {
-    self.res.entry().or_insert_with(Stop::default).requested = false;
+  pub fn run(mut self) {
+    self
+      .resources
+      .entry()
+      .or_insert_with(Stop::default)
+      .requested = false;
 
     loop {
       self.tick();
 
-      if self.res.get_mut::<Stop>().unwrap().requested {
+      if self.resources.get_mut::<Stop>().unwrap().requested {
         break;
       }
     }

@@ -3,16 +3,27 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::backend::{self, InstanceExt};
-use super::device::{DeviceHandle, PhysicalDeviceExt, QueueFamilyExt};
-use super::Gpu;
-use gfx_hal::adapter::DeviceType;
-use std::sync::Arc;
+use super::{Device, Queues};
+use crate::ecs;
+use crate::log;
+use gfx_hal::adapter::{DeviceType, PhysicalDevice};
 
-pub fn setup() -> Gpu {
-  let instance = Arc::new(backend::Instance::create("nova", 1));
+pub fn setup(res: &mut ecs::Resources) {
+  if res.has_value::<backend::Handle>() {
+    return;
+  }
+
+  let log = log::Logger::new("nova::graphics::setup");
+
+  // Instantiate the backend.
+  let backend = backend::Handle::from(backend::Instance::create("nova", 1));
+
+  log
+    .info("Instantiated backend.")
+    .with("backend", backend::NAME);
 
   // Select the best adapter according to `score_adapter()`.
-  let mut adapters = instance.enumerate_adapters();
+  let mut adapters = backend.enumerate_adapters();
 
   adapters.sort_by_key(|adapter| match adapter.info.device_type {
     DeviceType::DiscreteGpu => 3,
@@ -27,15 +38,16 @@ pub fn setup() -> Gpu {
     // TODO: Error handling (doesn't gfx_hal panic when no devices are found?)
     .expect("Could not create graphics device: no adapters found.");
 
+  let queue_families = adapter.queue_families.clone();
+
   // Open one queue in every family.
-  let queue_requests = adapter
-    .queue_families
+  let queue_requests = queue_families
     .iter()
     .map(|family| (family, &[1.0][..]))
     .collect::<Vec<_>>();
 
   // Open the physical device.
-  let mut gpu = unsafe {
+  let gpu = unsafe {
     adapter
       .physical_device
       .open(&queue_requests[..])
@@ -43,24 +55,15 @@ pub fn setup() -> Gpu {
       .expect("Could not create graphics device")
   };
 
-  let queues = adapter
-    .queue_families
-    .iter()
-    .map(|f| {
-      gpu
-        .queues
-        .take_raw(f.id())
-        .expect("Adapter did not open all requested queue groups.")
-        .into_iter()
-        .next()
-        .expect("Adapter did not open a queue for one or more requested queue groups.")
-    })
-    .collect();
+  let device = Device::from_raw(&backend, adapter, gpu.device);
+  let queues = Queues::from_raw(&device, gpu.queues, queue_families);
 
-  let device = DeviceHandle::new(gpu.device, adapter, instance.clone());
+  log
+    .info("Opened device.")
+    .with("adapter_info", device.adapter_info())
+    .with("queue_count", queues.count());
 
-  Gpu {
-    device,
-    _queues: queues,
-  }
+  res.insert(backend);
+  res.insert(device);
+  res.insert(queues);
 }

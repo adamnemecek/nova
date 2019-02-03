@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! The `backend` module exposes the contents of the most appropriate backend
-//! graphics API for the target platform.
-//!
-//! Common backend structure types are exposed so that other modules can make
-//! direct use of these types rather than making every type and function generic
-//! on the backend type.
+use std::sync::Arc;
 
 // Use DirectX 12 on Windows, Metal on MacOS, and Vulkan on Linux.
 #[cfg(windows)]
@@ -18,6 +13,8 @@ pub use gfx_backend_metal::*;
 pub use gfx_backend_vulkan::*;
 
 pub use gfx_hal::Instance as InstanceExt;
+
+pub type Handle = Arc<Instance>;
 
 #[cfg(windows)]
 pub const NAME: &str = "DirectX 12";

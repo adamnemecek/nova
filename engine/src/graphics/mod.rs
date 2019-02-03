@@ -4,19 +4,10 @@
 
 pub(crate) mod backend;
 pub mod device;
+pub mod queues;
 
 mod setup;
 
-pub use self::device::{Device, DeviceExt, DeviceHandle};
+pub use self::device::{Device, DeviceHandle};
+pub use self::queues::Queues;
 pub use self::setup::setup;
-
-pub struct Gpu {
-  _queues: Vec<device::Queue>,
-  device: DeviceHandle,
-}
-
-impl Gpu {
-  pub(crate) fn device(&self) -> &DeviceHandle {
-    &self.device
-  }
-}

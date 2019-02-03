@@ -5,7 +5,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let engine = nova::Engine::default();
 
-  engine.start();
+  engine.run();
 
   Ok(())
 }
