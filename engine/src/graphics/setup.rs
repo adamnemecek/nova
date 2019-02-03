@@ -3,10 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::backend::{self, InstanceExt};
-use super::{Device, Queues};
+use super::{Device, DeviceType, Queues, RawPhysicalDeviceExt};
 use crate::ecs;
 use crate::log;
-use gfx_hal::adapter::{DeviceType, PhysicalDevice};
 
 pub fn setup(res: &mut ecs::Resources) {
   if res.has_value::<backend::Handle>() {

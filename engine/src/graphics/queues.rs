@@ -4,8 +4,8 @@
 
 use super::backend::Backend;
 use super::device::DeviceHandle;
+use gfx_hal::queue::QueueFamily;
 
-use gfx_hal::queue::QueueFamily as RawQueueFamilyExt;
 pub(crate) use gfx_hal::queue::RawCommandQueue as RawQueueExt;
 
 type RawQueue = <Backend as gfx_hal::Backend>::CommandQueue;

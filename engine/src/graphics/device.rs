@@ -5,10 +5,13 @@
 use super::backend::{self, Backend};
 use std::sync::Arc;
 
-pub use gfx_hal::AdapterInfo;
+pub use gfx_hal::adapter::{AdapterInfo, DeviceType};
+
 pub(crate) use gfx_hal::Device as RawDeviceExt;
+pub(crate) use gfx_hal::PhysicalDevice as RawPhysicalDeviceExt;
 
 pub type DeviceHandle = Arc<Device>;
+
 pub(crate) type RawDevice = <Backend as gfx_hal::Backend>::Device;
 pub(crate) type RawPhysicalDevice = <Backend as gfx_hal::Backend>::PhysicalDevice;
 

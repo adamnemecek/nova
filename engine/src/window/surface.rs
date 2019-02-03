@@ -176,6 +176,12 @@ impl Surface {
   }
 
   fn destroy_swapchain(&mut self) {
+    self
+      .device
+      .raw()
+      .wait_idle()
+      .expect("Could not wait for graphics device to be idle");
+
     self.images.clear();
 
     if let Some(swapchain) = self.swapchain.take() {
