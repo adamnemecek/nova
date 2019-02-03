@@ -15,7 +15,7 @@ pub use winit::{EventsLoop, Window};
 
 pub type WindowHandle = Arc<Window>;
 
-pub fn create(options: Options) -> (Arc<Window>, EventsLoop) {
+pub fn setup(options: Options) -> (WindowHandle, EventsLoop) {
   let events_loop = EventsLoop::new();
 
   let monitor = events_loop.get_primary_monitor();

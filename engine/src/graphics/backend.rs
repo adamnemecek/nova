@@ -20,8 +20,8 @@ pub use gfx_backend_vulkan::*;
 pub use gfx_hal::Instance as InstanceExt;
 
 #[cfg(windows)]
-pub const BACKEND_NAME: &str = "DirectX 12";
+pub const NAME: &str = "DirectX 12";
 #[cfg(target_os = "macos")]
-pub const BACKEND_NAME: &str = "Metal";
+pub const NAME: &str = "Metal";
 #[cfg(all(unix, not(target_os = "macos")))]
-pub const BACKEND_NAME: &str = "Vulkan";
+pub const NAME: &str = "Vulkan";
