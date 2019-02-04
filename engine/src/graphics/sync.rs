@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, DeviceHandle, RawDeviceExt};
+use super::{Backend, Device, RawDeviceExt};
 use crate::utils::Droppable;
 
 type RawSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
 
 pub struct Semaphore {
   raw: Droppable<RawSemaphore>,
-  device: DeviceHandle,
+  device: Device,
 }
 
 impl Semaphore {
-  pub fn new(device: &DeviceHandle) -> Semaphore {
+  pub fn new(device: &Device) -> Semaphore {
     let raw = device
       .raw()
       .create_semaphore()

@@ -2,8 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::backend::Backend;
-use super::device::DeviceHandle;
+use super::{Backend, Device};
 use gfx_hal::queue::QueueFamily;
 
 pub(crate) use gfx_hal::queue::RawCommandQueue as RawQueueExt;
@@ -15,12 +14,12 @@ type RawQueues = gfx_hal::queue::Queues<Backend>;
 pub struct Queues {
   queues: Vec<RawQueue>,
   families: Vec<RawQueueFamily>,
-  _device: DeviceHandle,
+  _device: Device,
 }
 
 impl Queues {
   pub(super) fn from_raw(
-    device: &DeviceHandle,
+    device: &Device,
     mut queues: RawQueues,
     families: Vec<RawQueueFamily>,
   ) -> Self {

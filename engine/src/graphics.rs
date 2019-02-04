@@ -5,14 +5,18 @@
 pub(crate) mod backend;
 
 mod device;
+mod framebuffer;
 mod image;
 mod queues;
+mod render_pass;
 mod setup;
 mod sync;
 
 pub use self::backend::Backend;
 pub use self::device::*;
+pub use self::framebuffer::*;
 pub use self::image::*;
 pub use self::queues::*;
+pub use self::render_pass::*;
 pub use self::setup::*;
 pub use self::sync::*;

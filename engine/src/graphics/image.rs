@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, DeviceHandle, RawDeviceExt};
+use super::{Backend, Device, RawDeviceExt};
 use crate::utils::Droppable;
 
 pub use gfx_hal::format::Format as ImageFormat;
@@ -13,11 +13,11 @@ type RawImageView = <Backend as gfx_hal::Backend>::ImageView;
 pub struct Image {
   raw_view: Droppable<RawImageView>,
   _raw: RawImage,
-  device: DeviceHandle,
+  device: Device,
 }
 
 impl Image {
-  pub(crate) fn from_raw_image(device: &DeviceHandle, raw: RawImage, format: ImageFormat) -> Self {
+  pub(crate) fn from_raw_image(device: &Device, raw: RawImage, format: ImageFormat) -> Self {
     let raw_view = unsafe {
       device
         .raw()
@@ -40,6 +40,10 @@ impl Image {
       _raw: raw,
       raw_view: raw_view.into(),
     }
+  }
+
+  pub(crate) fn raw_view(&self) -> &RawImageView {
+    &self.raw_view
   }
 }
 

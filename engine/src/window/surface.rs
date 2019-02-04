@@ -21,13 +21,13 @@ pub struct Surface {
   images: Vec<Arc<graphics::Image>>,
   swapchain: Droppable<RawSwapchain>,
   raw: RawSurface,
-  device: graphics::DeviceHandle,
+  device: graphics::Device,
   size: Size<u32>,
   present_queue: Option<graphics::QueueIndex>,
 }
 
 impl Surface {
-  fn new(window: &Window, device: &graphics::DeviceHandle) -> Self {
+  fn new(window: &Window, device: &graphics::Device) -> Self {
     let surface = device.backend().create_surface(&window.raw);
 
     Surface {
@@ -55,7 +55,11 @@ impl Surface {
           let index = index as usize;
           let image = Arc::downgrade(&self.images[index]);
 
-          return Backbuffer { image, index };
+          return Backbuffer {
+            image,
+            index,
+            size: self.size,
+          };
         }
 
         Err(gfx_hal::AcquireError::SurfaceLost(_)) => {
@@ -221,4 +225,19 @@ impl<'a> ecs::System<'a> for MaintainSurface {
 pub struct Backbuffer {
   image: Weak<graphics::Image>,
   index: usize,
+  size: Size<u32>,
+}
+
+impl Backbuffer {
+  pub fn image(&self) -> &Weak<graphics::Image> {
+    &self.image
+  }
+
+  pub fn index(&self) -> usize {
+    self.index
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.size
+  }
 }

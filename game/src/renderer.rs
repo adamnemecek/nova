@@ -7,14 +7,20 @@ use nova::graphics;
 use nova::window;
 
 pub struct Renderer {
+  pass: graphics::RenderPass,
+  framebuffers: graphics::FramebufferCache,
   backbuffer_ready: graphics::Semaphore,
 }
 
 impl Renderer {
   pub fn new(res: &mut ecs::Resources) -> Self {
     let device = res.fetch();
+    let pass = graphics::RenderPass::new(&device);
+    let framebuffers = graphics::FramebufferCache::new(&pass);
 
     Renderer {
+      pass,
+      framebuffers,
       backbuffer_ready: graphics::Semaphore::new(&device),
     }
   }
@@ -26,7 +32,10 @@ impl Renderer {
       surface.acquire_backbuffer(&self.backbuffer_ready)
     };
 
-    // Render
+    let framebuffer = self.framebuffers.cached(backbuffer.index(), |fb| {
+      fb.set_size(backbuffer.size());
+      fb.attach(0, backbuffer.image());
+    });
 
     let mut surface = res.fetch_mut::<window::Surface>();
     let mut queues = res.fetch_mut();
