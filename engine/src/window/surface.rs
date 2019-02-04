@@ -23,7 +23,7 @@ pub struct Surface {
   raw: RawSurface,
   device: graphics::Device,
   size: Size<u32>,
-  present_queue: Option<graphics::QueueIndex>,
+  present_queue: Option<graphics::QueueId>,
 }
 
 impl Surface {

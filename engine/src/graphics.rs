@@ -9,10 +9,13 @@ mod framebuffer;
 mod image;
 mod queues;
 mod render_pass;
+mod commands;
 mod setup;
 mod sync;
 
 pub use self::backend::Backend;
+
+pub use self::commands::*;
 pub use self::device::*;
 pub use self::framebuffer::*;
 pub use self::image::*;

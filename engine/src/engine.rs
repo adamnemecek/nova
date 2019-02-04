@@ -106,7 +106,7 @@ impl Engine {
         break;
       }
 
-      std::thread::yield_now();
+      std::thread::sleep(std::time::Duration::from_millis(10));
     }
   }
 }

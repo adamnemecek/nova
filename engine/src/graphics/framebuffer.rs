@@ -12,6 +12,7 @@ type RawFramebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
 pub struct Framebuffer {
   raw: Droppable<RawFramebuffer>,
   device: Device,
+  size: Size<u32>,
 }
 
 impl Framebuffer {
@@ -32,7 +33,16 @@ impl Framebuffer {
     Framebuffer {
       device,
       raw: raw.into(),
+      size,
     }
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.size
+  }
+
+  pub(super) fn raw(&self) -> &RawFramebuffer {
+    &self.raw
   }
 }
 
