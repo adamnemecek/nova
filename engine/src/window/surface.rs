@@ -23,12 +23,16 @@ pub struct Surface {
   raw: RawSurface,
   device: graphics::Device,
   size: Size<u32>,
-  present_queue: Option<graphics::QueueId>,
+  queue_id: graphics::QueueId,
 }
 
 impl Surface {
-  fn new(window: &Window, device: &graphics::Device) -> Self {
+  fn new(window: &Window, device: &graphics::Device, queues: &graphics::Queues) -> Self {
     let surface = device.backend().create_surface(&window.raw);
+
+    let queue_id = queues
+      .find_queue_raw(|family| surface.supports_queue_family(family))
+      .expect("The graphics device does not support presentation to the window surface.");
 
     Surface {
       raw: surface,
@@ -36,7 +40,7 @@ impl Surface {
       size: window.size,
       swapchain: Droppable::dropped(),
       images: Vec::new(),
-      present_queue: None,
+      queue_id,
     }
   }
 
@@ -89,20 +93,8 @@ impl Surface {
       "Cannot present backbuffers from other surfaces."
     );
 
-    let queue_index = match self.present_queue {
-      Some(i) => i,
-
-      None => {
-        self.present_queue = queues.find_queue_raw(|family| self.raw.supports_queue_family(family));
-
-        self
-          .present_queue
-          .expect("The graphics device does not support presentation to the window surface.")
-      }
-    };
-
     let result = unsafe {
-      queues.raw_mut(queue_index).present(
+      queues.raw_mut(self.queue_id).present(
         Some((&self.swapchain, backbuffer.index as u32)),
         Some(wait_for.raw()),
       )
@@ -210,8 +202,9 @@ impl<'a> ecs::System<'a> for MaintainSurface {
     res.insert({
       let device = res.fetch();
       let window = res.fetch();
+      let queues = res.fetch();
 
-      Surface::new(&window, &device)
+      Surface::new(&window, &device, &queues)
     });
   }
 
