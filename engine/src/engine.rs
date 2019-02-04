@@ -105,6 +105,8 @@ impl Engine {
       if self.resources.get_mut::<Exit>().unwrap().requested {
         break;
       }
+
+      std::thread::yield_now();
     }
   }
 }

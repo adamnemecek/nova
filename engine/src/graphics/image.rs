@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Backend, DeviceHandle, RawDeviceExt};
+use crate::utils::Droppable;
 
 pub use gfx_hal::format::Format as ImageFormat;
 
@@ -10,7 +11,7 @@ type RawImage = <Backend as gfx_hal::Backend>::Image;
 type RawImageView = <Backend as gfx_hal::Backend>::ImageView;
 
 pub struct Image {
-  raw_view: Option<RawImageView>,
+  raw_view: Droppable<RawImageView>,
   _raw: RawImage,
   device: DeviceHandle,
 }
@@ -37,7 +38,7 @@ impl Image {
     Image {
       device: device.clone(),
       _raw: raw,
-      raw_view: Some(raw_view),
+      raw_view: raw_view.into(),
     }
   }
 }

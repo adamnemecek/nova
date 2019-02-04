@@ -3,11 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Backend, DeviceHandle, RawDeviceExt};
+use crate::utils::Droppable;
 
 type RawSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
 
 pub struct Semaphore {
-  raw: Option<RawSemaphore>,
+  raw: Droppable<RawSemaphore>,
   device: DeviceHandle,
 }
 
@@ -20,12 +21,12 @@ impl Semaphore {
 
     Semaphore {
       device: device.clone(),
-      raw: Some(raw),
+      raw: raw.into(),
     }
   }
 
   pub(crate) fn raw(&self) -> &RawSemaphore {
-    self.raw.as_ref().unwrap()
+    &self.raw
   }
 }
 

@@ -7,6 +7,7 @@ use crate::ecs;
 use crate::graphics;
 use crate::graphics::{RawDeviceExt, RawQueueExt};
 use crate::math::Size;
+use crate::utils::Droppable;
 use std::cmp;
 use std::sync::{Arc, Weak};
 
@@ -18,7 +19,7 @@ type RawSwapchain = <graphics::Backend as gfx_hal::Backend>::Swapchain;
 
 pub struct Surface {
   images: Vec<Arc<graphics::Image>>,
-  swapchain: Option<RawSwapchain>,
+  swapchain: Droppable<RawSwapchain>,
   raw: RawSurface,
   device: graphics::DeviceHandle,
   size: Size<u32>,
@@ -33,7 +34,7 @@ impl Surface {
       raw: surface,
       device: device.clone(),
       size: window.size,
-      swapchain: None,
+      swapchain: Droppable::dropped(),
       images: Vec::new(),
       present_queue: None,
     }
@@ -46,8 +47,6 @@ impl Surface {
       let result = unsafe {
         self
           .swapchain
-          .as_mut()
-          .unwrap()
           .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_ready.raw()))
       };
 
@@ -100,10 +99,7 @@ impl Surface {
 
     let result = unsafe {
       queues.raw_mut(queue_index).present(
-        self
-          .swapchain
-          .iter()
-          .map(|sc| (sc, backbuffer.index as u32)),
+        Some((&self.swapchain, backbuffer.index as u32)),
         Some(wait_for.raw()),
       )
     };
@@ -114,7 +110,7 @@ impl Surface {
   }
 
   fn ensure_swapchain(&mut self) {
-    if self.swapchain.is_none() {
+    if self.swapchain.is_dropped() {
       self.create_swapchain();
     }
   }
@@ -158,7 +154,7 @@ impl Surface {
         .expect("Could not create swapchain")
     };
 
-    self.swapchain = Some(swapchain);
+    self.swapchain = swapchain.into();
     self.size = extent.into();
 
     match backbuffers {

@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use std::borrow::{Borrow, BorrowMut};
 use std::ops::{Deref, DerefMut};
 
 /// A value that can be dropped at any time.
@@ -48,7 +49,7 @@ impl<T> Default for Droppable<T> {
   }
 }
 
-// Implement `DeRef` and `AsRef` to expose the inner value.
+// Implement `DeRef` and `Borrow` to expose the inner value.
 impl<T> Deref for Droppable<T> {
   type Target = T;
 
@@ -60,13 +61,13 @@ impl<T> Deref for Droppable<T> {
   }
 }
 
-impl<T> AsRef<T> for Droppable<T> {
-  fn as_ref(&self) -> &T {
+impl<T> Borrow<T> for Droppable<T> {
+  fn borrow(&self) -> &T {
     self.deref()
   }
 }
 
-// Implement `DeRefMut` and `AsRefMut` to expose the inner value mutably.
+// Implement `DeRefMut` and `BorrowMut` to expose the inner value mutably.
 impl<T> DerefMut for Droppable<T> {
   fn deref_mut(&mut self) -> &mut T {
     self
@@ -76,8 +77,8 @@ impl<T> DerefMut for Droppable<T> {
   }
 }
 
-impl<T> AsMut<T> for Droppable<T> {
-  fn as_mut(&mut self) -> &mut T {
+impl<T> BorrowMut<T> for Droppable<T> {
+  fn borrow_mut(&mut self) -> &mut T {
     self.deref_mut()
   }
 }
