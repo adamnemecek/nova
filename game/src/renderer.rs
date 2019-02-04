@@ -47,7 +47,7 @@ impl Renderer {
     }
   }
 
-  pub fn render(&mut self, res: &mut ecs::Resources) {
+  pub fn render(&mut self, res: &mut ecs::Resources, image: Arc<graphics::Image>) {
     self.frame_fence.wait_and_reset();
 
     let backbuffer = {

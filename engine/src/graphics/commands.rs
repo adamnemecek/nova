@@ -4,7 +4,8 @@
 
 mod pool;
 
-use super::{Backend, Framebuffer, QueueId, RenderPass};
+use super::render;
+use super::{Backend, QueueId};
 use crate::utils::Droppable;
 
 pub use self::pool::*;
@@ -33,7 +34,11 @@ impl Commands {
     }
   }
 
-  pub fn begin_render_pass(&mut self, render_pass: &RenderPass, framebuffer: &Framebuffer) {
+  pub fn begin_render_pass(
+    &mut self,
+    render_pass: &render::Pass,
+    framebuffer: &render::Framebuffer,
+  ) {
     // Convert the framebuffer size from `u32` to `i16`.
     let size = framebuffer.size().vector.map(|u| u as i16);
 

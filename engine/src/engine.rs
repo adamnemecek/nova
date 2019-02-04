@@ -48,14 +48,14 @@ impl Engine {
         let update = window::setup(&mut engine.resources, window_options);
 
         engine.add_dispatch(Event::Ticked, update);
-
-        if options.graphics {
-          engine.add_dispatch(Event::Ticked, window::MaintainSurface);
-        }
       }
     }
 
     engine
+  }
+
+  pub fn resources(&self) -> &ecs::Resources {
+    &self.resources
   }
 
   pub fn resources_mut(&mut self) -> &mut ecs::Resources {

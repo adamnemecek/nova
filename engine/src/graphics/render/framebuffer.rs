@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, Device, Image, RawDeviceExt, RenderPass};
+use super::Pass;
+use crate::graphics::{Backend, Device, Image, RawDeviceExt};
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::sync::{Arc, Weak};
@@ -16,14 +17,14 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-  pub fn new(render_pass: &RenderPass, attachments: Vec<Arc<Image>>, size: Size<u32>) -> Self {
-    let device = render_pass.device().clone();
+  pub fn new(pass: &Pass, size: Size<u32>, attachments: Vec<Arc<Image>>) -> Self {
+    let device = pass.device().clone();
 
     let raw = unsafe {
       device
         .raw()
         .create_framebuffer(
-          render_pass.raw(),
+          pass.raw(),
           attachments.iter().map(|a| a.raw_view()),
           size.into(),
         )
@@ -41,7 +42,7 @@ impl Framebuffer {
     self.size
   }
 
-  pub(super) fn raw(&self) -> &RawFramebuffer {
+  pub(crate) fn raw(&self) -> &RawFramebuffer {
     &self.raw
   }
 }
@@ -57,17 +58,17 @@ impl Drop for Framebuffer {
 }
 
 pub struct CachedFramebuffer {
-  render_pass: RenderPass,
+  pass: Pass,
   attachments: Vec<Weak<Image>>,
   size: Option<Size<u32>>,
   cache: Option<Framebuffer>,
 }
 
 impl CachedFramebuffer {
-  pub fn new(render_pass: &RenderPass) -> Self {
+  pub fn new(pass: &Pass) -> Self {
     CachedFramebuffer {
-      render_pass: render_pass.clone(),
-      attachments: vec![Weak::new(); render_pass.attachment_count()],
+      pass: pass.clone(),
+      attachments: vec![Weak::new(); pass.attachment_count()],
       size: None,
       cache: None,
     }
@@ -98,7 +99,11 @@ impl CachedFramebuffer {
     }
   }
 
-  pub fn get(&mut self) -> &Framebuffer {
+  pub fn will_create(&mut self) -> bool {
+    self.cache.is_none()
+  }
+
+  pub fn get_or_create(&mut self) -> &Framebuffer {
     match self.cache {
       Some(ref fb) => fb,
 
@@ -117,49 +122,9 @@ impl CachedFramebuffer {
           })
           .collect();
 
-        self.cache = Some(Framebuffer::new(&self.render_pass, attachments, size));
-
+        self.cache = Some(Framebuffer::new(&self.pass, size, attachments));
         self.cache.as_ref().unwrap()
       }
     }
-  }
-}
-
-pub struct FramebufferCache {
-  buffers: Vec<Option<CachedFramebuffer>>,
-  render_pass: RenderPass,
-}
-
-impl FramebufferCache {
-  pub fn new(render_pass: &RenderPass) -> Self {
-    FramebufferCache {
-      buffers: Vec::new(),
-      render_pass: render_pass.clone(),
-    }
-  }
-
-  pub fn cached(
-    &mut self,
-    index: usize,
-    edit: impl FnOnce(&mut CachedFramebuffer),
-  ) -> &Framebuffer {
-    while self.buffers.len() <= index {
-      self.buffers.push(None);
-    }
-
-    let buffer = &mut self.buffers[index];
-
-    let cached = match buffer {
-      Some(v) => v,
-
-      None => {
-        *buffer = Some(CachedFramebuffer::new(&self.render_pass));
-        buffer.as_mut().unwrap()
-      }
-    };
-
-    edit(cached);
-
-    cached.get()
   }
 }

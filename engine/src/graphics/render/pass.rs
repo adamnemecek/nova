@@ -2,18 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, Device, ImageFormat, RawDeviceExt};
+use crate::graphics::{Backend, Device, ImageFormat, RawDeviceExt};
 use crate::utils::Droppable;
 use std::sync::Arc;
 
 type RawRenderPass = <Backend as gfx_hal::Backend>::RenderPass;
 
 #[derive(Clone)]
-pub struct RenderPass {
+pub struct Pass {
   inner: Arc<Inner>,
 }
 
-impl RenderPass {
+impl Pass {
   pub fn new(device: &Device) -> Self {
     let format = ImageFormat::Bgra8Unorm;
 
@@ -52,7 +52,7 @@ impl RenderPass {
         .expect("Could not create render pass")
     };
 
-    RenderPass {
+    Pass {
       inner: Arc::new(Inner {
         device: device.clone(),
         raw: raw.into(),
@@ -68,7 +68,7 @@ impl RenderPass {
     1
   }
 
-  pub(super) fn raw(&self) -> &RawRenderPass {
+  pub(crate) fn raw(&self) -> &RawRenderPass {
     &self.inner.raw
   }
 }

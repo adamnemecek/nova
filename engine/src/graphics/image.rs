@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Backend, Device, RawDeviceExt};
+use crate::math::Size;
 use crate::utils::Droppable;
 
 pub use gfx_hal::format::Format as ImageFormat;
@@ -14,10 +15,16 @@ pub struct Image {
   raw_view: Droppable<RawImageView>,
   _raw: RawImage,
   device: Device,
+  size: Size<u32>,
 }
 
 impl Image {
-  pub(crate) fn from_raw_image(device: &Device, raw: RawImage, format: ImageFormat) -> Self {
+  pub(crate) fn from_raw_image(
+    device: &Device,
+    raw: RawImage,
+    format: ImageFormat,
+    size: Size<u32>,
+  ) -> Self {
     let raw_view = unsafe {
       device
         .raw()
@@ -39,7 +46,12 @@ impl Image {
       device: device.clone(),
       _raw: raw,
       raw_view: raw_view.into(),
+      size,
     }
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.size
   }
 
   pub(crate) fn raw_view(&self) -> &RawImageView {

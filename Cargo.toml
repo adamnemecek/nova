@@ -1,7 +1,6 @@
 [workspace]
 members = [
-  "engine",
-  "game"
+  "engine"
 ]
 
 [profile.release]

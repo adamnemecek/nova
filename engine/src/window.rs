@@ -4,6 +4,7 @@
 
 mod events;
 mod options;
+mod presenter;
 mod surface;
 mod update;
 
@@ -13,11 +14,13 @@ use winit::Window as RawWindow;
 
 pub use self::events::*;
 pub use self::options::*;
-pub use self::surface::{MaintainSurface, Surface};
+pub use self::presenter::*;
+pub use self::surface::*;
 pub use self::update::*;
 
 pub struct Window {
   raw: RawWindow,
+  surface: Surface,
   size: Size<u32>,
 }
 
@@ -37,9 +40,12 @@ pub fn setup(res: &mut ecs::Resources, options: Options) -> UpdateWindow {
     .build(&events_loop)
     .expect("Could not create window");
 
+  let surface = Surface::new(&raw, &res.fetch());
+
   let window = Window {
     size: get_size_of(&raw),
     raw,
+    surface,
   };
 
   res.insert(window);
