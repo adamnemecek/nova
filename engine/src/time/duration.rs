@@ -14,17 +14,25 @@ pub struct Duration(f64);
 
 impl Duration {
   pub const ZERO: Self = Duration(0.0);
-  pub const ONE_SEC: Self = Duration(1.0);
-  pub const ONE_60TH_SEC: Self = Duration(1.0 / 60.0);
-  pub const ONE_120TH_SEC: Self = Duration(1.0 / 120.0);
-  pub const ONE_144TH_SEC: Self = Duration(1.0 / 144.0);
-  pub const ONE_MILLI: Self = Duration(0.001);
-  pub const ONE_MICRO: Self = Duration(0.000_001);
+
+  pub const fn from_secs(secs: u64) -> Self {
+    Duration(secs as f64)
+  }
+
+  pub const fn from_millis(millis: u64) -> Self {
+    Duration(millis as f64 * 0.001)
+  }
+
+  pub const fn from_micros(micros: u64) -> Self {
+    Duration(micros as f64 * 0.000_001)
+  }
+
+  pub const fn from_hz(hz: u64) -> Self {
+    Duration(1.0 / hz as f64)
+  }
 
   /// Creates a new duration from the given number of seconds.
-  ///
-  /// Durations can only store finite, non-negative amounts of time.
-  pub fn from_secs(secs: f64) -> Self {
+  pub fn from_float_secs(secs: f64) -> Self {
     debug_assert!(secs.is_finite(), "Durations be finite.");
 
     debug_assert!(secs >= 0.0, "Durations must be non-negative.");
@@ -83,7 +91,7 @@ impl Mul<f64> for Duration {
   type Output = Duration;
 
   fn mul(self, rhs: f64) -> Self::Output {
-    Duration::from_secs(self.0 * rhs)
+    Duration::from_float_secs(self.0 * rhs)
   }
 }
 
@@ -91,7 +99,7 @@ impl Div<f64> for Duration {
   type Output = Self;
 
   fn div(self, rhs: f64) -> Self {
-    Duration::from_secs(self.0 / rhs)
+    Duration::from_float_secs(self.0 / rhs)
   }
 }
 

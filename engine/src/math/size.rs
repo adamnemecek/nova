@@ -1,5 +1,4 @@
 use super::{Num, Scalar, Vector2};
-use crate::graphics;
 use derive_more::*;
 use std::fmt;
 
@@ -36,15 +35,15 @@ impl From<(u32, u32)> for Size<u32> {
   }
 }
 
-impl From<graphics::hal::image::Extent> for Size<u32> {
-  fn from(extent: graphics::hal::image::Extent) -> Self {
+impl From<gfx_hal::image::Extent> for Size<u32> {
+  fn from(extent: gfx_hal::image::Extent) -> Self {
     Size::new(extent.width, extent.height)
   }
 }
 
-impl From<Size<u32>> for graphics::hal::image::Extent {
+impl From<Size<u32>> for gfx_hal::image::Extent {
   fn from(size: Size<u32>) -> Self {
-    graphics::hal::image::Extent {
+    gfx_hal::image::Extent {
       width: size.width(),
       height: size.height(),
       depth: 1,
@@ -52,15 +51,15 @@ impl From<Size<u32>> for graphics::hal::image::Extent {
   }
 }
 
-impl From<graphics::hal::window::Extent2D> for Size<u32> {
-  fn from(extent: graphics::hal::window::Extent2D) -> Self {
+impl From<gfx_hal::window::Extent2D> for Size<u32> {
+  fn from(extent: gfx_hal::window::Extent2D) -> Self {
     Size::new(extent.width, extent.height)
   }
 }
 
-impl From<Size<u32>> for graphics::hal::window::Extent2D {
+impl From<Size<u32>> for gfx_hal::window::Extent2D {
   fn from(size: Size<u32>) -> Self {
-    graphics::hal::window::Extent2D {
+    gfx_hal::window::Extent2D {
       width: size.width(),
       height: size.height(),
     }

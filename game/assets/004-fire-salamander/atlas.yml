@@ -1,8 +1,0 @@
----
-image: image.png
-cell_size:
-  - 48
-  - 64
-cell_origin:
-  - 24.5
-  - 36.0

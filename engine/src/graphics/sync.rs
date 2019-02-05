@@ -2,101 +2,87 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::device;
-use crate::graphics::prelude::*;
+use super::{Backend, Device, RawDeviceExt};
 use crate::utils::Droppable;
 
-/// A synchronization primitive for inserting dependencies into command
-/// execution.
-///
-/// Semaphores can be passed to some asynchronous operations such as submitting
-/// comands or acquiring a semaphore which will signal the semaphore on
-/// completion. Other operations accept a list of semaphores to wait on before
-/// executing.
+type RawSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
+type RawFence = <Backend as gfx_hal::Backend>::Fence;
+
 pub struct Semaphore {
-  device: device::Handle,
-  raw: Droppable<backend::Semaphore>,
+  raw: Droppable<RawSemaphore>,
+  device: Device,
 }
 
 impl Semaphore {
-  /// Creates a new semaphore with the given device.
-  pub fn new(device: &device::Handle) -> Self {
-    let semaphore = device
+  pub fn new(device: &Device) -> Semaphore {
+    let raw = device
       .raw()
       .create_semaphore()
-      .expect("could not create semaphore");
+      .expect("Could not create semaphore");
 
     Semaphore {
-      raw: semaphore.into(),
       device: device.clone(),
+      raw: raw.into(),
     }
   }
-}
 
-// Implement `AsRef` to expose the raw backend semaphore.
-impl AsRef<backend::Semaphore> for Semaphore {
-  fn as_ref(&self) -> &backend::Semaphore {
+  pub(crate) fn raw(&self) -> &RawSemaphore {
     &self.raw
   }
 }
 
-// Implement `Drop` to destroy the raw backend semaphore.
 impl Drop for Semaphore {
   fn drop(&mut self) {
-    if let Some(semaphore) = self.raw.take() {
-      self.device.raw().destroy_semaphore(semaphore);
+    if let Some(raw) = self.raw.take() {
+      unsafe {
+        self.device.raw().destroy_semaphore(raw);
+      }
     }
   }
 }
 
-/// A synchronization primitive that the device signals on completion of some
-/// operation.
 pub struct Fence {
-  /// Device the fence was created for.
-  device: device::Handle,
-  /// Raw backend fence structure.
-  raw: Droppable<backend::Fence>,
+  raw: Droppable<RawFence>,
+  device: Device,
 }
 
 impl Fence {
-  /// Creates a new fence for the given device.
-  pub fn new(device: &device::Handle) -> Self {
-    let fence = device
+  pub fn new(device: &Device) -> Fence {
+    let raw = device
       .raw()
-      .create_fence(true) // Initially signaled.
+      .create_fence(true)
       .expect("Could not create fence");
 
     Fence {
-      raw: fence.into(),
       device: device.clone(),
+      raw: raw.into(),
     }
   }
 
-  /// Checks if the fence is currently signaled.
-  pub fn is_signaled(&self) -> bool {
-    self
-      .device
-      .raw()
-      .get_fence_status(&self.raw)
-      .unwrap_or(false)
+  pub(crate) fn raw(&self) -> &RawFence {
+    &self.raw
   }
 
   /// Waits for the fence to be signaled.
   pub fn wait(&self) {
-    self
-      .device
-      .raw()
-      .wait_for_fence(&self.raw, !0)
-      .expect("Could not wait for fence");
+    unsafe {
+      self
+        .device
+        .raw()
+        .wait_for_fence(&self.raw, !0)
+        .expect("Could not wait for fence");
+    }
   }
 
   /// Resets the fence to unsignaled.
   pub fn reset(&mut self) {
-    self
-      .device
-      .raw()
-      .reset_fence(&self.raw)
-      .expect("Could not reset fence");
+    unsafe {
+      self
+        .device
+        .raw()
+        .reset_fence(&self.raw)
+        .expect("Could not reset fence");
+    }
   }
 
   /// Waits for the fence to be signaled then resets it to unsignaled.
@@ -106,18 +92,12 @@ impl Fence {
   }
 }
 
-// Implement `AsRef` to expose the raw backend fence structure.
-impl AsRef<backend::Fence> for Fence {
-  fn as_ref(&self) -> &backend::Fence {
-    &self.raw
-  }
-}
-
-// Implement `Drop` to destroy the fence on the device.
 impl Drop for Fence {
   fn drop(&mut self) {
-    if let Some(fence) = self.raw.take() {
-      self.device.raw().destroy_fence(fence);
+    if let Some(raw) = self.raw.take() {
+      unsafe {
+        self.device.raw().destroy_fence(raw);
+      }
     }
   }
 }

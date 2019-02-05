@@ -2,114 +2,73 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::ecs;
-use crate::log;
+mod events;
 
-/// Container for all ECS resources including entities and components.
-#[derive(Default)]
+use crate::ecs::{self, Dispatchable};
+
+pub use self::events::*;
+pub use rayon::ThreadPool;
+
 pub struct Engine {
-  pub(crate) world: specs::World,
+  resources: ecs::Resources,
+  thread_pool: ThreadPool,
+  event_handlers: EventHandlers,
 }
 
 impl Engine {
-  /// Creates a new engine instance.
   pub fn new() -> Self {
-    let mut engine = Engine {
-      world: specs::World::new(),
-    };
+    let thread_pool = rayon::ThreadPoolBuilder::new()
+      .build()
+      .expect("Could not create thread pool");
 
-    log::setup(&mut engine);
-
-    engine
-  }
-
-  /// Gets whether or not the engine has a resource of type `T`.
-  pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
-    self.world.res.has_value::<T>()
-  }
-
-  /// Adds a resource to the engine instance. If the resource already existed,
-  /// the old value is overwritten.
-  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
-    self.world.res.insert(resource);
-  }
-
-  /// Checks that a resource of type `T` exists in the engine. If it does not,
-  /// the [`Default`] value of `T` is added to the engine.
-  ///
-  /// This function returns a mutable reference to the new or existing resource.
-  pub fn ensure_resource<T: ecs::Resource + Default>(&mut self) -> &mut T {
-    if !self.has_resource::<T>() {
-      self.put_resource(T::default());
+    Engine {
+      resources: ecs::setup(),
+      thread_pool,
+      event_handlers: EventHandlers::new(),
     }
-
-    self.get_resource_mut()
   }
 
-  /// Fetches a reference to a resource in the engine instance.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist or is currently
-  /// fetched mutably.
-  pub fn fetch_resource<T: ecs::Resource>(&self) -> ecs::FetchResource<T> {
-    self.world.res.fetch()
+  pub fn resources(&self) -> &ecs::Resources {
+    &self.resources
   }
 
-  /// Fetches a mutable reference to a resource in the engine instance.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist or is already
-  /// fetched mutably.
-  pub fn fetch_resource_mut<T: ecs::Resource>(&self) -> ecs::FetchResourceMut<T> {
-    self.world.res.fetch_mut()
+  pub fn resources_mut(&mut self) -> &mut ecs::Resources {
+    &mut self.resources
   }
 
-  /// Gets a mutable reference to a resource in an engine instance. This is more
-  /// efficient than fetching a resource.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist.
-  pub fn get_resource_mut<T: ecs::Resource>(&mut self) -> &mut T {
+  pub fn add_dispatch(
+    &mut self,
+    event: Event,
+    mut dispatch: impl for<'a> Dispatchable<'a> + 'static,
+  ) {
+    dispatch.setup(&mut self.resources);
+
     self
-      .world
-      .res
-      .get_mut()
-      .expect("The specified resource does not exist.")
+      .event_handlers
+      .add(event, EventHandler::RunWithPool(Box::new(dispatch)));
   }
 
-  /// Performs deferred tasks and other engine maintenance. Should be called
-  /// once per frame.
-  pub fn maintain(&mut self) {
-    self.world.maintain()
+  pub fn add_fn(
+    &mut self,
+    event: Event,
+    fn_mut: impl FnMut(&mut ecs::Resources, &ThreadPool) + 'static,
+  ) {
+    self
+      .event_handlers
+      .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
-}
 
-// Implement conversions to and from references of equivalent types.
-//
-// These conversions are safe because they are all the same in memory.
-impl AsMut<Engine> for specs::Resources {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
-  }
-}
+  pub fn tick(&mut self) {
+    self
+      .event_handlers
+      .run(Event::Ticked, &mut self.resources, &self.thread_pool);
 
-impl AsMut<Engine> for specs::World {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
+    ecs::maintain(&mut self.resources);
   }
 }
 
-impl AsMut<specs::Resources> for Engine {
-  fn as_mut(&mut self) -> &mut specs::Resources {
-    unsafe { &mut *(self as *mut Self as *mut specs::Resources) }
-  }
-}
-
-impl AsMut<specs::World> for Engine {
-  fn as_mut(&mut self) -> &mut specs::World {
-    unsafe { &mut *(self as *mut Self as *mut specs::World) }
+impl Default for Engine {
+  fn default() -> Engine {
+    Engine::new()
   }
 }
