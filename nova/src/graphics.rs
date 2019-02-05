@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod device;
-pub mod render;
+pub mod renderer;
 
 pub(crate) mod backend;
 
@@ -15,3 +15,4 @@ pub use self::backend::Backend;
 pub use self::commands::*;
 pub use self::device::Device;
 pub use self::image::*;
+pub use self::renderer::Renderer;

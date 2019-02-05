@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Device, Fence, Semaphore};
-use crate::graphics::render::PipelineStage;
+use crate::graphics::renderer::PipelineStage;
 use crate::graphics::{Backend, Commands};
 use gfx_hal::queue::{QueueFamily, QueueFamilyId};
 

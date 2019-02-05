@@ -45,7 +45,7 @@ impl Engine {
 
       engine.add_dispatch(Event::TickStarted, update_window);
 
-      let mut renderer = graphics::render::Renderer::new(engine.resources_mut());
+      let mut renderer = graphics::Renderer::new(engine.resources_mut());
 
       engine.add_fn(Event::TickEnding, {
         move |res, _| {

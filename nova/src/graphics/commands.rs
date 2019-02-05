@@ -5,7 +5,7 @@
 mod pool;
 
 use super::device;
-use super::render;
+use super::renderer;
 use super::Backend;
 use crate::utils::Droppable;
 
@@ -18,7 +18,7 @@ type RawCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub struct Commands {
   raw: Droppable<RawCommandBuffer>,
   pool: CommandPool,
-  render_passes: Vec<render::Pass>,
+  render_passes: Vec<renderer::Pass>,
 }
 
 impl Commands {
@@ -48,8 +48,8 @@ impl Commands {
 
   pub fn begin_render_pass(
     &mut self,
-    render_pass: &render::Pass,
-    framebuffer: &render::Framebuffer,
+    render_pass: &renderer::Pass,
+    framebuffer: &renderer::Framebuffer,
   ) {
     // Convert the framebuffer size from `u32` to `i16`.
     let size = framebuffer.size().vector.map(|u| u as i16);
