@@ -10,6 +10,8 @@ use crate::ecs::{self, Dispatchable};
 #[cfg(not(feature = "headless"))]
 use crate::graphics;
 #[cfg(not(feature = "headless"))]
+use crate::ui;
+#[cfg(not(feature = "headless"))]
 use crate::window;
 
 pub use self::events::*;
@@ -44,6 +46,8 @@ impl Engine {
       let update_window = window::setup(engine.resources_mut(), options.window);
 
       engine.add_dispatch(Event::TickStarted, update_window);
+
+      ui::setup(engine.resources_mut());
 
       let mut renderer = graphics::Renderer::new(engine.resources_mut());
 

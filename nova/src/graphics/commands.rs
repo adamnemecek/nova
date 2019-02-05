@@ -7,6 +7,7 @@ mod pool;
 use super::device;
 use super::renderer;
 use super::Backend;
+use super::Pipeline;
 use crate::utils::Droppable;
 
 pub use self::pool::*;
@@ -19,7 +20,7 @@ pub struct Commands {
   raw: Droppable<RawCommandBuffer>,
   pool: CommandPool,
   render_passes: Vec<renderer::Pass>,
-  pipelines: Vec<renderer::Pipeline>,
+  pipelines: Vec<Pipeline>,
 }
 
 impl Commands {
@@ -91,7 +92,7 @@ impl Commands {
     self.render_passes.push(render_pass.clone());
   }
 
-  pub fn bind_pipeline(&mut self, pipeline: &renderer::Pipeline) {
+  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
     unsafe {
       self.raw.bind_graphics_pipeline(pipeline.raw());
     }

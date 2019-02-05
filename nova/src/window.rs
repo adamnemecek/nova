@@ -23,6 +23,12 @@ pub struct Window {
   size: Size<u32>,
 }
 
+impl Window {
+  pub fn size(&self) -> Size<u32> {
+    self.size
+  }
+}
+
 pub fn setup(res: &mut ecs::Resources, options: Options) -> UpdateWindow {
   if res.has_value::<Window>() {
     panic!("A window has already been set up.");
@@ -32,6 +38,7 @@ pub fn setup(res: &mut ecs::Resources, options: Options) -> UpdateWindow {
 
   let raw = winit::WindowBuilder::new()
     .with_title(options.title)
+    .with_resizable(false)
     .with_dimensions(
       winit::dpi::PhysicalSize::new(options.size.width().into(), options.size.height().into())
         .to_logical(events_loop.get_primary_monitor().get_hidpi_factor()),

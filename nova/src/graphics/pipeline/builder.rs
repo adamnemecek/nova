@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Inner, Pipeline, VertexData};
+use super::{Inner, Pipeline, Shader, ShaderSet, VertexData};
 use crate::graphics::device::RawDeviceExt;
-use crate::graphics::renderer::{Pass, Shader, ShaderSet};
+use crate::graphics::renderer;
 use crate::utils::quick_error;
 use std::ops::Range;
 use std::sync::Arc;
@@ -12,7 +12,7 @@ use std::sync::Arc;
 /// Builds a new [`Pipeline`].
 #[derive(Default)]
 pub struct PipelineBuilder {
-  render_pass: Option<Pass>,
+  render_pass: Option<renderer::Pass>,
   vertex_shader: Option<Shader>,
   fragment_shader: Option<Shader>,
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
@@ -27,7 +27,7 @@ impl PipelineBuilder {
   }
 
   /// Sets the render pass of the pipeline.
-  pub fn set_render_pass(mut self, pass: &Pass) -> Self {
+  pub fn set_render_pass(mut self, pass: &renderer::Pass) -> Self {
     self.render_pass = Some(pass.clone());
     self
   }
@@ -150,7 +150,7 @@ impl PipelineBuilder {
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       shader_set,
-      gfx_hal::Primitive::TriangleList,
+      gfx_hal::Primitive::TriangleStrip,
       gfx_hal::pso::Rasterizer::FILL,
       &layout,
       subpass,

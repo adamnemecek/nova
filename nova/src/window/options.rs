@@ -14,7 +14,7 @@ impl Options {
   pub fn new() -> Self {
     Options {
       title: String::new(),
-      size: Size::new(1280, 720),
+      size: Size::new(2560, 1440),
     }
   }
 

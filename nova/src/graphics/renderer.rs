@@ -4,19 +4,16 @@
 
 mod framebuffer;
 mod pass;
-mod pipeline;
-mod shaders;
 
 use super::device::{Fence, QueueSubmission, Queues, Semaphore};
-use super::{Color4, CommandPool, Commands};
+use super::{CommandPool, Commands};
 use crate::ecs;
+use crate::ui;
 use crate::utils::Droppable;
 use crate::window;
 
 pub use self::framebuffer::*;
 pub use self::pass::*;
-pub use self::pipeline::*;
-pub use self::shaders::*;
 pub use gfx_hal::pso::PipelineStage;
 
 pub struct Renderer {
@@ -27,7 +24,7 @@ pub struct Renderer {
   render_semaphore: Semaphore,
   framebuffer: Droppable<Framebuffer>,
   commands: Commands,
-  pipeline: Pipeline,
+  ui: ui::Renderer,
 }
 
 impl Renderer {
@@ -55,29 +52,7 @@ impl Renderer {
       pool.acquire()
     };
 
-    let vertex_shader = Shader::new(
-      &device,
-      &Spirv::from_glsl(
-        ShaderKind::Vertex,
-        include_str!("renderer/shaders/default.vert"),
-      ),
-    );
-
-    let fragment_shader = Shader::new(
-      &device,
-      &Spirv::from_glsl(
-        ShaderKind::Fragment,
-        include_str!("renderer/shaders/default.frag"),
-      ),
-    );
-
-    let pipeline = PipelineBuilder::new()
-      .set_render_pass(&pass)
-      .set_vertex_shader(&vertex_shader)
-      .set_fragment_shader(&fragment_shader)
-      .add_push_constant::<Color4>()
-      .build()
-      .expect("Could not create graphics pipeline");
+    let ui = ui::Renderer::new(&pass);
 
     Renderer {
       pass,
@@ -87,7 +62,7 @@ impl Renderer {
       render_semaphore,
       framebuffer: Droppable::dropped(),
       commands,
-      pipeline,
+      ui,
     }
   }
 
@@ -104,13 +79,7 @@ impl Renderer {
       .commands
       .begin_render_pass(&self.pass, &self.framebuffer);
 
-    self.commands.bind_pipeline(&self.pipeline);
-
-    self
-      .commands
-      .push_constant(0, &Color4::new(0.0, 1.0, 0.0, 1.0));
-
-    self.commands.draw(0..3);
+    self.ui.render(res, &mut self.commands);
 
     self.commands.finish_render_pass();
     self.commands.finish();

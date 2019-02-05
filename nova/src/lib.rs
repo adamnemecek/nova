@@ -12,6 +12,8 @@ pub mod engine;
 pub mod graphics;
 pub mod log;
 pub mod math;
+#[cfg(not(feature = "headless"))]
+pub mod ui;
 pub mod utils;
 #[cfg(not(feature = "headless"))]
 pub mod window;
