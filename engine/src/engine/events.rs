@@ -4,13 +4,15 @@
 
 use super::ThreadPool;
 use crate::ecs;
+use std::iter;
 
 #[repr(usize)]
 pub enum Event {
-  Ticked,
+  TickStarted,
+  TickEnding,
 }
 
-const EVENT_COUNT: usize = Event::Ticked as usize + 1;
+const EVENT_COUNT: usize = Event::TickEnding as usize + 1;
 
 pub enum EventHandler {
   FnMut(Box<dyn FnMut(&mut ecs::Resources, &ThreadPool)>),
@@ -26,11 +28,11 @@ impl EventHandler {
   }
 }
 
-pub(super) struct EventHandlers([Vec<EventHandler>; EVENT_COUNT]);
+pub(super) struct EventHandlers(Vec<Vec<EventHandler>>);
 
 impl EventHandlers {
   pub fn new() -> Self {
-    EventHandlers([Vec::new(); EVENT_COUNT])
+    EventHandlers(iter::repeat_with(Vec::new).take(EVENT_COUNT).collect())
   }
 
   pub fn add(&mut self, event: Event, handler: EventHandler) {

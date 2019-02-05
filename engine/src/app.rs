@@ -22,11 +22,11 @@ impl App {
 
       let update_window = window::setup(engine.resources_mut(), options.window);
 
-      engine.add_dispatch(engine::Event::Ticked, update_window);
+      engine.add_dispatch(engine::Event::TickStarted, update_window);
 
       let mut renderer = graphics::render::Renderer::new(engine.resources_mut());
 
-      engine.add_fn(engine::Event::Ticked, {
+      engine.add_fn(engine::Event::TickEnding, {
         move |res, _| {
           renderer.render(res);
         }

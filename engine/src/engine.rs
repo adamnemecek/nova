@@ -59,11 +59,19 @@ impl Engine {
   }
 
   pub fn tick(&mut self) {
-    self
-      .event_handlers
-      .run(Event::Ticked, &mut self.resources, &self.thread_pool);
+    self.run_event_handlers(Event::TickStarted);
 
     ecs::maintain(&mut self.resources);
+
+    self.run_event_handlers(Event::TickEnding);
+
+    ecs::maintain(&mut self.resources);
+  }
+
+  fn run_event_handlers(&mut self, event: Event) {
+    self
+      .event_handlers
+      .run(event, &mut self.resources, &self.thread_pool);
   }
 }
 
