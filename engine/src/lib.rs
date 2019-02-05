@@ -4,7 +4,6 @@
 
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
-pub mod app;
 pub mod assets;
 pub mod ecs;
 pub mod engine;
@@ -20,5 +19,4 @@ pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
 }
 
-pub use self::app::App;
 pub use self::engine::Engine;

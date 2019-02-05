@@ -5,6 +5,10 @@
 mod events;
 
 use crate::ecs::{self, Dispatchable};
+#[cfg(not(feature = "headless"))]
+use crate::graphics;
+#[cfg(not(feature = "headless"))]
+use crate::window;
 
 pub use self::events::*;
 pub use rayon::ThreadPool;
@@ -16,16 +20,35 @@ pub struct Engine {
 }
 
 impl Engine {
-  pub fn new() -> Self {
+  pub fn new(options: Options) -> Self {
     let thread_pool = rayon::ThreadPoolBuilder::new()
       .build()
       .expect("Could not create thread pool");
 
-    Engine {
+    let mut engine = Engine {
       resources: ecs::setup(),
       thread_pool,
       event_handlers: EventHandlers::new(),
+    };
+
+    #[cfg(not(feature = "headless"))]
+    {
+      graphics::setup(engine.resources_mut());
+
+      let update_window = window::setup(engine.resources_mut(), options.window);
+
+      engine.add_dispatch(Event::TickStarted, update_window);
+
+      let mut renderer = graphics::render::Renderer::new(engine.resources_mut());
+
+      engine.add_fn(Event::TickEnding, {
+        move |res, _| {
+          renderer.render(res);
+        }
+      });
     }
+
+    engine
   }
 
   pub fn resources(&self) -> &ecs::Resources {
@@ -58,6 +81,29 @@ impl Engine {
       .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
 
+  #[cfg(not(feature = "headless"))]
+  pub fn run(mut self) {
+    let mut reader = {
+      let mut events = self.resources.fetch_mut::<window::Events>();
+
+      events.channel_mut().register_reader()
+    };
+
+    loop {
+      self.tick();
+
+      std::thread::sleep(std::time::Duration::from_millis(10));
+
+      let events = self.resources.fetch::<window::Events>();
+
+      for event in events.channel().read(&mut reader) {
+        if let window::Event::CloseRequested = event {
+          return;
+        }
+      }
+    }
+  }
+
   pub fn tick(&mut self) {
     self.run_event_handlers(Event::TickStarted);
 
@@ -75,8 +121,7 @@ impl Engine {
   }
 }
 
-impl Default for Engine {
-  fn default() -> Engine {
-    Engine::new()
-  }
+#[derive(Default)]
+pub struct Options {
+  pub window: window::Options,
 }
