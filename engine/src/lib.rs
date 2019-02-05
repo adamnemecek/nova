@@ -5,6 +5,7 @@
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
 pub mod assets;
+pub mod clock;
 pub mod ecs;
 pub mod engine;
 #[cfg(not(feature = "headless"))]

@@ -9,6 +9,7 @@ use std::iter;
 #[repr(usize)]
 pub enum Event {
   TickStarted,
+  ClockTimeUpdated,
   TickEnding,
 }
 

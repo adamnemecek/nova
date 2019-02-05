@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod duration;
-mod instant;
-
-pub use self::duration::*;
-pub use self::instant::*;
-
+use super::{Duration, Instant};
 use crate::ecs;
 
 #[derive(Debug)]
@@ -26,17 +21,17 @@ impl Default for Time {
 }
 
 #[derive(Debug, Default)]
-pub struct Elapse {
+pub struct UpdateTime {
   previous: Option<Instant>,
 }
 
-impl Elapse {
+impl UpdateTime {
   pub fn new() -> Self {
-    Elapse::default()
+    UpdateTime::default()
   }
 }
 
-impl<'a> ecs::System<'a> for Elapse {
+impl<'a> ecs::System<'a> for UpdateTime {
   type SystemData = ecs::WriteResource<'a, Time>;
 
   fn setup(&mut self, res: &mut ecs::Resources) {

@@ -5,6 +5,7 @@
 mod events;
 
 use crate::assets;
+use crate::clock;
 use crate::ecs::{self, Dispatchable};
 #[cfg(not(feature = "headless"))]
 use crate::graphics;
@@ -31,6 +32,8 @@ impl Engine {
       thread_pool,
       event_handlers: EventHandlers::new(),
     };
+
+    engine.add_dispatch(Event::ClockTimeUpdated, clock::UpdateTime::default());
 
     engine.resources.insert(assets::OverlayFs::default());
 
@@ -95,8 +98,6 @@ impl Engine {
     loop {
       self.tick();
 
-      std::thread::sleep(std::time::Duration::from_millis(10));
-
       let events = self.resources.fetch::<window::Events>();
 
       for event in events.channel().read(&mut reader) {
@@ -109,6 +110,10 @@ impl Engine {
 
   pub fn tick(&mut self) {
     self.run_event_handlers(Event::TickStarted);
+
+    ecs::maintain(&mut self.resources);
+
+    self.run_event_handlers(Event::ClockTimeUpdated);
 
     ecs::maintain(&mut self.resources);
 
