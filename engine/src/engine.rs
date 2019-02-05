@@ -3,18 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod events;
-mod options;
 
 use crate::ecs::{self, Dispatchable};
 
-#[cfg(feature = "graphics")]
-use crate::graphics;
-
-#[cfg(feature = "window")]
-use crate::window;
-
 pub use self::events::*;
-pub use self::options::*;
 pub use rayon::ThreadPool;
 
 pub struct Engine {
@@ -24,34 +16,16 @@ pub struct Engine {
 }
 
 impl Engine {
-  pub fn new(options: Options) -> Self {
+  pub fn new() -> Self {
     let thread_pool = rayon::ThreadPoolBuilder::new()
       .build()
       .expect("Could not create thread pool");
 
-    let mut engine = Engine {
+    Engine {
       resources: ecs::setup(),
       thread_pool,
       event_handlers: EventHandlers::new(),
-    };
-
-    #[cfg(feature = "graphics")]
-    {
-      if options.graphics {
-        graphics::setup(&mut engine.resources);
-      }
     }
-
-    #[cfg(feature = "window")]
-    {
-      if let Some(window_options) = options.window {
-        let update = window::setup(&mut engine.resources, window_options);
-
-        engine.add_dispatch(Event::Ticked, update);
-      }
-    }
-
-    engine
   }
 
   pub fn resources(&self) -> &ecs::Resources {
@@ -91,33 +65,10 @@ impl Engine {
 
     ecs::maintain(&mut self.resources);
   }
-
-  pub fn run(mut self) {
-    self
-      .resources
-      .entry()
-      .or_insert_with(Exit::default)
-      .requested = false;
-
-    loop {
-      self.tick();
-
-      if self.resources.get_mut::<Exit>().unwrap().requested {
-        break;
-      }
-
-      std::thread::sleep(std::time::Duration::from_millis(10));
-    }
-  }
 }
 
 impl Default for Engine {
   fn default() -> Engine {
-    Engine::new(Options::default())
+    Engine::new()
   }
-}
-
-#[derive(Default)]
-pub struct Exit {
-  pub requested: bool,
 }

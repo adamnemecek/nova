@@ -21,37 +21,46 @@ pub struct Presenter {
   images: Vec<Arc<graphics::Image>>,
   image_index: Option<usize>,
   swapchain: Droppable<RawSwapchain>,
+  surface: Surface,
   device: graphics::Device,
   queue_id: graphics::QueueId,
   size: Size<u32>,
 }
 
 impl Presenter {
-  pub fn new(window: &Window, queues: &graphics::Queues) -> Presenter {
+  pub fn new(res: &ecs::Resources) -> Presenter {
+    let window = res.fetch::<Window>();
+
+    let device = res.fetch::<graphics::Device>();
+    let queues = res.fetch::<graphics::Queues>();
+
+    let surface = Surface::new(&window, &device);
+
     let queue_id = queues
-      .find_queue_raw(|family| window.surface.raw().supports_queue_family(family))
+      .find_queue_raw(|family| surface.raw().supports_queue_family(family))
       .expect("The graphics device does not support presentation to the window surface.");
 
     Presenter {
       images: Vec::with_capacity(MAX_FRAMES),
       image_index: None,
       swapchain: Droppable::dropped(),
-      device: window.surface.device().clone(),
+      surface: surface,
+      device: device.clone(),
       queue_id,
       size: window.size,
     }
   }
 
-  pub fn begin(&mut self, res: &mut ecs::Resources, image_ready: &graphics::Semaphore) {
+  pub fn begin(&mut self, signal_semaphore: &graphics::Semaphore) {
     for _ in 0..5 {
       if self.swapchain.is_dropped() {
-        self.create_swapchain(res);
+        self.create_swapchain();
       }
 
       let result = unsafe {
         self
           .swapchain
-          .acquire_image(!0, gfx_hal::FrameSync::Semaphore(image_ready.raw()))
+          .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_semaphore.raw()))
       };
 
       match result {
@@ -73,13 +82,13 @@ impl Presenter {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  pub fn image(&self) -> &Arc<graphics::Image> {
+  pub fn backbuffer(&self) -> &Arc<graphics::Image> {
     &self.images[self
       .image_index
       .expect("Presenter::image called before Presenter::begin.")]
   }
 
-  pub fn finish(&mut self, res: &mut ecs::Resources, wait_for: Option<&graphics::Semaphore>) {
+  pub fn finish(&mut self, res: &ecs::Resources, wait_for: Option<&graphics::Semaphore>) {
     let image_index = self
       .image_index
       .take()
@@ -99,10 +108,8 @@ impl Presenter {
     }
   }
 
-  fn create_swapchain(&mut self, res: &mut ecs::Resources) {
-    let mut surface = res.fetch_mut::<Surface>();
-
-    let capabilities = surface.capabilities();
+  fn create_swapchain(&mut self) {
+    let capabilities = self.surface.capabilities();
     let format = gfx_hal::format::Format::Bgra8Unorm;
 
     let extent = gfx_hal::window::Extent2D {
@@ -135,7 +142,7 @@ impl Presenter {
       self
         .device
         .raw()
-        .create_swapchain(surface.raw_mut(), config, None)
+        .create_swapchain(self.surface.raw_mut(), config, None)
         .expect("Could not create swapchain")
     };
 

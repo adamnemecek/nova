@@ -17,9 +17,18 @@ type RawCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub struct Commands {
   raw: Droppable<RawCommandBuffer>,
   pool: CommandPool,
+  render_passes: Vec<render::Pass>,
 }
 
 impl Commands {
+  fn new(raw: RawCommandBuffer, pool: &CommandPool) -> Commands {
+    Commands {
+      raw: raw.into(),
+      pool: pool.clone(),
+      render_passes: Vec::new(),
+    }
+  }
+
   pub fn queue_id(&self) -> QueueId {
     self.pool.queue_id()
   }
@@ -32,6 +41,8 @@ impl Commands {
     unsafe {
       self.raw.begin(Default::default(), Default::default());
     }
+
+    self.render_passes.clear();
   }
 
   pub fn begin_render_pass(
@@ -72,6 +83,8 @@ impl Commands {
         gfx_hal::command::SubpassContents::Inline,
       );
     }
+
+    self.render_passes.push(render_pass.clone());
   }
 
   pub fn finish_render_pass(&mut self) {

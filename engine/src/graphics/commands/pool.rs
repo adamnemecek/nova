@@ -57,10 +57,7 @@ impl CommandPool {
       .unwrap()
       .allocate_one(gfx_hal::command::RawLevel::Primary);
 
-    Commands {
-      raw: raw_buffer.into(),
-      pool: self.clone(),
-    }
+    Commands::new(raw_buffer, self)
   }
 
   pub(super) fn release_raw(&self, raw_buffer: RawCommandBuffer) {

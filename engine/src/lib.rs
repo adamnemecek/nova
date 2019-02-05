@@ -4,19 +4,21 @@
 
 #![feature(async_await, await_macro, const_fn, drain_filter, futures_api)]
 
+pub mod app;
 pub mod assets;
 pub mod ecs;
 pub mod engine;
-#[cfg(feature = "graphics")]
+#[cfg(not(feature = "headless"))]
 pub mod graphics;
 pub mod log;
 pub mod math;
 pub mod utils;
-#[cfg(feature = "window")]
+#[cfg(not(feature = "headless"))]
 pub mod window;
 
 pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
 }
 
+pub use self::app::App;
 pub use self::engine::Engine;

@@ -5,9 +5,8 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [features]
-default = ["graphics", "window"]
-graphics = []
-window = ["graphics"]
+default = []
+headless = []
 
 [dependencies]
 chrono = "0.4"
