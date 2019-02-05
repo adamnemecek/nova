@@ -2,114 +2,134 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::ecs;
-use crate::log;
+mod events;
 
-/// Container for all ECS resources including entities and components.
-#[derive(Default)]
+use crate::assets;
+use crate::clock;
+use crate::ecs::{self, Dispatchable};
+#[cfg(not(feature = "headless"))]
+use crate::graphics;
+#[cfg(not(feature = "headless"))]
+use crate::window;
+
+pub use self::events::*;
+pub use rayon::ThreadPool;
+
 pub struct Engine {
-  pub(crate) world: specs::World,
+  resources: ecs::Resources,
+  thread_pool: ThreadPool,
+  event_handlers: EventHandlers,
 }
 
 impl Engine {
-  /// Creates a new engine instance.
-  pub fn new() -> Self {
+  pub fn new(options: Options) -> Self {
+    let thread_pool = rayon::ThreadPoolBuilder::new()
+      .build()
+      .expect("Could not create thread pool");
+
     let mut engine = Engine {
-      world: specs::World::new(),
+      resources: ecs::setup(),
+      thread_pool,
+      event_handlers: EventHandlers::new(),
     };
 
-    log::setup(&mut engine);
+    engine.add_dispatch(Event::ClockTimeUpdated, clock::UpdateTime::default());
+
+    engine.resources.insert(assets::OverlayFs::default());
+
+    #[cfg(not(feature = "headless"))]
+    {
+      graphics::setup(engine.resources_mut());
+
+      let update_window = window::setup(engine.resources_mut(), options.window);
+
+      engine.add_dispatch(Event::TickStarted, update_window);
+
+      let mut renderer = graphics::render::Renderer::new(engine.resources_mut());
+
+      engine.add_fn(Event::TickEnding, {
+        move |res, _| {
+          renderer.render(res);
+        }
+      });
+    }
 
     engine
   }
 
-  /// Gets whether or not the engine has a resource of type `T`.
-  pub fn has_resource<T: ecs::Resource>(&mut self) -> bool {
-    self.world.res.has_value::<T>()
+  pub fn resources(&self) -> &ecs::Resources {
+    &self.resources
   }
 
-  /// Adds a resource to the engine instance. If the resource already existed,
-  /// the old value is overwritten.
-  pub fn put_resource(&mut self, resource: impl ecs::Resource) {
-    self.world.res.insert(resource);
+  pub fn resources_mut(&mut self) -> &mut ecs::Resources {
+    &mut self.resources
   }
 
-  /// Checks that a resource of type `T` exists in the engine. If it does not,
-  /// the [`Default`] value of `T` is added to the engine.
-  ///
-  /// This function returns a mutable reference to the new or existing resource.
-  pub fn ensure_resource<T: ecs::Resource + Default>(&mut self) -> &mut T {
-    if !self.has_resource::<T>() {
-      self.put_resource(T::default());
-    }
+  pub fn add_dispatch(
+    &mut self,
+    event: Event,
+    mut dispatch: impl for<'a> Dispatchable<'a> + 'static,
+  ) {
+    dispatch.setup(&mut self.resources);
 
-    self.get_resource_mut()
-  }
-
-  /// Fetches a reference to a resource in the engine instance.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist or is currently
-  /// fetched mutably.
-  pub fn fetch_resource<T: ecs::Resource>(&self) -> ecs::FetchResource<T> {
-    self.world.res.fetch()
-  }
-
-  /// Fetches a mutable reference to a resource in the engine instance.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist or is already
-  /// fetched mutably.
-  pub fn fetch_resource_mut<T: ecs::Resource>(&self) -> ecs::FetchResourceMut<T> {
-    self.world.res.fetch_mut()
-  }
-
-  /// Gets a mutable reference to a resource in an engine instance. This is more
-  /// efficient than fetching a resource.
-  ///
-  /// # Panics
-  ///
-  /// This function panics if the resource does not exist.
-  pub fn get_resource_mut<T: ecs::Resource>(&mut self) -> &mut T {
     self
-      .world
-      .res
-      .get_mut()
-      .expect("The specified resource does not exist.")
+      .event_handlers
+      .add(event, EventHandler::RunWithPool(Box::new(dispatch)));
   }
 
-  /// Performs deferred tasks and other engine maintenance. Should be called
-  /// once per frame.
-  pub fn maintain(&mut self) {
-    self.world.maintain()
+  pub fn add_fn(
+    &mut self,
+    event: Event,
+    fn_mut: impl FnMut(&mut ecs::Resources, &ThreadPool) + 'static,
+  ) {
+    self
+      .event_handlers
+      .add(event, EventHandler::FnMut(Box::new(fn_mut)));
+  }
+
+  #[cfg(not(feature = "headless"))]
+  pub fn run(mut self) {
+    let mut reader = {
+      let mut events = self.resources.fetch_mut::<window::Events>();
+
+      events.channel_mut().register_reader()
+    };
+
+    loop {
+      self.tick();
+
+      let events = self.resources.fetch::<window::Events>();
+
+      for event in events.channel().read(&mut reader) {
+        if let window::Event::CloseRequested = event {
+          return;
+        }
+      }
+    }
+  }
+
+  pub fn tick(&mut self) {
+    self.run_event_handlers(Event::TickStarted);
+
+    ecs::maintain(&mut self.resources);
+
+    self.run_event_handlers(Event::ClockTimeUpdated);
+
+    ecs::maintain(&mut self.resources);
+
+    self.run_event_handlers(Event::TickEnding);
+
+    ecs::maintain(&mut self.resources);
+  }
+
+  fn run_event_handlers(&mut self, event: Event) {
+    self
+      .event_handlers
+      .run(event, &mut self.resources, &self.thread_pool);
   }
 }
 
-// Implement conversions to and from references of equivalent types.
-//
-// These conversions are safe because they are all the same in memory.
-impl AsMut<Engine> for specs::Resources {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
-  }
-}
-
-impl AsMut<Engine> for specs::World {
-  fn as_mut(&mut self) -> &mut Engine {
-    unsafe { &mut *(self as *mut Self as *mut Engine) }
-  }
-}
-
-impl AsMut<specs::Resources> for Engine {
-  fn as_mut(&mut self) -> &mut specs::Resources {
-    unsafe { &mut *(self as *mut Self as *mut specs::Resources) }
-  }
-}
-
-impl AsMut<specs::World> for Engine {
-  fn as_mut(&mut self) -> &mut specs::World {
-    unsafe { &mut *(self as *mut Self as *mut specs::World) }
-  }
+#[derive(Default)]
+pub struct Options {
+  pub window: window::Options,
 }

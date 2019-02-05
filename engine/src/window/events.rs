@@ -1,42 +1,26 @@
-use derive_more::*;
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// One of the possible window events.
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Event {
-  Resized,
-  CloseRequested,
-}
+use crate::events;
 
-/// A resource containing the latest events received by an engine window.
-#[derive(Default, From, Deref, DerefMut)]
+pub use winit::EventsLoop;
+pub use winit::WindowEvent as Event;
+
+pub type EventChannel = events::Channel<Event>;
+pub type EventReader = events::ReaderId<Event>;
+
+#[derive(Default)]
 pub struct Events {
-  pub latest: Vec<Event>,
+  channel: EventChannel,
 }
 
-/// A structure that can be used to poll events for a window and store them in
-/// a `Vec`.
-#[derive(From)]
-pub struct EventSource {
-  events_loop: winit::EventsLoop,
-}
+impl Events {
+  pub fn channel(&self) -> &EventChannel {
+    &self.channel
+  }
 
-impl EventSource {
-  /// Polls events from the events loop and adds them to the given `Vec`.
-  pub fn poll_into(&mut self, events: &mut Vec<Event>) {
-    self.events_loop.poll_events(|event| {
-      if let winit::Event::WindowEvent { event, .. } = event {
-        match event {
-          winit::WindowEvent::CloseRequested => {
-            events.push(Event::CloseRequested);
-          }
-
-          winit::WindowEvent::Resized(_) => {
-            events.push(Event::Resized);
-          }
-
-          _ => {}
-        }
-      }
-    });
+  pub fn channel_mut(&mut self) -> &mut EventChannel {
+    &mut self.channel
   }
 }

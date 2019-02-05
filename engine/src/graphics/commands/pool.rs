@@ -2,79 +2,80 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::CommandLevel;
-use crate::graphics::device;
-use crate::graphics::prelude::*;
+use super::Commands;
+use crate::graphics::{Backend, Device, QueueId, RawDeviceExt};
 use crate::utils::Droppable;
-use gfx_hal::pool::CommandPoolCreateFlags as CreateFlags;
-use std::sync::atomic::AtomicBool;
-use std::sync::Mutex;
+use std::sync::{Arc, RwLock};
 
-/// A pool of buffer space to store data for [`Commands`].
+use gfx_hal::pool::RawCommandPool as RawCommandPoolExt;
+
+type RawCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+type RawCommandPool = <Backend as gfx_hal::Backend>::CommandPool;
+
+#[derive(Clone)]
 pub struct CommandPool {
-  /// The raw backend command pool in a mutex for synchronized access.
-  raw: Droppable<Mutex<backend::CommandPool>>,
-  /// The device the pool was created with.
-  device: device::Handle,
-  /// An atomic flag indicating whether any [`Commands`] are recording.
-  pub(super) recording: AtomicBool,
-  /// ID of the device queue family this command pool was created for.
-  queue_family_id: usize,
+  inner: Arc<Inner>,
+}
+
+struct Inner {
+  raw: Droppable<RwLock<RawCommandPool>>,
+  device: Device,
+  queue_id: QueueId,
 }
 
 impl CommandPool {
-  /// Creates a new command pool for the given queue family.
-  pub fn new(device: &device::Handle, queue_family_id: usize) -> CommandPool {
-    let pool = device
-      .raw()
-      .create_command_pool(
-        hal::queue::QueueFamilyId(queue_family_id),
-        CreateFlags::TRANSIENT,
-      )
-      .expect("Could not create command pool.");
+  pub fn new(device: &Device, queue_id: QueueId) -> Self {
+    let raw = unsafe {
+      device
+        .raw()
+        .create_command_pool(
+          queue_id.family_id(),
+          gfx_hal::pool::CommandPoolCreateFlags::TRANSIENT
+            | gfx_hal::pool::CommandPoolCreateFlags::RESET_INDIVIDUAL,
+        )
+        .expect("Could not create command pool")
+    };
 
     CommandPool {
-      device: device.clone(),
-      raw: Mutex::new(pool).into(),
-      recording: AtomicBool::new(false),
-      queue_family_id,
+      inner: Arc::new(Inner {
+        device: device.clone(),
+        raw: RwLock::new(raw).into(),
+        queue_id,
+      }),
     }
   }
 
-  /// Gets the ID of the device queue family this command pool was created for.
-  pub fn queue_family_id(&self) -> usize {
-    self.queue_family_id
+  pub fn queue_id(&self) -> QueueId {
+    self.inner.queue_id
   }
 
-  /// Allocates a raw command buffer with the given level from the pool.
-  pub(super) fn allocate_raw(&self, level: CommandLevel) -> backend::CommandBuffer {
-    self
+  pub fn acquire(&self) -> Commands {
+    let raw_buffer = self
+      .inner
       .raw
-      .lock()
+      .write()
       .unwrap()
-      .allocate(1, level)
-      .into_iter()
-      .next()
-      .unwrap()
+      .allocate_one(gfx_hal::command::RawLevel::Primary);
+
+    Commands::new(raw_buffer, self)
   }
 
-  /// Frees the given raw command buffer.Droppable
-  ///
-  /// Unsafe because there is no way to verify the command buffer came from this
-  /// pool.
-  pub(super) unsafe fn free_raw(&self, commands: backend::CommandBuffer) {
-    self.raw.lock().unwrap().free(vec![commands]);
+  pub(super) fn release_raw(&self, raw_buffer: RawCommandBuffer) {
+    unsafe {
+      self.inner.raw.write().unwrap().free(Some(raw_buffer));
+    }
   }
 }
 
-// Implement drop to destroy the raw backend command pool.
-impl Drop for CommandPool {
+impl Drop for Inner {
   fn drop(&mut self) {
-    if let Some(pool) = self.raw.take() {
-      self
-        .device
-        .raw()
-        .destroy_command_pool(pool.into_inner().unwrap());
+    if let Some(raw) = self.raw.take() {
+      unsafe {
+        self
+          .device
+          .raw()
+          .destroy_command_pool(raw.into_inner().unwrap());
+      }
     }
   }
 }

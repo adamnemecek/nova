@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec cargo run -p nova-game -- $*
+cd game && exec cargo run -- $*

@@ -9,8 +9,8 @@
 /// where by the time all the resources have been used, the first resource is
 /// now available to use again. This must be externally enforced.
 pub struct Ring<T> {
-  /// Items in the ring.
-  items: Vec<T>,
+  /// Elements of the ring.
+  contents: Vec<T>,
   /// Current index in the ring.
   index: usize,
 }
@@ -21,26 +21,31 @@ impl<T> Ring<T> {
   /// for that item.
   pub fn new(size: usize, create: impl FnMut(usize) -> T) -> Self {
     Ring {
-      items: (0..size).map(create).collect(),
+      contents: (0..size).map(create).collect(),
       index: 0,
     }
   }
 
   /// Gets a reference to the current item.
   pub fn current(&self) -> &T {
-    &self.items[self.index]
+    &self.contents[self.index]
   }
 
   /// Gets a mutable reference to the current item.
   pub fn current_mut(&mut self) -> &mut T {
-    &mut self.items[self.index]
+    &mut self.contents[self.index]
   }
 
   /// Moves to the next item and returns a mutable reference to it.
   pub fn advance(&mut self) -> &mut T {
     self.index += 1;
-    self.index %= self.items.len();
+    self.index %= self.contents.len();
 
-    &mut self.items[self.index]
+    &mut self.contents[self.index]
+  }
+
+  /// Consumes the `Ring` and returns the contents in a `Vec`.
+  pub fn into_contents(self) -> Vec<T> {
+    self.contents
   }
 }

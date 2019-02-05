@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-extern crate log;
-
-pub use log::SetLoggerError as SetAsDefaultError;
-
 use super::{Color, ContextBuilder, Level, LevelFilter, PrettyLevel};
 use chrono::{Datelike, Timelike};
+use std::borrow::Cow;
 use std::fmt;
 use std::io::{self, Write};
+
+pub use log::SetLoggerError as SetAsDefaultError;
 
 /// Writes formatted log messages to stdout with optional contextual
 /// information.
@@ -18,34 +17,18 @@ pub struct Logger {
   out: io::Stdout,
   /// Name describing the source of the messages. For example, the standard log
   /// macros use the current module path as the source.
-  pub source: String,
+  pub source: Cow<'static, str>,
   /// The highest level of logging that will be printed.
   pub max_level: LevelFilter,
 }
 
 impl Logger {
   /// Creates a new logger with the given source name.
-  pub fn new(source: impl Into<String>) -> Self {
+  pub fn new(source: impl Into<Cow<'static, str>>) -> Self {
     Logger {
       out: io::stdout(),
       source: source.into(),
       max_level: LevelFilter::Trace,
-    }
-  }
-
-  /// Sets this logger as the global default implementation for the standard log
-  /// macros.
-  pub fn set_as_default(&self) -> Result<(), SetAsDefaultError> {
-    log::set_max_level(self.max_level);
-    log::set_boxed_logger(Box::new(self.clone()))
-  }
-
-  /// Creates a new logger with a different source name but the same settings.
-  pub fn with_source(&self, name: impl Into<String>) -> Self {
-    Logger {
-      out: io::stdout(),
-      source: name.into(),
-      max_level: self.max_level,
     }
   }
 
@@ -87,7 +70,7 @@ impl Logger {
     // Output a timestamp and colorized level.
     write!(
       out,
-      "{}{:04}-{:02}-{:02} {:02}:{:02}:{:02} {}",
+      "{}{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03} {}",
       Color::BrightBlack,
       time.year(),
       time.month(),
@@ -95,6 +78,7 @@ impl Logger {
       time.hour(),
       time.minute(),
       time.second(),
+      time.nanosecond() / 1_000_000,
       PrettyLevel(level),
     )
     .unwrap();
@@ -109,13 +93,6 @@ impl Logger {
 
     // Return a context builder so the caller can add more information.
     ContextBuilder::new(out)
-  }
-}
-
-// Implement `Default` to create a new logger with no source name.
-impl Default for Logger {
-  fn default() -> Self {
-    Logger::new(String::default())
   }
 }
 
