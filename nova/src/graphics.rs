@@ -7,11 +7,13 @@ pub mod renderer;
 
 pub(crate) mod backend;
 
+mod color;
 mod commands;
 mod image;
 
 pub use self::backend::Backend;
 
+pub use self::color::*;
 pub use self::commands::*;
 pub use self::device::Device;
 pub use self::image::*;

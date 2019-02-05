@@ -5,13 +5,19 @@
 use crate::graphics::device::{Device, RawDeviceExt};
 use crate::graphics::Backend;
 use crate::utils::Droppable;
+use std::sync::Arc;
 
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
 type RawShader = <Backend as gfx_hal::Backend>::ShaderModule;
 
 /// A compiled shader module on the device.
+#[derive(Clone)]
 pub struct Shader {
+  inner: Arc<Inner>,
+}
+
+struct Inner {
   raw: Droppable<RawShader>,
   kind: ShaderKind,
   device: Device,
@@ -28,22 +34,24 @@ impl Shader {
     };
 
     Shader {
-      device: device.clone(),
-      raw: module.into(),
-      kind: spirv.0.clone(),
+      inner: Arc::new(Inner {
+        device: device.clone(),
+        raw: module.into(),
+        kind: spirv.0.clone(),
+      }),
     }
   }
 
   pub fn kind(&self) -> &ShaderKind {
-    &self.kind
+    &self.inner.kind
   }
 
   pub(super) fn raw(&self) -> &RawShader {
-    &self.raw
+    &self.inner.raw
   }
 }
 
-impl Drop for Shader {
+impl Drop for Inner {
   fn drop(&mut self) {
     if let Some(raw) = self.raw.take() {
       unsafe {
@@ -51,6 +59,11 @@ impl Drop for Shader {
       }
     }
   }
+}
+
+pub struct ShaderSet {
+  pub vertex: Shader,
+  pub fragment: Option<Shader>,
 }
 
 /// A shader compiled to SPIR-V.

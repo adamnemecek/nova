@@ -5,3 +5,4 @@
 mod droppable;
 
 pub use self::droppable::*;
+pub use quick_error::quick_error;

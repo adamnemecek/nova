@@ -2,96 +2,54 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Pass, Shader, ShaderKind, Spirv};
+mod builder;
+mod vertex;
+
+use super::ShaderSet;
 use crate::graphics::device::{Device, RawDeviceExt};
 use crate::graphics::Backend;
 use crate::utils::Droppable;
+use std::ops::Range;
+use std::sync::Arc;
+
+pub use self::builder::{BuildError, PipelineBuilder};
+pub use self::vertex::*;
+pub use gfx_hal::pso::PipelineStage;
 
 type RawPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
 type RawPipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 
+/// A graphics pipeline that configures rendering with input descriptors, push
+/// constants, and shaders.
+#[derive(Clone)]
 pub struct Pipeline {
+  inner: Arc<Inner>,
+}
+
+struct Inner {
+  device: Device,
   raw: Droppable<RawPipeline>,
   raw_layout: Droppable<RawPipelineLayout>,
-  _shaders: [Shader; 2],
-  device: Device,
+  push_constants: Vec<Range<u32>>,
+  _shaders: ShaderSet,
 }
 
 impl Pipeline {
-  pub fn new(pass: &Pass) -> Self {
-    let device = pass.device();
-
-    let vertex_shader = Shader::new(
-      &device,
-      &Spirv::from_glsl(ShaderKind::Vertex, include_str!("shaders/default.vert")),
-    );
-
-    let fragment_shader = Shader::new(
-      &device,
-      &Spirv::from_glsl(ShaderKind::Fragment, include_str!("shaders/default.frag")),
-    );
-
-    let raw_layout = unsafe {
-      device
-        .raw()
-        .create_pipeline_layout(&[], &[])
-        .expect("Could not create pipeline layout")
-    };
-
-    let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
-      gfx_hal::pso::GraphicsShaderSet {
-        vertex: gfx_hal::pso::EntryPoint {
-          module: vertex_shader.raw(),
-          entry: "main",
-          specialization: Default::default(),
-        },
-        fragment: Some(gfx_hal::pso::EntryPoint {
-          module: fragment_shader.raw(),
-          entry: "main",
-          specialization: Default::default(),
-        }),
-        domain: None,
-        geometry: None,
-        hull: None,
-      },
-      gfx_hal::Primitive::TriangleList,
-      gfx_hal::pso::Rasterizer::FILL,
-      &raw_layout,
-      gfx_hal::pass::Subpass {
-        index: 0,
-        main_pass: pass.raw(),
-      },
-    );
-
-    pipeline_desc
-      .blender
-      .targets
-      .push(gfx_hal::pso::ColorBlendDesc(
-        gfx_hal::pso::ColorMask::ALL,
-        gfx_hal::pso::BlendState::ALPHA,
-      ));
-
-    let raw = unsafe {
-      device
-        .raw()
-        .create_graphics_pipeline(&pipeline_desc, None)
-        .expect("Could not create graphics pipeline")
-    };
-
-    Pipeline {
-      raw: raw.into(),
-      raw_layout: raw_layout.into(),
-      _shaders: [vertex_shader, fragment_shader],
-      device: device.clone(),
-    }
+  pub(crate) fn push_constant_range(&self, index: usize) -> Range<u32> {
+    self.inner.push_constants[index].clone()
   }
 
   pub(crate) fn raw(&self) -> &RawPipeline {
-    &self.raw
+    &self.inner.raw
+  }
+
+  pub(crate) fn raw_layout(&self) -> &RawPipelineLayout {
+    &self.inner.raw_layout
   }
 }
 
-impl Drop for Pipeline {
+/// Implement `Drop` to destroy the raw backend resources.
+impl Drop for Inner {
   fn drop(&mut self) {
     let device = self.device.raw();
 

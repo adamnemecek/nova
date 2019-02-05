@@ -5,10 +5,10 @@
 mod framebuffer;
 mod pass;
 mod pipeline;
-mod shader;
+mod shaders;
 
 use super::device::{Fence, QueueSubmission, Queues, Semaphore};
-use super::{CommandPool, Commands};
+use super::{Color4, CommandPool, Commands};
 use crate::ecs;
 use crate::utils::Droppable;
 use crate::window;
@@ -16,7 +16,7 @@ use crate::window;
 pub use self::framebuffer::*;
 pub use self::pass::*;
 pub use self::pipeline::*;
-pub use self::shader::*;
+pub use self::shaders::*;
 pub use gfx_hal::pso::PipelineStage;
 
 pub struct Renderer {
@@ -55,7 +55,29 @@ impl Renderer {
       pool.acquire()
     };
 
-    let pipeline = Pipeline::new(&pass);
+    let vertex_shader = Shader::new(
+      &device,
+      &Spirv::from_glsl(
+        ShaderKind::Vertex,
+        include_str!("renderer/shaders/default.vert"),
+      ),
+    );
+
+    let fragment_shader = Shader::new(
+      &device,
+      &Spirv::from_glsl(
+        ShaderKind::Fragment,
+        include_str!("renderer/shaders/default.frag"),
+      ),
+    );
+
+    let pipeline = PipelineBuilder::new()
+      .set_render_pass(&pass)
+      .set_vertex_shader(&vertex_shader)
+      .set_fragment_shader(&fragment_shader)
+      .add_push_constant::<Color4>()
+      .build()
+      .expect("Could not create graphics pipeline");
 
     Renderer {
       pass,
@@ -83,6 +105,11 @@ impl Renderer {
       .begin_render_pass(&self.pass, &self.framebuffer);
 
     self.commands.bind_pipeline(&self.pipeline);
+
+    self
+      .commands
+      .push_constant(0, &Color4::new(0.0, 1.0, 0.0, 1.0));
+
     self.commands.draw(0..3);
 
     self.commands.finish_render_pass();
