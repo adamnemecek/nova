@@ -5,13 +5,15 @@
 mod framebuffer;
 mod pass;
 
-use super::{CommandPool, Commands, Fence, PipelineStage, QueueSubmission, Queues, Semaphore};
+use super::device::{Fence, QueueSubmission, Queues, Semaphore};
+use super::{CommandPool, Commands};
 use crate::ecs;
 use crate::utils::Droppable;
 use crate::window;
 
 pub use self::framebuffer::*;
 pub use self::pass::*;
+pub use gfx_hal::pso::PipelineStage;
 
 pub struct Renderer {
   pass: Pass,

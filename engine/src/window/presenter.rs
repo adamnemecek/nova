@@ -5,7 +5,8 @@
 use super::surface::{RawSurfaceExt, Surface};
 use super::Window;
 use crate::ecs;
-use crate::graphics::{self, RawDeviceExt, RawQueueExt};
+use crate::graphics;
+use crate::graphics::device::{self, Device, RawDeviceExt, RawQueueExt};
 use crate::math::Size;
 use crate::utils::Droppable;
 use std::cmp;
@@ -22,8 +23,8 @@ pub struct Presenter {
   image_index: Option<usize>,
   swapchain: Droppable<RawSwapchain>,
   surface: Surface,
-  device: graphics::Device,
-  queue_id: graphics::QueueId,
+  device: Device,
+  queue_id: device::QueueId,
   size: Size<u32>,
 }
 
@@ -31,8 +32,8 @@ impl Presenter {
   pub fn new(res: &ecs::Resources) -> Presenter {
     let window = res.fetch::<Window>();
 
-    let device = res.fetch::<graphics::Device>();
-    let queues = res.fetch::<graphics::Queues>();
+    let device = res.fetch::<Device>();
+    let queues = res.fetch::<device::Queues>();
 
     let surface = Surface::new(&window, &device);
 
@@ -51,7 +52,7 @@ impl Presenter {
     }
   }
 
-  pub fn begin(&mut self, signal_semaphore: &graphics::Semaphore) {
+  pub fn begin(&mut self, signal_semaphore: &device::Semaphore) {
     for _ in 0..5 {
       if self.swapchain.is_dropped() {
         self.create_swapchain();
@@ -88,13 +89,13 @@ impl Presenter {
       .expect("Presenter::image called before Presenter::begin.")]
   }
 
-  pub fn finish(&mut self, res: &ecs::Resources, wait_for: Option<&graphics::Semaphore>) {
+  pub fn finish(&mut self, res: &ecs::Resources, wait_for: Option<&device::Semaphore>) {
     let image_index = self
       .image_index
       .take()
       .expect("Presenter::finish called before Presenter::begin.");
 
-    let mut queues = res.fetch_mut::<graphics::Queues>();
+    let mut queues = res.fetch_mut::<device::Queues>();
 
     let result = unsafe {
       queues.raw_mut(self.queue_id).present(

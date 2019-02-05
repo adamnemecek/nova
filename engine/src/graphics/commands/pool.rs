@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Commands;
-use crate::graphics::{Backend, Device, QueueId, RawDeviceExt};
+use crate::graphics::device::{self, Device, RawDeviceExt};
+use crate::graphics::Backend;
 use crate::utils::Droppable;
 use std::sync::{Arc, RwLock};
 
@@ -20,11 +21,11 @@ pub struct CommandPool {
 struct Inner {
   raw: Droppable<RwLock<RawCommandPool>>,
   device: Device,
-  queue_id: QueueId,
+  queue_id: device::QueueId,
 }
 
 impl CommandPool {
-  pub fn new(device: &Device, queue_id: QueueId) -> Self {
+  pub fn new(device: &Device, queue_id: device::QueueId) -> Self {
     let raw = unsafe {
       device
         .raw()
@@ -45,7 +46,7 @@ impl CommandPool {
     }
   }
 
-  pub fn queue_id(&self) -> QueueId {
+  pub fn queue_id(&self) -> device::QueueId {
     self.inner.queue_id
   }
 

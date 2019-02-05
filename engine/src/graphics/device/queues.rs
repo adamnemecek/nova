@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, Commands, Device, Fence, Semaphore};
+use super::{Device, Fence, Semaphore};
+use crate::graphics::render::PipelineStage;
+use crate::graphics::{Backend, Commands};
 use gfx_hal::queue::{QueueFamily, QueueFamilyId};
 
-pub use gfx_hal::pso::PipelineStage;
 pub(crate) use gfx_hal::queue::RawCommandQueue as RawQueueExt;
 
 type RawQueue = <Backend as gfx_hal::Backend>::CommandQueue;

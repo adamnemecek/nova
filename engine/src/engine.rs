@@ -39,7 +39,7 @@ impl Engine {
 
     #[cfg(not(feature = "headless"))]
     {
-      graphics::setup(engine.resources_mut());
+      graphics::device::setup(engine.resources_mut());
 
       let update_window = window::setup(engine.resources_mut(), options.window);
 

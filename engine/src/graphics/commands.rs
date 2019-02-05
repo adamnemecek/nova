@@ -4,8 +4,9 @@
 
 mod pool;
 
+use super::device;
 use super::render;
-use super::{Backend, QueueId};
+use super::Backend;
 use crate::utils::Droppable;
 
 pub use self::pool::*;
@@ -29,7 +30,7 @@ impl Commands {
     }
   }
 
-  pub fn queue_id(&self) -> QueueId {
+  pub fn queue_id(&self) -> device::QueueId {
     self.pool.queue_id()
   }
 

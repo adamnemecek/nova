@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::backend::{self, InstanceExt};
 use super::{Device, DeviceType, Queues, RawPhysicalDeviceExt};
 use crate::ecs;
+use crate::graphics::backend::{self, InstanceExt};
 use crate::log;
 
 pub fn setup(res: &mut ecs::Resources) {
@@ -12,7 +12,7 @@ pub fn setup(res: &mut ecs::Resources) {
     return;
   }
 
-  let log = log::Logger::new("nova::graphics::setup");
+  let log = log::Logger::new(module_path!());
 
   // Instantiate the backend.
   let backend = backend::Handle::from(backend::Instance::create("nova", 1));
