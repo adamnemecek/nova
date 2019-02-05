@@ -4,6 +4,8 @@
 
 mod framebuffer;
 mod pass;
+mod pipeline;
+mod shader;
 
 use super::device::{Fence, QueueSubmission, Queues, Semaphore};
 use super::{CommandPool, Commands};
@@ -13,6 +15,8 @@ use crate::window;
 
 pub use self::framebuffer::*;
 pub use self::pass::*;
+pub use self::pipeline::*;
+pub use self::shader::*;
 pub use gfx_hal::pso::PipelineStage;
 
 pub struct Renderer {
@@ -23,6 +27,7 @@ pub struct Renderer {
   render_semaphore: Semaphore,
   framebuffer: Droppable<Framebuffer>,
   commands: Commands,
+  pipeline: Pipeline,
 }
 
 impl Renderer {
@@ -30,6 +35,8 @@ impl Renderer {
     let presenter = window::Presenter::new(res);
 
     let device = res.fetch();
+
+    let pass = Pass::new(&device);
 
     let fence = Fence::new(&device);
     let backbuffer_semaphore = Semaphore::new(&device);
@@ -48,14 +55,17 @@ impl Renderer {
       pool.acquire()
     };
 
+    let pipeline = Pipeline::new(&pass);
+
     Renderer {
-      pass: Pass::new(&device),
+      pass,
       presenter,
       fence,
       backbuffer_semaphore,
       render_semaphore,
       framebuffer: Droppable::dropped(),
       commands,
+      pipeline,
     }
   }
 
@@ -71,6 +81,9 @@ impl Renderer {
     self
       .commands
       .begin_render_pass(&self.pass, &self.framebuffer);
+
+    self.commands.bind_pipeline(&self.pipeline);
+    self.commands.draw(0..3);
 
     self.commands.finish_render_pass();
     self.commands.finish();

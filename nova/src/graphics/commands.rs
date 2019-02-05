@@ -88,6 +88,18 @@ impl Commands {
     self.render_passes.push(render_pass.clone());
   }
 
+  pub fn bind_pipeline(&mut self, pipeline: &renderer::Pipeline) {
+    unsafe {
+      self.raw.bind_graphics_pipeline(pipeline.raw());
+    }
+  }
+
+  pub fn draw(&mut self, vertices: std::ops::Range<u32>) {
+    unsafe {
+      self.raw.draw(vertices, 0..1);
+    }
+  }
+
   pub fn finish_render_pass(&mut self) {
     unsafe {
       self.raw.end_render_pass();
