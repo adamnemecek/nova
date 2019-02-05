@@ -1,3 +1,3 @@
 #!/bin/sh
 
-cd game && exec cargo run -- $*
+cd tvb && exec cargo run -- $*

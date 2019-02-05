@@ -1,15 +1,12 @@
-# nova-game
+# tvb
 
-Project “nova-game” is a Pokémon fan game implemented in Rust with the Nova
-engine.
+Project TVB is a 2D adventure RPG and engine.
 
 ## Running
 
-To run the game, use the included `run.sh` script, or run with cargo:
+To run the game, use the included `run.sh` script:
 
     ./run.sh
-    # or
-    cargo run -p nova-game
 
 ## Building
 
