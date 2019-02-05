@@ -16,8 +16,6 @@ use gfx_hal::Swapchain as RawSwapchainExt;
 
 type RawSwapchain = <graphics::Backend as gfx_hal::Backend>::Swapchain;
 
-const MAX_FRAMES: usize = 3;
-
 pub struct Presenter {
   images: Vec<Arc<graphics::Image>>,
   image_index: Option<usize>,
@@ -42,7 +40,7 @@ impl Presenter {
       .expect("The graphics device does not support presentation to the window surface.");
 
     Presenter {
-      images: Vec::with_capacity(MAX_FRAMES),
+      images: Vec::new(),
       image_index: None,
       swapchain: Droppable::dropped(),
       surface: surface,
