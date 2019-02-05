@@ -4,6 +4,7 @@
 
 mod events;
 
+use crate::assets;
 use crate::ecs::{self, Dispatchable};
 #[cfg(not(feature = "headless"))]
 use crate::graphics;
@@ -30,6 +31,8 @@ impl Engine {
       thread_pool,
       event_handlers: EventHandlers::new(),
     };
+
+    engine.resources.insert(assets::OverlayFs::default());
 
     #[cfg(not(feature = "headless"))]
     {
