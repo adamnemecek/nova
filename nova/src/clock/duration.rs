@@ -15,19 +15,19 @@ pub struct Duration(f64);
 impl Duration {
   pub const ZERO: Self = Duration(0.0);
 
-  pub const fn from_secs(secs: u64) -> Self {
+  pub fn from_secs(secs: u64) -> Self {
     Duration(secs as f64)
   }
 
-  pub const fn from_millis(millis: u64) -> Self {
+  pub fn from_millis(millis: u64) -> Self {
     Duration(millis as f64 * 0.001)
   }
 
-  pub const fn from_micros(micros: u64) -> Self {
+  pub fn from_micros(micros: u64) -> Self {
     Duration(micros as f64 * 0.000_001)
   }
 
-  pub const fn from_hz(hz: u64) -> Self {
+  pub fn from_hz(hz: u64) -> Self {
     Duration(1.0 / hz as f64)
   }
 

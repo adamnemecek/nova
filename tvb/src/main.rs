@@ -1,5 +1,3 @@
-#![feature(async_await, futures_api, await_macro)]
-
 use nova::ecs;
 use nova::graphics::Color4;
 use nova::ui;
