@@ -4,6 +4,7 @@
 
 use super::{Duration, Instant};
 use crate::ecs;
+use crate::engine;
 
 #[derive(Debug)]
 pub struct Time {
@@ -34,7 +35,7 @@ impl UpdateTime {
 impl<'a> ecs::System<'a> for UpdateTime {
   type SystemData = ecs::WriteResource<'a, Time>;
 
-  fn setup(&mut self, res: &mut ecs::Resources) {
+  fn setup(&mut self, res: &mut engine::Resources) {
     res.entry().or_insert_with(Time::default);
   }
 

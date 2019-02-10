@@ -5,11 +5,12 @@
 mod renderer;
 
 use crate::ecs;
+use crate::engine;
 use crate::graphics::Color4;
 
 pub use self::renderer::*;
 
-pub fn setup(res: &mut ecs::Resources) {
+pub fn setup(res: &mut engine::Resources) {
   ecs::register::<Layout>(res);
   ecs::register::<Background>(res);
 }

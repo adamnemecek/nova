@@ -8,7 +8,7 @@ mod presenter;
 mod surface;
 mod update;
 
-use crate::ecs;
+use crate::engine;
 use crate::math::Size;
 use winit::Window as RawWindow;
 
@@ -29,7 +29,7 @@ impl Window {
   }
 }
 
-pub fn setup(res: &mut ecs::Resources, options: Options) -> UpdateWindow {
+pub fn setup(res: &mut engine::Resources, options: Options) -> UpdateWindow {
   if res.has_value::<Window>() {
     panic!("A window has already been set up.");
   }

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::ThreadPool;
+use super::{Resources, ThreadPool};
 use crate::ecs;
 use std::iter;
 
@@ -16,12 +16,12 @@ pub enum Event {
 const EVENT_COUNT: usize = Event::TickEnding as usize + 1;
 
 pub enum EventHandler {
-  FnMut(Box<dyn FnMut(&mut ecs::Resources, &ThreadPool)>),
+  FnMut(Box<dyn FnMut(&mut Resources, &ThreadPool)>),
   RunWithPool(Box<dyn for<'a> ecs::Dispatchable<'a>>),
 }
 
 impl EventHandler {
-  fn run(&mut self, res: &mut ecs::Resources, pool: &ThreadPool) {
+  fn run(&mut self, res: &mut Resources, pool: &ThreadPool) {
     match self {
       EventHandler::FnMut(inner) => inner(res, pool),
       EventHandler::RunWithPool(inner) => inner.run(res, pool),
@@ -40,7 +40,7 @@ impl EventHandlers {
     self.0[event as usize].push(handler);
   }
 
-  pub fn run(&mut self, event: Event, res: &mut ecs::Resources, pool: &ThreadPool) {
+  pub fn run(&mut self, event: Event, res: &mut Resources, pool: &ThreadPool) {
     for handler in &mut self.0[event as usize] {
       handler.run(res, pool);
     }

@@ -4,7 +4,7 @@
 
 use super::surface::{RawSurfaceExt, Surface};
 use super::Window;
-use crate::ecs;
+use crate::engine;
 use crate::graphics;
 use crate::graphics::device::{self, Device, RawDeviceExt, RawQueueExt};
 use crate::math::Size;
@@ -27,7 +27,7 @@ pub struct Presenter {
 }
 
 impl Presenter {
-  pub fn new(res: &ecs::Resources) -> Presenter {
+  pub fn new(res: &engine::Resources) -> Presenter {
     let window = res.fetch::<Window>();
 
     let device = res.fetch::<Device>();
@@ -87,7 +87,7 @@ impl Presenter {
       .expect("Presenter::image called before Presenter::begin.")]
   }
 
-  pub fn finish(&mut self, res: &ecs::Resources, wait_for: Option<&device::Semaphore>) {
+  pub fn finish(&mut self, res: &engine::Resources, wait_for: Option<&device::Semaphore>) {
     let image_index = self
       .image_index
       .take()

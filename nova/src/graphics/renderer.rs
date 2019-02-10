@@ -7,7 +7,7 @@ mod pass;
 
 use super::device::{Fence, QueueSubmission, Queues, Semaphore};
 use super::{CommandPool, Commands};
-use crate::ecs;
+use crate::engine;
 use crate::ui;
 use crate::utils::Droppable;
 use crate::window;
@@ -28,7 +28,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(res: &ecs::Resources) -> Self {
+  pub fn new(res: &engine::Resources) -> Self {
     let presenter = window::Presenter::new(res);
 
     let device = res.fetch();
@@ -66,7 +66,7 @@ impl Renderer {
     }
   }
 
-  pub fn render(&mut self, res: &ecs::Resources) {
+  pub fn render(&mut self, res: &engine::Resources) {
     self.fence.wait_and_reset();
 
     self.framebuffer.take();

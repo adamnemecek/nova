@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod events;
+mod resources;
 
 use crate::assets;
 use crate::clock;
@@ -15,6 +16,7 @@ use crate::ui;
 use crate::window;
 
 pub use self::events::*;
+pub use self::resources::*;
 pub use rayon::ThreadPool;
 
 pub struct Engine {
@@ -61,11 +63,11 @@ impl Engine {
     engine
   }
 
-  pub fn resources(&self) -> &ecs::Resources {
+  pub fn resources(&self) -> &Resources {
     &self.world.res
   }
 
-  pub fn resources_mut(&mut self) -> &mut ecs::Resources {
+  pub fn resources_mut(&mut self) -> &mut Resources {
     &mut self.world.res
   }
 
@@ -89,7 +91,7 @@ impl Engine {
   pub fn add_fn(
     &mut self,
     event: Event,
-    fn_mut: impl FnMut(&mut ecs::Resources, &ThreadPool) + 'static,
+    fn_mut: impl FnMut(&mut Resources, &ThreadPool) + 'static,
   ) {
     self
       .event_handlers

@@ -4,6 +4,7 @@
 
 use super::{Background, Layout};
 use crate::ecs;
+use crate::engine;
 use crate::graphics;
 use crate::math::Matrix4;
 use crate::window::Window;
@@ -43,7 +44,7 @@ impl Renderer {
     Renderer { pipeline }
   }
 
-  pub fn render(&mut self, res: &ecs::Resources, commands: &mut graphics::Commands) {
+  pub fn render(&mut self, res: &engine::Resources, commands: &mut graphics::Commands) {
     use crate::ecs::Join;
 
     // Scale the entire UI based on the size of the window.
