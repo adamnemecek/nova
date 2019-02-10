@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Color, ContextBuilder, Level, LevelFilter, PrettyLevel};
+use crate::utils::SharedStr;
 use chrono::{Datelike, Timelike};
-use std::borrow::Cow;
 use std::fmt;
 use std::io::{self, Write};
 
@@ -17,14 +17,14 @@ pub struct Logger {
   out: io::Stdout,
   /// Name describing the source of the messages. For example, the standard log
   /// macros use the current module path as the source.
-  pub source: Cow<'static, str>,
+  pub source: SharedStr,
   /// The highest level of logging that will be printed.
   pub max_level: LevelFilter,
 }
 
 impl Logger {
   /// Creates a new logger with the given source name.
-  pub fn new(source: impl Into<Cow<'static, str>>) -> Self {
+  pub fn new(source: impl Into<SharedStr>) -> Self {
     Logger {
       out: io::stdout(),
       source: source.into(),

@@ -3,6 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod droppable;
+mod shared_str;
 
 pub use self::droppable::*;
+pub use self::shared_str::*;
 pub use quick_error::quick_error;
