@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::dispatch;
 use super::{Resources, ThreadPool};
-use crate::ecs;
 use std::iter;
 
 #[repr(usize)]
@@ -17,7 +17,7 @@ const EVENT_COUNT: usize = Event::TickEnding as usize + 1;
 
 pub enum EventHandler {
   FnMut(Box<dyn FnMut(&mut Resources, &ThreadPool)>),
-  RunWithPool(Box<dyn for<'a> ecs::Dispatchable<'a>>),
+  RunWithPool(Box<dyn for<'a> dispatch::RunWithPool<'a>>),
 }
 
 impl EventHandler {

@@ -5,9 +5,7 @@
 use crate::engine;
 
 pub use specs::join::{Join, ParJoin};
-pub use specs::{self, shred};
 
-pub use specs::shred::{par, seq, Par, RunWithPool as Dispatchable, Seq};
 pub use specs::shred::{DynamicSystemData, System, SystemData};
 pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 
@@ -41,7 +39,7 @@ where
     .or_insert_with(move || storage::MaskedStorage::<T>::new(storage()));
 
   res
-    .fetch_mut::<shred::MetaTable<storage::AnyStorage>>()
+    .fetch_mut::<engine::MetaTable<storage::AnyStorage>>()
     .register(&*res.fetch::<storage::MaskedStorage<T>>());
 }
 
