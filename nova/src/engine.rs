@@ -39,7 +39,7 @@ impl Engine {
       event_handlers: EventHandlers::new(),
     };
 
-    engine.add_dispatch(Event::ClockTimeUpdated, clock::UpdateTime::default());
+    engine.on_event(Event::ClockTimeUpdated, clock::UpdateTime::default());
 
     engine.world.res.insert(assets::OverlayFs::default());
 
@@ -49,13 +49,13 @@ impl Engine {
 
       let update_window = window::setup(engine.resources_mut(), options.window);
 
-      engine.add_dispatch(Event::TickStarted, update_window);
+      engine.on_event(Event::TickStarted, update_window);
 
       ui::setup(engine.resources_mut());
 
       let mut renderer = graphics::Renderer::new(engine.resources_mut());
 
-      engine.add_fn(Event::TickEnding, {
+      engine.on_event_fn(Event::TickEnding, {
         move |res, _| {
           renderer.render(res);
         }
@@ -78,7 +78,7 @@ impl Engine {
     self.world.create_entity()
   }
 
-  pub fn add_dispatch(
+  pub fn on_event(
     &mut self,
     event: Event,
     mut dispatch: impl for<'a> dispatch::RunWithPool<'a> + 'static,
@@ -90,7 +90,7 @@ impl Engine {
       .add(event, EventHandler::RunWithPool(Box::new(dispatch)));
   }
 
-  pub fn add_fn(
+  pub fn on_event_fn(
     &mut self,
     event: Event,
     fn_mut: impl FnMut(&mut Resources, &ThreadPool) + 'static,
