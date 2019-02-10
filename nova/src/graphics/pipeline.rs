@@ -13,7 +13,7 @@ use crate::utils::Droppable;
 use std::ops::Range;
 use std::sync::Arc;
 
-pub use self::builder::{BuildError, PipelineBuilder};
+pub use self::builder::PipelineBuilder;
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
 pub use self::vertex::*;
 pub use gfx_hal::pso::PipelineStage;

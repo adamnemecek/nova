@@ -1,4 +1,3 @@
-use nova::ecs;
 use nova::graphics::Color4;
 use nova::ui;
 
@@ -9,7 +8,8 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let mut engine = nova::Engine::new(Default::default());
 
-  ecs::create_entity(engine.resources_mut())
+  engine
+    .create_entity()
     .with(ui::Layout {
       x: 100.0,
       y: 100.0,

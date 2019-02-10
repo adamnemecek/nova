@@ -13,17 +13,16 @@ chrono = "0.4"
 crossbeam = "0.6"
 derive_more = "0.13"
 gfx-hal = "0.1"
+glsl-to-spirv = "0.1"
 log = { version = "0.4", features = ["std"] }
-nalgebra = "*"
-num-traits = "*"
+nalgebra = "0.17"
+num-traits = "0.2"
+quick-error = "1.2"
 rayon = "1.0"
 shrev = "1.0"
-specs = { git = "https://github.com/bfrydl/specs" }
-specs-derive = "0.3"
+specs = "0.14"
+specs-derive = "0.4"
 winit = "0.18"
-smallvec = "0.6.8"
-glsl-to-spirv = "0.1.7"
-quick-error = "1.2.2"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.1"

@@ -18,7 +18,7 @@ pub use self::events::*;
 pub use rayon::ThreadPool;
 
 pub struct Engine {
-  resources: ecs::Resources,
+  world: specs::World,
   thread_pool: ThreadPool,
   event_handlers: EventHandlers,
 }
@@ -30,14 +30,14 @@ impl Engine {
       .expect("Could not create thread pool");
 
     let mut engine = Engine {
-      resources: ecs::setup(),
+      world: specs::World::new(),
       thread_pool,
       event_handlers: EventHandlers::new(),
     };
 
     engine.add_dispatch(Event::ClockTimeUpdated, clock::UpdateTime::default());
 
-    engine.resources.insert(assets::OverlayFs::default());
+    engine.world.res.insert(assets::OverlayFs::default());
 
     #[cfg(not(feature = "headless"))]
     {
@@ -62,11 +62,16 @@ impl Engine {
   }
 
   pub fn resources(&self) -> &ecs::Resources {
-    &self.resources
+    &self.world.res
   }
 
   pub fn resources_mut(&mut self) -> &mut ecs::Resources {
-    &mut self.resources
+    &mut self.world.res
+  }
+
+  #[deprecated]
+  pub fn create_entity(&mut self) -> ecs::EntityBuilder {
+    self.world.create_entity()
   }
 
   pub fn add_dispatch(
@@ -74,7 +79,7 @@ impl Engine {
     event: Event,
     mut dispatch: impl for<'a> Dispatchable<'a> + 'static,
   ) {
-    dispatch.setup(&mut self.resources);
+    dispatch.setup(&mut self.world.res);
 
     self
       .event_handlers
@@ -94,7 +99,7 @@ impl Engine {
   #[cfg(not(feature = "headless"))]
   pub fn run(mut self) {
     let mut reader = {
-      let mut events = self.resources.fetch_mut::<window::Events>();
+      let mut events = self.world.res.fetch_mut::<window::Events>();
 
       events.channel_mut().register_reader()
     };
@@ -102,7 +107,7 @@ impl Engine {
     loop {
       self.tick();
 
-      let events = self.resources.fetch::<window::Events>();
+      let events = self.world.res.fetch::<window::Events>();
 
       for event in events.channel().read(&mut reader) {
         if let window::Event::CloseRequested = event {
@@ -114,22 +119,16 @@ impl Engine {
 
   pub fn tick(&mut self) {
     self.run_event_handlers(Event::TickStarted);
-
-    ecs::maintain(&mut self.resources);
-
     self.run_event_handlers(Event::ClockTimeUpdated);
-
-    ecs::maintain(&mut self.resources);
-
     self.run_event_handlers(Event::TickEnding);
-
-    ecs::maintain(&mut self.resources);
   }
 
   fn run_event_handlers(&mut self, event: Event) {
     self
       .event_handlers
-      .run(event, &mut self.resources, &self.thread_pool);
+      .run(event, &mut self.world.res, &self.thread_pool);
+
+    self.world.maintain();
   }
 }
 
