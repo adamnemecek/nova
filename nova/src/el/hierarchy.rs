@@ -5,6 +5,8 @@
 use super::{ChildNodes, Mount, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
 use crate::engine;
+use std::collections::BTreeSet;
+use std::mem;
 
 #[derive(Debug, Default)]
 pub struct Hierarchy {
@@ -14,9 +16,17 @@ pub struct Hierarchy {
 
 #[derive(Debug, Default)]
 pub struct BuildHierarchy {
+  // Resuable temporary storage for the stack of entities that need to be built.
   build_stack: Vec<ecs::Entity>,
+  // Resuable temporary storage for the stack of entities that need new nodes
+  // applied.
   apply_stack: Vec<(ecs::Entity, Node)>,
+  // Resuable temporary storage for the stack of entities that need to be
+  // deleted.
   delete_stack: Vec<ecs::Entity>,
+  // Resuable temporary storage for which real children of a mounted element are
+  // links created from `ChildNodes`.
+  real_children_links: BTreeSet<usize>,
 }
 
 impl<'a> ecs::System<'a> for BuildHierarchy {
@@ -35,6 +45,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     res.entry().or_insert_with(Hierarchy::default);
   }
 
+  #[allow(clippy::cyclomatic_complexity)]
   fn run(&mut self, (entities, mut hierarchy, mut mounts, mut rebuild_required): Self::SystemData) {
     // Clear the sorted hierarchy which is about to change.
     hierarchy.sorted.clear();
@@ -67,30 +78,53 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           let current_len = element.real_children.len();
           let new_len = children.len();
 
-          if new_len > current_len && current_len > 0 {
-            let extras = element.real_children.drain(current_len - 1..new_len);
+          if new_len < current_len {
+            for i in current_len - 1..new_len {
+              if !element.real_children_links.contains(&i) {
+                self.delete_stack.push(element.real_children[i]);
+              }
+            }
 
-            self.delete_stack.extend(extras);
+            element.real_children.truncate(new_len);
           }
 
           // Ensure enough child entities exist and push each one onto the apply
           // stack to change its node content.
           for (i, child) in children.into_iter().enumerate() {
             if let Some(child_entity) = child.entity() {
+              // Flag this child as a linked entity so it isn't deleted or
+              // overwritten on rebuild.
+              self.real_children_links.insert(i);
+
               // If the node is a child entity, link to it directly.
               if i >= element.real_children.len() {
                 element.real_children.push(child_entity);
               } else {
+                if !element.real_children_links.contains(&i) {
+                  self.delete_stack.push(element.real_children[i]);
+                }
+
                 element.real_children[i] = child_entity;
               }
             } else {
               if i >= element.real_children.len() {
                 element.real_children.push(entities.create());
+              } else if element.real_children_links.contains(&i) {
+                element.real_children[i] = entities.create();
               }
 
               self.apply_stack.push((element.real_children[i], child));
             }
           }
+
+          // Swap the old `real_children_links` with the local buffer containing
+          // the new values and then clear the buffer for reuse.
+          mem::swap(
+            &mut self.real_children_links,
+            &mut element.real_children_links,
+          );
+
+          self.real_children_links.clear();
         }
 
         // Push all children onto the build stack in reverse order so that
@@ -175,7 +209,12 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
         self.delete_stack.extend(mount.node_children.drain(..));
-        self.delete_stack.extend(mount.real_children.drain(..));
+
+        for (i, entity) in mount.real_children.drain(..).enumerate() {
+          if !mount.real_children_links.contains(&i) {
+            self.delete_stack.push(entity);
+          }
+        }
       }
 
       mounts.remove(entity);

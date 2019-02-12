@@ -4,12 +4,14 @@
 
 use super::InstanceBox;
 use crate::ecs;
+use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub struct Mount {
   pub instance: InstanceBox,
   pub node_children: Vec<ecs::Entity>,
   pub real_children: Vec<ecs::Entity>,
+  pub real_children_links: BTreeSet<usize>,
 }
 
 impl Mount {
@@ -18,6 +20,7 @@ impl Mount {
       instance,
       node_children: Vec::new(),
       real_children: Vec::new(),
+      real_children_links: BTreeSet::new(),
     }
   }
 }

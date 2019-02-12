@@ -29,7 +29,7 @@ impl el::Element for App {
     App
   }
 
-  fn build(&mut self, _: &Self::Props, children: el::ChildNodes) -> el::Node {
+  fn build(&mut self, _: &Self::Props, _: el::ChildNodes) -> el::Node {
     el::node::list(vec![
       el::node::<Child>(
         ChildProps { id: 0 },
@@ -83,7 +83,7 @@ impl el::Element for Grandchild {
     Grandchild
   }
 
-  fn build(&mut self, _props: &Self::Props, children: el::ChildNodes) -> el::Node {
+  fn build(&mut self, _props: &Self::Props, _children: el::ChildNodes) -> el::Node {
     el::node::empty()
   }
 }
