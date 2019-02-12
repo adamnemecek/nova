@@ -45,7 +45,7 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
     let props = props.downcast()?;
 
     if *props == self.props {
-      return Ok(ShouldRebuild::No);
+      return Ok(ShouldRebuild(false));
     }
 
     self.props = *props;

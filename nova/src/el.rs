@@ -16,6 +16,7 @@ use self::prototype::Prototype;
 use crate::ecs;
 use crate::engine;
 use std::fmt;
+use std::ops::{Deref, DerefMut};
 
 pub use self::hierarchy::BuildHierarchy;
 pub use self::node::{node, ChildNodes, Node};
@@ -26,7 +27,7 @@ pub trait Element: Send + Sync + fmt::Debug {
   fn new(props: &Self::Props) -> Self;
 
   fn on_prop_change(&mut self, _props: &Self::Props) -> ShouldRebuild {
-    ShouldRebuild::Yes
+    ShouldRebuild(true)
   }
 
   fn build(&mut self, _props: &Self::Props, _children: ChildNodes) -> Node {
@@ -34,10 +35,21 @@ pub trait Element: Send + Sync + fmt::Debug {
   }
 }
 
-#[derive(Debug)]
-pub enum ShouldRebuild {
-  No,
-  Yes,
+#[derive(Default, PartialEq, Eq, Clone, Copy, Debug)]
+pub struct ShouldRebuild(pub bool);
+
+impl Deref for ShouldRebuild {
+  type Target = bool;
+
+  fn deref(&self) -> &bool {
+    &self.0
+  }
+}
+
+impl DerefMut for ShouldRebuild {
+  fn deref_mut(&mut self) -> &mut bool {
+    &mut self.0
+  }
 }
 
 #[derive(Default)]

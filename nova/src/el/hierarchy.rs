@@ -97,10 +97,9 @@ impl BuildHierarchy {
   ) {
     while let Some((entity, node)) = self.apply_stack.pop() {
       let prototype = node.into_element_prototype();
+      let mut should_rebuild = ShouldRebuild(true);
 
       // Apply the prototype to the entity and get its element mount.
-      let mut should_rebuild = ShouldRebuild::Yes;
-
       let mount = match mounts.get_mut(entity) {
         Some(mount) => {
           // If the mount already exists, update its props.
@@ -132,10 +131,11 @@ impl BuildHierarchy {
         }
       };
 
-      self.apply_node_to_children(prototype.children, &mut mount.node_children, &entities);
+      if *self.apply_node_to_children(prototype.children, &mut mount.node_children, &entities) {
+        *should_rebuild = true;
+      }
 
-      // If the element should be rebuilt, flag it for rebuilding.
-      if let ShouldRebuild::Yes = should_rebuild {
+      if *should_rebuild {
         let _ = rebuild_required.insert(entity, RebuildRequired);
       }
     }
@@ -199,11 +199,7 @@ impl BuildHierarchy {
       }
     }
 
-    if current_len != new_len {
-      ShouldRebuild::Yes
-    } else {
-      ShouldRebuild::No
-    }
+    ShouldRebuild(current_len != new_len)
   }
 
   fn delete_orphaned_entities(
@@ -225,7 +221,7 @@ impl BuildHierarchy {
 
   fn delete_children(&mut self, children: &mut mount::Children, range: impl RangeBounds<usize>) {
     for entity in children.entities.drain(range) {
-      if !children.references.contains(&entity) {
+      if !children.references.remove(&entity) {
         self.delete_stack.push(entity);
       }
     }
