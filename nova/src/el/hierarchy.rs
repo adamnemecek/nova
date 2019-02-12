@@ -14,7 +14,7 @@ pub struct Hierarchy {
 #[derive(Debug, Default)]
 pub struct BuildHierarchy {
   build_stack: Vec<ecs::Entity>,
-  apply_stack: Vec<(Option<ecs::Entity>, ecs::Entity, Node)>,
+  apply_stack: Vec<(ecs::Entity, Node)>,
   delete_stack: Vec<ecs::Entity>,
 }
 
@@ -68,9 +68,14 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 
             let child_entity = element.real_children[i];
 
-            self.apply_stack.push((None, child_entity, child));
-            self.build_stack.push(child_entity);
+            self.apply_stack.push((child_entity, child));
           }
+
+          // Push all children onto the build stack in reverse order so that
+          // they are sorted into the hierarchy correctly.
+          self
+            .build_stack
+            .extend(element.real_children.iter().rev().cloned());
         } else {
           // Add all of this element's children to the stack.
           for child in element.real_children.iter().rev() {
@@ -80,7 +85,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
       }
 
       // Apply any changes to descendents.
-      while let Some((parent, entity, node)) = self.apply_stack.pop() {
+      while let Some((entity, node)) = self.apply_stack.pop() {
         let prototype = node.into_element_prototype();
 
         // Apply the prototype to the entity and get its element mount.
@@ -117,42 +122,42 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           }
         };
 
-        // Rebuild the element if needed.
+        // If the number of node children has changed, then this element needs
+        // to be rebuilt.
+        let current_len = mount.node_children.len();
+        let new_len = prototype.children.len();
+
+        if current_len != new_len {
+          should_rebuild = ShouldRebuild::Yes;
+        }
+
+        // Flag any extra children for deletion.
+        if new_len > current_len {
+          let extras = mount.node_children.drain(current_len - 1..new_len);
+
+          self.delete_stack.extend(extras);
+        }
+
+        // Ensure enough child entities exist and flag each one for
+        // application of the new node content.
+        for (i, child) in prototype.children.into_iter().enumerate() {
+          if i < mount.node_children.len() {
+            mount.node_children.push(entities.create());
+          }
+
+          let child_entity = mount.node_children[i];
+
+          self.apply_stack.push((child_entity, child));
+        }
+
+        // If the element should be rebuilt, flag it for rebuilding.
         if let ShouldRebuild::Yes = should_rebuild {
-          let children = mount.instance.build();
-
-          // Flag any extra children for deletion.
-          let current_len = mount.node_children.len();
-          let new_len = children.len();
-
-          if new_len > current_len {
-            let extras = mount.node_children.drain(current_len - 1..new_len);
-
-            self.delete_stack.extend(extras);
-          }
-
-          // Ensure enough child entities exist and flag each one for
-          // application of the new node content.
-          for (i, child) in children.into_iter().enumerate() {
-            if i < mount.node_children.len() {
-              mount.node_children.push(entities.create());
-            }
-
-            let child_entity = mount.node_children[i];
-
-            self.apply_stack.push((Some(entity), child_entity, child));
-          }
-
-          if let Some(parent) = parent {
-            let _ = rebuild_required.insert(parent, RebuildRequired);
-          }
-        } else {
-
+          let _ = rebuild_required.insert(entity, RebuildRequired);
         }
       }
     }
 
-    // Delete all orphaned entities.
+    // Finally, delete all orphaned entities.
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
         self.delete_stack.extend(mount.node_children.drain(..));
