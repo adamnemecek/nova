@@ -14,6 +14,7 @@ crossbeam = "0.6"
 derive_more = "0.13"
 gfx-hal = "0.1"
 glsl-to-spirv = "0.1"
+hibitset = "0.5.4"
 log = { version = "0.4", features = ["std"] }
 nalgebra = "0.17"
 num-traits = "0.2"
@@ -23,6 +24,7 @@ shrev = "1.0"
 specs = "0.14"
 specs-derive = "0.4"
 winit = "0.18"
+smallvec = "0.6.8"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.1"

@@ -23,4 +23,4 @@ pub mod events {
 pub use self::engine::Engine;
 pub use specs::{self, shred};
 
-mod el;
+pub mod el;

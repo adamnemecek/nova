@@ -2,28 +2,107 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Element, InstanceBox};
+use super::{Element, Prototype};
+use std::iter;
+use std::mem;
+use std::vec;
 
-#[derive(Debug, Default)]
-pub struct Node {
-  instance: Option<InstanceBox>,
-  children: Vec<Node>,
+#[derive(Debug)]
+pub struct Node(Content);
+
+#[derive(Debug)]
+enum Content {
+  List(Vec<Node>),
+  Element(Prototype),
+}
+
+impl Node {
+  /// Gets the number of actual elements represented by this node.
+  pub fn len(&self) -> usize {
+    match &self.0 {
+      Content::List(nodes) => nodes.len(),
+      Content::Element(_) => 1,
+    }
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.len() == 0
+  }
+
+  pub(super) fn into_element_prototype(self) -> Prototype {
+    match self.0 {
+      Content::Element(prototype) => prototype,
+      Content::List(_) => panic!("Cannot convert a list node into an element prototype."),
+    }
+  }
 }
 
 pub fn empty() -> Node {
-  Default::default()
+  Node(Content::List(Vec::new()))
+}
+
+pub fn list(mut children: Vec<Node>) -> Node {
+  // Flatten nested list nodes.
+  let mut i = 0;
+
+  while i < children.len() {
+    if let Node(Content::List(_)) = children[i] {
+      // Swap an empty node with the list node in the vec.
+      //
+      // This is more efficient than removing it, which would move all later
+      // elements back one index.
+      let mut child = empty();
+
+      mem::swap(&mut children[i], &mut child);
+
+      // Splice the list's children into the vec at its former position,
+      // which will overwrite the empty node that was just swapped in.
+      children.splice(i..=i, child.into_iter());
+    }
+
+    i += 1;
+  }
+
+  Node(Content::List(children))
 }
 
 pub fn node<T: Element + 'static>(props: T::Props, children: Vec<Node>) -> Node {
-  Node {
-    instance: Some(InstanceBox::new::<T>(props)),
-    children: Vec::new(),
+  Node(Content::Element(Prototype::new::<T>(props, children)))
+}
+
+impl IntoIterator for Node {
+  type Item = Node;
+  type IntoIter = IntoIter;
+
+  fn into_iter(self) -> IntoIter {
+    match self.0 {
+      Content::List(nodes) => IntoIter::List(nodes.into_iter()),
+      content @ Content::Element(_) => IntoIter::Element(iter::once(Node(content))),
+    }
   }
 }
 
-pub fn list(children: Vec<Node>) -> Node {
-  Node {
-    instance: None,
-    children,
+pub enum IntoIter {
+  Element(iter::Once<Node>),
+  List(vec::IntoIter<Node>),
+}
+
+impl Iterator for IntoIter {
+  type Item = Node;
+
+  fn next(&mut self) -> Option<Node> {
+    match self {
+      IntoIter::Element(iter) => iter.next(),
+      IntoIter::List(iter) => iter.next(),
+    }
+  }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    match self {
+      IntoIter::Element(iter) => iter.size_hint(),
+      IntoIter::List(iter) => iter.size_hint(),
+    }
   }
 }
+
+impl ExactSizeIterator for IntoIter {}

@@ -2,13 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod instance;
-mod node;
+pub mod node;
 
-use self::instance::{Instance, InstanceBox};
+mod hierarchy;
+mod instance;
+mod mount;
+mod prototype;
+
+use self::instance::InstanceBox;
+use self::mount::Mount;
+use self::prototype::Prototype;
 use crate::ecs;
 use std::fmt;
 
+pub use self::hierarchy::BuildHierarchy;
 pub use self::node::{node, Node};
 
 pub trait Element: Send + Sync + fmt::Debug {
@@ -16,23 +23,24 @@ pub trait Element: Send + Sync + fmt::Debug {
 
   fn new(props: &Self::Props) -> Self;
 
-  fn on_prop_change(&mut self, _props: &Self::Props) -> RebuildNeeded {
-    RebuildNeeded::Yes
+  fn on_prop_change(&mut self, _props: &Self::Props) -> ShouldRebuild {
+    ShouldRebuild::Yes
   }
 
   fn build(&mut self, _props: &Self::Props) -> Node {
-    Node::default()
+    node::empty()
   }
 }
 
 #[derive(Debug)]
-pub enum RebuildNeeded {
+pub enum ShouldRebuild {
   No,
   Yes,
 }
 
-#[derive(Debug)]
-struct Mount {
-  instance: Option<InstanceBox>,
-  children: Vec<ecs::Entity>,
+#[derive(Default)]
+pub struct RebuildRequired;
+
+impl ecs::Component for RebuildRequired {
+  type Storage = ecs::NullStorage<Self>;
 }
