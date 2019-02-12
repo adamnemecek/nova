@@ -4,8 +4,9 @@
 
 use super::{Mount, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
+use crate::engine;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Hierarchy {
   pub roots: Vec<ecs::Entity>,
   pub sorted: Vec<ecs::Entity>,
@@ -26,6 +27,14 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     ecs::WriteComponents<'a, RebuildRequired>,
   );
 
+  fn setup(&mut self, res: &mut engine::Resources) {
+    use ecs::SystemData;
+
+    Self::SystemData::setup(res);
+
+    res.entry().or_insert_with(Hierarchy::default);
+  }
+
   fn run(&mut self, (entities, mut hierarchy, mut mounts, mut rebuild_required): Self::SystemData) {
     // Clear the sorted hierarchy which is about to change.
     hierarchy.sorted.clear();
@@ -37,6 +46,8 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 
     // For each entity on the stack…
     while let Some(entity) = self.build_stack.pop() {
+      println!("Building {}…", entity.id());
+
       // By now, all entities before this one in the hierarchy have been
       // visited, so add this entity to the sorted vec.
       hierarchy.sorted.push(entity);
@@ -54,7 +65,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           let current_len = element.real_children.len();
           let new_len = children.len();
 
-          if new_len > current_len {
+          if new_len > current_len && current_len > 0 {
             let extras = element.real_children.drain(current_len - 1..new_len);
 
             self.delete_stack.extend(extras);
@@ -63,7 +74,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           // Ensure enough child entities exist and push each one onto the apply
           // stack to change its node content.
           for (i, child) in children.into_iter().enumerate() {
-            if i < element.real_children.len() {
+            if i >= element.real_children.len() {
               element.real_children.push(entities.create());
             }
 
@@ -126,7 +137,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
         }
 
         // Flag any extra children for deletion.
-        if new_len > current_len {
+        if new_len > current_len && current_len > 0 {
           let extras = mount.node_children.drain(current_len - 1..new_len);
 
           self.delete_stack.extend(extras);
@@ -135,7 +146,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
         // Ensure enough child entities exist and flag each one for
         // application of the new node content.
         for (i, child) in prototype.children.into_iter().enumerate() {
-          if i < mount.node_children.len() {
+          if i >= mount.node_children.len() {
             mount.node_children.push(entities.create());
           }
 

@@ -50,6 +50,13 @@ where
   storage::Storage::new(res.fetch(), res.fetch::<storage::MaskedStorage<T>>())
 }
 
+pub fn write_components<T>(res: &engine::Resources) -> WriteComponents<T>
+where
+  T: Component,
+{
+  storage::Storage::new(res.fetch(), res.fetch_mut::<storage::MaskedStorage<T>>())
+}
+
 pub fn entities(res: &engine::Resources) -> engine::FetchResource<Entities> {
   res.fetch()
 }

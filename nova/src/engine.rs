@@ -43,6 +43,7 @@ impl Engine {
 
     engine.world.res.insert(assets::OverlayFs::default());
 
+    /*
     #[cfg(not(feature = "headless"))]
     {
       graphics::device::setup(engine.resources_mut());
@@ -61,6 +62,7 @@ impl Engine {
         }
       });
     }
+    */
 
     engine
   }
@@ -122,6 +124,8 @@ impl Engine {
   }
 
   pub fn tick(&mut self) {
+    self.world.maintain();
+
     self.run_event_handlers(Event::TickStarted);
     self.run_event_handlers(Event::ClockTimeUpdated);
     self.run_event_handlers(Event::TickEnding);
