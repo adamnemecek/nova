@@ -2,9 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::mount;
 use super::{ChildNodes, Mount, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
 use crate::engine;
+use std::ops::RangeBounds;
 
 #[derive(Debug, Default)]
 pub struct Hierarchy {
@@ -57,10 +59,14 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 
       let mut was_rebuilt = false;
 
-      if let Some(mut mount) = mounts.get_mut(entity) {
+      if let Some(mount) = mounts.get_mut(entity) {
         // Rebuild the element if needed.
         if rebuild_required.contains(entity) {
-          self.build_mounted_element(&mut mount, &entities);
+          let node = mount.instance.build(ChildNodes {
+            entities: mount.node_children.entities.iter(),
+          });
+
+          self.apply_node_to_children(node, &mut mount.real_children, &entities);
 
           was_rebuilt = true;
           rebuild_required.remove(entity);
@@ -83,64 +89,6 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 }
 
 impl BuildHierarchy {
-  fn build_mounted_element(&mut self, mount: &mut Mount, entities: &ecs::Entities) {
-    // Build the element and get the resulting children.
-    let children = mount.instance.build(ChildNodes {
-      entities: mount.node_children.entities.iter(),
-    });
-
-    // Flag any extra children for deletion.
-    let current_len = mount.real_children.entities.len();
-    let new_len = children.len();
-
-    if new_len < current_len {
-      for entity in mount.real_children.entities.drain(current_len - 1..) {
-        if !mount.real_children.references.remove(&entity) {
-          self.delete_stack.push(entity);
-        }
-      }
-    }
-
-    // Ensure enough child entities exist and push each one onto the apply
-    // stack to change its node content.
-    for (i, child) in children.into_iter().enumerate() {
-      if let Some(child_entity) = child.entity() {
-        // Flag this child as a reference entity so it isn't deleted or
-        // overwritten on rebuild.
-        mount.real_children.references.insert(child_entity);
-
-        // If the node is a child entity, link to it directly.
-        if i >= mount.real_children.entities.len() {
-          mount.real_children.entities.push(child_entity);
-        } else {
-          let existing = mount.real_children.entities[i];
-
-          if !mount.real_children.references.remove(&existing) {
-            self.delete_stack.push(existing);
-          }
-
-          mount.real_children.entities[i] = child_entity;
-        }
-      } else {
-        if i >= mount.real_children.entities.len() {
-          mount.real_children.entities.push(entities.create());
-        } else {
-          let existing = mount.real_children.entities[i];
-
-          if !mount.real_children.references.remove(&existing) {
-            self.delete_stack.push(existing);
-
-            mount.real_children.entities[i] = entities.create();
-          }
-        }
-
-        self
-          .apply_stack
-          .push((mount.real_children.entities[i], child));
-      }
-    }
-  }
-
   fn apply_node_changes(
     &mut self,
     entities: &ecs::Entities,
@@ -184,67 +132,77 @@ impl BuildHierarchy {
         }
       };
 
-      // If the number of node children has changed, then this element needs
-      // to be rebuilt.
-      let current_len = mount.node_children.entities.len();
-      let new_len = prototype.children.len();
-
-      if current_len != new_len {
-        should_rebuild = ShouldRebuild::Yes;
-      }
-
-      // Flag any extra children for deletion.
-      if new_len < current_len && current_len > 0 {
-        for entity in mount.node_children.entities.drain(current_len - 1..) {
-          if !mount.node_children.references.remove(&entity) {
-            self.delete_stack.push(entity);
-          }
-        }
-      }
-
-      // Ensure enough child entities exist and flag each one for
-      // application of the new node content.
-      for (i, child) in prototype.children.into_iter().enumerate() {
-        if let Some(child_entity) = child.entity() {
-          // Flag this child as a reference entity so it isn't deleted or
-          // overwritten on rebuild.
-          mount.node_children.references.insert(child_entity);
-
-          // If the node is a child entity, link to it directly.
-          if i >= mount.node_children.entities.len() {
-            mount.node_children.entities.push(child_entity);
-          } else {
-            let existing = mount.node_children.entities[i];
-
-            if !mount.node_children.references.remove(&existing) {
-              self.delete_stack.push(existing);
-            }
-
-            mount.node_children.entities[i] = child_entity;
-          }
-        } else {
-          if i >= mount.node_children.entities.len() {
-            mount.node_children.entities.push(entities.create());
-          } else {
-            let existing = mount.node_children.entities[i];
-
-            if !mount.node_children.references.remove(&existing) {
-              self.delete_stack.push(existing);
-
-              mount.node_children.entities[i] = entities.create();
-            }
-          }
-
-          self
-            .apply_stack
-            .push((mount.node_children.entities[i], child));
-        }
-      }
+      self.apply_node_to_children(prototype.children, &mut mount.node_children, &entities);
 
       // If the element should be rebuilt, flag it for rebuilding.
       if let ShouldRebuild::Yes = should_rebuild {
         let _ = rebuild_required.insert(entity, RebuildRequired);
       }
+    }
+  }
+
+  fn apply_node_to_children<I>(
+    &mut self,
+    node: I,
+    children: &mut mount::Children,
+    entities: &ecs::Entities,
+  ) -> ShouldRebuild
+  where
+    I: IntoIterator<Item = Node>,
+    I::IntoIter: ExactSizeIterator,
+  {
+    let nodes = node.into_iter();
+
+    let current_len = children.entities.len();
+    let new_len = nodes.len();
+
+    // Flag any extra children for deletion.
+    if new_len < current_len && current_len > 0 {
+      self.delete_children(children, new_len..);
+    }
+
+    for (i, child) in nodes.enumerate() {
+      if let Some(child_entity) = child.entity() {
+        // The child is an entity so reference it directly.
+
+        if i < children.entities.len() {
+          let existing = children.entities[i];
+
+          if !children.references.remove(&existing) {
+            self.delete_stack.push(existing);
+          }
+
+          children.entities[i] = child_entity;
+        } else {
+          children.entities.push(child_entity);
+        }
+
+        // Flag this child as a reference entity so it isn't deleted or
+        // overwritten on rebuild.
+        children.references.insert(child_entity);
+      } else {
+        // The child is an element so apply it to the entity.
+
+        if i < children.entities.len() {
+          let existing = children.entities[i];
+
+          // If the existing element was a reference, replace it with a new
+          // entity.
+          if children.references.remove(&existing) {
+            children.entities[i] = entities.create();
+          }
+        } else {
+          children.entities.push(entities.create());
+        }
+
+        self.apply_stack.push((children.entities[i], child));
+      }
+    }
+
+    if current_len != new_len {
+      ShouldRebuild::Yes
+    } else {
+      ShouldRebuild::No
     }
   }
 
@@ -271,6 +229,14 @@ impl BuildHierarchy {
       mounts.remove(entity);
 
       let _ = entities.delete(entity); // Err is if the entity is already deleted. ¯\_(ツ)_/¯
+    }
+  }
+
+  fn delete_children(&mut self, children: &mut mount::Children, range: impl RangeBounds<usize>) {
+    for entity in children.entities.drain(range) {
+      if !children.references.contains(&entity) {
+        self.delete_stack.push(entity);
+      }
     }
   }
 }

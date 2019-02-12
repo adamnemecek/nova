@@ -20,14 +20,6 @@ enum Content {
 }
 
 impl Node {
-  /// Gets the number of actual elements represented by this node.
-  pub(super) fn len(&self) -> usize {
-    match &self.0 {
-      Content::List(nodes) => nodes.len(),
-      Content::Element(_) | Content::Entity(_) => 1,
-    }
-  }
-
   pub(super) fn entity(&self) -> Option<ecs::Entity> {
     match &self.0 {
       Content::Entity(entity) => Some(*entity),
