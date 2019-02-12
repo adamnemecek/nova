@@ -60,31 +60,25 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
             self.delete_stack.extend(extras);
           }
 
-          // Apply nodes to child elements and then build them.
+          // Ensure enough child entities exist and push each one onto the apply
+          // stack to change its node content.
           for (i, child) in children.into_iter().enumerate() {
             if i < element.real_children.len() {
               element.real_children.push(entities.create());
             }
 
-            let child_entity = element.real_children[i];
-
-            self.apply_stack.push((child_entity, child));
-          }
-
-          // Push all children onto the build stack in reverse order so that
-          // they are sorted into the hierarchy correctly.
-          self
-            .build_stack
-            .extend(element.real_children.iter().rev().cloned());
-        } else {
-          // Add all of this element's children to the stack.
-          for child in element.real_children.iter().rev() {
-            self.build_stack.push(*child);
+            self.apply_stack.push((element.real_children[i], child));
           }
         }
+
+        // Push all children onto the build stack in reverse order so that
+        // they are sorted into the hierarchy correctly.
+        self
+          .build_stack
+          .extend(element.real_children.iter().rev().cloned());
       }
 
-      // Apply any changes to descendents.
+      // Apply changes to node descendents.
       while let Some((entity, node)) = self.apply_stack.pop() {
         let prototype = node.into_element_prototype();
 
@@ -145,9 +139,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
             mount.node_children.push(entities.create());
           }
 
-          let child_entity = mount.node_children[i];
-
-          self.apply_stack.push((child_entity, child));
+          self.apply_stack.push((mount.node_children[i], child));
         }
 
         // If the element should be rebuilt, flag it for rebuilding.
