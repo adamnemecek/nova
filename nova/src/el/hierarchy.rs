@@ -213,22 +213,13 @@ impl BuildHierarchy {
   ) {
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
-        for entity in &mount.node_children.entities {
-          if !mount.node_children.references.contains(entity) {
-            self.delete_stack.push(*entity);
-          }
-        }
-
-        for entity in &mount.real_children.entities {
-          if !mount.real_children.references.contains(entity) {
-            self.delete_stack.push(*entity);
-          }
-        }
+        self.delete_children(&mut mount.node_children, ..);
+        self.delete_children(&mut mount.real_children, ..);
       }
 
       mounts.remove(entity);
 
-      let _ = entities.delete(entity); // Err is if the entity is already deleted. ¯\_(ツ)_/¯
+      let _ = entities.delete(entity);
     }
   }
 
