@@ -60,6 +60,9 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
       let mut was_rebuilt = false;
 
       if let Some(mount) = mounts.get_mut(entity) {
+        // Awake the element. Does nothing if already awake.
+        mount.instance.awake();
+
         // Rebuild the element if needed.
         if rebuild_required.contains(entity) {
           let node = mount.instance.build(ChildNodes {
@@ -111,6 +114,7 @@ impl BuildHierarchy {
             Err(props) => {
               // The mounted element is a different type of element, so
               // replace it with a new instance based on the prototype.
+              mount.instance.sleep();
               mount.instance = (prototype.new)(props);
             }
           };
@@ -181,7 +185,7 @@ impl BuildHierarchy {
         // overwritten on rebuild.
         children.references.insert(child_entity);
       } else {
-        // The child is an element so apply it to the entity.
+        // The child is an element so add it to the stack for application.
 
         if i < children.entities.len() {
           let existing = children.entities[i];
@@ -199,6 +203,7 @@ impl BuildHierarchy {
       }
     }
 
+    // Rebuild is only needed if the number of children changes.
     ShouldRebuild(current_len != new_len)
   }
 
@@ -209,6 +214,8 @@ impl BuildHierarchy {
   ) {
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
+        mount.instance.sleep();
+
         self.delete_children(&mut mount.node_children, ..);
         self.delete_children(&mut mount.real_children, ..);
       }

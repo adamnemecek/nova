@@ -12,7 +12,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   el::create::<App>(engine.resources(), ());
 
-  engine.tick();
+  for _ in 0..5 {
+    engine.tick();
+
+    std::thread::sleep(std::time::Duration::from_millis(15));
+  }
 
   el::print_all(engine.resources());
 
@@ -81,6 +85,10 @@ impl el::Element for Grandchild {
 
   fn new(_props: &Self::Props) -> Self {
     Grandchild
+  }
+
+  fn on_awake(&mut self, props: &Self::Props) {
+    println!("Grandchild {} is awake!", props.id);
   }
 
   fn build(&mut self, _props: &Self::Props, _children: el::ChildNodes) -> el::Node {

@@ -26,6 +26,9 @@ pub trait Element: Send + Sync + fmt::Debug {
 
   fn new(props: &Self::Props) -> Self;
 
+  fn on_awake(&mut self, _props: &Self::Props) {}
+  fn on_sleep(&mut self, _props: &Self::Props) {}
+
   fn on_prop_change(&mut self, _props: &Self::Props) -> ShouldRebuild {
     ShouldRebuild(true)
   }

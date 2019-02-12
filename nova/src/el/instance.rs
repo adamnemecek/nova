@@ -10,6 +10,8 @@ use std::fmt;
 pub trait Instance: Any + Send + Sync + fmt::Debug {
   fn build(&mut self, children: ChildNodes) -> Node;
   fn set_props(&mut self, props: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>>;
+  fn awake(&mut self);
+  fn sleep(&mut self);
 }
 
 #[derive(Debug, Deref, DerefMut)]
@@ -25,6 +27,7 @@ impl InstanceBox {
 struct ElementInstance<T: Element> {
   element: T,
   props: T::Props,
+  awake: bool,
 }
 
 impl<T: Element> ElementInstance<T> {
@@ -32,6 +35,7 @@ impl<T: Element> ElementInstance<T> {
     ElementInstance {
       element: T::new(&props),
       props,
+      awake: false,
     }
   }
 }
@@ -51,5 +55,23 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
     self.props = *props;
 
     Ok(self.element.on_prop_change(&self.props))
+  }
+
+  fn awake(&mut self) {
+    if self.awake {
+      return;
+    }
+
+    self.awake = true;
+    self.element.on_awake(&self.props);
+  }
+
+  fn sleep(&mut self) {
+    if !self.awake {
+      return;
+    }
+
+    self.awake = false;
+    self.element.on_sleep(&self.props);
   }
 }
