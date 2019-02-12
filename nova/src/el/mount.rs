@@ -9,22 +9,26 @@ use std::collections::BTreeSet;
 #[derive(Debug)]
 pub struct Mount {
   pub instance: InstanceBox,
-  pub node_children: Vec<ecs::Entity>,
-  pub real_children: Vec<ecs::Entity>,
-  pub real_children_links: BTreeSet<usize>,
+  pub node_children: Children,
+  pub real_children: Children,
 }
 
 impl Mount {
   pub fn new(instance: InstanceBox) -> Self {
     Mount {
       instance,
-      node_children: Vec::new(),
-      real_children: Vec::new(),
-      real_children_links: BTreeSet::new(),
+      node_children: Children::default(),
+      real_children: Children::default(),
     }
   }
 }
 
 impl ecs::Component for Mount {
   type Storage = ecs::BTreeStorage<Self>;
+}
+
+#[derive(Debug, Default)]
+pub struct Children {
+  pub entities: Vec<ecs::Entity>,
+  pub references: BTreeSet<ecs::Entity>,
 }

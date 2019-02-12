@@ -77,6 +77,7 @@ pub fn print_all(res: &engine::Resources) {
         "node_children: {:?}, ",
         mount
           .node_children
+          .entities
           .iter()
           .map(|e| e.id())
           .collect::<Vec<_>>()
@@ -86,6 +87,7 @@ pub fn print_all(res: &engine::Resources) {
         "real_children: {:?}",
         mount
           .real_children
+          .entities
           .iter()
           .map(|e| e.id())
           .collect::<Vec<_>>()
