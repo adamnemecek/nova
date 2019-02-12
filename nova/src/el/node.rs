@@ -3,8 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Element, Prototype};
+use crate::ecs;
 use std::iter;
 use std::mem;
+use std::slice;
 use std::vec;
 
 #[derive(Debug)]
@@ -14,25 +16,30 @@ pub struct Node(Content);
 enum Content {
   List(Vec<Node>),
   Element(Prototype),
+  Entity(ecs::Entity),
 }
 
 impl Node {
   /// Gets the number of actual elements represented by this node.
-  pub fn len(&self) -> usize {
+  pub(super) fn len(&self) -> usize {
     match &self.0 {
       Content::List(nodes) => nodes.len(),
-      Content::Element(_) => 1,
+      Content::Element(_) | Content::Entity(_) => 1,
     }
   }
 
-  pub fn is_empty(&self) -> bool {
-    self.len() == 0
+  pub(super) fn entity(&self) -> Option<ecs::Entity> {
+    match &self.0 {
+      Content::Entity(entity) => Some(*entity),
+      _ => None,
+    }
   }
 
   pub(super) fn into_element_prototype(self) -> Prototype {
     match self.0 {
       Content::Element(prototype) => prototype,
       Content::List(_) => panic!("Cannot convert a list node into an element prototype."),
+      Content::Entity(_) => panic!("Cannot convert an entity node into an element prototype."),
     }
   }
 }
@@ -77,7 +84,7 @@ impl IntoIterator for Node {
   fn into_iter(self) -> IntoIter {
     match self.0 {
       Content::List(nodes) => IntoIter::List(nodes.into_iter()),
-      content @ Content::Element(_) => IntoIter::Element(iter::once(Node(content))),
+      content => IntoIter::Element(iter::once(Node(content))),
     }
   }
 }
@@ -106,3 +113,15 @@ impl Iterator for IntoIter {
 }
 
 impl ExactSizeIterator for IntoIter {}
+
+pub struct ChildNodes<'a> {
+  pub(super) entities: slice::Iter<'a, ecs::Entity>,
+}
+
+impl<'a> Iterator for ChildNodes<'a> {
+  type Item = Node;
+
+  fn next(&mut self) -> Option<Node> {
+    self.entities.next().map(|e| Node(Content::Entity(*e)))
+  }
+}

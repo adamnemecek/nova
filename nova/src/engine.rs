@@ -10,12 +10,14 @@ mod resources;
 use crate::assets;
 use crate::clock;
 use crate::ecs;
+/*
 #[cfg(not(feature = "headless"))]
 use crate::graphics;
 #[cfg(not(feature = "headless"))]
 use crate::ui;
 #[cfg(not(feature = "headless"))]
 use crate::window;
+*/
 
 pub use self::events::*;
 pub use self::resources::*;
@@ -28,7 +30,7 @@ pub struct Engine {
 }
 
 impl Engine {
-  pub fn new(options: Options) -> Self {
+  pub fn new() -> Self {
     let thread_pool = rayon::ThreadPoolBuilder::new()
       .build()
       .expect("Could not create thread pool");
@@ -102,6 +104,7 @@ impl Engine {
       .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
 
+  /*
   #[cfg(not(feature = "headless"))]
   pub fn run(mut self) {
     let mut reader = {
@@ -122,6 +125,7 @@ impl Engine {
       }
     }
   }
+  */
 
   pub fn tick(&mut self) {
     self.world.maintain();
@@ -140,7 +144,15 @@ impl Engine {
   }
 }
 
+/*
 #[derive(Default)]
 pub struct Options {
   pub window: window::Options,
+}
+*/
+
+impl Default for Engine {
+  fn default() -> Self {
+    Engine::new()
+  }
 }

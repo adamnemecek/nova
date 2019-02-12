@@ -18,7 +18,7 @@ use crate::engine;
 use std::fmt;
 
 pub use self::hierarchy::BuildHierarchy;
-pub use self::node::{node, Node};
+pub use self::node::{node, ChildNodes, Node};
 
 pub trait Element: Send + Sync + fmt::Debug {
   type Props: Default + PartialEq + Send + Sync + fmt::Debug + 'static;
@@ -29,26 +29,8 @@ pub trait Element: Send + Sync + fmt::Debug {
     ShouldRebuild::Yes
   }
 
-  fn build(&mut self, _props: &Self::Props) -> Node {
+  fn build(&mut self, _props: &Self::Props, _children: ChildNodes) -> Node {
     node::empty()
-  }
-}
-
-pub trait UnitElement: Default + Send + Sync + fmt::Debug {
-  fn build(&mut self) -> Node {
-    node::empty()
-  }
-}
-
-impl<T: UnitElement> Element for T {
-  type Props = ();
-
-  fn new(_: &Self::Props) -> Self {
-    T::default()
-  }
-
-  fn build(&mut self, _: &Self::Props) -> Node {
-    self.build()
   }
 }
 

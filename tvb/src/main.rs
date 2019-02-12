@@ -6,7 +6,7 @@ use nova::engine;
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   nova::log::set_as_default();
 
-  let mut engine = nova::Engine::new(Default::default());
+  let mut engine = nova::Engine::new();
 
   engine.on_event(engine::Event::TickEnding, el::BuildHierarchy::default());
 
@@ -22,8 +22,14 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[derive(Debug, Default)]
 struct App;
 
-impl el::UnitElement for App {
-  fn build(&mut self) -> el::Node {
+impl el::Element for App {
+  type Props = ();
+
+  fn new(_: &Self::Props) -> Self {
+    App
+  }
+
+  fn build(&mut self, _: &Self::Props, children: el::ChildNodes) -> el::Node {
     el::node::list(vec![
       el::node::<Child>(
         ChildProps { id: 0 },
@@ -50,8 +56,15 @@ impl el::Element for Child {
     Child
   }
 
-  fn build(&mut self, _props: &Self::Props) -> el::Node {
-    el::node::empty()
+  fn build(&mut self, props: &Self::Props, children: el::ChildNodes) -> el::Node {
+    if props.id == 2 {
+      el::node::list(vec![
+        el::node::<Grandchild>(GrandchildProps { id: 1 }, vec![]),
+        el::node::<Grandchild>(GrandchildProps { id: 2 }, vec![]),
+      ])
+    } else {
+      el::node::list(children.collect())
+    }
   }
 }
 
@@ -70,7 +83,7 @@ impl el::Element for Grandchild {
     Grandchild
   }
 
-  fn build(&mut self, _props: &Self::Props) -> el::Node {
+  fn build(&mut self, _props: &Self::Props, children: el::ChildNodes) -> el::Node {
     el::node::empty()
   }
 }

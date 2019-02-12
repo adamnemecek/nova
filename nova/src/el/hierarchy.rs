@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Mount, Node, RebuildRequired, ShouldRebuild};
+use super::{ChildNodes, Mount, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
 use crate::engine;
 
@@ -59,7 +59,9 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           rebuild_required.remove(entity);
 
           // Build the element and get the resulting children.
-          let children = element.instance.build();
+          let children = element.instance.build(ChildNodes {
+            entities: element.node_children.iter(),
+          });
 
           // Flag any extra children for deletion.
           let current_len = element.real_children.len();
@@ -74,11 +76,20 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           // Ensure enough child entities exist and push each one onto the apply
           // stack to change its node content.
           for (i, child) in children.into_iter().enumerate() {
-            if i >= element.real_children.len() {
-              element.real_children.push(entities.create());
-            }
+            if let Some(child_entity) = child.entity() {
+              // If the node is a child entity, link to it directly.
+              if i >= element.real_children.len() {
+                element.real_children.push(child_entity);
+              } else {
+                element.real_children[i] = child_entity;
+              }
+            } else {
+              if i >= element.real_children.len() {
+                element.real_children.push(entities.create());
+              }
 
-            self.apply_stack.push((element.real_children[i], child));
+              self.apply_stack.push((element.real_children[i], child));
+            }
           }
         }
 

@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Node;
-use super::{Element, ShouldRebuild};
+use super::{ChildNodes, Element, Node, ShouldRebuild};
 use derive_more::*;
 use std::any::Any;
 use std::fmt;
 
 pub trait Instance: Any + Send + Sync + fmt::Debug {
-  fn build(&mut self) -> Node;
+  fn build(&mut self, children: ChildNodes) -> Node;
   fn set_props(&mut self, props: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>>;
 }
 
@@ -38,8 +37,8 @@ impl<T: Element> ElementInstance<T> {
 }
 
 impl<T: Element + 'static> Instance for ElementInstance<T> {
-  fn build(&mut self) -> Node {
-    self.element.build(&self.props)
+  fn build(&mut self, children: ChildNodes) -> Node {
+    self.element.build(&self.props, children)
   }
 
   fn set_props(&mut self, props: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>> {
