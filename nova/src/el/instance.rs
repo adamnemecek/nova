@@ -6,6 +6,7 @@ use super::{ChildNodes, Element, Node, ShouldRebuild};
 use derive_more::*;
 use std::any::Any;
 use std::fmt;
+use std::mem;
 
 pub trait Instance: Any + Send + Sync + fmt::Debug {
   fn build(&mut self, children: ChildNodes) -> Node;
@@ -46,15 +47,15 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
   }
 
   fn replace_element(&mut self, element: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>> {
-    let element = element.downcast()?;
+    let mut element = element.downcast::<T>()?;
 
     if *element == self.element {
       return Ok(ShouldRebuild(false));
     }
 
-    self.element = *element;
+    mem::swap(&mut self.element, &mut *element);
 
-    Ok(self.element.on_change(&mut self.state))
+    Ok(self.element.on_change(&mut self.state, *element))
   }
 
   fn awake(&mut self) {

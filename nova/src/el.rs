@@ -21,13 +21,13 @@ use std::ops::{Deref, DerefMut};
 pub use self::hierarchy::BuildHierarchy;
 pub use self::node::{node, ChildNodes, Node};
 
-pub trait Element: PartialEq + Send + Sync + fmt::Debug {
+pub trait Element: PartialEq + Send + Sync + fmt::Debug + Sized {
   type State: Default + Send + Sync + fmt::Debug + 'static;
 
   fn on_awake(&self, _state: &mut Self::State) {}
   fn on_sleep(&self, _state: &mut Self::State) {}
 
-  fn on_change(&self, _state: &mut Self::State) -> ShouldRebuild {
+  fn on_change(&self, _state: &mut Self::State, _old_self: Self) -> ShouldRebuild {
     ShouldRebuild(true)
   }
 
@@ -36,11 +36,21 @@ pub trait Element: PartialEq + Send + Sync + fmt::Debug {
   }
 }
 
-pub trait StatelessElement: PartialEq + Send + Sync + fmt::Debug {
+pub trait StatelessElement: PartialEq + Send + Sync + fmt::Debug + Sized {
   fn on_awake(&self) {}
   fn on_sleep(&self) {}
 
-  fn on_change(&self) -> ShouldRebuild {
+  fn on_change(&self, _old_self: Self) -> ShouldRebuild {
+    ShouldRebuild(true)
+  }
+
+  fn build(&self, children: ChildNodes) -> Node {
+    children.into()
+  }
+}
+
+pub trait PureElement: PartialEq + Send + Sync + fmt::Debug + Sized {
+  fn on_change(&self, _old_self: Self) -> ShouldRebuild {
     ShouldRebuild(true)
   }
 
@@ -60,8 +70,8 @@ impl<T: StatelessElement> Element for T {
     self.on_sleep();
   }
 
-  fn on_change(&self, _state: &mut Self::State) -> ShouldRebuild {
-    self.on_change()
+  fn on_change(&self, _state: &mut Self::State, old_self: Self) -> ShouldRebuild {
+    self.on_change(old_self)
   }
 
   fn build(&self, _state: &mut Self::State, children: ChildNodes) -> Node {
@@ -69,19 +79,9 @@ impl<T: StatelessElement> Element for T {
   }
 }
 
-pub trait PureElement: PartialEq + Send + Sync + fmt::Debug {
-  fn on_change(&self) -> ShouldRebuild {
-    ShouldRebuild(true)
-  }
-
-  fn build(&self, children: ChildNodes) -> Node {
-    children.into()
-  }
-}
-
 impl<T: PureElement> StatelessElement for T {
-  fn on_change(&self) -> ShouldRebuild {
-    self.on_change()
+  fn on_change(&self, old_self: Self) -> ShouldRebuild {
+    self.on_change(old_self)
   }
 
   fn build(&self, children: ChildNodes) -> Node {
