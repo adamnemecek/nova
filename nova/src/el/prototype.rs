@@ -9,21 +9,21 @@ use std::any::Any;
 #[derive(Debug)]
 pub struct Prototype {
   pub new: fn(Box<dyn Any>) -> InstanceBox,
-  pub props: Box<dyn Any>,
+  pub element: Box<dyn Any>,
   pub children: Vec<Node>,
 }
 
 impl Prototype {
-  pub fn new<E: Element + 'static>(props: E::Props, children: Vec<Node>) -> Self {
+  pub fn new<E: Element + 'static>(element: E, children: Vec<Node>) -> Self {
     Prototype {
       new: |props| {
         InstanceBox::new::<E>(
           *props
-            .downcast::<E::Props>()
+            .downcast::<E>()
             .expect("Incorrect props type for element"),
         )
       },
-      props: Box::new(props),
+      element: Box::new(element),
       children,
     }
   }

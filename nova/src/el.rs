@@ -21,20 +21,63 @@ use std::ops::{Deref, DerefMut};
 pub use self::hierarchy::BuildHierarchy;
 pub use self::node::{node, ChildNodes, Node};
 
-pub trait Element: Send + Sync + fmt::Debug {
-  type Props: Default + PartialEq + Send + Sync + fmt::Debug + 'static;
+pub trait Element: PartialEq + Send + Sync + fmt::Debug {
+  type State: Default + Send + Sync + fmt::Debug + 'static;
 
-  fn new(props: &Self::Props) -> Self;
+  fn on_awake(&self, _state: &mut Self::State) {}
+  fn on_sleep(&self, _state: &mut Self::State) {}
 
-  fn on_awake(&mut self, _props: &Self::Props) {}
-  fn on_sleep(&mut self, _props: &Self::Props) {}
-
-  fn on_prop_change(&mut self, _props: &Self::Props) -> ShouldRebuild {
+  fn on_change(&self, _state: &mut Self::State) -> ShouldRebuild {
     ShouldRebuild(true)
   }
 
-  fn build(&mut self, _props: &Self::Props, _children: ChildNodes) -> Node {
+  fn build(&self, _state: &mut Self::State, _children: ChildNodes) -> Node {
     node::empty()
+  }
+}
+
+pub trait StatelessElement: PartialEq + Send + Sync + fmt::Debug {
+  fn on_awake(&self) {}
+  fn on_sleep(&self) {}
+
+  fn on_change(&self) -> ShouldRebuild {
+    ShouldRebuild(true)
+  }
+
+  fn build(&self, _children: ChildNodes) -> Node {
+    node::empty()
+  }
+}
+
+impl<T: StatelessElement> Element for T {
+  type State = ();
+
+  fn on_awake(&self, _state: &mut Self::State) {
+    self.on_awake();
+  }
+
+  fn on_sleep(&self, _state: &mut Self::State) {
+    self.on_sleep();
+  }
+
+  fn on_change(&self, _state: &mut Self::State) -> ShouldRebuild {
+    self.on_change()
+  }
+
+  fn build(&self, _state: &mut Self::State, children: ChildNodes) -> Node {
+    self.build(children)
+  }
+}
+
+pub trait PureElement: PartialEq + Send + Sync + fmt::Debug {
+  fn build(&self, _children: ChildNodes) -> Node {
+    node::empty()
+  }
+}
+
+impl<T: PureElement> StatelessElement for T {
+  fn build(&self, children: ChildNodes) -> Node {
+    PureElement::build(self, children)
   }
 }
 
@@ -62,7 +105,7 @@ impl ecs::Component for RebuildRequired {
   type Storage = ecs::NullStorage<Self>;
 }
 
-pub fn create<E: Element + 'static>(res: &engine::Resources, props: E::Props) {
+pub fn create<E: Element + 'static>(res: &engine::Resources, element: E) {
   let entities = res.fetch::<ecs::Entities>();
 
   let mut hierarchy = res.fetch_mut::<Hierarchy>();
@@ -72,7 +115,7 @@ pub fn create<E: Element + 'static>(res: &engine::Resources, props: E::Props) {
   hierarchy.roots.push(
     entities
       .build_entity()
-      .with(Mount::new(InstanceBox::new::<E>(props)), &mut mounts)
+      .with(Mount::new(InstanceBox::new(element)), &mut mounts)
       .with(RebuildRequired, &mut rebuild_required)
       .build(),
   );

@@ -10,7 +10,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   engine.on_event(engine::Event::TickEnding, el::BuildHierarchy::default());
 
-  el::create::<App>(engine.resources(), ());
+  el::create(engine.resources(), App);
 
   for _ in 0..5 {
     engine.tick();
@@ -23,48 +23,33 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   Ok(())
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 struct App;
 
-impl el::Element for App {
-  type Props = ();
-
-  fn new(_: &Self::Props) -> Self {
-    App
-  }
-
-  fn build(&mut self, _: &Self::Props, _: el::ChildNodes) -> el::Node {
+impl el::PureElement for App {
+  fn build(&self, _: el::ChildNodes) -> el::Node {
     el::node::list(vec![
-      el::node::<Child>(
-        ChildProps { id: 0 },
-        vec![el::node::<Grandchild>(GrandchildProps { id: 0 }, vec![])],
+      el::node(
+        Child { id: 0 },
+        vec![el::node(Grandchild { id: 0 }, vec![])],
       ),
-      el::node::<Child>(ChildProps { id: 1 }, vec![]),
-      el::node::<Child>(ChildProps { id: 2 }, vec![]),
+      el::node(Child { id: 1 }, vec![]),
+      el::node(Child { id: 2 }, vec![]),
     ])
   }
 }
 
-#[derive(Debug)]
-struct Child;
-
-#[derive(Debug, Default, PartialEq)]
-struct ChildProps {
+#[derive(Debug, PartialEq)]
+struct Child {
   id: usize,
 }
 
-impl el::Element for Child {
-  type Props = ChildProps;
-
-  fn new(_props: &Self::Props) -> Self {
-    Child
-  }
-
-  fn build(&mut self, props: &Self::Props, children: el::ChildNodes) -> el::Node {
-    if props.id == 2 {
+impl el::StatelessElement for Child {
+  fn build(&self, children: el::ChildNodes) -> el::Node {
+    if self.id == 2 {
       el::node::list(vec![
-        el::node::<Grandchild>(GrandchildProps { id: 1 }, vec![]),
-        el::node::<Grandchild>(GrandchildProps { id: 2 }, vec![]),
+        el::node(Grandchild { id: 1 }, vec![]),
+        el::node(Grandchild { id: 2 }, vec![]),
       ])
     } else {
       el::node::list(children.collect())
@@ -72,26 +57,17 @@ impl el::Element for Child {
   }
 }
 
-#[derive(Debug)]
-struct Grandchild;
-
-#[derive(Debug, Default, PartialEq)]
-struct GrandchildProps {
+#[derive(Debug, PartialEq)]
+struct Grandchild {
   id: usize,
 }
 
-impl el::Element for Grandchild {
-  type Props = GrandchildProps;
-
-  fn new(_props: &Self::Props) -> Self {
-    Grandchild
+impl el::StatelessElement for Grandchild {
+  fn on_awake(&self) {
+    println!("Grandchild {} is awake!", self.id);
   }
 
-  fn on_awake(&mut self, props: &Self::Props) {
-    println!("Grandchild {} is awake!", props.id);
-  }
-
-  fn build(&mut self, _props: &Self::Props, _children: el::ChildNodes) -> el::Node {
+  fn build(&self, _children: el::ChildNodes) -> el::Node {
     el::node::empty()
   }
 }

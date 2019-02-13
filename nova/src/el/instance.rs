@@ -9,7 +9,7 @@ use std::fmt;
 
 pub trait Instance: Any + Send + Sync + fmt::Debug {
   fn build(&mut self, children: ChildNodes) -> Node;
-  fn set_props(&mut self, props: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>>;
+  fn replace_element(&mut self, element: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>>;
   fn awake(&mut self);
   fn sleep(&mut self);
 }
@@ -18,23 +18,23 @@ pub trait Instance: Any + Send + Sync + fmt::Debug {
 pub struct InstanceBox(Box<dyn Instance>);
 
 impl InstanceBox {
-  pub fn new<T: Element + 'static>(props: T::Props) -> Self {
-    InstanceBox(Box::new(ElementInstance::<T>::new(props)))
+  pub(super) fn new<T: Element + 'static>(element: T) -> Self {
+    InstanceBox(Box::new(ElementInstance::new(element)))
   }
 }
 
 #[derive(Debug)]
 struct ElementInstance<T: Element> {
   element: T,
-  props: T::Props,
+  state: T::State,
   awake: bool,
 }
 
 impl<T: Element> ElementInstance<T> {
-  fn new(props: T::Props) -> Self {
+  fn new(element: T) -> Self {
     ElementInstance {
-      element: T::new(&props),
-      props,
+      element,
+      state: T::State::default(),
       awake: false,
     }
   }
@@ -42,19 +42,19 @@ impl<T: Element> ElementInstance<T> {
 
 impl<T: Element + 'static> Instance for ElementInstance<T> {
   fn build(&mut self, children: ChildNodes) -> Node {
-    self.element.build(&self.props, children)
+    self.element.build(&mut self.state, children)
   }
 
-  fn set_props(&mut self, props: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>> {
-    let props = props.downcast()?;
+  fn replace_element(&mut self, element: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>> {
+    let element = element.downcast()?;
 
-    if *props == self.props {
+    if *element == self.element {
       return Ok(ShouldRebuild(false));
     }
 
-    self.props = *props;
+    self.element = *element;
 
-    Ok(self.element.on_prop_change(&self.props))
+    Ok(self.element.on_change(&mut self.state))
   }
 
   fn awake(&mut self) {
@@ -63,7 +63,7 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
     }
 
     self.awake = true;
-    self.element.on_awake(&self.props);
+    self.element.on_awake(&mut self.state);
   }
 
   fn sleep(&mut self) {
@@ -72,6 +72,6 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
     }
 
     self.awake = false;
-    self.element.on_sleep(&self.props);
+    self.element.on_sleep(&mut self.state);
   }
 }

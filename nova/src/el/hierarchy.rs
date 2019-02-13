@@ -106,16 +106,16 @@ impl BuildHierarchy {
       let mount = match mounts.get_mut(entity) {
         Some(mount) => {
           // If the mount already exists, update its props.
-          match mount.instance.set_props(prototype.props) {
+          match mount.instance.replace_element(prototype.element) {
             Ok(rebuild) => {
               should_rebuild = rebuild;
             }
 
-            Err(props) => {
-              // The mounted element is a different type of element, so
+            Err(element) => {
+              // The mounted instance has a different type of element, so
               // replace it with a new instance based on the prototype.
               mount.instance.sleep();
-              mount.instance = (prototype.new)(props);
+              mount.instance = (prototype.new)(element);
             }
           };
 
@@ -126,7 +126,7 @@ impl BuildHierarchy {
           // If the mount doesn't exist, mount a new element instance based
           // on the prototype.
           mounts
-            .insert(entity, Mount::new((prototype.new)(prototype.props)))
+            .insert(entity, Mount::new((prototype.new)(prototype.element)))
             .expect("Could not create element mount");
 
           mounts

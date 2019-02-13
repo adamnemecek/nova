@@ -65,8 +65,8 @@ pub fn list(mut children: Vec<Node>) -> Node {
   Node(Content::List(children))
 }
 
-pub fn node<T: Element + 'static>(props: T::Props, children: Vec<Node>) -> Node {
-  Node(Content::Element(Prototype::new::<T>(props, children)))
+pub fn node<E: Element + 'static>(element: E, children: Vec<Node>) -> Node {
+  Node(Content::Element(Prototype::new(element, children)))
 }
 
 impl IntoIterator for Node {
