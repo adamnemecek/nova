@@ -27,14 +27,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 struct App;
 
 impl el::PureElement for App {
-  fn build(&self, _: el::ChildNodes) -> el::Node {
+  fn build(&self, children: el::ChildNodes) -> el::Node {
     el::node::list(vec![
-      el::node(
-        Child { id: 0 },
-        vec![el::node(Grandchild { id: 0 }, vec![])],
-      ),
-      el::node(Child { id: 1 }, vec![]),
-      el::node(Child { id: 2 }, vec![]),
+      el::node(Child { id: 0 }, el::node(Grandchild { id: 0 }, None)),
+      el::node(Child { id: 1 }, None),
+      el::node(Child { id: 2 }, None),
+      children.into(),
     ])
   }
 }
@@ -44,15 +42,15 @@ struct Child {
   id: usize,
 }
 
-impl el::StatelessElement for Child {
+impl el::PureElement for Child {
   fn build(&self, children: el::ChildNodes) -> el::Node {
     if self.id == 2 {
       el::node::list(vec![
-        el::node(Grandchild { id: 1 }, vec![]),
-        el::node(Grandchild { id: 2 }, vec![]),
+        el::node(Grandchild { id: 1 }, ()),
+        el::node(Grandchild { id: 2 }, ()),
       ])
     } else {
-      el::node::list(children.collect())
+      children.into()
     }
   }
 }
@@ -65,9 +63,5 @@ struct Grandchild {
 impl el::StatelessElement for Grandchild {
   fn on_awake(&self) {
     println!("Grandchild {} is awake!", self.id);
-  }
-
-  fn build(&self, _children: el::ChildNodes) -> el::Node {
-    el::node::empty()
   }
 }

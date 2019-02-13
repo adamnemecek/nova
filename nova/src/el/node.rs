@@ -36,37 +36,40 @@ impl Node {
   }
 }
 
-pub fn empty() -> Node {
-  Node(Content::List(Vec::new()))
-}
-
-pub fn list(mut children: Vec<Node>) -> Node {
-  // Flatten nested list nodes.
-  let mut i = 0;
-
-  while i < children.len() {
-    if let Node(Content::List(_)) = children[i] {
-      // Swap an empty node with the list node in the vec.
-      //
-      // This is more efficient than removing it, which would move all later
-      // elements back one index.
-      let mut child = empty();
-
-      mem::swap(&mut children[i], &mut child);
-
-      // Splice the list's children into the vec at its former position,
-      // which will overwrite the empty node that was just swapped in.
-      children.splice(i..=i, child.into_iter());
-    }
-
-    i += 1;
+impl From<()> for Node {
+  fn from(_: ()) -> Self {
+    empty()
   }
-
-  Node(Content::List(children))
 }
 
-pub fn node<E: Element + 'static>(element: E, children: Vec<Node>) -> Node {
-  Node(Content::Element(Prototype::new(element, children)))
+impl From<Option<Node>> for Node {
+  fn from(node: Option<Node>) -> Self {
+    match node {
+      Some(node) => node,
+      None => empty(),
+    }
+  }
+}
+
+impl<E: Element + 'static> From<E> for Node {
+  fn from(element: E) -> Self {
+    node(element, Vec::new())
+  }
+}
+
+impl From<Vec<Node>> for Node {
+  fn from(nodes: Vec<Node>) -> Self {
+    list(nodes)
+  }
+}
+
+impl From<Node> for Vec<Node> {
+  fn from(node: Node) -> Self {
+    match node {
+      Node(Content::List(nodes)) => nodes,
+      node => vec![node],
+    }
+  }
 }
 
 impl IntoIterator for Node {
@@ -110,10 +113,52 @@ pub struct ChildNodes<'a> {
   pub(super) entities: slice::Iter<'a, ecs::Entity>,
 }
 
+impl<'a> From<ChildNodes<'a>> for Node {
+  fn from(children: ChildNodes<'a>) -> Self {
+    list(children.collect())
+  }
+}
+
 impl<'a> Iterator for ChildNodes<'a> {
   type Item = Node;
 
   fn next(&mut self) -> Option<Node> {
     self.entities.next().map(|e| Node(Content::Entity(*e)))
   }
+}
+
+pub fn empty() -> Node {
+  Node(Content::List(Vec::new()))
+}
+
+pub fn list(mut children: Vec<Node>) -> Node {
+  // Flatten nested list nodes.
+  let mut i = 0;
+
+  while i < children.len() {
+    if let Node(Content::List(_)) = children[i] {
+      // Swap an empty node with the list node in the vec.
+      //
+      // This is more efficient than removing it, which would move all later
+      // elements back one index.
+      let mut child = empty();
+
+      mem::swap(&mut children[i], &mut child);
+
+      // Splice the list's children into the vec at its former position,
+      // which will overwrite the empty node that was just swapped in.
+      children.splice(i..=i, child.into_iter());
+    }
+
+    i += 1;
+  }
+
+  Node(Content::List(children))
+}
+
+pub fn node(element: impl Element + 'static, children: impl Into<Node>) -> Node {
+  Node(Content::Element(Prototype::new(
+    element,
+    children.into().into(),
+  )))
 }

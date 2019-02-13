@@ -31,8 +31,8 @@ pub trait Element: PartialEq + Send + Sync + fmt::Debug {
     ShouldRebuild(true)
   }
 
-  fn build(&self, _state: &mut Self::State, _children: ChildNodes) -> Node {
-    node::empty()
+  fn build(&self, _state: &mut Self::State, children: ChildNodes) -> Node {
+    children.into()
   }
 }
 
@@ -44,8 +44,8 @@ pub trait StatelessElement: PartialEq + Send + Sync + fmt::Debug {
     ShouldRebuild(true)
   }
 
-  fn build(&self, _children: ChildNodes) -> Node {
-    node::empty()
+  fn build(&self, children: ChildNodes) -> Node {
+    children.into()
   }
 }
 
@@ -70,12 +70,20 @@ impl<T: StatelessElement> Element for T {
 }
 
 pub trait PureElement: PartialEq + Send + Sync + fmt::Debug {
-  fn build(&self, _children: ChildNodes) -> Node {
-    node::empty()
+  fn on_change(&self) -> ShouldRebuild {
+    ShouldRebuild(true)
+  }
+
+  fn build(&self, children: ChildNodes) -> Node {
+    children.into()
   }
 }
 
 impl<T: PureElement> StatelessElement for T {
+  fn on_change(&self) -> ShouldRebuild {
+    self.on_change()
+  }
+
   fn build(&self, children: ChildNodes) -> Node {
     PureElement::build(self, children)
   }
