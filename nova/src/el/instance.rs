@@ -2,17 +2,31 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{ChildNodes, Element, Node, ShouldRebuild};
+use super::message;
+use super::{ChildNodes, Context, Element, Node, ShouldRebuild};
+use crate::ecs;
 use derive_more::*;
 use std::any::Any;
 use std::fmt;
 use std::mem;
 
 pub trait Instance: Any + Send + Sync + fmt::Debug {
-  fn build(&mut self, children: ChildNodes) -> Node;
-  fn replace_element(&mut self, element: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>>;
-  fn awake(&mut self);
-  fn sleep(&mut self);
+  fn replace_element(
+    &mut self,
+    element: Box<dyn Any>,
+    message_queue: &message::DeliveryQueue,
+  ) -> Result<ShouldRebuild, Box<dyn Any>>;
+
+  fn awake(&mut self, entity: ecs::Entity, message_queue: &message::DeliveryQueue);
+  fn sleep(&mut self, message_queue: &message::DeliveryQueue);
+
+  fn on_message(
+    &mut self,
+    payload: Box<dyn Any>,
+    message_queue: &message::DeliveryQueue,
+  ) -> Result<ShouldRebuild, Box<dyn Any>>;
+
+  fn build(&mut self, children: ChildNodes, message_queue: &message::DeliveryQueue) -> Node;
 }
 
 #[derive(Debug, Deref, DerefMut)]
@@ -28,7 +42,7 @@ impl InstanceBox {
 struct ElementInstance<T: Element> {
   element: T,
   state: T::State,
-  awake: bool,
+  entity: Option<ecs::Entity>,
 }
 
 impl<T: Element> ElementInstance<T> {
@@ -36,17 +50,17 @@ impl<T: Element> ElementInstance<T> {
     ElementInstance {
       element,
       state: T::State::default(),
-      awake: false,
+      entity: None,
     }
   }
 }
 
 impl<T: Element + 'static> Instance for ElementInstance<T> {
-  fn build(&mut self, children: ChildNodes) -> Node {
-    self.element.build(&mut self.state, children)
-  }
-
-  fn replace_element(&mut self, element: Box<dyn Any>) -> Result<ShouldRebuild, Box<dyn Any>> {
+  fn replace_element(
+    &mut self,
+    element: Box<dyn Any>,
+    message_queue: &message::DeliveryQueue,
+  ) -> Result<ShouldRebuild, Box<dyn Any>> {
     let mut element = element.downcast::<T>()?;
 
     if *element == self.element {
@@ -55,24 +69,71 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
 
     mem::swap(&mut self.element, &mut *element);
 
-    Ok(self.element.on_change(&mut self.state, *element))
+    Ok(self.element.on_change(
+      *element,
+      Context {
+        state: &mut self.state,
+        entity: self.entity.expect("Element is not awake."),
+        message_queue,
+      },
+    ))
   }
 
-  fn awake(&mut self) {
-    if self.awake {
+  fn awake(&mut self, entity: ecs::Entity, message_queue: &message::DeliveryQueue) {
+    if self.entity.is_some() {
       return;
     }
 
-    self.awake = true;
-    self.element.on_awake(&mut self.state);
+    self.entity = Some(entity);
+
+    self.element.on_awake(Context {
+      state: &mut self.state,
+      entity,
+      message_queue,
+    });
   }
 
-  fn sleep(&mut self) {
-    if !self.awake {
-      return;
-    }
+  fn sleep(&mut self, message_queue: &message::DeliveryQueue) {
+    if let Some(entity) = self.entity {
+      self.element.on_sleep(Context {
+        state: &mut self.state,
+        entity,
+        message_queue,
+      });
 
-    self.awake = false;
-    self.element.on_sleep(&mut self.state);
+      self.entity = None;
+    }
+  }
+
+  fn on_message(
+    &mut self,
+    msg: Box<dyn Any>,
+    message_queue: &message::DeliveryQueue,
+  ) -> Result<ShouldRebuild, Box<dyn Any>> {
+    let msg = msg.downcast::<T::Message>()?;
+
+    if let Some(entity) = self.entity {
+      Ok(self.element.on_message(
+        *msg,
+        Context {
+          state: &mut self.state,
+          entity,
+          message_queue,
+        },
+      ))
+    } else {
+      Ok(ShouldRebuild(false))
+    }
+  }
+
+  fn build(&mut self, children: ChildNodes, message_queue: &message::DeliveryQueue) -> Node {
+    self.element.build(
+      children,
+      Context {
+        state: &mut self.state,
+        entity: self.entity.expect("Element is not awake."),
+        message_queue,
+      },
+    )
   }
 }

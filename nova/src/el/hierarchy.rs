@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::message;
 use super::mount;
 use super::{ChildNodes, Mount, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
@@ -32,6 +33,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     ecs::WriteResource<'a, Hierarchy>,
     ecs::WriteComponents<'a, Mount>,
     ecs::WriteComponents<'a, RebuildRequired>,
+    ecs::ReadResource<'a, message::DeliveryQueue>,
   );
 
   fn setup(&mut self, res: &mut engine::Resources) {
@@ -42,7 +44,10 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     res.entry().or_insert_with(Hierarchy::default);
   }
 
-  fn run(&mut self, (entities, mut hierarchy, mut mounts, mut rebuild_required): Self::SystemData) {
+  fn run(
+    &mut self,
+    (entities, mut hierarchy, mut mounts, mut rebuild_required, msg_queue): Self::SystemData,
+  ) {
     // Clear the sorted hierarchy which is about to change.
     hierarchy.sorted.clear();
 
@@ -61,13 +66,16 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 
       if let Some(mount) = mounts.get_mut(entity) {
         // Awake the element. Does nothing if already awake.
-        mount.instance.awake();
+        mount.instance.awake(entity, &msg_queue);
 
         // Rebuild the element if needed.
         if rebuild_required.contains(entity) {
-          let node = mount.instance.build(ChildNodes {
-            entities: mount.node_children.entities.iter(),
-          });
+          let node = mount.instance.build(
+            ChildNodes {
+              entities: mount.node_children.entities.iter(),
+            },
+            &msg_queue,
+          );
 
           self.apply_node_to_children(node, &mut mount.real_children, &entities);
 
@@ -83,11 +91,11 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
       }
 
       if was_rebuilt {
-        self.apply_node_changes(&entities, &mut mounts, &mut rebuild_required);
+        self.apply_node_changes(&entities, &mut mounts, &mut rebuild_required, &msg_queue);
       }
     }
 
-    self.delete_orphaned_entities(&entities, &mut mounts);
+    self.delete_orphaned_entities(&entities, &mut mounts, &msg_queue);
   }
 }
 
@@ -97,6 +105,7 @@ impl BuildHierarchy {
     entities: &ecs::Entities,
     mounts: &mut ecs::WriteComponents<Mount>,
     rebuild_required: &mut ecs::WriteComponents<RebuildRequired>,
+    msg_queue: &message::DeliveryQueue,
   ) {
     while let Some((entity, node)) = self.apply_stack.pop() {
       let prototype = node.into_element_prototype();
@@ -106,7 +115,10 @@ impl BuildHierarchy {
       let mount = match mounts.get_mut(entity) {
         Some(mount) => {
           // If the mount already exists, update its props.
-          match mount.instance.replace_element(prototype.element) {
+          match mount
+            .instance
+            .replace_element(prototype.element, &msg_queue)
+          {
             Ok(rebuild) => {
               should_rebuild = rebuild;
             }
@@ -114,7 +126,7 @@ impl BuildHierarchy {
             Err(element) => {
               // The mounted instance has a different type of element, so
               // replace it with a new instance based on the prototype.
-              mount.instance.sleep();
+              mount.instance.sleep(&msg_queue);
               mount.instance = (prototype.new)(element);
             }
           };
@@ -211,10 +223,11 @@ impl BuildHierarchy {
     &mut self,
     entities: &ecs::Entities,
     mounts: &mut ecs::WriteComponents<Mount>,
+    msg_queue: &message::DeliveryQueue,
   ) {
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
-        mount.instance.sleep();
+        mount.instance.sleep(&msg_queue);
 
         self.delete_children(&mut mount.node_children, ..);
         self.delete_children(&mut mount.real_children, ..);

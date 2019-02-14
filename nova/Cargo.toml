@@ -10,7 +10,7 @@ headless = []
 
 [dependencies]
 chrono = "0.4"
-crossbeam = "0.6"
+crossbeam = "0.7"
 derive_more = "0.13"
 gfx-hal = "0.1"
 glsl-to-spirv = "0.1"

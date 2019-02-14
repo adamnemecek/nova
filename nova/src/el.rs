@@ -4,8 +4,10 @@
 
 pub mod node;
 
+mod context;
 mod hierarchy;
 mod instance;
+mod message;
 mod mount;
 mod prototype;
 
@@ -18,74 +20,28 @@ use crate::engine;
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 
+pub use self::context::Context;
 pub use self::hierarchy::BuildHierarchy;
+pub use self::message::{DeliverMessages, Message, MessageComposer};
 pub use self::node::{node, ChildNodes, Node};
 
 pub trait Element: PartialEq + Send + Sync + fmt::Debug + Sized {
   type State: Default + Send + Sync + fmt::Debug + 'static;
+  type Message: message::Payload;
 
-  fn on_awake(&self, _state: &mut Self::State) {}
-  fn on_sleep(&self, _state: &mut Self::State) {}
+  fn on_awake(&self, _ctx: Context<Self>) {}
+  fn on_sleep(&self, _ctx: Context<Self>) {}
 
-  fn on_change(&self, _state: &mut Self::State, _old_self: Self) -> ShouldRebuild {
+  fn on_change(&self, _old: Self, _ctx: Context<Self>) -> ShouldRebuild {
     ShouldRebuild(true)
   }
 
-  fn build(&self, _state: &mut Self::State, children: ChildNodes) -> Node {
+  fn on_message(&self, _msg: Self::Message, _ctx: Context<Self>) -> ShouldRebuild {
+    ShouldRebuild(false)
+  }
+
+  fn build(&self, children: ChildNodes, _ctx: Context<Self>) -> Node {
     children.into()
-  }
-}
-
-pub trait StatelessElement: PartialEq + Send + Sync + fmt::Debug + Sized {
-  fn on_awake(&self) {}
-  fn on_sleep(&self) {}
-
-  fn on_change(&self, _old_self: Self) -> ShouldRebuild {
-    ShouldRebuild(true)
-  }
-
-  fn build(&self, children: ChildNodes) -> Node {
-    children.into()
-  }
-}
-
-pub trait PureElement: PartialEq + Send + Sync + fmt::Debug + Sized {
-  fn on_change(&self, _old_self: Self) -> ShouldRebuild {
-    ShouldRebuild(true)
-  }
-
-  fn build(&self, children: ChildNodes) -> Node {
-    children.into()
-  }
-}
-
-impl<T: StatelessElement> Element for T {
-  type State = ();
-
-  fn on_awake(&self, _state: &mut Self::State) {
-    self.on_awake();
-  }
-
-  fn on_sleep(&self, _state: &mut Self::State) {
-    self.on_sleep();
-  }
-
-  fn on_change(&self, _state: &mut Self::State, old_self: Self) -> ShouldRebuild {
-    self.on_change(old_self)
-  }
-
-  fn build(&self, _state: &mut Self::State, children: ChildNodes) -> Node {
-    self.build(children)
-  }
-}
-
-impl<T: PureElement> StatelessElement for T {
-  fn on_change(&self, old_self: Self) -> ShouldRebuild {
-    self.on_change(old_self)
-  }
-
-  fn build(&self, children: ChildNodes) -> Node {
-    PureElement::build(self, children)
   }
 }
 
