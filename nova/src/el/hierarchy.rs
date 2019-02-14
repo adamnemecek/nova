@@ -4,7 +4,7 @@
 
 use super::message;
 use super::mount;
-use super::{ChildNodes, Mount, Node, RebuildRequired, ShouldRebuild};
+use super::{Mount, MountContext, Node, RebuildRequired, ShouldRebuild};
 use crate::ecs;
 use crate::engine;
 use std::ops::RangeBounds;
@@ -28,6 +28,7 @@ pub struct BuildHierarchy {
 }
 
 impl<'a> ecs::System<'a> for BuildHierarchy {
+  #[allow(clippy::type_complexity)]
   type SystemData = (
     ecs::ReadResource<'a, ecs::Entities>,
     ecs::WriteResource<'a, Hierarchy>,
@@ -66,16 +67,16 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
 
       if let Some(mount) = mounts.get_mut(entity) {
         // Awake the element. Does nothing if already awake.
-        mount.instance.awake(entity, &msg_queue);
+        mount
+          .instance
+          .awake(MountContext::new(entity, &mount.node_children, &msg_queue));
 
         // Rebuild the element if needed.
         if rebuild_required.contains(entity) {
-          let node = mount.instance.build(
-            ChildNodes {
-              entities: mount.node_children.entities.iter(),
-            },
-            &msg_queue,
-          );
+          let node =
+            mount
+              .instance
+              .build(MountContext::new(entity, &mount.node_children, &msg_queue));
 
           self.apply_node_to_children(node, &mut mount.real_children, &entities);
 
@@ -115,10 +116,10 @@ impl BuildHierarchy {
       let mount = match mounts.get_mut(entity) {
         Some(mount) => {
           // If the mount already exists, update its props.
-          match mount
-            .instance
-            .replace_element(prototype.element, &msg_queue)
-          {
+          match mount.instance.replace_element(
+            prototype.element,
+            MountContext::new(entity, &mount.node_children, &msg_queue),
+          ) {
             Ok(rebuild) => {
               should_rebuild = rebuild;
             }
@@ -126,7 +127,10 @@ impl BuildHierarchy {
             Err(element) => {
               // The mounted instance has a different type of element, so
               // replace it with a new instance based on the prototype.
-              mount.instance.sleep(&msg_queue);
+              mount
+                .instance
+                .sleep(MountContext::new(entity, &mount.node_children, &msg_queue));
+
               mount.instance = (prototype.new)(element);
             }
           };
@@ -227,7 +231,9 @@ impl BuildHierarchy {
   ) {
     while let Some(entity) = self.delete_stack.pop() {
       if let Some(mount) = mounts.get_mut(entity) {
-        mount.instance.sleep(&msg_queue);
+        mount
+          .instance
+          .sleep(MountContext::new(entity, &mount.node_children, &msg_queue));
 
         self.delete_children(&mut mount.node_children, ..);
         self.delete_children(&mut mount.real_children, ..);

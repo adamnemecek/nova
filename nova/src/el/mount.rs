@@ -8,13 +8,13 @@ use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub struct Mount {
-  pub instance: InstanceBox,
+  pub(super) instance: InstanceBox,
   pub node_children: Children,
   pub real_children: Children,
 }
 
 impl Mount {
-  pub fn new(instance: InstanceBox) -> Self {
+  pub(super) fn new(instance: InstanceBox) -> Self {
     Mount {
       instance,
       node_children: Children::default(),

@@ -7,7 +7,7 @@ use super::{Element, InstanceBox};
 use std::any::Any;
 
 #[derive(Debug)]
-pub struct Prototype {
+pub(super) struct Prototype {
   pub new: fn(Box<dyn Any>) -> InstanceBox,
   pub element: Box<dyn Any>,
   pub children: Vec<Node>,

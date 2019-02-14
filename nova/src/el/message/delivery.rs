@@ -1,6 +1,6 @@
 use super::Message;
 use crate::ecs;
-use crate::el::{Mount, RebuildRequired, ShouldRebuild};
+use crate::el::{Mount, MountContext, RebuildRequired, ShouldRebuild};
 use crate::engine;
 use crate::log;
 use crossbeam::queue::SegQueue;
@@ -48,7 +48,10 @@ impl<'a> ecs::System<'a> for DeliverMessages {
 
       while let Some(Message { recipient, payload }) = self.msg_stack.pop() {
         match mounts.get_mut(recipient) {
-          Some(mount) => match mount.instance.on_message(payload, &queue) {
+          Some(mount) => match mount.instance.on_message(
+            payload,
+            MountContext::new(recipient, &mount.node_children, &queue),
+          ) {
             Ok(ShouldRebuild(true)) => {
               let _ = needs_rebuild.insert(recipient, RebuildRequired);
             }

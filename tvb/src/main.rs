@@ -40,7 +40,7 @@ impl el::Element for App {
     el::ShouldRebuild(false)
   }
 
-  fn build(&self, children: el::ChildNodes, ctx: el::Context<Self>) -> el::Node {
+  fn build(&self, ctx: el::Context<Self>) -> el::Node {
     el::node::list(vec![
       el::node(
         Child { id: 0 },
@@ -54,7 +54,7 @@ impl el::Element for App {
       ),
       el::node(Child { id: 1 }, None),
       el::node(Child { id: 2 }, None),
-      children.into(),
+      ctx.children.into(),
     ])
   }
 }
@@ -68,7 +68,7 @@ impl el::Element for Child {
   type State = ();
   type Message = ();
 
-  fn build(&self, children: el::ChildNodes, _: el::Context<Self>) -> el::Node {
+  fn build(&self, ctx: el::Context<Self>) -> el::Node {
     if self.id == 2 {
       el::node::list(vec![
         el::node(
@@ -85,10 +85,10 @@ impl el::Element for Child {
           },
           None,
         ),
-        children.into(),
+        ctx.children.into(),
       ])
     } else {
-      children.into()
+      ctx.children.into()
     }
   }
 }

@@ -11,6 +11,7 @@ mod message;
 mod mount;
 mod prototype;
 
+use self::context::MountContext;
 use self::hierarchy::Hierarchy;
 use self::instance::InstanceBox;
 use self::mount::Mount;
@@ -40,8 +41,8 @@ pub trait Element: PartialEq + Send + Sync + fmt::Debug + Sized {
     ShouldRebuild(false)
   }
 
-  fn build(&self, children: ChildNodes, _ctx: Context<Self>) -> Node {
-    children.into()
+  fn build(&self, ctx: Context<Self>) -> Node {
+    ctx.children.into()
   }
 }
 

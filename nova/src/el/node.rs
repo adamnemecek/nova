@@ -125,7 +125,13 @@ impl<'a> Iterator for ChildNodes<'a> {
   fn next(&mut self) -> Option<Node> {
     self.entities.next().map(|e| Node(Content::Entity(*e)))
   }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    self.entities.size_hint()
+  }
 }
+
+impl<'a> ExactSizeIterator for ChildNodes<'a> {}
 
 pub fn empty() -> Node {
   Node(Content::List(Vec::new()))

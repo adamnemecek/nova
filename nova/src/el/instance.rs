@@ -2,38 +2,36 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::message;
-use super::{ChildNodes, Context, Element, Node, ShouldRebuild};
-use crate::ecs;
+use super::{Context, Element, MountContext, Node, ShouldRebuild};
 use derive_more::*;
 use std::any::Any;
 use std::fmt;
 use std::mem;
 
-pub trait Instance: Any + Send + Sync + fmt::Debug {
+pub(super) trait Instance: Any + Send + Sync + fmt::Debug {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
-    message_queue: &message::DeliveryQueue,
+    ctx: MountContext,
   ) -> Result<ShouldRebuild, Box<dyn Any>>;
 
-  fn awake(&mut self, entity: ecs::Entity, message_queue: &message::DeliveryQueue);
-  fn sleep(&mut self, message_queue: &message::DeliveryQueue);
+  fn awake(&mut self, ctx: MountContext);
+  fn sleep(&mut self, ctx: MountContext);
 
   fn on_message(
     &mut self,
     payload: Box<dyn Any>,
-    message_queue: &message::DeliveryQueue,
+    ctx: MountContext,
   ) -> Result<ShouldRebuild, Box<dyn Any>>;
 
-  fn build(&mut self, children: ChildNodes, message_queue: &message::DeliveryQueue) -> Node;
+  fn build(&mut self, ctx: MountContext) -> Node;
 }
 
 #[derive(Debug, Deref, DerefMut)]
-pub struct InstanceBox(Box<dyn Instance>);
+pub(super) struct InstanceBox(Box<dyn Instance>);
 
 impl InstanceBox {
-  pub(super) fn new<T: Element + 'static>(element: T) -> Self {
+  pub fn new<T: Element + 'static>(element: T) -> Self {
     InstanceBox(Box::new(ElementInstance::new(element)))
   }
 }
@@ -42,7 +40,7 @@ impl InstanceBox {
 struct ElementInstance<T: Element> {
   element: T,
   state: T::State,
-  entity: Option<ecs::Entity>,
+  awake: bool,
 }
 
 impl<T: Element> ElementInstance<T> {
@@ -50,7 +48,7 @@ impl<T: Element> ElementInstance<T> {
     ElementInstance {
       element,
       state: T::State::default(),
-      entity: None,
+      awake: false,
     }
   }
 }
@@ -59,7 +57,7 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
-    message_queue: &message::DeliveryQueue,
+    ctx: MountContext,
   ) -> Result<ShouldRebuild, Box<dyn Any>> {
     let mut element = element.downcast::<T>()?;
 
@@ -69,71 +67,46 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
 
     mem::swap(&mut self.element, &mut *element);
 
-    Ok(self.element.on_change(
-      *element,
-      Context {
-        state: &mut self.state,
-        entity: self.entity.expect("Element is not awake."),
-        message_queue,
-      },
-    ))
+    Ok(
+      self
+        .element
+        .on_change(*element, Context::new(ctx, &mut self.state)),
+    )
   }
 
-  fn awake(&mut self, entity: ecs::Entity, message_queue: &message::DeliveryQueue) {
-    if self.entity.is_some() {
+  fn awake(&mut self, ctx: MountContext) {
+    if self.awake {
       return;
     }
 
-    self.entity = Some(entity);
-
-    self.element.on_awake(Context {
-      state: &mut self.state,
-      entity,
-      message_queue,
-    });
+    self.awake = true;
+    self.element.on_awake(Context::new(ctx, &mut self.state));
   }
 
-  fn sleep(&mut self, message_queue: &message::DeliveryQueue) {
-    if let Some(entity) = self.entity {
-      self.element.on_sleep(Context {
-        state: &mut self.state,
-        entity,
-        message_queue,
-      });
-
-      self.entity = None;
+  fn sleep(&mut self, ctx: MountContext) {
+    if !self.awake {
+      return;
     }
+
+    self.element.on_sleep(Context::new(ctx, &mut self.state));
+    self.awake = false;
   }
 
   fn on_message(
     &mut self,
     msg: Box<dyn Any>,
-    message_queue: &message::DeliveryQueue,
+    ctx: MountContext,
   ) -> Result<ShouldRebuild, Box<dyn Any>> {
     let msg = msg.downcast::<T::Message>()?;
 
-    if let Some(entity) = self.entity {
-      Ok(self.element.on_message(
-        *msg,
-        Context {
-          state: &mut self.state,
-          entity,
-          message_queue,
-        },
-      ))
-    } else {
-      Ok(ShouldRebuild(false))
-    }
+    Ok(
+      self
+        .element
+        .on_message(*msg, Context::new(ctx, &mut self.state)),
+    )
   }
 
-  fn build(&mut self, children: ChildNodes, message_queue: &message::DeliveryQueue) -> Node {
-    self.element.build(
-      children,
-      Context {
-        state: &mut self.state,
-        entity: self.entity.expect("Element is not awake."),
-        message_queue,
-      },
-    )
+  fn build(&mut self, ctx: MountContext) -> Node {
+    self.element.build(Context::new(ctx, &mut self.state))
   }
 }
