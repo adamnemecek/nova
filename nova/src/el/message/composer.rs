@@ -17,7 +17,7 @@ impl<I: fmt::Debug + 'static> MessageComposer<I> {
   pub(in crate::el) fn new<E, A>(
     recipient: ecs::Entity,
     arg: A,
-    composer: fn(I, A) -> E::Message,
+    composer: fn(A, I) -> E::Message,
   ) -> Self
   where
     E: Element + 'static,
@@ -52,7 +52,7 @@ trait Inner<I>: Send + Sync + fmt::Debug {
 struct ElementMessageComposer<E: Element, I, A> {
   recipient: ecs::Entity,
   arg: A,
-  composer: fn(I, A) -> E::Message,
+  composer: fn(A, I) -> E::Message,
 }
 
 impl<E: Element + fmt::Debug, I, A: fmt::Debug> fmt::Debug for ElementMessageComposer<E, I, A> {
@@ -73,7 +73,7 @@ where
   A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,
 {
   fn compose(&self, input: I) -> Message {
-    let payload = (self.composer)(input, self.arg.clone());
+    let payload = (self.composer)(self.arg.clone(), input);
 
     Message {
       recipient: self.recipient,

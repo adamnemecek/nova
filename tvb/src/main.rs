@@ -3,9 +3,70 @@ extern crate nova;
 use nova::el;
 use nova::engine;
 use nova::engine::dispatch::seq;
+use nova::log;
+
+#[derive(Debug, Default, PartialEq)]
+struct App;
+
+impl el::Element for App {
+  type State = usize;
+  type Message = usize;
+
+  fn on_awake(&self, ctx: el::Context<Self>) {
+    *ctx.state = 1;
+  }
+
+  fn on_message(&self, msg: Self::Message, ctx: el::Context<Self>) -> el::ShouldRebuild {
+    println!("Got message: {:#?}.", msg);
+
+    *ctx.state = msg + 1;
+
+    el::ShouldRebuild(true)
+  }
+
+  fn build(&self, ctx: el::Context<Self>) -> el::Node {
+    println!("Rebuilt App.");
+
+    (1..=*ctx.state)
+      .map(|id| {
+        el::node(
+          Child {
+            id,
+            on_awake: Some(ctx.compose((), |_, id| id)),
+          },
+          None,
+        )
+      })
+      .collect()
+  }
+}
+
+#[derive(Debug, PartialEq)]
+struct Child {
+  id: usize,
+  on_awake: Option<el::MessageComposer<usize>>,
+}
+
+impl el::Element for Child {
+  type State = ();
+  type Message = ();
+
+  fn on_awake(&self, ctx: el::Context<Self>) {
+    if let Some(ref on_awake) = self.on_awake {
+      ctx.send(on_awake.compose(self.id));
+    }
+  }
+
+  fn build(&self, ctx: el::Context<Self>) -> el::Node {
+    println!("Rebuilt Child {{ id: {:?} }}.", self.id);
+
+    ctx.children.into()
+  }
+}
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-  nova::log::set_as_default();
+  // Boilerplate.
+  log::set_as_default();
 
   let mut engine = nova::Engine::new();
 
@@ -14,98 +75,17 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     seq![el::BuildHierarchy::default(), el::DeliverMessages::new(),],
   );
 
+  // Create App element (mounted automatically).
   el::create(engine.resources(), App);
 
+  // Tick five times to propagate messages.
   for _ in 0..5 {
+    log::debug!("Ticking…");
     engine.tick();
-
-    std::thread::sleep(std::time::Duration::from_millis(15));
   }
 
+  // Print out the entire element graph.
   el::print_all(engine.resources());
 
   Ok(())
-}
-
-#[derive(Debug, Default, PartialEq)]
-struct App;
-
-impl el::Element for App {
-  type State = ();
-  type Message = String;
-
-  fn on_message(&self, msg: Self::Message, _: el::Context<Self>) -> el::ShouldRebuild {
-    println!("Got message: {:#?}.", msg);
-
-    el::ShouldRebuild(false)
-  }
-
-  fn build(&self, ctx: el::Context<Self>) -> el::Node {
-    el::node::list(vec![
-      el::node(
-        Child { id: 0 },
-        el::node(
-          Grandchild {
-            id: 0,
-            on_awake: Some(ctx.compose_with("World", |_, who| format!("Hello {}!", who))),
-          },
-          None,
-        ),
-      ),
-      el::node(Child { id: 1 }, None),
-      el::node(Child { id: 2 }, None),
-      ctx.children.into(),
-    ])
-  }
-}
-
-#[derive(Debug, PartialEq)]
-struct Child {
-  id: usize,
-}
-
-impl el::Element for Child {
-  type State = ();
-  type Message = ();
-
-  fn build(&self, ctx: el::Context<Self>) -> el::Node {
-    if self.id == 2 {
-      el::node::list(vec![
-        el::node(
-          Grandchild {
-            id: 1,
-            on_awake: None,
-          },
-          None,
-        ),
-        el::node(
-          Grandchild {
-            id: 2,
-            on_awake: None,
-          },
-          None,
-        ),
-        ctx.children.into(),
-      ])
-    } else {
-      ctx.children.into()
-    }
-  }
-}
-
-#[derive(Debug, PartialEq)]
-struct Grandchild {
-  id: usize,
-  on_awake: Option<el::MessageComposer<()>>,
-}
-
-impl el::Element for Grandchild {
-  type State = ();
-  type Message = ();
-
-  fn on_awake(&self, ctx: el::Context<Self>) {
-    if let Some(ref on_awake) = self.on_awake {
-      ctx.send(on_awake.compose(()));
-    }
-  }
 }

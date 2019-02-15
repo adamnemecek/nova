@@ -2,11 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod child_nodes;
+mod into_iter;
+
+pub use self::child_nodes::ChildNodes;
+pub use self::into_iter::IntoIter;
+
 use super::{Element, Prototype};
 use crate::ecs;
 use std::iter;
 use std::mem;
-use std::slice;
 use std::vec;
 
 #[derive(Debug)]
@@ -57,9 +62,21 @@ impl<E: Element + 'static> From<E> for Node {
   }
 }
 
+impl<'a> From<ChildNodes<'a>> for Node {
+  fn from(children: ChildNodes<'a>) -> Self {
+    list(children.collect())
+  }
+}
+
 impl From<Vec<Node>> for Node {
   fn from(nodes: Vec<Node>) -> Self {
     list(nodes)
+  }
+}
+
+impl iter::FromIterator<Node> for Node {
+  fn from_iter<I: IntoIterator<Item = Node>>(iter: I) -> Self {
+    list(iter.into_iter().collect::<Vec<_>>())
   }
 }
 
@@ -83,55 +100,6 @@ impl IntoIterator for Node {
     }
   }
 }
-
-pub enum IntoIter {
-  Element(iter::Once<Node>),
-  List(vec::IntoIter<Node>),
-}
-
-impl Iterator for IntoIter {
-  type Item = Node;
-
-  fn next(&mut self) -> Option<Node> {
-    match self {
-      IntoIter::Element(iter) => iter.next(),
-      IntoIter::List(iter) => iter.next(),
-    }
-  }
-
-  fn size_hint(&self) -> (usize, Option<usize>) {
-    match self {
-      IntoIter::Element(iter) => iter.size_hint(),
-      IntoIter::List(iter) => iter.size_hint(),
-    }
-  }
-}
-
-impl ExactSizeIterator for IntoIter {}
-
-pub struct ChildNodes<'a> {
-  pub(super) entities: slice::Iter<'a, ecs::Entity>,
-}
-
-impl<'a> From<ChildNodes<'a>> for Node {
-  fn from(children: ChildNodes<'a>) -> Self {
-    list(children.collect())
-  }
-}
-
-impl<'a> Iterator for ChildNodes<'a> {
-  type Item = Node;
-
-  fn next(&mut self) -> Option<Node> {
-    self.entities.next().map(|e| Node(Content::Entity(*e)))
-  }
-
-  fn size_hint(&self) -> (usize, Option<usize>) {
-    self.entities.size_hint()
-  }
-}
-
-impl<'a> ExactSizeIterator for ChildNodes<'a> {}
 
 pub fn empty() -> Node {
   Node(Content::List(Vec::new()))

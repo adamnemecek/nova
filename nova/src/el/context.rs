@@ -25,16 +25,7 @@ impl<'a, E: Element + 'static> Context<'a, E> {
     }
   }
 
-  pub fn compose(&self, msg: E::Message) -> Message {
-    let recipient = self.entity;
-
-    Message {
-      recipient,
-      payload: Box::new(msg),
-    }
-  }
-
-  pub fn compose_with<I, A>(&self, arg: A, composer: fn(I, A) -> E::Message) -> MessageComposer<I>
+  pub fn compose<I, A>(&self, arg: A, composer: fn(A, I) -> E::Message) -> MessageComposer<I>
   where
     I: fmt::Debug + 'static,
     A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,
