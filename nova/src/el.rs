@@ -10,7 +10,7 @@ mod hierarchy;
 mod instance;
 mod message;
 
-use self::instance::InstanceBox;
+use self::instance::Instance;
 use crate::ecs;
 use crate::engine;
 

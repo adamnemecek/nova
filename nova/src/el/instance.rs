@@ -10,7 +10,16 @@ use std::any::Any;
 use std::fmt;
 use std::mem;
 
-pub(super) trait Instance: Any + Send + Sync + fmt::Debug {
+#[derive(Debug, Deref, DerefMut)]
+pub(super) struct Instance(Box<dyn InstanceLike>);
+
+impl Instance {
+  pub fn new<T: Element + 'static>(element: T) -> Self {
+    Instance(Box::new(ElementInstance::new(element)))
+  }
+}
+
+pub(super) trait InstanceLike: Any + Send + Sync + fmt::Debug {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
@@ -27,15 +36,6 @@ pub(super) trait Instance: Any + Send + Sync + fmt::Debug {
   ) -> Result<ShouldRebuild, Box<dyn Any>>;
 
   fn build(&mut self, children: &hierarchy::Children, ctx: &mut hierarchy::Context) -> Spec;
-}
-
-#[derive(Debug, Deref, DerefMut)]
-pub(super) struct InstanceBox(Box<dyn Instance>);
-
-impl InstanceBox {
-  pub fn new<T: Element + 'static>(element: T) -> Self {
-    InstanceBox(Box::new(ElementInstance::new(element)))
-  }
 }
 
 #[derive(Debug)]
@@ -55,7 +55,7 @@ impl<T: Element> ElementInstance<T> {
   }
 }
 
-impl<T: Element + 'static> Instance for ElementInstance<T> {
+impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,

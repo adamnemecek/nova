@@ -5,7 +5,7 @@
 mod context;
 mod node;
 
-use super::{Element, InstanceBox, Message, ShouldRebuild, Spec};
+use super::{Element, Instance, Message, ShouldRebuild, Spec};
 use crate::ecs;
 use crate::engine;
 use crate::log;
@@ -58,7 +58,7 @@ impl Hierarchy {
     self.roots.push(
       entities
         .build_entity()
-        .with(Node::new(InstanceBox::new(element)), &mut nodes)
+        .with(Node::new(Instance::new(element)), &mut nodes)
         .build(),
     );
   }
