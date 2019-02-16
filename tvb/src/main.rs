@@ -1,5 +1,6 @@
 extern crate nova;
 
+use nova::clock;
 use nova::el;
 use nova::log;
 
@@ -74,7 +75,8 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Tick five times to propagate messages.
   for _ in 0..5 {
     log::debug!("Ticking…");
-    engine.tick();
+
+    engine.tick(clock::DeltaTime::Fixed(clock::Duration::from_hz(60)));
   }
 
   // Print out the entire element graph.

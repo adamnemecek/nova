@@ -32,9 +32,11 @@ pub struct Hierarchy {
   messages: SegQueue<Message>,
 }
 
-impl Default for Hierarchy {
-  fn default() -> Self {
-    Hierarchy {
+impl Hierarchy {
+  pub fn setup(res: &mut engine::Resources) {
+    ecs::register::<Node>(res);
+
+    res.entry().or_insert_with(|| Hierarchy {
       log: log::Logger::new("nova::el::Hierarchy"),
       roots: Vec::new(),
       sorted: Vec::new(),
@@ -42,13 +44,7 @@ impl Default for Hierarchy {
       apply_stack: Vec::new(),
       delete_stack: Vec::new(),
       messages: SegQueue::new(),
-    }
-  }
-}
-
-impl Hierarchy {
-  pub fn new() -> Hierarchy {
-    Default::default()
+    });
   }
 
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {

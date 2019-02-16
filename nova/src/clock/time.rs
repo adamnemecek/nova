@@ -12,45 +12,35 @@ pub struct Time {
   pub max_delta: Duration,
 }
 
-impl Default for Time {
-  fn default() -> Self {
-    Time {
+impl Time {
+  pub fn setup(res: &mut engine::Resources) {
+    res.entry().or_insert_with(|| Time {
       delta: Duration::ZERO,
       max_delta: Duration::from_hz(20),
-    }
-  }
-}
-
-#[derive(Debug, Default)]
-pub struct UpdateTime {
-  previous: Option<Instant>,
-}
-
-impl UpdateTime {
-  pub fn new() -> Self {
-    UpdateTime::default()
-  }
-}
-
-impl<'a> ecs::System<'a> for UpdateTime {
-  type SystemData = ecs::WriteResource<'a, Time>;
-
-  fn setup(&mut self, res: &mut engine::Resources) {
-    res.entry().or_insert_with(Time::default);
+    });
   }
 
-  fn run(&mut self, mut time: ecs::WriteResource<'a, Time>) {
+  pub fn update(&mut self, delta_time: DeltaTime) {
     let now = Instant::now();
 
-    time.delta = match self.previous {
-      Some(previous) => now - previous,
-      None => Duration::ZERO,
+    self.delta = match delta_time {
+      DeltaTime::Fixed(duration) => duration,
+      DeltaTime::SincePrevious(Some(previous)) => now - *previous,
+      DeltaTime::SincePrevious(None) => Duration::ZERO,
     };
 
-    if time.delta > time.max_delta {
-      time.delta = time.max_delta;
+    if self.delta > self.max_delta {
+      self.delta = self.max_delta;
     }
 
-    self.previous = Some(now);
+    if let DeltaTime::SincePrevious(previous) = delta_time {
+      *previous = Some(now);
+    }
   }
+}
+
+#[derive(Debug)]
+pub enum DeltaTime<'a> {
+  Fixed(Duration),
+  SincePrevious(&'a mut Option<Instant>),
 }

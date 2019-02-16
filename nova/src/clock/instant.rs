@@ -5,16 +5,16 @@
 use super::Duration;
 use derive_more::*;
 use std::ops::Sub;
-use std::time::Instant as StdInstant;
+use std::time;
 
 /// Represents an instant in time.
 #[derive(Debug, Clone, Copy, From)]
-pub struct Instant(StdInstant);
+pub struct Instant(time::Instant);
 
 impl Instant {
   /// Gets a representation of the current instant in time.
-  pub fn now() -> Self {
-    StdInstant::now().into()
+  pub(super) fn now() -> Self {
+    time::Instant::now().into()
   }
 }
 

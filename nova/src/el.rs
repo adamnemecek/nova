@@ -20,12 +20,6 @@ pub use self::hierarchy::Hierarchy;
 pub use self::message::{Message, MessageComposer};
 pub use self::spec::{spec, Spec};
 
-pub fn setup(res: &mut engine::Resources) {
-  ecs::register::<hierarchy::Node>(res);
-
-  res.entry().or_insert_with(Hierarchy::new);
-}
-
 pub fn print_all(res: &engine::Resources) {
   let hierarchy = res.fetch::<Hierarchy>();
   let nodes = ecs::read_components::<hierarchy::Node>(res);
