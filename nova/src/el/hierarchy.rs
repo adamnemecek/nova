@@ -4,7 +4,7 @@
 
 use super::message;
 use super::mount;
-use super::{Mount, MountContext, Node, RebuildRequired, ShouldRebuild};
+use super::{Mount, MountContext, Node, ShouldRebuild};
 use crate::ecs;
 use crate::engine;
 use std::ops::RangeBounds;
@@ -28,12 +28,10 @@ pub struct BuildHierarchy {
 }
 
 impl<'a> ecs::System<'a> for BuildHierarchy {
-  #[allow(clippy::type_complexity)]
   type SystemData = (
     ecs::ReadResource<'a, ecs::Entities>,
     ecs::WriteResource<'a, Hierarchy>,
     ecs::WriteComponents<'a, Mount>,
-    ecs::WriteComponents<'a, RebuildRequired>,
     ecs::ReadResource<'a, message::DeliveryQueue>,
   );
 
@@ -45,10 +43,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
     res.entry().or_insert_with(Hierarchy::default);
   }
 
-  fn run(
-    &mut self,
-    (entities, mut hierarchy, mut mounts, mut rebuild_required, msg_queue): Self::SystemData,
-  ) {
+  fn run(&mut self, (entities, mut hierarchy, mut mounts, msg_queue): Self::SystemData) {
     // Clear the sorted hierarchy which is about to change.
     hierarchy.sorted.clear();
 
@@ -72,7 +67,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           .awake(MountContext::new(entity, &mount.node_children, &msg_queue));
 
         // Rebuild the element if needed.
-        if rebuild_required.contains(entity) {
+        if mount.needs_build {
           let node =
             mount
               .instance
@@ -81,7 +76,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
           self.apply_node_to_children(node, &mut mount.real_children, &entities);
 
           was_rebuilt = true;
-          rebuild_required.remove(entity);
+          mount.needs_build = false;
         }
 
         // Push all children onto the build stack in reverse order so that
@@ -92,7 +87,7 @@ impl<'a> ecs::System<'a> for BuildHierarchy {
       }
 
       if was_rebuilt {
-        self.apply_node_changes(&entities, &mut mounts, &mut rebuild_required, &msg_queue);
+        self.apply_node_changes(&entities, &mut mounts, &msg_queue);
       }
     }
 
@@ -105,7 +100,6 @@ impl BuildHierarchy {
     &mut self,
     entities: &ecs::Entities,
     mounts: &mut ecs::WriteComponents<Mount>,
-    rebuild_required: &mut ecs::WriteComponents<RebuildRequired>,
     msg_queue: &message::DeliveryQueue,
   ) {
     while let Some((entity, node)) = self.apply_stack.pop() {
@@ -155,9 +149,7 @@ impl BuildHierarchy {
         *should_rebuild = true;
       }
 
-      if *should_rebuild {
-        let _ = rebuild_required.insert(entity, RebuildRequired);
-      }
+      mount.needs_build = mount.needs_build || *should_rebuild;
     }
   }
 

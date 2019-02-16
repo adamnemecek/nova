@@ -63,25 +63,16 @@ impl DerefMut for ShouldRebuild {
   }
 }
 
-#[derive(Default)]
-pub struct RebuildRequired;
-
-impl ecs::Component for RebuildRequired {
-  type Storage = ecs::NullStorage<Self>;
-}
-
 pub fn create<E: Element + 'static>(res: &engine::Resources, element: E) {
   let entities = res.fetch::<ecs::Entities>();
 
   let mut hierarchy = res.fetch_mut::<Hierarchy>();
   let mut mounts = ecs::write_components::<Mount>(res);
-  let mut rebuild_required = ecs::write_components::<RebuildRequired>(res);
 
   hierarchy.roots.push(
     entities
       .build_entity()
       .with(Mount::new(InstanceBox::new(element)), &mut mounts)
-      .with(RebuildRequired, &mut rebuild_required)
       .build(),
   );
 }

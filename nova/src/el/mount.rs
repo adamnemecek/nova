@@ -11,6 +11,7 @@ pub struct Mount {
   pub(super) instance: InstanceBox,
   pub node_children: Children,
   pub real_children: Children,
+  pub needs_build: bool,
 }
 
 impl Mount {
@@ -19,6 +20,7 @@ impl Mount {
       instance,
       node_children: Children::default(),
       real_children: Children::default(),
+      needs_build: true,
     }
   }
 }
