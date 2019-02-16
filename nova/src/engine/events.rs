@@ -29,11 +29,11 @@ impl EventHandler {
   }
 }
 
-pub(super) struct EventHandlers(Vec<Vec<EventHandler>>);
+pub(super) struct EventHandlerList(Vec<Vec<EventHandler>>);
 
-impl EventHandlers {
+impl EventHandlerList {
   pub fn new() -> Self {
-    EventHandlers(iter::repeat_with(Vec::new).take(EVENT_COUNT).collect())
+    EventHandlerList(iter::repeat_with(Vec::new).take(EVENT_COUNT).collect())
   }
 
   pub fn add(&mut self, event: Event, handler: EventHandler) {

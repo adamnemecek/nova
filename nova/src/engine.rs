@@ -9,13 +9,7 @@ mod resources;
 
 use crate::assets;
 use crate::clock;
-use crate::ecs;
-#[cfg(not(feature = "headless"))]
-use crate::graphics;
-#[cfg(not(feature = "headless"))]
-use crate::ui;
-#[cfg(not(feature = "headless"))]
-use crate::window;
+use crate::el;
 
 pub use self::events::*;
 pub use self::resources::*;
@@ -24,11 +18,17 @@ pub use rayon::ThreadPool;
 pub struct Engine {
   world: specs::World,
   thread_pool: ThreadPool,
-  event_handlers: EventHandlers,
+  event_handlers: EventHandlerList,
+}
+
+impl Default for Engine {
+  fn default() -> Self {
+    Engine::new()
+  }
 }
 
 impl Engine {
-  pub fn new(options: Options) -> Self {
+  pub fn new() -> Self {
     let thread_pool = rayon::ThreadPoolBuilder::new()
       .build()
       .expect("Could not create thread pool");
@@ -36,31 +36,13 @@ impl Engine {
     let mut engine = Engine {
       world: specs::World::new(),
       thread_pool,
-      event_handlers: EventHandlers::new(),
+      event_handlers: EventHandlerList::new(),
     };
 
-    engine.on_event(Event::ClockTimeUpdated, clock::UpdateTime::default());
+    engine.resources_mut().insert(assets::OverlayFs::default());
 
-    engine.world.res.insert(assets::OverlayFs::default());
-
-    #[cfg(not(feature = "headless"))]
-    {
-      graphics::device::setup(engine.resources_mut());
-
-      let update_window = window::setup(engine.resources_mut(), options.window);
-
-      engine.on_event(Event::TickStarted, update_window);
-
-      ui::setup(engine.resources_mut());
-
-      let mut renderer = graphics::Renderer::new(engine.resources_mut());
-
-      engine.on_event_fn(Event::TickEnding, {
-        move |res, _| {
-          renderer.render(res);
-        }
-      });
-    }
+    clock::Time::setup(engine.resources_mut());
+    el::Hierarchy::setup(engine.resources_mut());
 
     engine
   }
@@ -73,9 +55,10 @@ impl Engine {
     &mut self.world.res
   }
 
-  #[deprecated]
-  pub fn create_entity(&mut self) -> ecs::EntityBuilder {
-    self.world.create_entity()
+  pub fn add_element(&mut self, element: impl el::Element + 'static) {
+    let res = self.resources();
+
+    res.fetch_mut::<el::Hierarchy>().add_element(res, element);
   }
 
   pub fn on_event(
@@ -100,43 +83,47 @@ impl Engine {
       .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
 
-  #[cfg(not(feature = "headless"))]
   pub fn run(mut self) {
-    let mut reader = {
-      let mut events = self.world.res.fetch_mut::<window::Events>();
-
-      events.channel_mut().register_reader()
-    };
+    let mut previous = None;
 
     loop {
-      self.tick();
-
-      let events = self.world.res.fetch::<window::Events>();
-
-      for event in events.channel().read(&mut reader) {
-        if let window::Event::CloseRequested = event {
-          return;
-        }
-      }
+      self.tick(clock::DeltaTime::SincePrevious(&mut previous));
     }
   }
 
-  pub fn tick(&mut self) {
+  pub fn tick(&mut self, delta_time: clock::DeltaTime) {
+    self.world.maintain();
+
     self.run_event_handlers(Event::TickStarted);
+
+    el::Hierarchy::deliver_messages(
+      &mut self.world.res.fetch_mut(),
+      &self.world.res,
+      &self.thread_pool,
+    );
+
+    self.world.maintain();
+
+    clock::Time::update(&mut self.world.res.fetch_mut(), delta_time);
+
     self.run_event_handlers(Event::ClockTimeUpdated);
+
+    el::Hierarchy::build(
+      &mut self.world.res.fetch_mut(),
+      &self.world.res,
+      &self.thread_pool,
+    );
+
+    self.world.maintain();
+
     self.run_event_handlers(Event::TickEnding);
+
+    self.world.maintain();
   }
 
   fn run_event_handlers(&mut self, event: Event) {
     self
       .event_handlers
       .run(event, &mut self.world.res, &self.thread_pool);
-
-    self.world.maintain();
   }
-}
-
-#[derive(Default)]
-pub struct Options {
-  pub window: window::Options,
 }
