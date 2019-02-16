@@ -4,7 +4,8 @@
 
 use derive_more::*;
 
-#[derive(Debug, Clone, Copy, From)]
+#[derive(Debug, Clone, Copy, From, PartialEq)]
+#[repr(C)]
 pub struct Color4 {
   pub r: f32,
   pub g: f32,

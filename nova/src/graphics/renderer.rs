@@ -2,19 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod pipeline;
+
+mod drawing;
 mod framebuffer;
 mod pass;
 
-use super::device::{Fence, QueueSubmission, Queues, Semaphore};
+use super::device::{Device, Fence, QueueSubmission, Queues, Semaphore};
 use super::{CommandPool, Commands};
 use crate::engine;
-use crate::ui;
 use crate::utils::Droppable;
 use crate::window;
 
+pub use self::drawing::{DrawCommands, Drawable};
 pub use self::framebuffer::*;
 pub use self::pass::*;
-pub use gfx_hal::pso::PipelineStage;
+pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 
 pub struct Renderer {
   pass: Pass,
@@ -24,11 +27,11 @@ pub struct Renderer {
   render_semaphore: Semaphore,
   framebuffer: Droppable<Framebuffer>,
   commands: Commands,
-  ui: ui::Renderer,
+  drawables: Vec<Box<dyn Drawable>>,
 }
 
 impl Renderer {
-  pub fn new(res: &engine::Resources) -> Self {
+  pub fn new(res: &mut engine::Resources) -> Self {
     let presenter = window::Presenter::new(res);
 
     let device = res.fetch();
@@ -52,8 +55,6 @@ impl Renderer {
       pool.acquire()
     };
 
-    let ui = ui::Renderer::new(&pass);
-
     Renderer {
       pass,
       presenter,
@@ -62,8 +63,20 @@ impl Renderer {
       render_semaphore,
       framebuffer: Droppable::dropped(),
       commands,
-      ui,
+      drawables: Vec::new(),
     }
+  }
+
+  pub fn device(&self) -> &Device {
+    self.pass.device()
+  }
+
+  pub fn pass(&self) -> &Pass {
+    &self.pass
+  }
+
+  pub fn add(&mut self, draw: impl Drawable + 'static) {
+    self.drawables.push(Box::new(draw));
   }
 
   pub fn render(&mut self, res: &engine::Resources) {
@@ -79,7 +92,9 @@ impl Renderer {
       .commands
       .begin_render_pass(&self.pass, &self.framebuffer);
 
-    self.ui.render(res, &mut self.commands);
+    for draw in &mut self.drawables {
+      draw.draw(DrawCommands::from(&mut self.commands), res);
+    }
 
     self.commands.finish_render_pass();
     self.commands.finish();

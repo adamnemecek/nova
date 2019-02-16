@@ -62,7 +62,7 @@ impl Queues {
     unsafe {
       queue.submit(
         gfx_hal::queue::Submission {
-          command_buffers: Some(submission.commands.raw()),
+          command_buffers: Some(&submission.commands.raw),
 
           wait_semaphores: submission
             .wait_semaphores

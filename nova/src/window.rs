@@ -8,7 +8,7 @@ mod presenter;
 mod surface;
 mod update;
 
-use crate::engine;
+use crate::engine::{self, Engine};
 use crate::math::Size;
 use winit::Window as RawWindow;
 
@@ -29,8 +29,8 @@ impl Window {
   }
 }
 
-pub fn setup(res: &mut engine::Resources, options: Options) -> UpdateWindow {
-  if res.has_value::<Window>() {
+pub fn setup(engine: &mut Engine, options: Options) {
+  if engine.resources().has_value::<Window>() {
     panic!("A window has already been set up.");
   }
 
@@ -51,10 +51,10 @@ pub fn setup(res: &mut engine::Resources, options: Options) -> UpdateWindow {
     raw,
   };
 
-  res.insert(window);
-  res.insert(Events::default());
+  engine.resources_mut().insert(window);
+  engine.resources_mut().insert(Events::default());
 
-  UpdateWindow { events_loop }
+  engine.on_event(engine::Event::TickStarted, UpdateWindow { events_loop });
 }
 
 fn get_size_of(window: &RawWindow) -> Size<u32> {

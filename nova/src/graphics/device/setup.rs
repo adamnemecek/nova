@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Device, DeviceType, Queues, RawPhysicalDeviceExt};
-use crate::engine;
 use crate::graphics::backend::{self, InstanceExt};
 use crate::log;
+use crate::Engine;
 
-pub fn setup(res: &mut engine::Resources) {
-  if res.has_value::<backend::Handle>() {
+pub fn setup(engine: &mut Engine) {
+  if engine.resources().has_value::<backend::Handle>() {
     return;
   }
 
@@ -62,7 +62,7 @@ pub fn setup(res: &mut engine::Resources) {
     .with("adapter_info", device.adapter_info())
     .with("queue_count", queues.count());
 
-  res.insert(backend);
-  res.insert(device);
-  res.insert(queues);
+  engine.resources_mut().insert(backend);
+  engine.resources_mut().insert(device);
+  engine.resources_mut().insert(queues);
 }

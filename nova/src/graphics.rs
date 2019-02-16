@@ -4,7 +4,7 @@
 
 pub mod device;
 pub mod renderer;
-pub mod pipeline;
+pub mod shader;
 
 pub(crate) mod backend;
 
@@ -13,10 +13,9 @@ mod commands;
 mod image;
 
 pub use self::backend::Backend;
-
 pub use self::color::*;
 pub use self::commands::*;
-pub use self::pipeline::{Pipeline, PipelineBuilder};
-pub use self::device::Device;
+pub use self::device::{Device, setup};
 pub use self::image::*;
 pub use self::renderer::Renderer;
+pub use self::shader::{Shader, ShaderKind, ShaderSet};

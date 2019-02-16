@@ -7,29 +7,24 @@ mod pool;
 use super::device;
 use super::renderer;
 use super::Backend;
-use super::Pipeline;
 use crate::utils::Droppable;
 
 pub use self::pool::*;
 
-use gfx_hal::command::RawCommandBuffer as RawCommandsExt;
+pub use gfx_hal::command::RawCommandBuffer as RawCommandsExt;
 
-type RawCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+type RawCommands = <Backend as gfx_hal::Backend>::CommandBuffer;
 
 pub struct Commands {
-  raw: Droppable<RawCommandBuffer>,
+  pub(super) raw: Droppable<RawCommands>,
   pool: CommandPool,
-  render_passes: Vec<renderer::Pass>,
-  pipelines: Vec<Pipeline>,
 }
 
 impl Commands {
-  fn new(raw: RawCommandBuffer, pool: &CommandPool) -> Commands {
+  fn new(raw: RawCommands, pool: &CommandPool) -> Commands {
     Commands {
       raw: raw.into(),
       pool: pool.clone(),
-      render_passes: Vec::new(),
-      pipelines: Vec::new(),
     }
   }
 
@@ -37,17 +32,10 @@ impl Commands {
     self.pool.queue_id()
   }
 
-  pub(super) fn raw(&self) -> &RawCommandBuffer {
-    &self.raw
-  }
-
   pub fn begin(&mut self) {
     unsafe {
       self.raw.begin(Default::default(), Default::default());
     }
-
-    self.render_passes.clear();
-    self.pipelines.clear();
   }
 
   pub fn begin_render_pass(
@@ -87,44 +75,6 @@ impl Commands {
         ],
         gfx_hal::command::SubpassContents::Inline,
       );
-    }
-
-    self.render_passes.push(render_pass.clone());
-  }
-
-  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
-    unsafe {
-      self.raw.bind_graphics_pipeline(pipeline.raw());
-    }
-
-    self.pipelines.push(pipeline.clone());
-  }
-
-  pub fn push_constant<T>(&mut self, index: usize, value: &T) {
-    let pipeline = self
-      .pipelines
-      .last()
-      .expect("A pipeline must be bound to push constant values.");
-
-    let range = pipeline.push_constant_range(index);
-
-    // Convert the constant to a slice of `u32` as vulkan/gfx-hal expects.
-    let constants =
-      unsafe { std::slice::from_raw_parts(value as *const T as *const u32, range.len()) };
-
-    unsafe {
-      self.raw.push_graphics_constants(
-        pipeline.raw_layout(),
-        gfx_hal::pso::ShaderStageFlags::VERTEX | gfx_hal::pso::ShaderStageFlags::FRAGMENT,
-        range.start,
-        constants,
-      );
-    }
-  }
-
-  pub fn draw(&mut self, vertices: std::ops::Range<u32>) {
-    unsafe {
-      self.raw.draw(vertices, 0..1);
     }
   }
 

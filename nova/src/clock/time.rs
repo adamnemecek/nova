@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Duration, Instant};
-use crate::ecs;
 use crate::engine;
 
 #[derive(Debug)]

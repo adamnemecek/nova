@@ -4,6 +4,8 @@
 
 use super::hierarchy;
 use super::{Element, Message, MessageComposer};
+use crate::ecs;
+use crate::engine;
 use std::fmt;
 
 pub struct Context<'a, 'b, E: Element> {
@@ -12,6 +14,14 @@ pub struct Context<'a, 'b, E: Element> {
 }
 
 impl<'a, 'b, E: Element + 'static> Context<'a, 'b, E> {
+  pub fn entity(&self) -> ecs::Entity {
+    self.hierarchy.entity
+  }
+
+  pub fn resources(&self) -> &engine::Resources {
+    self.hierarchy.resources
+  }
+
   pub fn compose<I, A>(&self, arg: A, composer: fn(A, I) -> E::Message) -> MessageComposer<I>
   where
     I: fmt::Debug + 'static,

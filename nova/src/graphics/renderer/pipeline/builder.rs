@@ -2,9 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Inner, Pipeline, Shader, ShaderSet, VertexData};
+use super::{Inner, Pipeline, VertexData};
 use crate::graphics::device::RawDeviceExt;
 use crate::graphics::renderer;
+use crate::graphics::{Shader, ShaderSet};
 use crate::utils::quick_error;
 use std::ops::Range;
 use std::sync::Arc;
