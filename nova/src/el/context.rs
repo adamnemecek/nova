@@ -2,62 +2,27 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::message::{self, Message, MessageComposer};
-use super::mount;
-use super::{ChildNodes, Element};
-use crate::ecs;
+use super::hierarchy;
+use super::{Element, Message, MessageComposer};
 use std::fmt;
 
-pub struct Context<'a, E: Element> {
+pub struct Context<'a, 'b, E: Element> {
   pub state: &'a mut E::State,
-  pub entity: ecs::Entity,
-  pub children: ChildNodes<'a>,
-  pub(super) message_queue: &'a message::DeliveryQueue,
+  pub(super) hierarchy: &'a mut hierarchy::Context<'b>,
 }
 
-impl<'a, E: Element + 'static> Context<'a, E> {
-  pub(super) fn new(ctx: MountContext<'a>, state: &'a mut E::State) -> Self {
-    Context {
-      state,
-      entity: ctx.entity,
-      children: ctx.children,
-      message_queue: ctx.message_queue,
-    }
-  }
-
+impl<'a, 'b, E: Element + 'static> Context<'a, 'b, E> {
   pub fn compose<I, A>(&self, arg: A, composer: fn(A, I) -> E::Message) -> MessageComposer<I>
   where
     I: fmt::Debug + 'static,
     A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,
   {
-    let recipient = self.entity;
+    let recipient = self.hierarchy.entity;
 
     MessageComposer::<I>::new::<E, A>(recipient, arg, composer)
   }
 
   pub fn send(&self, message: Message) {
-    self.message_queue.messages.push(message);
-  }
-}
-
-pub(super) struct MountContext<'a> {
-  pub entity: ecs::Entity,
-  pub children: ChildNodes<'a>,
-  pub message_queue: &'a message::DeliveryQueue,
-}
-
-impl<'a> MountContext<'a> {
-  pub fn new(
-    entity: ecs::Entity,
-    children: &'a mount::Children,
-    message_queue: &'a message::DeliveryQueue,
-  ) -> Self {
-    MountContext {
-      entity,
-      children: ChildNodes {
-        entities: children.entities.iter(),
-      },
-      message_queue,
-    }
+    self.hierarchy.queue_message(message);
   }
 }

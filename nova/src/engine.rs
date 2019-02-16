@@ -9,7 +9,7 @@ mod resources;
 
 use crate::assets;
 use crate::clock;
-use crate::ecs;
+use crate::el;
 /*
 #[cfg(not(feature = "headless"))]
 use crate::graphics;
@@ -40,6 +40,8 @@ impl Engine {
       thread_pool,
       event_handlers: EventHandlers::new(),
     };
+
+    el::setup(engine.resources_mut());
 
     engine.on_event(Event::ClockTimeUpdated, clock::UpdateTime::default());
 
@@ -77,9 +79,10 @@ impl Engine {
     &mut self.world.res
   }
 
-  #[deprecated]
-  pub fn create_entity(&mut self) -> ecs::EntityBuilder {
-    self.world.create_entity()
+  pub fn add_element(&mut self, element: impl el::Element + 'static) {
+    let res = self.resources();
+
+    res.fetch_mut::<el::Hierarchy>().add_element(res, element);
   }
 
   pub fn on_event(
@@ -131,16 +134,34 @@ impl Engine {
     self.world.maintain();
 
     self.run_event_handlers(Event::TickStarted);
+
+    self
+      .world
+      .res
+      .fetch_mut::<el::Hierarchy>()
+      .deliver_messages(&self.world.res, &self.thread_pool);
+
+    self.world.maintain();
+
     self.run_event_handlers(Event::ClockTimeUpdated);
+
+    self
+      .world
+      .res
+      .fetch_mut::<el::Hierarchy>()
+      .build(&self.world.res, &self.thread_pool);
+
+    self.world.maintain();
+
     self.run_event_handlers(Event::TickEnding);
+
+    self.world.maintain();
   }
 
   fn run_event_handlers(&mut self, event: Event) {
     self
       .event_handlers
       .run(event, &mut self.world.res, &self.thread_pool);
-
-    self.world.maintain();
   }
 }
 

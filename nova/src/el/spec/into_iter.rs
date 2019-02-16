@@ -2,28 +2,28 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Content, Node};
+use super::{Content, Spec};
 use std::iter;
 use std::vec;
 
 pub enum IntoIter {
-  Element(iter::Once<Node>),
-  List(vec::IntoIter<Node>),
+  Element(iter::Once<Spec>),
+  List(vec::IntoIter<Spec>),
 }
 
-impl From<Node> for IntoIter {
-  fn from(node: Node) -> Self {
-    match node.0 {
-      Content::List(nodes) => IntoIter::List(nodes.into_iter()),
-      content => IntoIter::Element(iter::once(Node(content))),
+impl From<Spec> for IntoIter {
+  fn from(spec: Spec) -> Self {
+    match spec.0 {
+      Content::List(specs) => IntoIter::List(specs.into_iter()),
+      content => IntoIter::Element(iter::once(Spec(content))),
     }
   }
 }
 
 impl Iterator for IntoIter {
-  type Item = Node;
+  type Item = Spec;
 
-  fn next(&mut self) -> Option<Node> {
+  fn next(&mut self) -> Option<Spec> {
     match self {
       IntoIter::Element(iter) => iter.next(),
       IntoIter::List(iter) => iter.next(),

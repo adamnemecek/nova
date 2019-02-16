@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Context, Element, MountContext, Node, ShouldRebuild};
+use super::hierarchy;
+use super::spec::{self, Spec};
+use super::{Context, Element, ShouldRebuild};
 use derive_more::*;
 use std::any::Any;
 use std::fmt;
@@ -12,19 +14,19 @@ pub(super) trait Instance: Any + Send + Sync + fmt::Debug {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
-    ctx: MountContext,
+    ctx: &mut hierarchy::Context,
   ) -> Result<ShouldRebuild, Box<dyn Any>>;
 
-  fn awake(&mut self, ctx: MountContext);
-  fn sleep(&mut self, ctx: MountContext);
+  fn awake(&mut self, ctx: &mut hierarchy::Context);
+  fn sleep(&mut self, ctx: &mut hierarchy::Context);
 
   fn on_message(
     &mut self,
     payload: Box<dyn Any>,
-    ctx: MountContext,
+    ctx: &mut hierarchy::Context,
   ) -> Result<ShouldRebuild, Box<dyn Any>>;
 
-  fn build(&mut self, ctx: MountContext) -> Node;
+  fn build(&mut self, children: &hierarchy::Children, ctx: &mut hierarchy::Context) -> Spec;
 }
 
 #[derive(Debug, Deref, DerefMut)]
@@ -57,9 +59,9 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
-    ctx: MountContext,
+    ctx: &mut hierarchy::Context,
   ) -> Result<ShouldRebuild, Box<dyn Any>> {
-    let mut element = element.downcast::<T>()?;
+    let mut element = (element as Box<dyn Any>).downcast::<T>()?;
 
     if *element == self.element {
       return Ok(ShouldRebuild(false));
@@ -67,46 +69,66 @@ impl<T: Element + 'static> Instance for ElementInstance<T> {
 
     mem::swap(&mut self.element, &mut *element);
 
-    Ok(
-      self
-        .element
-        .on_change(*element, Context::new(ctx, &mut self.state)),
-    )
+    Ok(self.element.on_change(
+      *element,
+      Context {
+        hierarchy: ctx,
+        state: &mut self.state,
+      },
+    ))
   }
 
-  fn awake(&mut self, ctx: MountContext) {
+  fn awake(&mut self, ctx: &mut hierarchy::Context) {
     if self.awake {
       return;
     }
 
     self.awake = true;
-    self.element.on_awake(Context::new(ctx, &mut self.state));
+
+    self.element.on_awake(Context {
+      hierarchy: ctx,
+      state: &mut self.state,
+    });
   }
 
-  fn sleep(&mut self, ctx: MountContext) {
+  fn sleep(&mut self, ctx: &mut hierarchy::Context) {
     if !self.awake {
       return;
     }
 
-    self.element.on_sleep(Context::new(ctx, &mut self.state));
+    self.element.on_sleep(Context {
+      hierarchy: ctx,
+      state: &mut self.state,
+    });
+
     self.awake = false;
   }
 
   fn on_message(
     &mut self,
     msg: Box<dyn Any>,
-    ctx: MountContext,
+    ctx: &mut hierarchy::Context,
   ) -> Result<ShouldRebuild, Box<dyn Any>> {
     let msg = msg.downcast::<T::Message>()?;
 
-    Ok(
-      self
-        .element
-        .on_message(*msg, Context::new(ctx, &mut self.state)),
-    )
+    Ok(self.element.on_message(
+      *msg,
+      Context {
+        hierarchy: ctx,
+        state: &mut self.state,
+      },
+    ))
   }
 
-  fn build(&mut self, ctx: MountContext) -> Node {
-    self.element.build(Context::new(ctx, &mut self.state))
+  fn build(&mut self, children: &hierarchy::Children, ctx: &mut hierarchy::Context) -> Spec {
+    self.element.build(
+      spec::Children {
+        entities: children.entities.iter(),
+      },
+      Context {
+        hierarchy: ctx,
+        state: &mut self.state,
+      },
+    )
   }
 }

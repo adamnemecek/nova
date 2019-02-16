@@ -2,29 +2,31 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod child_nodes;
+mod children;
 mod into_iter;
+mod prototype;
 
-pub use self::child_nodes::ChildNodes;
+pub use self::children::Children;
 pub use self::into_iter::IntoIter;
+pub(super) use self::prototype::Prototype;
 
-use super::{Element, Prototype};
+use super::Element;
 use crate::ecs;
 use std::iter;
 use std::mem;
 use std::vec;
 
 #[derive(Debug)]
-pub struct Node(Content);
+pub struct Spec(Content);
 
 #[derive(Debug)]
 enum Content {
-  List(Vec<Node>),
+  List(Vec<Spec>),
   Element(Prototype),
   Entity(ecs::Entity),
 }
 
-impl Node {
+impl Spec {
   pub(super) fn entity(&self) -> Option<ecs::Entity> {
     match &self.0 {
       Content::Entity(entity) => Some(*entity),
@@ -41,14 +43,14 @@ impl Node {
   }
 }
 
-impl From<()> for Node {
+impl From<()> for Spec {
   fn from(_: ()) -> Self {
     empty()
   }
 }
 
-impl From<Option<Node>> for Node {
-  fn from(node: Option<Node>) -> Self {
+impl From<Option<Spec>> for Spec {
+  fn from(node: Option<Spec>) -> Self {
     match node {
       Some(node) => node,
       None => empty(),
@@ -56,61 +58,61 @@ impl From<Option<Node>> for Node {
   }
 }
 
-impl<E: Element + 'static> From<E> for Node {
+impl<E: Element + 'static> From<E> for Spec {
   fn from(element: E) -> Self {
-    node(element, Vec::new())
+    spec(element, Vec::new())
   }
 }
 
-impl<'a> From<ChildNodes<'a>> for Node {
-  fn from(children: ChildNodes<'a>) -> Self {
+impl<'a> From<Children<'a>> for Spec {
+  fn from(children: Children<'a>) -> Self {
     list(children.collect())
   }
 }
 
-impl From<Vec<Node>> for Node {
-  fn from(nodes: Vec<Node>) -> Self {
-    list(nodes)
+impl From<Vec<Spec>> for Spec {
+  fn from(specs: Vec<Spec>) -> Self {
+    list(specs)
   }
 }
 
-impl iter::FromIterator<Node> for Node {
-  fn from_iter<I: IntoIterator<Item = Node>>(iter: I) -> Self {
+impl iter::FromIterator<Spec> for Spec {
+  fn from_iter<I: IntoIterator<Item = Spec>>(iter: I) -> Self {
     list(iter.into_iter().collect::<Vec<_>>())
   }
 }
 
-impl From<Node> for Vec<Node> {
-  fn from(node: Node) -> Self {
-    match node {
-      Node(Content::List(nodes)) => nodes,
+impl From<Spec> for Vec<Spec> {
+  fn from(spec: Spec) -> Self {
+    match spec {
+      Spec(Content::List(specs)) => specs,
       node => vec![node],
     }
   }
 }
 
-impl IntoIterator for Node {
-  type Item = Node;
+impl IntoIterator for Spec {
+  type Item = Spec;
   type IntoIter = IntoIter;
 
   fn into_iter(self) -> IntoIter {
     match self.0 {
-      Content::List(nodes) => IntoIter::List(nodes.into_iter()),
-      content => IntoIter::Element(iter::once(Node(content))),
+      Content::List(specs) => IntoIter::List(specs.into_iter()),
+      content => IntoIter::Element(iter::once(Spec(content))),
     }
   }
 }
 
-pub fn empty() -> Node {
-  Node(Content::List(Vec::new()))
+pub fn empty() -> Spec {
+  Spec(Content::List(Vec::new()))
 }
 
-pub fn list(mut children: Vec<Node>) -> Node {
+pub fn list(mut children: Vec<Spec>) -> Spec {
   // Flatten nested list nodes.
   let mut i = 0;
 
   while i < children.len() {
-    if let Node(Content::List(_)) = children[i] {
+    if let Spec(Content::List(_)) = children[i] {
       // Swap an empty node with the list node in the vec.
       //
       // This is more efficient than removing it, which would move all later
@@ -127,11 +129,11 @@ pub fn list(mut children: Vec<Node>) -> Node {
     i += 1;
   }
 
-  Node(Content::List(children))
+  Spec(Content::List(children))
 }
 
-pub fn node(element: impl Element + 'static, children: impl Into<Node>) -> Node {
-  Node(Content::Element(Prototype::new(
+pub fn spec(element: impl Element + 'static, children: impl Into<Spec>) -> Spec {
+  Spec(Content::Element(Prototype::new(
     element,
     children.into().into(),
   )))

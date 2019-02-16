@@ -3,14 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod composer;
-mod delivery;
 
 use crate::ecs;
 use std::any::Any;
 use std::fmt;
 
 pub use self::composer::MessageComposer;
-pub use self::delivery::{DeliverMessages, DeliveryQueue};
 
 #[derive(Debug)]
 pub struct Message {

@@ -1,8 +1,6 @@
 extern crate nova;
 
 use nova::el;
-use nova::engine;
-use nova::engine::dispatch::seq;
 use nova::log;
 
 #[derive(Debug, Default, PartialEq)]
@@ -24,12 +22,12 @@ impl el::Element for App {
     el::ShouldRebuild(true)
   }
 
-  fn build(&self, ctx: el::Context<Self>) -> el::Node {
+  fn build(&self, _: el::spec::Children, ctx: el::Context<Self>) -> el::Spec {
     println!("Rebuilt App.");
 
     (1..=*ctx.state)
       .map(|id| {
-        el::node(
+        el::spec(
           Child {
             id,
             on_awake: Some(ctx.compose((), |_, id| id)),
@@ -57,10 +55,10 @@ impl el::Element for Child {
     }
   }
 
-  fn build(&self, ctx: el::Context<Self>) -> el::Node {
+  fn build(&self, children: el::spec::Children, _: el::Context<Self>) -> el::Spec {
     println!("Rebuilt Child {{ id: {:?} }}.", self.id);
 
-    ctx.children.into()
+    children.into()
   }
 }
 
@@ -70,13 +68,8 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   let mut engine = nova::Engine::new();
 
-  engine.on_event(
-    engine::Event::TickEnding,
-    seq![el::BuildHierarchy::default(), el::DeliverMessages::new(),],
-  );
-
-  // Create App element (mounted automatically).
-  el::create(engine.resources(), App);
+  // Add App element.
+  engine.add_element(App);
 
   // Tick five times to propagate messages.
   for _ in 0..5 {

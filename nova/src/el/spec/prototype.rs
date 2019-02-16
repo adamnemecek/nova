@@ -2,19 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Node;
-use super::{Element, InstanceBox};
+use super::Spec;
+use crate::el::{Element, InstanceBox};
 use std::any::Any;
 
 #[derive(Debug)]
-pub(super) struct Prototype {
+pub(in crate::el) struct Prototype {
   pub new: fn(Box<dyn Any>) -> InstanceBox,
   pub element: Box<dyn Any>,
-  pub children: Vec<Node>,
+  pub children: Vec<Spec>,
 }
 
+// The `Box<dyn Any>` stored in the `Prototype` always contains a `Send + Sync`
+// element.
+unsafe impl Send for Prototype {}
+unsafe impl Sync for Prototype {}
+
 impl Prototype {
-  pub fn new<E: Element + 'static>(element: E, children: Vec<Node>) -> Self {
+  pub fn new<E: Element + 'static>(element: E, children: Vec<Spec>) -> Self {
     Prototype {
       new: |props| {
         InstanceBox::new::<E>(
