@@ -16,7 +16,7 @@ pub struct Surface {
 }
 
 impl Surface {
-  pub(super) fn new(window: &Window, device: &graphics::Device) -> Self {
+  pub(crate) fn new(window: &Window, device: &graphics::Device) -> Self {
     let surface = device.backend().create_surface(&window.raw);
 
     Surface {
@@ -25,15 +25,15 @@ impl Surface {
     }
   }
 
-  pub(super) fn raw(&self) -> &RawSurface {
+  pub(crate) fn raw(&self) -> &RawSurface {
     &self.raw
   }
 
-  pub(super) fn raw_mut(&mut self) -> &mut RawSurface {
+  pub(crate) fn raw_mut(&mut self) -> &mut RawSurface {
     &mut self.raw
   }
 
-  pub(super) fn capabilities(&self) -> SurfaceCapabilities {
+  pub(crate) fn capabilities(&self) -> SurfaceCapabilities {
     let (capabilities, _, _, _) = self.raw.compatibility(self.device.raw_physical());
 
     capabilities

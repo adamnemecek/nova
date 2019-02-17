@@ -12,7 +12,7 @@ use crate::log;
 use crossbeam::queue::SegQueue;
 
 pub use self::context::Context;
-pub(super) use self::node::{Children, Node};
+pub(crate) use self::node::{Children, Node};
 
 #[derive(Debug)]
 pub struct Hierarchy {

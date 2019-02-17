@@ -9,8 +9,8 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct Message {
-  pub(super) recipient: ecs::Entity,
-  pub(super) payload: Box<dyn Any + Send>,
+  pub(crate) recipient: ecs::Entity,
+  pub(crate) payload: Box<dyn Any + Send>,
 }
 
 pub trait Payload: Any + Send + fmt::Debug {}
@@ -23,7 +23,7 @@ pub struct MessageComposer<I> {
 }
 
 impl<I: fmt::Debug + 'static> MessageComposer<I> {
-  pub(super) fn new<E, A>(recipient: ecs::Entity, arg: A, composer: fn(A, I) -> E::Message) -> Self
+  pub(crate) fn new<E, A>(recipient: ecs::Entity, arg: A, composer: fn(A, I) -> E::Message) -> Self
   where
     E: Element + 'static,
     A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,

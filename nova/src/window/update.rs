@@ -6,7 +6,7 @@ use super::{get_size_of, Event, Events, EventsLoop, Window};
 use crate::ecs;
 
 pub struct UpdateWindow {
-  pub(super) events_loop: EventsLoop,
+  pub(crate) events_loop: EventsLoop,
 }
 
 impl<'a> ecs::System<'a> for UpdateWindow {

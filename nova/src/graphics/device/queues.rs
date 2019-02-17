@@ -20,7 +20,7 @@ pub struct Queues {
 }
 
 impl Queues {
-  pub(super) fn from_raw(
+  pub(crate) fn from_raw(
     device: &Device,
     mut queues: RawQueues,
     families: Vec<RawQueueFamily>,

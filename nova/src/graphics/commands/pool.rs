@@ -61,7 +61,7 @@ impl CommandPool {
     Commands::new(raw_buffer, self)
   }
 
-  pub(super) fn release_raw(&self, raw_buffer: RawCommandBuffer) {
+  pub(crate) fn release_raw(&self, raw_buffer: RawCommandBuffer) {
     unsafe {
       self.inner.raw.write().unwrap().free(Some(raw_buffer));
     }

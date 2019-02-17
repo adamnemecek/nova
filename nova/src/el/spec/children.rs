@@ -7,7 +7,7 @@ use crate::ecs;
 use std::slice;
 
 pub struct Children<'a> {
-  pub(in crate::el) entities: slice::Iter<'a, ecs::Entity>,
+  pub(crate) entities: slice::Iter<'a, ecs::Entity>,
 }
 
 impl<'a> Iterator for Children<'a> {

@@ -11,7 +11,7 @@ use std::fmt;
 use std::mem;
 
 #[derive(Debug, Deref, DerefMut)]
-pub(super) struct Instance(Box<dyn InstanceLike>);
+pub(crate) struct Instance(Box<dyn InstanceLike>);
 
 impl Instance {
   pub fn new<T: Element + 'static>(element: T) -> Self {
@@ -19,7 +19,7 @@ impl Instance {
   }
 }
 
-pub(super) trait InstanceLike: Any + Send + Sync + fmt::Debug {
+pub(crate) trait InstanceLike: Any + Send + Sync + fmt::Debug {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,

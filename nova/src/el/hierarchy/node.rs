@@ -8,14 +8,14 @@ use std::collections::BTreeSet;
 
 #[derive(Debug)]
 pub struct Node {
-  pub(in crate::el) instance: Instance,
+  pub(crate) instance: Instance,
   pub spec_children: Children,
   pub real_children: Children,
   pub needs_build: bool,
 }
 
 impl Node {
-  pub(super) fn new(instance: Instance) -> Self {
+  pub(crate) fn new(instance: Instance) -> Self {
     Node {
       instance,
       spec_children: Children::default(),

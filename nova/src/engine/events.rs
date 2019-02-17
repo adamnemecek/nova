@@ -29,7 +29,7 @@ impl EventHandler {
   }
 }
 
-pub(super) struct EventHandlerList(Vec<Vec<EventHandler>>);
+pub(crate) struct EventHandlerList(Vec<Vec<EventHandler>>);
 
 impl EventHandlerList {
   pub fn new() -> Self {

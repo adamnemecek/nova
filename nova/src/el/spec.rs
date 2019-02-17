@@ -8,7 +8,7 @@ mod prototype;
 
 pub use self::children::Children;
 pub use self::into_iter::IntoIter;
-pub(super) use self::prototype::Prototype;
+pub(crate) use self::prototype::Prototype;
 
 use super::Element;
 use crate::ecs;
@@ -27,14 +27,14 @@ enum Content {
 }
 
 impl Spec {
-  pub(super) fn entity(&self) -> Option<ecs::Entity> {
+  pub(crate) fn entity(&self) -> Option<ecs::Entity> {
     match &self.0 {
       Content::Entity(entity) => Some(*entity),
       _ => None,
     }
   }
 
-  pub(super) fn into_element_prototype(self) -> Prototype {
+  pub(crate) fn into_element_prototype(self) -> Prototype {
     match self.0 {
       Content::Element(prototype) => prototype,
       Content::List(_) => panic!("Cannot convert a list node into an element prototype."),

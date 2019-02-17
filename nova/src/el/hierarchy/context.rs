@@ -20,7 +20,7 @@ impl<'a> Context<'a> {
     self.hierarchy.messages.push(message)
   }
 
-  pub(super) fn push_apply_children<I>(&mut self, spec: I, children: &mut Children) -> ShouldRebuild
+  pub(crate) fn push_apply_children<I>(&mut self, spec: I, children: &mut Children) -> ShouldRebuild
   where
     I: IntoIterator<Item = Spec>,
     I::IntoIter: ExactSizeIterator,
@@ -80,7 +80,7 @@ impl<'a> Context<'a> {
     ShouldRebuild(current_len != new_len)
   }
 
-  pub(super) fn push_delete_children(
+  pub(crate) fn push_delete_children(
     &mut self,
     children: &mut Children,
     range: impl RangeBounds<usize>,

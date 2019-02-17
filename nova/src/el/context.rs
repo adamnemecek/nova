@@ -10,7 +10,7 @@ use std::fmt;
 
 pub struct Context<'a, 'b, E: Element> {
   pub state: &'a mut E::State,
-  pub(super) hierarchy: &'a mut hierarchy::Context<'b>,
+  pub(crate) hierarchy: &'a mut hierarchy::Context<'b>,
 }
 
 impl<'a, 'b, E: Element + 'static> Context<'a, 'b, E> {

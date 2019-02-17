@@ -33,7 +33,7 @@ impl el::Element for App {
 }
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-  // Set log macros to use nova logging.
+  // Set up log macros to use nova logging.
   log::set_as_default();
 
   // Create a new nova engine instance.

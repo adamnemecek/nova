@@ -13,7 +13,7 @@ pub struct Instant(time::Instant);
 
 impl Instant {
   /// Gets a representation of the current instant in time.
-  pub(super) fn now() -> Self {
+  pub(crate) fn now() -> Self {
     time::Instant::now().into()
   }
 }

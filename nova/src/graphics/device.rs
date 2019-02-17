@@ -34,7 +34,7 @@ struct Inner {
 }
 
 impl Device {
-  pub(super) fn from_raw(
+  pub(crate) fn from_raw(
     backend: &backend::Handle,
     adapter: RawAdapter,
     device: RawDevice,

@@ -7,7 +7,7 @@ use crate::el::{Element, Instance};
 use std::any::Any;
 
 #[derive(Debug)]
-pub(in crate::el) struct Prototype {
+pub(crate) struct Prototype {
   pub new: fn(Box<dyn Any>) -> Instance,
   pub element: Box<dyn Any>,
   pub children: Vec<Spec>,

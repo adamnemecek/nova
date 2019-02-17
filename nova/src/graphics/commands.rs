@@ -16,7 +16,7 @@ pub use gfx_hal::command::RawCommandBuffer as RawCommandsExt;
 type RawCommands = <Backend as gfx_hal::Backend>::CommandBuffer;
 
 pub struct Commands {
-  pub(super) raw: Droppable<RawCommands>,
+  pub(crate) raw: Droppable<RawCommands>,
   pool: CommandPool,
 }
 

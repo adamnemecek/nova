@@ -46,7 +46,7 @@ impl Shader {
     &self.inner.kind
   }
 
-  pub(super) fn raw(&self) -> &RawShader {
+  pub(crate) fn raw(&self) -> &RawShader {
     &self.inner.raw
   }
 }
