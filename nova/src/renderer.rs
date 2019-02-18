@@ -7,6 +7,7 @@ pub mod device;
 pub mod pipeline;
 pub mod shader;
 
+mod alloc;
 mod buffer;
 mod commands;
 mod drawing;

@@ -11,6 +11,7 @@ use std::ops::Range;
 
 pub use self::builder::PipelineBuilder;
 pub use self::vertex::*;
+pub use gfx_hal::memory::Barrier as MemoryBarrier;
 pub use gfx_hal::pso::PipelineStage;
 
 type RawPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;

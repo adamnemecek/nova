@@ -2,7 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::buffer::Buffer;
 use super::device::{self, Device, DeviceExt, QueueFamilyExt};
+use super::image::{Image, ImageLayout};
+use super::pipeline::{MemoryBarrier, PipelineStage};
 use super::{Backend, Framebuffer, RenderPass};
 use std::ops::{Deref, DerefMut};
 
@@ -38,6 +41,42 @@ impl Commands {
   pub fn begin(&mut self) {
     unsafe {
       self.buffer.begin(Default::default(), Default::default());
+    }
+  }
+
+  pub fn pipeline_barrier(
+    &mut self,
+    stages: (PipelineStage, PipelineStage),
+    memory_barriers: &[MemoryBarrier<Backend>],
+  ) {
+    unsafe {
+      self.buffer.pipeline_barrier(
+        stages.0..stages.1,
+        gfx_hal::memory::Dependencies::empty(),
+        memory_barriers,
+      );
+    }
+  }
+
+  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, image: &Image, layout: ImageLayout) {
+    unsafe {
+      self.buffer.copy_buffer_to_image(
+        &buffer.raw,
+        &image.raw,
+        layout,
+        &[gfx_hal::command::BufferImageCopy {
+          buffer_offset: 0,
+          buffer_width: 0,
+          buffer_height: 0,
+          image_layers: gfx_hal::image::SubresourceLayers {
+            aspects: gfx_hal::format::Aspects::COLOR,
+            level: 0,
+            layers: 0..1,
+          },
+          image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
+          image_extent: image.size().into(),
+        }],
+      );
     }
   }
 

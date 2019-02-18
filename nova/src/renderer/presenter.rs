@@ -4,8 +4,9 @@
 
 use super::backend::Backend;
 use super::device::{Device, DeviceExt, QueueExt};
+use super::image::{self, RawImage, RawImageView};
 use super::sync::Semaphore;
-use super::{Gpu, Image};
+use super::Gpu;
 use crate::math::Size;
 use crate::window::Window;
 use std::cmp;
@@ -21,8 +22,8 @@ pub struct Presenter {
   surface: Surface,
   queue_index: usize,
   swapchain: Option<Swapchain>,
-  images: Vec<Image>,
-  image_index: Option<usize>,
+  backbuffers: Vec<Backbuffer>,
+  backbuffer_index: Option<usize>,
 }
 
 impl Presenter {
@@ -40,8 +41,8 @@ impl Presenter {
       surface,
       queue_index,
       swapchain: None,
-      images: Vec::new(),
-      image_index: None,
+      backbuffers: Vec::new(),
+      backbuffer_index: None,
     }
   }
 
@@ -61,7 +62,7 @@ impl Presenter {
 
       match result {
         Ok(index) => {
-          self.image_index = Some(index as usize);
+          self.backbuffer_index = Some(index as usize);
           return;
         }
 
@@ -78,15 +79,15 @@ impl Presenter {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  pub fn backbuffer(&self) -> &Image {
-    &self.images[self
-      .image_index
+  pub fn backbuffer(&self) -> &Backbuffer {
+    &self.backbuffers[self
+      .backbuffer_index
       .expect("Presenter::image called before Presenter::begin.")]
   }
 
   pub fn finish(&mut self, gpu: &mut Gpu, wait_for: &Semaphore) {
-    let image_index = self
-      .image_index
+    let backbuffer_index = self
+      .backbuffer_index
       .take()
       .expect("Presenter::finish called before Presenter::begin.");
 
@@ -95,7 +96,7 @@ impl Presenter {
     let result = unsafe {
       gpu
         .queue_mut(self.queue_index)
-        .present(Some((swapchain, image_index as u32)), Some(wait_for))
+        .present(Some((swapchain, backbuffer_index as u32)), Some(wait_for))
     };
 
     if result.is_err() {
@@ -146,9 +147,13 @@ impl Presenter {
     match backbuffers {
       gfx_hal::Backbuffer::Images(raw_images) => {
         for raw_image in raw_images {
-          let image = Image::from_swapchain(gpu.device(), raw_image, format, self.size);
+          let raw_view = image::create_view(gpu.device(), &raw_image, format);
 
-          self.images.push(image);
+          self.backbuffers.push(Backbuffer {
+            raw_image,
+            raw_view,
+            size: self.size,
+          });
         }
       }
 
@@ -166,14 +171,29 @@ impl Presenter {
       .wait_idle()
       .expect("Could not wait for graphics device to be idle");
 
-    for image in self.images.drain(..) {
-      image.destroy(device);
+    for backbuffer in self.backbuffers.drain(..) {
+      backbuffer.destroy(device);
     }
 
     if let Some(swapchain) = self.swapchain.take() {
       unsafe {
         device.destroy_swapchain(swapchain);
       }
+    }
+  }
+}
+
+pub struct Backbuffer {
+  #[allow(dead_code)]
+  pub(crate) raw_image: RawImage,
+  pub(crate) raw_view: RawImageView,
+  pub(crate) size: Size<u32>,
+}
+
+impl Backbuffer {
+  fn destroy(self, device: &Device) {
+    unsafe {
+      device.destroy_image_view(self.raw_view);
     }
   }
 }
