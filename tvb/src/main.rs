@@ -1,16 +1,13 @@
 extern crate nova;
 
 use nova::el;
-use nova::engine;
 use nova::log;
-use nova::renderer::Renderer;
 use nova::ui;
-use nova::window;
 
 #[derive(Debug, Default, PartialEq)]
-struct App;
+struct Game;
 
-impl el::Element for App {
+impl el::Element for Game {
   type State = ();
   type Message = ();
 
@@ -36,28 +33,14 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Set up log macros to use nova logging.
   log::set_as_default();
 
-  // Create a new nova engine instance.
-  let mut engine = nova::Engine::new();
+  // Create a new nova app.
+  let mut app = nova::App::new();
 
-  ui::setup(&mut engine);
-  window::setup(&mut engine, Default::default());
+  // Add a root `Game` element.
+  app.add_element(Game);
 
-  // Create a renderer.
-  let mut renderer = Renderer::new(&engine.resources().fetch());
-  let mut ui_painter = ui::Painter::new(&renderer);
-
-  // Render at the end of each frame.
-  engine.on_event_fn(engine::Event::TickEnding, move |res, _| {
-    let cmd = renderer.begin();
-
-    ui_painter.draw(cmd.into(), res);
-
-    renderer.finish();
-  });
-
-  // Add an `App` element and run the engine until exit.
-  engine.add_element(App);
-  engine.run();
+  // Run the app until exit.
+  app.run();
 
   Ok(())
 }

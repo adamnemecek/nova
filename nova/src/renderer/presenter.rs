@@ -166,7 +166,9 @@ impl Presenter {
       .wait_idle()
       .expect("Could not wait for graphics device to be idle");
 
-    self.images.clear();
+    for image in self.images.drain(..) {
+      image.destroy(device);
+    }
 
     if let Some(swapchain) = self.swapchain.take() {
       unsafe {

@@ -83,14 +83,6 @@ impl Engine {
       .add(event, EventHandler::FnMut(Box::new(fn_mut)));
   }
 
-  pub fn run(mut self) {
-    let mut previous = None;
-
-    loop {
-      self.tick(clock::DeltaTime::SincePrevious(&mut previous));
-    }
-  }
-
   pub fn tick(&mut self, delta_time: clock::DeltaTime) {
     self.world.maintain();
 

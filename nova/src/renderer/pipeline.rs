@@ -31,6 +31,8 @@ impl Pipeline {
   }
 
   pub fn destroy(self, device: &Device) {
+    device.wait_idle().expect("Could not wait for device idle");
+
     unsafe {
       device.destroy_graphics_pipeline(self.raw);
       device.destroy_pipeline_layout(self.raw_layout);
