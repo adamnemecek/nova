@@ -2,20 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::ImageFormat;
+use crate::renderer::ImageFormat;
 use std::mem;
 
-/// A trait that allows a type to be used as a vertex in a vertex buffer.
+/// A trait for types that can be used for vertex buffers.
 pub trait VertexData: Sized {
+  /// A list of the vertex's attributes, the individual fields accessible in the
+  /// vertex shader.
+  const ATTRIBUTES: &'static [VertexAttribute];
+
   /// Gets the vertex stride, which is usually the size of the vertex data
   /// structure.
   fn stride() -> u32 {
     mem::size_of::<Self>() as u32
   }
-
-  /// Gets a list of the vertex's attributes, the individual fields accessible
-  /// in the vertex shader.
-  fn attributes() -> &'static [VertexAttribute];
 }
 
 /// One of the kinds of vertex attribute, the individual fields accessible in

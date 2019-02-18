@@ -11,6 +11,8 @@ pub mod graphics;
 pub mod log;
 pub mod math;
 #[cfg(not(feature = "headless"))]
+pub mod renderer;
+#[cfg(not(feature = "headless"))]
 pub mod ui;
 pub mod utils;
 #[cfg(not(feature = "headless"))]
@@ -21,6 +23,7 @@ pub mod events {
 }
 
 pub use self::engine::Engine;
+pub use self::renderer::Renderer;
 pub use specs::{self, shred};
 
 pub mod el;

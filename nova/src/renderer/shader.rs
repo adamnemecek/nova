@@ -2,9 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::graphics::device::{Device, RawDeviceExt};
-use crate::graphics::Backend;
-use crate::utils::Droppable;
+use super::device::{Device, DeviceExt};
+use super::Backend;
 use std::sync::Arc;
 
 pub use glsl_to_spirv::ShaderType as ShaderKind;
@@ -18,25 +17,22 @@ pub struct Shader {
 }
 
 struct Inner {
-  raw: Droppable<RawShader>,
+  raw: RawShader,
   kind: ShaderKind,
-  device: Device,
 }
 
 impl Shader {
   /// Creates a new shader on the device from the given compiled SPIR-V.
   pub fn new(device: &Device, spirv: &Spirv) -> Shader {
-    let module = unsafe {
+    let raw = unsafe {
       device
-        .raw()
         .create_shader_module(&spirv.1)
         .expect("Could not create backend shader module")
     };
 
     Shader {
       inner: Arc::new(Inner {
-        device: device.clone(),
-        raw: module.into(),
+        raw,
         kind: spirv.0.clone(),
       }),
     }
@@ -49,13 +45,11 @@ impl Shader {
   pub(crate) fn raw(&self) -> &RawShader {
     &self.inner.raw
   }
-}
 
-impl Drop for Inner {
-  fn drop(&mut self) {
-    if let Some(raw) = self.raw.take() {
+  pub fn destroy(self, device: &Device) {
+    if let Ok(inner) = Arc::try_unwrap(self.inner) {
       unsafe {
-        self.device.raw().destroy_shader_module(raw);
+        device.destroy_shader_module(inner.raw);
       }
     }
   }
@@ -64,6 +58,16 @@ impl Drop for Inner {
 pub struct ShaderSet {
   pub vertex: Shader,
   pub fragment: Option<Shader>,
+}
+
+impl ShaderSet {
+  pub fn destroy(self, device: &Device) {
+    self.vertex.destroy(device);
+
+    if let Some(fragment) = self.fragment {
+      fragment.destroy(device);
+    }
+  }
 }
 
 /// A shader compiled to SPIR-V.

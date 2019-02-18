@@ -2,21 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod renderer;
+mod painter;
 
-use self::renderer::Renderer;
 use crate::ecs;
 use crate::el;
-use crate::graphics::{self, Color4};
+use crate::graphics::Color4;
 use crate::Engine;
 
+pub use self::painter::Painter;
 pub use crate::graphics::Color4 as Color;
 
-pub fn setup(engine: &mut Engine, renderer: &mut graphics::Renderer) {
+pub fn setup(engine: &mut Engine) {
   ecs::register::<Layout>(engine.resources_mut());
   ecs::register::<Style>(engine.resources_mut());
-
-  renderer.add(Renderer::new(renderer));
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]

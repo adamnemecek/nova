@@ -2,64 +2,61 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::surface::{RawSurfaceExt, Surface};
-use super::Window;
-use crate::engine;
-use crate::graphics;
-use crate::graphics::device::{self, Device, RawDeviceExt, RawQueueExt};
+use super::backend::Backend;
+use super::device::{Device, DeviceExt, QueueExt};
+use super::sync::Semaphore;
+use super::{Gpu, Image};
 use crate::math::Size;
-use crate::utils::Droppable;
+use crate::window::Window;
 use std::cmp;
-use std::sync::Arc;
 
-use gfx_hal::Swapchain as RawSwapchainExt;
+use gfx_hal::Surface as SurfaceExt;
+use gfx_hal::Swapchain as SwapchainExt;
 
-type RawSwapchain = <graphics::Backend as gfx_hal::Backend>::Swapchain;
+type Surface = <Backend as gfx_hal::Backend>::Surface;
+type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;
 
 pub struct Presenter {
-  images: Vec<Arc<graphics::Image>>,
-  image_index: Option<usize>,
-  swapchain: Droppable<RawSwapchain>,
-  surface: Surface,
-  device: Device,
-  queue_id: device::QueueId,
   size: Size<u32>,
+  surface: Surface,
+  queue_index: usize,
+  swapchain: Option<Swapchain>,
+  images: Vec<Image>,
+  image_index: Option<usize>,
 }
 
 impl Presenter {
-  pub fn new(res: &engine::Resources) -> Presenter {
-    let window = res.fetch::<Window>();
+  pub fn new(window: &Window, gpu: &Gpu) -> Presenter {
+    let surface = gpu.backend().create_surface(&window.raw);
 
-    let device = res.fetch::<Device>();
-    let queues = res.fetch::<device::Queues>();
-
-    let surface = Surface::new(&window, &device);
-
-    let queue_id = queues
-      .find_queue_raw(|family| surface.raw().supports_queue_family(family))
+    let queue_index = gpu
+      .queue_families()
+      .iter()
+      .position(|f| surface.supports_queue_family(f))
       .expect("The graphics device does not support presentation to the window surface.");
 
     Presenter {
+      size: window.size(),
+      surface,
+      queue_index,
+      swapchain: None,
       images: Vec::new(),
       image_index: None,
-      swapchain: Droppable::dropped(),
-      surface: surface,
-      device: device.clone(),
-      queue_id,
-      size: window.size,
     }
   }
 
-  pub fn begin(&mut self, signal_semaphore: &device::Semaphore) {
+  pub fn begin(&mut self, gpu: &Gpu, signal_semaphore: &Semaphore) {
     for _ in 0..5 {
-      if self.swapchain.is_dropped() {
-        self.create_swapchain();
+      if self.swapchain.is_none() {
+        self.create_swapchain(gpu);
       }
 
       let result = unsafe {
         self
           .swapchain
-          .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_semaphore.raw()))
+          .as_mut()
+          .unwrap()
+          .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_semaphore))
       };
 
       match result {
@@ -73,7 +70,7 @@ impl Presenter {
         }
 
         Err(_) => {
-          self.destroy_swapchain();
+          self.destroy_swapchain(gpu.device());
         }
       }
     }
@@ -81,34 +78,33 @@ impl Presenter {
     panic!("Swapchain was repeatedly out of date.");
   }
 
-  pub fn backbuffer(&self) -> &Arc<graphics::Image> {
+  pub fn backbuffer(&self) -> &Image {
     &self.images[self
       .image_index
       .expect("Presenter::image called before Presenter::begin.")]
   }
 
-  pub fn finish(&mut self, res: &engine::Resources, wait_for: Option<&device::Semaphore>) {
+  pub fn finish(&mut self, gpu: &mut Gpu, wait_for: &Semaphore) {
     let image_index = self
       .image_index
       .take()
       .expect("Presenter::finish called before Presenter::begin.");
 
-    let mut queues = res.fetch_mut::<device::Queues>();
+    let swapchain = self.swapchain.as_ref().expect("Swapchain not created.");
 
     let result = unsafe {
-      queues.raw_mut(self.queue_id).present(
-        Some((&self.swapchain, image_index as u32)),
-        wait_for.map(|sem| sem.raw()),
-      )
+      gpu
+        .queue_mut(self.queue_index)
+        .present(Some((swapchain, image_index as u32)), Some(wait_for))
     };
 
     if result.is_err() {
-      self.destroy_swapchain();
+      self.destroy_swapchain(gpu.device());
     }
   }
 
-  fn create_swapchain(&mut self) {
-    let capabilities = self.surface.capabilities();
+  fn create_swapchain(&mut self, gpu: &Gpu) {
+    let (capabilities, _, _, _) = self.surface.compatibility(gpu.physical_device());
     let format = gfx_hal::format::Format::Bgra8Unorm;
 
     let extent = gfx_hal::window::Extent2D {
@@ -138,10 +134,9 @@ impl Presenter {
     };
 
     let (swapchain, backbuffers) = unsafe {
-      self
-        .device
-        .raw()
-        .create_swapchain(self.surface.raw_mut(), config, None)
+      gpu
+        .device()
+        .create_swapchain(&mut self.surface, config, None)
         .expect("Could not create swapchain")
     };
 
@@ -150,10 +145,10 @@ impl Presenter {
 
     match backbuffers {
       gfx_hal::Backbuffer::Images(raw_images) => {
-        for raw in raw_images {
-          let image = graphics::Image::from_raw_image(&self.device, raw, format, self.size);
+        for raw_image in raw_images {
+          let image = Image::from_raw(gpu.device(), raw_image, format, self.size);
 
-          self.images.push(Arc::new(image));
+          self.images.push(image);
         }
       }
 
@@ -162,10 +157,12 @@ impl Presenter {
     };
   }
 
-  fn destroy_swapchain(&mut self) {
-    self
-      .device
-      .raw()
+  pub fn destroy(mut self, device: &Device) {
+    self.destroy_swapchain(device);
+  }
+
+  fn destroy_swapchain(&mut self, device: &Device) {
+    device
       .wait_idle()
       .expect("Could not wait for graphics device to be idle");
 
@@ -173,14 +170,8 @@ impl Presenter {
 
     if let Some(swapchain) = self.swapchain.take() {
       unsafe {
-        self.device.raw().destroy_swapchain(swapchain);
+        device.destroy_swapchain(swapchain);
       }
     }
-  }
-}
-
-impl Drop for Presenter {
-  fn drop(&mut self) {
-    self.destroy_swapchain();
   }
 }

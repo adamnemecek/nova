@@ -4,8 +4,6 @@
 
 mod events;
 mod options;
-mod presenter;
-mod surface;
 mod update;
 
 use crate::engine::{self, Engine};
@@ -14,12 +12,10 @@ use winit::Window as RawWindow;
 
 pub use self::events::*;
 pub use self::options::*;
-pub use self::presenter::*;
-pub use self::surface::*;
 pub use self::update::*;
 
 pub struct Window {
-  raw: RawWindow,
+  pub(crate) raw: RawWindow,
   size: Size<u32>,
 }
 

@@ -2,8 +2,8 @@ extern crate nova;
 
 use nova::el;
 use nova::engine;
-use nova::graphics;
 use nova::log;
+use nova::renderer::Renderer;
 use nova::ui;
 use nova::window;
 
@@ -39,21 +39,20 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Create a new nova engine instance.
   let mut engine = nova::Engine::new();
 
-  // Set up a window for rendering and getting input.
+  ui::setup(&mut engine);
   window::setup(&mut engine, Default::default());
 
-  // Set up a graphics device.
-  graphics::setup(&mut engine);
-
   // Create a renderer.
-  let mut renderer = graphics::Renderer::new(engine.resources_mut());
-
-  // Set up UI resources and rendering.
-  ui::setup(&mut engine, &mut renderer);
+  let mut renderer = Renderer::new(&engine.resources().fetch());
+  let mut ui_painter = ui::Painter::new(&renderer);
 
   // Render at the end of each frame.
   engine.on_event_fn(engine::Event::TickEnding, move |res, _| {
-    renderer.render(res);
+    let cmd = renderer.begin();
+
+    ui_painter.draw(cmd.into(), res);
+
+    renderer.finish();
   });
 
   // Add an `App` element and run the engine until exit.
