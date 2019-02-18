@@ -4,27 +4,24 @@ version = "0.2.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
-[features]
-default = []
-headless = []
-
 [dependencies]
 chrono = "0.4"
 crossbeam = "0.7"
 derive_more = "0.13"
 gfx-hal = "0.1"
 glsl-to-spirv = "0.1"
-hibitset = "0.5.4"
+hibitset = "0.5"
+image = "0.21"
 log = { version = "0.4", features = ["std"] }
 nalgebra = "0.17"
 num-traits = "0.2"
 quick-error = "1.2"
 rayon = "1.0"
 shrev = "1.0"
+smallvec = "0.6"
 specs = "0.14"
 specs-derive = "0.4"
 winit = "0.18"
-smallvec = "0.6.8"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.1"

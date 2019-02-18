@@ -3,5 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod color;
+mod image;
 
-pub use self::color::*;
+pub use self::color::Color4;
+pub use self::image::Image;

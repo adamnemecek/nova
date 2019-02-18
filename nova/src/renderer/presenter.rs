@@ -146,7 +146,7 @@ impl Presenter {
     match backbuffers {
       gfx_hal::Backbuffer::Images(raw_images) => {
         for raw_image in raw_images {
-          let image = Image::from_raw(gpu.device(), raw_image, format, self.size);
+          let image = Image::from_swapchain(gpu.device(), raw_image, format, self.size);
 
           self.images.push(image);
         }
