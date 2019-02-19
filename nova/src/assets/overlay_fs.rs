@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct OverlayFs {
   pub paths: Vec<PathBuf>,
 }
@@ -18,7 +19,7 @@ impl OverlayFs {
 }
 
 impl OverlayFs {
-  pub fn read(&self, relative_path: impl Into<PathBuf>) -> io::Result<File> {
+  pub fn open(&self, relative_path: impl Into<PathBuf>) -> io::Result<File> {
     let relative_path = relative_path.into();
 
     for mut path in self.paths.iter().cloned() {

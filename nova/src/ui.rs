@@ -27,15 +27,15 @@ pub struct Layout {
 
 impl Layout {
   pub fn set<E: el::Element + 'static>(ctx: &el::Context<E>, value: Layout) {
-    let mut layouts = ecs::write_components(ctx.resources());
+    let mut layouts = ecs::write_components(&ctx.resources);
 
-    let _ = layouts.insert(ctx.entity(), value);
+    let _ = layouts.insert(ctx.entity, value);
   }
 
   pub fn unset<E: el::Element + 'static>(ctx: &el::Context<E>) {
-    let mut layouts = ecs::write_components::<Layout>(ctx.resources());
+    let mut layouts = ecs::write_components::<Layout>(&ctx.resources);
 
-    layouts.remove(ctx.entity());
+    layouts.remove(ctx.entity);
   }
 }
 
@@ -50,15 +50,15 @@ pub struct Style {
 
 impl Style {
   pub fn set<E: el::Element + 'static>(ctx: &el::Context<E>, value: Style) {
-    let mut styles = ecs::write_components(ctx.resources());
+    let mut styles = ecs::write_components(&ctx.resources);
 
-    let _ = styles.insert(ctx.entity(), value);
+    let _ = styles.insert(ctx.entity, value);
   }
 
   pub fn unset<E: el::Element + 'static>(ctx: &el::Context<E>) {
-    let mut styles = ecs::write_components::<Style>(ctx.resources());
+    let mut styles = ecs::write_components::<Style>(&ctx.resources);
 
-    styles.remove(ctx.entity());
+    styles.remove(ctx.entity);
   }
 }
 

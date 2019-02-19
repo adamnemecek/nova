@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use crate::assets::AssetLoader;
 use crate::clock;
 use crate::ui;
 use crate::window::{self, Window};
@@ -23,6 +24,8 @@ impl Default for App {
 impl App {
   pub fn new() -> Self {
     let mut engine = Engine::new();
+
+    engine.resources_mut().insert(AssetLoader::default());
 
     Window::setup(&mut engine, Default::default());
     ui::setup(&mut engine);

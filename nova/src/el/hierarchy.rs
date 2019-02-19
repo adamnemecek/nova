@@ -14,6 +14,8 @@ use crossbeam::queue::SegQueue;
 pub use self::context::Context;
 pub(crate) use self::node::{Children, Node};
 
+pub type MessageQueue = SegQueue<Message>;
+
 #[derive(Debug)]
 pub struct Hierarchy {
   log: log::Logger,
@@ -29,7 +31,7 @@ pub struct Hierarchy {
   /// deleted.
   delete_stack: Vec<ecs::Entity>,
   /// Queue of messages to deliver.
-  messages: SegQueue<Message>,
+  pub(crate) messages: MessageQueue,
 }
 
 impl Hierarchy {
@@ -43,7 +45,7 @@ impl Hierarchy {
       build_stack: Vec::new(),
       apply_stack: Vec::new(),
       delete_stack: Vec::new(),
-      messages: SegQueue::new(),
+      messages: MessageQueue::new(),
     });
   }
 
@@ -69,7 +71,6 @@ impl Hierarchy {
           let ctx = &mut Context {
             hierarchy: self,
             resources: res,
-            thread_pool: pool,
             entities: &entities,
             entity: recipient,
           };
@@ -128,7 +129,6 @@ impl Hierarchy {
         let mut ctx = Context {
           hierarchy: self,
           resources: res,
-          thread_pool: pool,
           entities: &entities,
           entity,
         };
@@ -172,7 +172,6 @@ impl Hierarchy {
       let ctx = &mut Context {
         hierarchy: self,
         resources: res,
-        thread_pool: pool,
         entities,
         entity,
       };
@@ -234,7 +233,6 @@ impl Hierarchy {
       let ctx = &mut Context {
         hierarchy: self,
         resources: res,
-        thread_pool: pool,
         entities,
         entity,
       };

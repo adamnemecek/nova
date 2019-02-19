@@ -1,11 +1,12 @@
 use std::borrow::Cow;
+use std::ffi::OsStr;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
 
 /// An immutable `str` container that can be freely shared across threads.
-/// 
+///
 /// The value is stored in either an `Arc<str>` or `&'static str`. In the latter
 /// case, no allocation is made.
 #[derive(Clone)]
@@ -53,6 +54,12 @@ impl AsRef<str> for SharedStr {
   }
 }
 
+impl AsRef<OsStr> for SharedStr {
+  fn as_ref(&self) -> &OsStr {
+    (**self).as_ref()
+  }
+}
+
 impl Deref for SharedStr {
   type Target = str;
 
@@ -63,19 +70,19 @@ impl Deref for SharedStr {
 
 impl fmt::Debug for SharedStr {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{:?}", self.as_ref())
+    write!(f, "{:?}", &**self)
   }
 }
 
 impl fmt::Display for SharedStr {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{}", self.as_ref())
+    write!(f, "{}", &**self)
   }
 }
 
 impl PartialEq for SharedStr {
   fn eq(&self, other: &SharedStr) -> bool {
-    self.as_ref() == other.as_ref()
+    **self == **other
   }
 }
 

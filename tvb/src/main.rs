@@ -1,5 +1,6 @@
 extern crate nova;
 
+use nova::assets;
 use nova::el;
 use nova::log;
 use nova::ui;
@@ -7,22 +8,28 @@ use nova::ui;
 #[derive(Debug, Default, PartialEq)]
 struct Game;
 
+#[derive(Debug)]
+enum Message {
+  AssetLoaded(String),
+}
+
 impl el::Element for Game {
   type State = ();
-  type Message = ();
+  type Message = Message;
 
-  fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
+  fn on_message(&self, msg: Message, _: el::Context<Self>) -> el::ShouldRebuild {
+    let Message::AssetLoaded(content) = msg;
+
+    print!("{}", &content);
+
+    el::ShouldRebuild(false)
+  }
+
+  fn build(&self, _: el::spec::Children, ctx: el::Context<Self>) -> el::Spec {
     el::spec(
-      ui::Div {
-        layout: ui::Layout {
-          x: 100.0,
-          y: 100.0,
-          width: 1000.0,
-          height: 500.0,
-        },
-        style: ui::Style {
-          background: ui::Color::new(0.2, 0.2, 0.8, 1.0),
-        },
+      assets::Asset {
+        path: "test.txt".into(),
+        on_load: ctx.compose((), |_, result| Message::AssetLoaded(result.unwrap())),
       },
       None,
     )

@@ -42,7 +42,7 @@ impl Engine {
     engine.resources_mut().insert(assets::OverlayFs::default());
 
     clock::Time::setup(engine.resources_mut());
-    el::Hierarchy::setup(engine.resources_mut());
+    el::setup(&mut engine);
 
     engine
   }

@@ -10,16 +10,11 @@ use std::ops::RangeBounds;
 pub struct Context<'a> {
   pub hierarchy: &'a mut Hierarchy,
   pub resources: &'a engine::Resources,
-  pub thread_pool: &'a engine::ThreadPool,
   pub entities: &'a ecs::Entities,
   pub entity: ecs::Entity,
 }
 
 impl<'a> Context<'a> {
-  pub fn queue_message(&self, message: Message) {
-    self.hierarchy.messages.push(message)
-  }
-
   pub(crate) fn push_apply_children<I>(&mut self, spec: I, children: &mut Children) -> ShouldRebuild
   where
     I: IntoIterator<Item = Spec>,

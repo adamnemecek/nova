@@ -6,6 +6,7 @@ use super::Element;
 use crate::ecs;
 use std::any::Any;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Message {
@@ -48,12 +49,20 @@ impl<I> PartialEq for MessageComposer<I> {
   }
 }
 
+impl<I> Clone for MessageComposer<I> {
+  fn clone(&self) -> Self {
+    self.inner.clone()
+  }
+}
+
 trait Inner<I>: Send + Sync + fmt::Debug {
   fn compose(&self, input: I) -> Message;
   fn as_any(&self) -> &dyn Any;
   fn eq(&self, other: &dyn Any) -> bool;
+  fn clone(&self) -> MessageComposer<I>;
 }
 
+#[derive(Clone)]
 struct ElementMessageComposer<E: Element, I, A> {
   recipient: ecs::Entity,
   arg: A,
@@ -71,11 +80,11 @@ impl<E: Element + fmt::Debug, I, A: fmt::Debug> fmt::Debug for ElementMessageCom
   }
 }
 
-impl<E, I, A> Inner<I> for ElementMessageComposer<E, I, A>
+impl<E, I, A: Clone> Inner<I> for ElementMessageComposer<E, I, A>
 where
   E: Element + 'static,
-  I: 'static,
-  A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,
+  I: fmt::Debug + 'static,
+  A: PartialEq + Send + Sync + fmt::Debug + 'static,
 {
   fn compose(&self, input: I) -> Message {
     let payload = (self.composer)(self.arg.clone(), input);
@@ -96,5 +105,9 @@ where
     } else {
       false
     }
+  }
+
+  fn clone(&self) -> MessageComposer<I> {
+    MessageComposer::new::<E, A>(self.recipient, self.arg.clone(), self.composer)
   }
 }

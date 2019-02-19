@@ -23,6 +23,8 @@ pub use self::app::App;
 pub use self::engine::Engine;
 pub use self::renderer::Renderer;
 pub use self::window::Window;
+
 pub use specs::{self, shred};
+pub use crossbeam;
 
 pub mod el;

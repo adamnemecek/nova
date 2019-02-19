@@ -69,13 +69,11 @@ impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
 
     mem::swap(&mut self.element, &mut *element);
 
-    Ok(self.element.on_change(
-      *element,
-      Context {
-        hierarchy: ctx,
-        state: &mut self.state,
-      },
-    ))
+    Ok(
+      self
+        .element
+        .on_change(*element, Context::new(&mut self.state, ctx)),
+    )
   }
 
   fn awake(&mut self, ctx: &mut hierarchy::Context) {
@@ -85,10 +83,7 @@ impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
 
     self.awake = true;
 
-    self.element.on_awake(Context {
-      hierarchy: ctx,
-      state: &mut self.state,
-    });
+    self.element.on_awake(Context::new(&mut self.state, ctx));
   }
 
   fn sleep(&mut self, ctx: &mut hierarchy::Context) {
@@ -96,10 +91,7 @@ impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
       return;
     }
 
-    self.element.on_sleep(Context {
-      hierarchy: ctx,
-      state: &mut self.state,
-    });
+    self.element.on_sleep(Context::new(&mut self.state, ctx));
 
     self.awake = false;
   }
@@ -111,13 +103,11 @@ impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
   ) -> Result<ShouldRebuild, Box<dyn Any>> {
     let msg = msg.downcast::<T::Message>()?;
 
-    Ok(self.element.on_message(
-      *msg,
-      Context {
-        hierarchy: ctx,
-        state: &mut self.state,
-      },
-    ))
+    Ok(
+      self
+        .element
+        .on_message(*msg, Context::new(&mut self.state, ctx)),
+    )
   }
 
   fn build(&mut self, children: &hierarchy::Children, ctx: &mut hierarchy::Context) -> Spec {
@@ -125,10 +115,7 @@ impl<T: Element + 'static> InstanceLike for ElementInstance<T> {
       spec::Children {
         entities: children.entities.iter(),
       },
-      Context {
-        hierarchy: ctx,
-        state: &mut self.state,
-      },
+      Context::new(&mut self.state, ctx),
     )
   }
 }
