@@ -63,7 +63,7 @@ impl<T: Load + fmt::Debug + 'static> el::Element for Asset<T> {
   fn build(&self, children: el::spec::Children, ctx: el::Context<Self>) -> el::Spec {
     if let Some(receiver) = ctx.state {
       el::spec(
-        el::ReceiveMessages {
+        el::common::Receive {
           receiver: receiver.clone(),
           on_recv: self.on_load.clone(),
         },
