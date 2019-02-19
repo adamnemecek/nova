@@ -10,24 +10,27 @@ mod hierarchy;
 mod instance;
 mod message;
 
-use self::instance::Instance;
-use crate::ecs;
-use crate::engine::{self, Engine};
-
 pub use self::channels::ReceiveMessages;
 pub use self::context::Context;
 pub use self::element::{Element, ShouldRebuild};
 pub use self::hierarchy::Hierarchy;
-pub use self::message::{Message, MessageComposer};
+pub use self::message::{Message, MessageComposer, MessageQueue};
 pub use self::spec::{spec, Spec};
 
+use self::instance::Instance;
+use crate::ecs;
+use crate::engine::{self, Engine};
+
 pub fn setup(engine: &mut Engine) {
+  engine.resources_mut().insert(Hierarchy::new());
+  engine.resources_mut().insert(MessageQueue::new());
+
+  ecs::register::<hierarchy::Node>(engine.resources_mut());
+
   engine.on_event(
     engine::Event::ClockTimeUpdated,
     channels::DispatchReceiverMessages,
   );
-
-  Hierarchy::setup(engine.resources_mut());
 }
 
 pub fn print_all(res: &engine::Resources) {
@@ -64,8 +67,7 @@ pub fn print_all(res: &engine::Resources) {
 }
 
 mod channels {
-  use super::hierarchy::{Hierarchy, MessageQueue};
-  use super::{Context, Element, MessageComposer, ShouldRebuild};
+  use super::{Context, Element, MessageComposer, MessageQueue, ShouldRebuild};
   use crate::ecs;
   use crossbeam::channel;
   use std::fmt;
@@ -93,7 +95,7 @@ mod channels {
     }
 
     fn on_message(&self, msg: T, ctx: Context<Self>) -> ShouldRebuild {
-      ctx.send(self.on_recv.compose(msg));
+      ctx.messages.send(self.on_recv.compose(msg));
 
       ShouldRebuild(false)
     }
@@ -114,15 +116,15 @@ mod channels {
 
   impl<'a> ecs::System<'a> for DispatchReceiverMessages {
     type SystemData = (
-      ecs::ReadResource<'a, Hierarchy>,
+      ecs::ReadResource<'a, MessageQueue>,
       ecs::ReadComponents<'a, MessageReceiver>,
     );
 
-    fn run(&mut self, (hierarchy, receivers): Self::SystemData) {
+    fn run(&mut self, (queue, receivers): Self::SystemData) {
       use crate::ecs::Join;
 
       for receiver in (&receivers).join() {
-        (receiver.receive)(&hierarchy.messages);
+        (receiver.receive)(&queue);
       }
     }
   }
@@ -139,7 +141,7 @@ mod channels {
       MessageReceiver {
         receive: Box::new(move |queue| {
           while let Ok(message) = receiver.try_recv() {
-            queue.push(composer.compose(message));
+            queue.send(composer.compose(message));
           }
         }),
       }

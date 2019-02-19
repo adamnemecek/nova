@@ -5,16 +5,13 @@
 mod context;
 mod node;
 
-use super::{Element, Instance, Message, ShouldRebuild, Spec};
+use super::{Element, Instance, Message, MessageQueue, ShouldRebuild, Spec};
 use crate::ecs;
 use crate::engine;
 use crate::log;
-use crossbeam::queue::SegQueue;
 
 pub use self::context::Context;
 pub(crate) use self::node::{Children, Node};
-
-pub type MessageQueue = SegQueue<Message>;
 
 #[derive(Debug)]
 pub struct Hierarchy {
@@ -30,23 +27,24 @@ pub struct Hierarchy {
   /// Resuable temporary storage for the stack of entities that need to be
   /// deleted.
   delete_stack: Vec<ecs::Entity>,
-  /// Queue of messages to deliver.
-  pub(crate) messages: MessageQueue,
 }
 
-impl Hierarchy {
-  pub fn setup(res: &mut engine::Resources) {
-    ecs::register::<Node>(res);
-
-    res.entry().or_insert_with(|| Hierarchy {
+impl Default for Hierarchy {
+  fn default() -> Self {
+    Self {
       log: log::Logger::new("nova::el::Hierarchy"),
       roots: Vec::new(),
       sorted: Vec::new(),
       build_stack: Vec::new(),
       apply_stack: Vec::new(),
       delete_stack: Vec::new(),
-      messages: MessageQueue::new(),
-    });
+    }
+  }
+}
+
+impl Hierarchy {
+  pub fn new() -> Self {
+    Self::default()
   }
 
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {
@@ -63,16 +61,18 @@ impl Hierarchy {
 
   pub fn deliver_messages(&mut self, res: &engine::Resources) {
     let entities = res.fetch::<ecs::Entities>();
+    let messages = res.fetch::<MessageQueue>();
     let mut nodes = ecs::write_components::<Node>(res);
 
-    while let Ok(Message { recipient, payload }) = self.messages.pop() {
+    while let Some(Message { recipient, payload }) = messages.take() {
       match nodes.get_mut(recipient) {
         Some(node) => {
           let ctx = &mut Context {
+            entity: recipient,
             hierarchy: self,
             resources: res,
             entities: &entities,
-            entity: recipient,
+            messages: &messages,
           };
 
           match node.instance.on_message(payload, ctx) {
@@ -107,6 +107,7 @@ impl Hierarchy {
 
   pub fn build(&mut self, res: &engine::Resources) {
     let entities = res.fetch::<ecs::Entities>();
+    let messages = res.fetch::<MessageQueue>();
     let mut nodes = ecs::write_components::<Node>(res);
 
     // Clear the sorted hierarchy which is about to change.
@@ -127,10 +128,11 @@ impl Hierarchy {
 
       if let Some(node) = nodes.get_mut(entity) {
         let mut ctx = Context {
+          entity,
           hierarchy: self,
           resources: res,
           entities: &entities,
-          entity,
+          messages: &messages,
         };
 
         // Awake the element. Does nothing if already awake.
@@ -154,17 +156,18 @@ impl Hierarchy {
       }
 
       if was_rebuilt {
-        self.apply(res, &entities, &mut nodes);
+        self.apply(res, &entities, &messages, &mut nodes);
       }
     }
 
-    self.delete(res, &entities, &mut nodes);
+    self.delete(res, &entities, &messages, &mut nodes);
   }
 
   fn apply(
     &mut self,
     res: &engine::Resources,
     entities: &ecs::Entities,
+    messages: &MessageQueue,
     nodes: &mut ecs::WriteComponents<Node>,
   ) {
     while let Some((entity, spec)) = self.apply_stack.pop() {
@@ -173,6 +176,7 @@ impl Hierarchy {
         resources: res,
         entities,
         entity,
+        messages,
       };
 
       let prototype = spec.into_element_prototype();
@@ -225,6 +229,7 @@ impl Hierarchy {
     &mut self,
     res: &engine::Resources,
     entities: &ecs::Entities,
+    messages: &MessageQueue,
     nodes: &mut ecs::WriteComponents<Node>,
   ) {
     while let Some(entity) = self.delete_stack.pop() {
@@ -233,6 +238,7 @@ impl Hierarchy {
         resources: res,
         entities,
         entity,
+        messages,
       };
 
       if let Some(node) = nodes.get_mut(entity) {

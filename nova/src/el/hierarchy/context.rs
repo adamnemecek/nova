@@ -2,16 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Children, Hierarchy, ShouldRebuild, Spec};
+use super::{Children, Hierarchy, MessageQueue, ShouldRebuild, Spec};
 use crate::ecs;
 use crate::engine;
 use std::ops::RangeBounds;
 
 pub struct Context<'a> {
+  pub entity: ecs::Entity,
   pub hierarchy: &'a mut Hierarchy,
   pub resources: &'a engine::Resources,
   pub entities: &'a ecs::Entities,
-  pub entity: ecs::Entity,
+  pub messages: &'a MessageQueue,
 }
 
 impl<'a> Context<'a> {

@@ -3,8 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod composer;
+mod queue;
 
 pub use self::composer::MessageComposer;
+pub use self::queue::MessageQueue;
 
 use super::Element;
 use crate::ecs;

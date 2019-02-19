@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::hierarchy;
-use super::{Element, Message, MessageComposer};
+use super::{Element, MessageComposer, MessageQueue};
 use crate::ecs;
 use crate::engine;
 use std::fmt;
@@ -13,7 +13,7 @@ pub struct Context<'a, E: Element> {
   pub resources: &'a engine::Resources,
   pub entities: &'a ecs::Entities,
   pub entity: ecs::Entity,
-  messages: &'a hierarchy::MessageQueue,
+  pub messages: &'a MessageQueue,
 }
 
 impl<'a, E: Element + 'static> Context<'a, E> {
@@ -23,12 +23,8 @@ impl<'a, E: Element + 'static> Context<'a, E> {
       resources: ctx.resources,
       entities: ctx.entities,
       entity: ctx.entity,
-      messages: &ctx.hierarchy.messages,
+      messages: ctx.messages,
     }
-  }
-
-  pub fn send(&self, message: Message) {
-    self.messages.push(message);
   }
 
   pub fn compose<I, A>(&self, arg: A, composer: fn(A, I) -> E::Message) -> MessageComposer<I>
