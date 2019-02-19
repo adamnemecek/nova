@@ -19,7 +19,7 @@ pub use self::spec::{spec, Spec};
 
 use self::instance::Instance;
 use crate::ecs;
-use crate::engine::{self, Engine};
+use crate::Engine;
 
 pub fn setup(engine: &mut Engine) {
   engine.resources_mut().insert(Hierarchy::new());
@@ -28,37 +28,4 @@ pub fn setup(engine: &mut Engine) {
   ecs::register::<hierarchy::Node>(engine.resources_mut());
 
   common::setup(engine);
-}
-
-pub fn print_all(res: &engine::Resources) {
-  let hierarchy = res.fetch::<Hierarchy>();
-  let nodes = ecs::read_components::<hierarchy::Node>(res);
-
-  for entity in hierarchy.sorted.iter().cloned() {
-    print!("\n{}: ", entity.id());
-
-    if let Some(node) = nodes.get(entity) {
-      print!("{:#?}, ", node.instance);
-
-      print!(
-        "spec_children: {:?}, ",
-        node
-          .spec_children
-          .entities
-          .iter()
-          .map(|e| e.id())
-          .collect::<Vec<_>>()
-      );
-
-      println!(
-        "real_children: {:?}",
-        node
-          .real_children
-          .entities
-          .iter()
-          .map(|e| e.id())
-          .collect::<Vec<_>>()
-      );
-    }
-  }
 }
