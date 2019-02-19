@@ -4,8 +4,8 @@
 
 use super::buffer::Buffer;
 use super::device::{self, Device, DeviceExt, QueueFamilyExt};
-use super::image::{Image, ImageLayout};
 use super::pipeline::{MemoryBarrier, PipelineStage};
+use super::texture::{ImageLayout, Texture};
 use super::{Backend, Framebuffer, RenderPass};
 use std::ops::{Deref, DerefMut};
 
@@ -58,7 +58,7 @@ impl Commands {
     }
   }
 
-  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, image: &Image, layout: ImageLayout) {
+  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, image: &Texture, layout: ImageLayout) {
     unsafe {
       self.buffer.copy_buffer_to_image(
         &buffer.raw,

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::renderer::ImageFormat;
+use crate::renderer::TextureFormat;
 use std::mem;
 
 /// A trait for types that can be used for vertex buffers.
@@ -36,11 +36,11 @@ impl VertexAttribute {
 }
 
 // Implement `From` to convert attributes to the equivalent raw image format.
-impl From<&VertexAttribute> for ImageFormat {
+impl From<&VertexAttribute> for TextureFormat {
   fn from(attr: &VertexAttribute) -> Self {
     match attr {
-      VertexAttribute::Vector2f32 => ImageFormat::Rg32Float,
-      VertexAttribute::Vector4f32 => ImageFormat::Rgba32Float,
+      VertexAttribute::Vector2f32 => TextureFormat::Rg32Float,
+      VertexAttribute::Vector4f32 => TextureFormat::Rgba32Float,
     }
   }
 }

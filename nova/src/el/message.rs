@@ -6,7 +6,6 @@ use super::Element;
 use crate::ecs;
 use std::any::Any;
 use std::fmt;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Message {

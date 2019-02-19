@@ -60,7 +60,7 @@ impl Buffer {
     unsafe { std::slice::from_raw_parts_mut(mapped, self.size) }
   }
 
-  fn destroy(self, device: &Device, allocator: &mut Allocator) {
+  pub fn destroy(self, device: &Device, allocator: &mut Allocator) {
     unsafe {
       if self.mapped.is_some() {
         device.unmap_memory(&self.memory);

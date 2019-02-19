@@ -8,23 +8,23 @@ use super::pipeline::MemoryBarrier;
 use super::Backend;
 use crate::math::Size;
 
-pub use gfx_hal::format::Format as ImageFormat;
+pub use gfx_hal::format::Format as TextureFormat;
 pub use gfx_hal::image::Access as ImageAccess;
 pub use gfx_hal::image::Layout as ImageLayout;
 
-pub type RawImage = <Backend as gfx_hal::Backend>::Image;
-pub type RawImageView = <Backend as gfx_hal::Backend>::ImageView;
+pub type RawTexture = <Backend as gfx_hal::Backend>::Image;
+pub type RawTextureView = <Backend as gfx_hal::Backend>::ImageView;
 
-pub struct Image {
-  pub(crate) raw: RawImage,
-  pub(crate) raw_view: RawImageView,
+pub struct Texture {
+  pub(crate) raw: RawTexture,
+  pub(crate) raw_view: RawTextureView,
   memory: Memory,
   size: Size<u32>,
 }
 
-impl Image {
+impl Texture {
   pub(crate) fn new(device: &Device, allocator: &mut Allocator, size: Size<u32>) -> Self {
-    const format: ImageFormat = ImageFormat::Rgba8Srgb;
+    const format: TextureFormat = TextureFormat::Rgba8Srgb;
 
     let raw = unsafe {
       device
@@ -45,7 +45,7 @@ impl Image {
 
     let raw_view = create_view(device, &raw, format);
 
-    Image {
+    Texture {
       raw,
       raw_view,
       memory,
@@ -86,9 +86,9 @@ impl Image {
 
 pub(crate) fn create_view(
   device: &Device,
-  raw_image: &RawImage,
-  format: ImageFormat,
-) -> RawImageView {
+  raw_image: &RawTexture,
+  format: TextureFormat,
+) -> RawTextureView {
   unsafe {
     device
       .create_image_view(

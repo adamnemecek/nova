@@ -12,10 +12,10 @@ mod buffer;
 mod commands;
 mod drawing;
 mod framebuffer;
-mod image;
 mod presenter;
 mod render_pass;
 mod sync;
+mod texture;
 
 use self::device::{QueueExt, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
@@ -27,10 +27,10 @@ pub use self::backend::Backend;
 pub use self::commands::Commands;
 pub use self::device::{Device, DeviceExt, Gpu};
 pub use self::drawing::{DrawCommands, Drawable};
-pub use self::image::{Image, ImageFormat};
 pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 pub use self::render_pass::RenderPass;
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
+pub use self::texture::{Texture, TextureFormat};
 
 pub struct Renderer {
   framebuffer: Option<Framebuffer>,

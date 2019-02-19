@@ -3,7 +3,6 @@ extern crate nova;
 use nova::assets;
 use nova::el;
 use nova::log;
-use nova::ui;
 
 #[derive(Debug, Default, PartialEq)]
 struct Game;

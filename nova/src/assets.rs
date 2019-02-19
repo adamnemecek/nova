@@ -67,10 +67,10 @@ impl<T: Load + fmt::Debug + 'static> el::Element for Asset<T> {
           receiver: receiver.clone(),
           on_recv: self.on_load.clone(),
         },
-        None,
+        children,
       )
     } else {
-      el::spec::empty()
+      children.into()
     }
   }
 }

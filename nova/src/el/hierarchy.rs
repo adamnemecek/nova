@@ -61,7 +61,7 @@ impl Hierarchy {
     );
   }
 
-  pub fn deliver_messages(&mut self, res: &engine::Resources, pool: &engine::ThreadPool) {
+  pub fn deliver_messages(&mut self, res: &engine::Resources) {
     let entities = res.fetch::<ecs::Entities>();
     let mut nodes = ecs::write_components::<Node>(res);
 
@@ -105,7 +105,7 @@ impl Hierarchy {
     }
   }
 
-  pub fn build(&mut self, res: &engine::Resources, pool: &engine::ThreadPool) {
+  pub fn build(&mut self, res: &engine::Resources) {
     let entities = res.fetch::<ecs::Entities>();
     let mut nodes = ecs::write_components::<Node>(res);
 
@@ -154,17 +154,16 @@ impl Hierarchy {
       }
 
       if was_rebuilt {
-        self.apply(res, pool, &entities, &mut nodes);
+        self.apply(res, &entities, &mut nodes);
       }
     }
 
-    self.delete(res, pool, &entities, &mut nodes);
+    self.delete(res, &entities, &mut nodes);
   }
 
   fn apply(
     &mut self,
     res: &engine::Resources,
-    pool: &engine::ThreadPool,
     entities: &ecs::Entities,
     nodes: &mut ecs::WriteComponents<Node>,
   ) {
@@ -225,7 +224,6 @@ impl Hierarchy {
   fn delete(
     &mut self,
     res: &engine::Resources,
-    pool: &engine::ThreadPool,
     entities: &ecs::Entities,
     nodes: &mut ecs::WriteComponents<Node>,
   ) {

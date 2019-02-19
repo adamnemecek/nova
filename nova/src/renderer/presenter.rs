@@ -4,8 +4,8 @@
 
 use super::backend::Backend;
 use super::device::{Device, DeviceExt, QueueExt};
-use super::image::{self, RawImage, RawImageView};
 use super::sync::Semaphore;
+use super::texture::{self, RawTexture, RawTextureView};
 use super::Gpu;
 use crate::math::Size;
 use crate::window::Window;
@@ -147,7 +147,7 @@ impl Presenter {
     match backbuffers {
       gfx_hal::Backbuffer::Images(raw_images) => {
         for raw_image in raw_images {
-          let raw_view = image::create_view(gpu.device(), &raw_image, format);
+          let raw_view = texture::create_view(gpu.device(), &raw_image, format);
 
           self.backbuffers.push(Backbuffer {
             raw_image,
@@ -185,8 +185,8 @@ impl Presenter {
 
 pub struct Backbuffer {
   #[allow(dead_code)]
-  pub(crate) raw_image: RawImage,
-  pub(crate) raw_view: RawImageView,
+  pub(crate) raw_image: RawTexture,
+  pub(crate) raw_view: RawTextureView,
   pub(crate) size: Size<u32>,
 }
 

@@ -88,11 +88,7 @@ impl Engine {
 
     self.run_event_handlers(Event::TickStarted);
 
-    el::Hierarchy::deliver_messages(
-      &mut self.world.res.fetch_mut(),
-      &self.world.res,
-      &self.thread_pool,
-    );
+    el::Hierarchy::deliver_messages(&mut self.world.res.fetch_mut(), &self.world.res);
 
     self.world.maintain();
 
@@ -100,11 +96,7 @@ impl Engine {
 
     self.run_event_handlers(Event::ClockTimeUpdated);
 
-    el::Hierarchy::build(
-      &mut self.world.res.fetch_mut(),
-      &self.world.res,
-      &self.thread_pool,
-    );
+    el::Hierarchy::build(&mut self.world.res.fetch_mut(), &self.world.res);
 
     self.world.maintain();
 
