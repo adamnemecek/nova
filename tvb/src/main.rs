@@ -2,36 +2,64 @@ extern crate nova;
 
 use nova::assets;
 use nova::el;
+use nova::graphics;
 use nova::log;
+use nova::ui;
 
 #[derive(Debug, Default, PartialEq)]
 struct Game;
 
 #[derive(Debug)]
 enum Message {
-  AssetLoaded(String),
+  ImageLoaded(graphics::Image),
 }
 
 impl el::Element for Game {
-  type State = ();
+  type State = Option<graphics::Image>;
   type Message = Message;
 
-  fn on_message(&self, msg: Message, _: el::Context<Self>) -> el::ShouldRebuild {
-    let Message::AssetLoaded(content) = msg;
+  fn on_message(&self, msg: Message, ctx: el::Context<Self>) -> el::ShouldRebuild {
+    let Message::ImageLoaded(image) = msg;
 
-    print!("{}", &content);
+    *ctx.state = Some(image);
 
-    el::ShouldRebuild(false)
+    el::ShouldRebuild(true)
   }
 
   fn build(&self, _: el::spec::Children, ctx: el::Context<Self>) -> el::Spec {
-    el::spec(
-      assets::Asset {
-        path: "test.txt".into(),
-        on_load: ctx.compose((), |_, result| Message::AssetLoaded(result.unwrap())),
-      },
-      None,
-    )
+    /*
+      <>
+        <div
+          layout: (x: 160, y: 90, width: 600, height: 634),
+          style: (bg_color: #ffffffff, bg_image: state),
+        />
+        <Asset path: "do-it.jpg", on_load: |img| ImageLoaded(img) />
+      </>
+    */
+    el::spec::list(vec![
+      el::spec(
+        ui::Div {
+          layout: ui::Layout {
+            x: 160.0,
+            y: 90.0,
+            width: 600.0,
+            height: 634.0,
+          },
+          style: ui::Style {
+            bg_color: ui::Color::WHITE,
+            bg_image: ctx.state.clone(),
+          },
+        },
+        [],
+      ),
+      el::spec(
+        assets::Asset {
+          path: "do-it.jpg".into(),
+          on_load: ctx.compose((), |_, result| Message::ImageLoaded(result.unwrap())),
+        },
+        [],
+      ),
+    ])
   }
 }
 

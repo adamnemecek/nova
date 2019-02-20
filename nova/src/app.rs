@@ -81,9 +81,9 @@ impl App {
   }
 
   pub fn render(&mut self) {
-    let cmd = self.renderer.begin();
+    let mut render = self.renderer.begin();
 
-    self.ui_painter.draw(cmd.into(), self.engine.resources());
+    self.ui_painter.draw(&mut render, self.engine.resources());
 
     self.renderer.finish();
   }

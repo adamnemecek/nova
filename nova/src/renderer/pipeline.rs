@@ -5,6 +5,7 @@
 mod builder;
 mod vertex;
 
+use super::descriptors::DescriptorLayout;
 use super::device::{Device, DeviceExt};
 use super::{Backend, ShaderSet};
 use std::ops::Range;
@@ -20,10 +21,11 @@ type RawPipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 /// A graphics pipeline that configures rendering with input descriptors, push
 /// constants, and shaders.
 pub struct Pipeline {
-  push_constants: Vec<Range<u32>>,
   pub(crate) raw_layout: RawPipelineLayout,
   pub(crate) raw: RawPipeline,
   shaders: ShaderSet,
+  descriptor_layouts: Vec<DescriptorLayout>,
+  push_constants: Vec<Range<u32>>,
 }
 
 impl Pipeline {
@@ -40,5 +42,9 @@ impl Pipeline {
     }
 
     self.shaders.destroy(&device);
+
+    for layout in self.descriptor_layouts {
+      layout.destroy(&device);
+    }
   }
 }

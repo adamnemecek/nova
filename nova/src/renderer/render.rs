@@ -4,26 +4,44 @@
 
 use super::commands::{CommandBufferExt, Commands};
 use super::pipeline::Pipeline;
-use crate::engine;
+use super::texture::{TextureCache, TextureId};
+use super::{Allocator, Device};
+use crate::graphics;
+use std::iter;
 
-pub trait Drawable: Sized {
-  fn draw(&mut self, cmd: DrawCommands, res: &engine::Resources);
+pub struct Render<'a> {
+  pub(super) cmd: &'a mut Commands,
+  pub(super) device: &'a Device,
+  pub(super) allocator: &'a mut Allocator,
+  pub(super) texture_cache: &'a mut TextureCache,
 }
 
-pub struct DrawCommands<'a> {
-  cmd: &'a mut Commands,
-}
-
-impl<'a> From<&'a mut Commands> for DrawCommands<'a> {
-  fn from(cmd: &'a mut Commands) -> Self {
-    DrawCommands { cmd }
-  }
-}
-
-impl<'a> DrawCommands<'a> {
+impl<'a> Render<'a> {
   pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
     unsafe {
       self.cmd.buffer.bind_graphics_pipeline(&pipeline.raw);
+    }
+  }
+
+  pub fn bind_image_cached(
+    &mut self,
+    pipeline: &Pipeline,
+    binding: usize,
+    image: &graphics::Image,
+    id_cache: &mut Option<TextureId>,
+  ) {
+    let descriptor_set =
+      self
+        .texture_cache
+        .get_cached(image, id_cache, &self.device, &mut self.allocator);
+
+    unsafe {
+      self.cmd.buffer.bind_graphics_descriptor_sets(
+        &pipeline.raw_layout,
+        binding,
+        iter::once(descriptor_set),
+        &[],
+      );
     }
   }
 

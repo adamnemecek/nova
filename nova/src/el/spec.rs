@@ -49,6 +49,12 @@ impl From<()> for Spec {
   }
 }
 
+impl From<[Spec; 0]> for Spec {
+  fn from(_: [Spec; 0]) -> Self {
+    empty()
+  }
+}
+
 impl From<Option<Spec>> for Spec {
   fn from(node: Option<Spec>) -> Self {
     match node {

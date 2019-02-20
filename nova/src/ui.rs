@@ -6,16 +6,12 @@ mod painter;
 
 use crate::ecs;
 use crate::el;
-use crate::graphics::Color4;
+use crate::graphics::Image;
+use crate::renderer::TextureId;
 use crate::Engine;
 
 pub use self::painter::Painter;
 pub use crate::graphics::Color4 as Color;
-
-pub fn setup(engine: &mut Engine) {
-  ecs::register::<Layout>(engine.resources_mut());
-  ecs::register::<Style>(engine.resources_mut());
-}
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct Layout {
@@ -25,40 +21,22 @@ pub struct Layout {
   pub height: f32,
 }
 
-impl Layout {
-  pub fn set<E: el::Element + 'static>(ctx: &el::Context<E>, value: Layout) {
-    let mut layouts = ecs::write_components(&ctx.resources);
-
-    let _ = layouts.insert(ctx.entity, value);
-  }
-
-  pub fn unset<E: el::Element + 'static>(ctx: &el::Context<E>) {
-    let mut layouts = ecs::write_components::<Layout>(&ctx.resources);
-
-    layouts.remove(ctx.entity);
-  }
-}
-
 impl ecs::Component for Layout {
   type Storage = ecs::BTreeStorage<Self>;
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Style {
-  pub background: Color,
+  pub bg_color: Color,
+  pub bg_image: Option<Image>,
 }
 
-impl Style {
-  pub fn set<E: el::Element + 'static>(ctx: &el::Context<E>, value: Style) {
-    let mut styles = ecs::write_components(&ctx.resources);
-
-    let _ = styles.insert(ctx.entity, value);
-  }
-
-  pub fn unset<E: el::Element + 'static>(ctx: &el::Context<E>) {
-    let mut styles = ecs::write_components::<Style>(&ctx.resources);
-
-    styles.remove(ctx.entity);
+impl Default for Style {
+  fn default() -> Self {
+    Self {
+      bg_color: Color::TRANSPARENT,
+      bg_image: None,
+    }
   }
 }
 
@@ -66,12 +44,13 @@ impl ecs::Component for Style {
   type Storage = ecs::BTreeStorage<Self>;
 }
 
-impl Default for Style {
-  fn default() -> Self {
-    Style {
-      background: Color4::TRANSPARENT,
-    }
-  }
+#[derive(Debug, Default)]
+pub struct StyleCache {
+  bg_texture: Option<TextureId>,
+}
+
+impl ecs::Component for StyleCache {
+  type Storage = ecs::BTreeStorage<Self>;
 }
 
 #[derive(Debug, Default, PartialEq)]
@@ -85,12 +64,26 @@ impl el::Element for Div {
   type Message = ();
 
   fn on_awake(&self, ctx: el::Context<Self>) {
-    Layout::set(&ctx, self.layout);
-    Style::set(&ctx, self.style);
+    ctx.put_component(self.layout);
+    ctx.put_component(self.style.clone());
+    ctx.put_component(StyleCache::default());
+  }
+
+  fn on_change(&self, _: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
+    self.on_awake(ctx);
+
+    el::ShouldRebuild(true)
   }
 
   fn on_sleep(&self, ctx: el::Context<Self>) {
-    Layout::unset(&ctx);
-    Style::unset(&ctx);
+    ctx.remove_component::<Layout>();
+    ctx.remove_component::<Style>();
+    ctx.remove_component::<StyleCache>();
   }
+}
+
+pub fn setup(engine: &mut Engine) {
+  ecs::register::<Layout>(engine.resources_mut());
+  ecs::register::<Style>(engine.resources_mut());
+  ecs::register::<StyleCache>(engine.resources_mut());
 }

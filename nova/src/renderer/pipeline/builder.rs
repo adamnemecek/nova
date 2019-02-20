@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Pipeline, VertexData};
+use crate::renderer::descriptors::DescriptorLayout;
 use crate::renderer::device::{Device, DeviceExt};
 use crate::renderer::{RenderPass, Shader, ShaderSet};
 use crate::utils::quick_error;
@@ -16,6 +17,7 @@ pub struct PipelineBuilder {
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
   push_constants: Vec<Range<u32>>,
+  descriptor_layouts: Vec<DescriptorLayout>,
 }
 
 impl PipelineBuilder {
@@ -67,6 +69,11 @@ impl PipelineBuilder {
         desc
       }));
 
+    self
+  }
+
+  pub fn add_descriptor_layout(mut self, layout: DescriptorLayout) -> Self {
+    self.descriptor_layouts.push(layout);
     self
   }
 
@@ -133,13 +140,18 @@ impl PipelineBuilder {
       )]
     };
 
-    let layout = unsafe { device.create_pipeline_layout(&[], &push_constants)? };
+    let raw_layout = unsafe {
+      device.create_pipeline_layout(
+        self.descriptor_layouts.iter().map(|layout| layout.raw()),
+        &push_constants,
+      )?
+    };
 
     let mut pipeline_desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       shader_set,
       gfx_hal::Primitive::TriangleStrip,
       gfx_hal::pso::Rasterizer::FILL,
-      &layout,
+      &raw_layout,
       subpass,
     );
 
@@ -159,12 +171,13 @@ impl PipelineBuilder {
       .attributes
       .extend(self.vertex_attributes.into_iter());
 
-    let pipeline = unsafe { device.create_graphics_pipeline(&pipeline_desc, None)? };
+    let raw = unsafe { device.create_graphics_pipeline(&pipeline_desc, None)? };
 
     Ok(Pipeline {
-      raw: pipeline,
-      raw_layout: layout,
-      push_constants: self.push_constants.into_boxed_slice().into(),
+      raw,
+      raw_layout,
+      descriptor_layouts: self.descriptor_layouts,
+      push_constants: self.push_constants,
       shaders: ShaderSet {
         vertex: self.vertex_shader.unwrap(),
         fragment: self.fragment_shader,

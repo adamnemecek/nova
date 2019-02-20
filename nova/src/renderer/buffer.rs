@@ -1,9 +1,12 @@
 use super::alloc::{Allocator, Memory, MemoryKind};
 use super::device::{Device, DeviceExt};
 use super::Backend;
+use std::ops::{Index, IndexMut};
+use std::slice::SliceIndex;
 
 type RawBuffer = <Backend as gfx_hal::Backend>::Buffer;
 
+#[derive(Debug)]
 pub struct Buffer {
   pub(crate) raw: RawBuffer,
   memory: Memory,
@@ -54,12 +57,6 @@ impl Buffer {
     }
   }
 
-  pub fn bytes_mut(&mut self) -> &mut [u8] {
-    let mapped = self.mapped.expect("Buffer memory is not mapped.");
-
-    unsafe { std::slice::from_raw_parts_mut(mapped, self.size) }
-  }
-
   pub fn destroy(self, device: &Device, allocator: &mut Allocator) {
     unsafe {
       if self.mapped.is_some() {
@@ -70,6 +67,26 @@ impl Buffer {
 
       device.destroy_buffer(self.raw);
     }
+  }
+}
+
+impl<I: SliceIndex<[u8]>> Index<I> for Buffer {
+  type Output = I::Output;
+
+  fn index(&self, index: I) -> &Self::Output {
+    let mapped = self.mapped.expect("Buffer memory is not mapped.");
+    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.size) };
+
+    &slice[index]
+  }
+}
+
+impl<I: SliceIndex<[u8]>> IndexMut<I> for Buffer {
+  fn index_mut(&mut self, index: I) -> &mut I::Output {
+    let mapped = self.mapped.expect("Buffer memory is not mapped.");
+    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.size) };
+
+    &mut slice[index]
   }
 }
 

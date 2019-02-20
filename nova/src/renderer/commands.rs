@@ -5,7 +5,7 @@
 use super::buffer::Buffer;
 use super::device::{self, Device, DeviceExt, QueueFamilyExt};
 use super::pipeline::{MemoryBarrier, PipelineStage};
-use super::texture::{ImageLayout, Texture};
+use super::texture::{Texture, TextureLayout};
 use super::{Backend, Framebuffer, RenderPass};
 use std::ops::{Deref, DerefMut};
 
@@ -44,10 +44,10 @@ impl Commands {
     }
   }
 
-  pub fn pipeline_barrier(
-    &mut self,
+  pub fn pipeline_barrier<'a>(
+    &'a mut self,
     stages: (PipelineStage, PipelineStage),
-    memory_barriers: &[MemoryBarrier<Backend>],
+    memory_barriers: impl IntoIterator<Item = MemoryBarrier<'a, Backend>>,
   ) {
     unsafe {
       self.buffer.pipeline_barrier(
@@ -58,14 +58,14 @@ impl Commands {
     }
   }
 
-  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, image: &Texture, layout: ImageLayout) {
+  pub fn copy_buffer_to_texture(&mut self, buffer: &Buffer, offset: usize, texture: &Texture) {
     unsafe {
       self.buffer.copy_buffer_to_image(
         &buffer.raw,
-        &image.raw,
-        layout,
+        &texture.raw,
+        TextureLayout::TransferDstOptimal,
         &[gfx_hal::command::BufferImageCopy {
-          buffer_offset: 0,
+          buffer_offset: offset as u64,
           buffer_width: 0,
           buffer_height: 0,
           image_layers: gfx_hal::image::SubresourceLayers {
@@ -74,7 +74,7 @@ impl Commands {
             layers: 0..1,
           },
           image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
-          image_extent: image.size().into(),
+          image_extent: texture.size().into(),
         }],
       );
     }

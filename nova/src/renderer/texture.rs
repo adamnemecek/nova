@@ -2,19 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod cache;
+
+pub use self::cache::{TextureCache, TextureId};
+pub use gfx_hal::format::Format as TextureFormat;
+pub use gfx_hal::image::Access as TextureAccess;
+pub use gfx_hal::image::Layout as TextureLayout;
+
 use super::alloc::{Allocator, Memory, MemoryKind};
 use super::device::{Device, DeviceExt};
 use super::pipeline::MemoryBarrier;
 use super::Backend;
 use crate::math::Size;
 
-pub use gfx_hal::format::Format as TextureFormat;
-pub use gfx_hal::image::Access as ImageAccess;
-pub use gfx_hal::image::Layout as ImageLayout;
-
 pub type RawTexture = <Backend as gfx_hal::Backend>::Image;
 pub type RawTextureView = <Backend as gfx_hal::Backend>::ImageView;
+pub type Sampler = <Backend as gfx_hal::Backend>::Sampler;
 
+#[derive(Debug)]
 pub struct Texture {
   pub(crate) raw: RawTexture,
   pub(crate) raw_view: RawTextureView,
@@ -24,17 +29,17 @@ pub struct Texture {
 
 impl Texture {
   pub(crate) fn new(device: &Device, allocator: &mut Allocator, size: Size<u32>) -> Self {
-    const format: TextureFormat = TextureFormat::Rgba8Srgb;
+    const FORMAT: TextureFormat = TextureFormat::Rgba8Srgb;
 
-    let raw = unsafe {
+    let mut raw = unsafe {
       device
         .create_image(
           gfx_hal::image::Kind::D2(size.width(), size.height(), 1, 1),
           1,
-          format,
+          FORMAT,
           gfx_hal::image::Tiling::Optimal,
           gfx_hal::image::Usage::TRANSFER_DST | gfx_hal::image::Usage::SAMPLED,
-          gfx_hal::image::ViewCapabilities::KIND_2D_ARRAY,
+          gfx_hal::image::ViewCapabilities::empty(),
         )
         .expect("Could not create image")
     };
@@ -43,7 +48,13 @@ impl Texture {
       device.get_image_requirements(&raw)
     });
 
-    let raw_view = create_view(device, &raw, format);
+    unsafe {
+      device
+        .bind_image_memory(&memory, 0, &mut raw)
+        .expect("Could not bind texture memory");
+    }
+
+    let raw_view = create_view(device, &raw, FORMAT);
 
     Texture {
       raw,
@@ -59,8 +70,8 @@ impl Texture {
 
   pub(crate) fn barrier(
     &self,
-    access_change: (ImageAccess, ImageAccess),
-    layout_change: (ImageLayout, ImageLayout),
+    access_change: (TextureAccess, TextureAccess),
+    layout_change: (TextureLayout, TextureLayout),
   ) -> MemoryBarrier<Backend> {
     MemoryBarrier::Image {
       families: None,

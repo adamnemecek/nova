@@ -7,6 +7,13 @@ vec2 positions[4] = vec2[] (
   vec2(0.5, 0.5)
 );
 
+vec2 texCoords[4] = vec2[] (
+  vec2(1.0, 0.0),
+  vec2(0.0, 0.0),
+  vec2(0.0, 1.0),
+  vec2(1.0, 1.0)
+);
+
 layout(push_constant) uniform PushConstants {
   mat4 transform;
   float x;
@@ -17,9 +24,11 @@ layout(push_constant) uniform PushConstants {
 } pushed;
 
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec2 outTexCoord;
 
 void main() {
   outColor = pushed.tint;
+  outTexCoord = texCoords[gl_VertexIndex];
 
   switch (gl_VertexIndex) {
     case 0:
