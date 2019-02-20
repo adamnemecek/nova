@@ -7,7 +7,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Receive<T> {
   pub receiver: channel::Receiver<T>,
-  pub on_recv: el::MessageComposer<T>,
+  pub on_recv: el::MessageFn<T>,
 }
 
 impl<T: fmt::Debug + Send + 'static> el::Element for Receive<T> {
@@ -15,7 +15,7 @@ impl<T: fmt::Debug + Send + 'static> el::Element for Receive<T> {
   type Message = T;
 
   fn on_awake(&self, ctx: el::Context<Self>) {
-    let on_recv = ctx.compose((), |_, msg| msg);
+    let on_recv = ctx.message_fn(|msg| msg);
 
     ctx.put_component(MessageReceiver::new(self.receiver.clone(), on_recv));
   }
@@ -27,7 +27,7 @@ impl<T: fmt::Debug + Send + 'static> el::Element for Receive<T> {
   }
 
   fn on_message(&self, msg: T, ctx: el::Context<Self>) -> el::ShouldRebuild {
-    ctx.messages.send(self.on_recv.compose(msg));
+    ctx.messages.send((self.on_recv)(msg));
 
     el::ShouldRebuild(false)
   }
@@ -68,12 +68,12 @@ pub struct MessageReceiver {
 impl MessageReceiver {
   pub fn new<T: Send + fmt::Debug + 'static>(
     receiver: channel::Receiver<T>,
-    composer: el::MessageComposer<T>,
+    func: el::MessageFn<T>,
   ) -> Self {
     MessageReceiver {
       receive: Box::new(move |queue| {
         while let Ok(message) = receiver.try_recv() {
-          queue.send(composer.compose(message));
+          queue.send((func)(message));
         }
       }),
     }

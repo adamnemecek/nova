@@ -11,10 +11,10 @@ mod hierarchy;
 mod instance;
 mod message;
 
-pub use self::context::Context;
-pub use self::element::{Element, ShouldRebuild};
+pub use self::context::{Context, NodeContext};
+pub use self::element::{Element, ElementState, ShouldRebuild};
 pub use self::hierarchy::Hierarchy;
-pub use self::message::{Message, MessageComposer, MessageQueue};
+pub use self::message::{Message, MessageFn, MessageQueue};
 pub use self::spec::{spec, Spec};
 
 use self::instance::Instance;

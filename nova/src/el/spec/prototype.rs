@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::Spec;
-use crate::el::{Element, Instance};
+use crate::el::{Element, Instance, NodeContext};
 use std::any::Any;
+use std::fmt;
 
-#[derive(Debug)]
 pub(crate) struct Prototype {
-  pub new: fn(Box<dyn Any>) -> Instance,
+  pub new: fn(Box<dyn Any>, NodeContext) -> Instance,
   pub element: Box<dyn Any>,
   pub children: Vec<Spec>,
 }
@@ -21,15 +21,25 @@ unsafe impl Sync for Prototype {}
 impl Prototype {
   pub fn new<E: Element + 'static>(element: E, children: Vec<Spec>) -> Self {
     Prototype {
-      new: |props| {
+      new: |props, ctx| {
         Instance::new::<E>(
           *props
             .downcast::<E>()
             .expect("Incorrect props type for element"),
+          ctx,
         )
       },
       element: Box::new(element),
       children,
     }
+  }
+}
+
+impl fmt::Debug for Prototype {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    f.debug_struct("Prototype")
+      .field("element", &self.element)
+      .field("children", &self.children)
+      .finish()
   }
 }

@@ -2,16 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod context;
 mod node;
 
+pub(crate) use self::node::{Children, Node};
+
+use super::context::NodeContext;
 use super::{Element, Instance, Message, MessageQueue, ShouldRebuild, Spec};
 use crate::ecs;
 use crate::engine;
 use crate::log;
-
-pub use self::context::Context;
-pub(crate) use self::node::{Children, Node};
+use std::ops::RangeBounds;
 
 #[derive(Debug)]
 pub struct Hierarchy {
@@ -49,14 +49,20 @@ impl Hierarchy {
 
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {
     let entities = res.fetch::<ecs::Entities>();
+    let entity = entities.create();
+
+    let ctx = NodeContext {
+      resources: res,
+      entities: &entities,
+      entity,
+      messages: &res.fetch::<MessageQueue>(),
+    };
+
     let mut nodes = ecs::write_components::<Node>(res);
 
-    self.roots.push(
-      entities
-        .build_entity()
-        .with(Node::new(Instance::new(element)), &mut nodes)
-        .build(),
-    );
+    let _ = nodes.insert(entity, Node::new(Instance::new(element, ctx)));
+
+    self.roots.push(entity);
   }
 
   pub fn deliver_messages(&mut self, res: &engine::Resources) {
@@ -67,11 +73,10 @@ impl Hierarchy {
     while let Some(Message { recipient, payload }) = messages.take() {
       match nodes.get_mut(recipient) {
         Some(node) => {
-          let ctx = &mut Context {
-            entity: recipient,
-            hierarchy: self,
+          let ctx = NodeContext {
             resources: res,
             entities: &entities,
+            entity: recipient,
             messages: &messages,
           };
 
@@ -127,22 +132,21 @@ impl Hierarchy {
       let mut was_rebuilt = false;
 
       if let Some(node) = nodes.get_mut(entity) {
-        let mut ctx = Context {
-          entity,
-          hierarchy: self,
+        let ctx = NodeContext {
           resources: res,
           entities: &entities,
+          entity,
           messages: &messages,
         };
 
         // Awake the element. Does nothing if already awake.
-        node.instance.awake(&mut ctx);
+        node.instance.awake(ctx);
 
         // Rebuild the element if needed.
         if node.needs_build {
-          let spec = node.instance.build(&node.real_children, &mut ctx);
+          let spec = node.instance.build(&node.real_children, ctx);
 
-          ctx.push_apply_children(spec, &mut node.real_children);
+          self.push_apply_children(ctx, spec, &mut node.real_children);
 
           was_rebuilt = true;
           node.needs_build = false;
@@ -171,8 +175,7 @@ impl Hierarchy {
     nodes: &mut ecs::WriteComponents<Node>,
   ) {
     while let Some((entity, spec)) = self.apply_stack.pop() {
-      let ctx = &mut Context {
-        hierarchy: self,
+      let ctx = NodeContext {
         resources: res,
         entities,
         entity,
@@ -195,7 +198,7 @@ impl Hierarchy {
               // The nodeed instance has a different type of element, so
               // replace it with a new instance based on the prototype.
               node.instance.sleep(ctx);
-              node.instance = (prototype.new)(element);
+              node.instance = (prototype.new)(element, ctx);
             }
           };
 
@@ -206,7 +209,7 @@ impl Hierarchy {
           // If the node doesn't exist, node a new element instance based
           // on the prototype.
           nodes
-            .insert(entity, Node::new((prototype.new)(prototype.element)))
+            .insert(entity, Node::new((prototype.new)(prototype.element, ctx)))
             .expect("Could not create element node");
 
           nodes
@@ -216,7 +219,7 @@ impl Hierarchy {
       };
 
       if let ShouldRebuild(true) =
-        ctx.push_apply_children(prototype.children, &mut node.spec_children)
+        self.push_apply_children(ctx, prototype.children, &mut node.spec_children)
       {
         *should_rebuild = true;
       }
@@ -233,8 +236,7 @@ impl Hierarchy {
     nodes: &mut ecs::WriteComponents<Node>,
   ) {
     while let Some(entity) = self.delete_stack.pop() {
-      let ctx = &mut Context {
-        hierarchy: self,
+      let ctx = NodeContext {
         resources: res,
         entities,
         entity,
@@ -244,13 +246,87 @@ impl Hierarchy {
       if let Some(node) = nodes.get_mut(entity) {
         node.instance.sleep(ctx);
 
-        ctx.push_delete_children(&mut node.spec_children, ..);
-        ctx.push_delete_children(&mut node.real_children, ..);
+        self.push_delete_children(&mut node.spec_children, ..);
+        self.push_delete_children(&mut node.real_children, ..);
       }
 
       nodes.remove(entity);
 
       let _ = entities.delete(entity);
+    }
+  }
+
+  fn push_apply_children<I>(
+    &mut self,
+    ctx: NodeContext,
+    spec: I,
+    children: &mut Children,
+  ) -> ShouldRebuild
+  where
+    I: IntoIterator<Item = Spec>,
+    I::IntoIter: ExactSizeIterator,
+  {
+    let specs = spec.into_iter();
+
+    let current_len = children.entities.len();
+    let new_len = specs.len();
+
+    // Flag any extra children for deletion.
+    if new_len < current_len && current_len > 0 {
+      self.push_delete_children(children, new_len..);
+    }
+
+    for (i, child) in specs.enumerate() {
+      if let Some(child_entity) = child.entity() {
+        // The child is an entity so reference it directly.
+
+        if i < children.entities.len() {
+          let existing = children.entities[i];
+
+          if !children.references.remove(&existing) {
+            self.delete_stack.push(existing);
+          }
+
+          children.entities[i] = child_entity;
+        } else {
+          children.entities.push(child_entity);
+        }
+
+        // Flag this child as a reference entity so it isn't deleted or
+        // overwritten on rebuild.
+        children.references.insert(child_entity);
+      } else {
+        // The child is an element so add it to the stack for application.
+
+        if i < children.entities.len() {
+          let existing = children.entities[i];
+
+          // If the existing element was a reference, replace it with a new
+          // entity.
+          if children.references.remove(&existing) {
+            children.entities[i] = ctx.entities.create();
+          }
+        } else {
+          children.entities.push(ctx.entities.create());
+        }
+
+        self.apply_stack.push((children.entities[i], child));
+      }
+    }
+
+    // Rebuild is only needed if the number of children changes.
+    ShouldRebuild(current_len != new_len)
+  }
+
+  pub(crate) fn push_delete_children(
+    &mut self,
+    children: &mut Children,
+    range: impl RangeBounds<usize>,
+  ) {
+    for entity in children.entities.drain(range) {
+      if !children.references.remove(&entity) {
+        self.delete_stack.push(entity);
+      }
     }
   }
 }

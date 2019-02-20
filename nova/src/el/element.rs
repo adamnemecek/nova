@@ -2,14 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::context::{Context, NodeContext};
 use super::message;
 use super::spec::{self, Spec};
-use super::Context;
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 
 pub trait Element: PartialEq + Send + Sync + fmt::Debug + Sized {
-  type State: Default + Send + Sync + fmt::Debug + 'static;
+  type State: ElementState + Send + Sync + fmt::Debug + 'static;
   type Message: message::Payload;
 
   fn on_awake(&self, _ctx: Context<Self>) {}
@@ -25,6 +25,16 @@ pub trait Element: PartialEq + Send + Sync + fmt::Debug + Sized {
 
   fn build(&self, children: spec::Children, _: Context<Self>) -> Spec {
     children.into()
+  }
+}
+
+pub trait ElementState {
+  fn new(ctx: NodeContext) -> Self;
+}
+
+impl<T: Default> ElementState for T {
+  fn new(_: NodeContext) -> Self {
+    Self::default()
   }
 }
 

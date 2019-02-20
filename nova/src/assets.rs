@@ -16,7 +16,7 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub struct Asset<T> {
   pub path: SharedStr,
-  pub on_load: el::MessageComposer<LoadResult<T>>,
+  pub on_load: el::MessageFn<LoadResult<T>>,
 }
 
 impl<T> PartialEq for Asset<T> {
@@ -54,7 +54,11 @@ impl<T: Load + fmt::Debug + 'static> el::Element for Asset<T> {
     ));
   }
 
-  fn on_change(&self, _: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
+  fn on_change(&self, old: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
+    if self.path == old.path {
+      return el::ShouldRebuild(false);
+    }
+
     self.on_awake(ctx);
 
     el::ShouldRebuild(true)

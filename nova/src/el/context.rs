@@ -2,39 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::hierarchy;
-use super::{Element, MessageComposer, MessageQueue};
+use super::message::{self, MessageFn, MessageQueue};
+use super::Element;
 use crate::ecs;
 use crate::engine;
-use std::fmt;
+use std::ops::Deref;
 
-pub struct Context<'a, E: Element> {
-  pub state: &'a mut E::State,
+#[derive(Clone, Copy)]
+pub struct NodeContext<'a> {
   pub resources: &'a engine::Resources,
   pub entities: &'a ecs::Entities,
   pub entity: ecs::Entity,
   pub messages: &'a MessageQueue,
 }
 
-impl<'a, E: Element + 'static> Context<'a, E> {
-  pub fn new(state: &'a mut E::State, ctx: &'a hierarchy::Context) -> Self {
-    Context::<'a> {
-      state,
-      resources: ctx.resources,
-      entities: ctx.entities,
-      entity: ctx.entity,
-      messages: ctx.messages,
-    }
-  }
-
-  pub fn compose<I, A>(&self, arg: A, composer: fn(A, I) -> E::Message) -> MessageComposer<I>
-  where
-    I: fmt::Debug + 'static,
-    A: Clone + PartialEq + Send + Sync + fmt::Debug + 'static,
-  {
-    let recipient = self.entity;
-
-    MessageComposer::<I>::new::<E, A>(recipient, arg, composer)
+impl<'a> NodeContext<'a> {
+  pub fn message_fn<I: 'static, P: message::Payload>(&self, func: fn(I) -> P) -> MessageFn<I> {
+    MessageFn::new(self.entity, func)
   }
 
   pub fn put_component<T: ecs::Component>(&self, component: T) {
@@ -45,5 +29,24 @@ impl<'a, E: Element + 'static> Context<'a, E> {
 
   pub fn remove_component<T: ecs::Component>(&self) {
     ecs::write_components::<T>(&self.resources).remove(self.entity);
+  }
+}
+
+pub struct Context<'a, E: Element> {
+  pub state: &'a mut E::State,
+  outer: NodeContext<'a>,
+}
+
+impl<'a, E: Element + 'static> Context<'a, E> {
+  pub fn new(state: &'a mut E::State, outer: NodeContext<'a>) -> Self {
+    Context::<'a> { state, outer }
+  }
+}
+
+impl<'a, E: Element> Deref for Context<'a, E> {
+  type Target = NodeContext<'a>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.outer
   }
 }

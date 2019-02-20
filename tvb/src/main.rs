@@ -10,18 +10,33 @@ use nova::ui;
 struct Game;
 
 #[derive(Debug)]
+struct State {
+  image: Option<graphics::Image>,
+  on_load: el::MessageFn<assets::LoadResult<graphics::Image>>,
+}
+
+impl el::ElementState for State {
+  fn new(ctx: el::NodeContext) -> Self {
+    State {
+      image: None,
+      on_load: ctx.message_fn(|result| Message::ImageLoaded(result.unwrap())),
+    }
+  }
+}
+
+#[derive(Debug)]
 enum Message {
   ImageLoaded(graphics::Image),
 }
 
 impl el::Element for Game {
-  type State = Option<graphics::Image>;
+  type State = State;
   type Message = Message;
 
   fn on_message(&self, msg: Message, ctx: el::Context<Self>) -> el::ShouldRebuild {
     let Message::ImageLoaded(image) = msg;
 
-    *ctx.state = Some(image);
+    ctx.state.image = Some(image);
 
     el::ShouldRebuild(true)
   }
@@ -31,7 +46,7 @@ impl el::Element for Game {
       <>
         <div
           layout: (x: 160, y: 90, width: 600, height: 634),
-          style: (bg_color: #ffffffff, bg_image: state),
+          style: (bg_color: #ffffffff, bg_image: state.image),
         />
         <Asset path: "do-it.jpg", on_load: |img| ImageLoaded(img) />
       </>
@@ -47,7 +62,7 @@ impl el::Element for Game {
           },
           style: ui::Style {
             bg_color: ui::Color::WHITE,
-            bg_image: ctx.state.clone(),
+            bg_image: ctx.state.image.clone(),
           },
         },
         [],
@@ -55,7 +70,7 @@ impl el::Element for Game {
       el::spec(
         assets::Asset {
           path: "do-it.jpg".into(),
-          on_load: ctx.compose((), |_, result| Message::ImageLoaded(result.unwrap())),
+          on_load: ctx.state.on_load.clone(),
         },
         [],
       ),
