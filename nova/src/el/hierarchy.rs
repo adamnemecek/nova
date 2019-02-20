@@ -47,6 +47,10 @@ impl Hierarchy {
     Self::default()
   }
 
+  pub fn roots<'a>(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+    self.roots.iter().cloned()
+  }
+
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {
     let entities = res.fetch::<ecs::Entities>();
     let entity = entities.create();

@@ -3,11 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod common;
+pub mod hierarchy;
 pub mod spec;
 
 mod context;
 mod element;
-mod hierarchy;
 mod instance;
 mod message;
 
