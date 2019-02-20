@@ -9,7 +9,6 @@ pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
 pub type Fence = <Backend as gfx_hal::Backend>::Fence;
 
 pub struct FrameSync {
-  pub texture_semaphore: Semaphore,
   pub backbuffer_semaphore: Semaphore,
   pub render_semaphore: Semaphore,
   pub fence: Fence,
@@ -17,13 +16,11 @@ pub struct FrameSync {
 
 impl FrameSync {
   pub fn new(device: &Device) -> FrameSync {
-    let texture_semaphore = device.create_semaphore().unwrap();
     let backbuffer_semaphore = device.create_semaphore().unwrap();
     let render_semaphore = device.create_semaphore().unwrap();
     let fence = device.create_fence(true).unwrap();
 
     FrameSync {
-      texture_semaphore,
       backbuffer_semaphore,
       render_semaphore,
       fence,

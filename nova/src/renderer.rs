@@ -32,7 +32,7 @@ use self::descriptors::DescriptorLayout;
 use self::device::{QueueExt, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
 use self::presenter::Presenter;
-use self::sync::{FrameSync, Semaphore};
+use self::sync::FrameSync;
 use crate::window::Window;
 use std::iter;
 
@@ -142,26 +142,11 @@ impl Renderer {
     unsafe {
       queue.submit(
         gfx_hal::Submission {
-          command_buffers: iter::once(&self.texture_commands.buffer),
-          wait_semaphores: iter::empty::<(&Semaphore, PipelineStage)>(),
-          signal_semaphores: iter::once(&self.frame_sync.texture_semaphore),
-        },
-        None,
-      );
-
-      queue.submit(
-        gfx_hal::Submission {
-          command_buffers: iter::once(&self.commands.buffer),
-          wait_semaphores: vec![
-            (
-              &self.frame_sync.backbuffer_semaphore,
-              PipelineStage::COLOR_ATTACHMENT_OUTPUT,
-            ),
-            (
-              &self.frame_sync.texture_semaphore,
-              PipelineStage::FRAGMENT_SHADER,
-            ),
-          ],
+          command_buffers: &[&self.texture_commands.buffer, &self.commands.buffer][..],
+          wait_semaphores: vec![(
+            &self.frame_sync.backbuffer_semaphore,
+            PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+          )],
           signal_semaphores: iter::once(&self.frame_sync.render_semaphore),
         },
         Some(&self.frame_sync.fence),

@@ -58,12 +58,6 @@ impl DescriptorPool {
     set
   }
 
-  pub fn free(&mut self, set: DescriptorSet) {
-    unsafe {
-      self.raw.free_sets(Some(set));
-    }
-  }
-
   pub fn destroy(self, device: &Device) {
     unsafe {
       device.destroy_descriptor_pool(self.raw);
