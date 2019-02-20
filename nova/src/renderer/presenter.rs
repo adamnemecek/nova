@@ -5,7 +5,7 @@
 use super::backend::Backend;
 use super::device::{Device, DeviceExt, QueueExt};
 use super::sync::Semaphore;
-use super::texture::{self, RawTexture, RawTextureView};
+use super::texture::{self, RawTexture, RawTextureView, TextureFormat};
 use super::Gpu;
 use crate::math::Size;
 use crate::window::Window;
@@ -105,8 +105,9 @@ impl Presenter {
   }
 
   fn create_swapchain(&mut self, gpu: &Gpu) {
+    const FORMAT: TextureFormat = TextureFormat::Bgra8Unorm;
+
     let (capabilities, _, _, _) = self.surface.compatibility(gpu.physical_device());
-    let format = gfx_hal::format::Format::Bgra8Unorm;
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
@@ -126,7 +127,7 @@ impl Presenter {
 
     let config = gfx_hal::SwapchainConfig {
       present_mode: gfx_hal::window::PresentMode::Fifo,
-      format,
+      format: FORMAT,
       extent,
       image_count,
       image_layers: 1,
@@ -147,7 +148,7 @@ impl Presenter {
     match backbuffers {
       gfx_hal::Backbuffer::Images(raw_images) => {
         for raw_image in raw_images {
-          let raw_view = texture::create_view(gpu.device(), &raw_image, format);
+          let raw_view = texture::create_view(gpu.device(), &raw_image, FORMAT);
 
           self.backbuffers.push(Backbuffer {
             raw_image,

@@ -29,7 +29,7 @@ pub struct Texture {
 
 impl Texture {
   pub(crate) fn new(device: &Device, allocator: &mut Allocator, size: Size<u32>) -> Self {
-    const FORMAT: TextureFormat = TextureFormat::Rgba8Srgb;
+    const FORMAT: TextureFormat = TextureFormat::Rgba8Unorm;
 
     let mut raw = unsafe {
       device
