@@ -112,11 +112,11 @@ impl Presenter {
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
         capabilities.extents.start.width,
-        cmp::min(capabilities.extents.end.width, self.size.width()),
+        cmp::min(capabilities.extents.end.width, self.size.width),
       ),
       height: cmp::max(
         capabilities.extents.start.height,
-        cmp::min(capabilities.extents.end.height, self.size.height()),
+        cmp::min(capabilities.extents.end.height, self.size.height),
       ),
     };
 

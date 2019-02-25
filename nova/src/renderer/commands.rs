@@ -88,8 +88,8 @@ impl Commands {
       rect: gfx_hal::pso::Rect {
         x: 0,
         y: 0,
-        w: size.vector.x as i16,
-        h: size.vector.y as i16,
+        w: size.width as i16,
+        h: size.height as i16,
       },
       depth: 0.0..1.0,
     };

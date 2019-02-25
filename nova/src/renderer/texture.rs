@@ -34,7 +34,7 @@ impl Texture {
     let mut raw = unsafe {
       device
         .create_image(
-          gfx_hal::image::Kind::D2(size.width(), size.height(), 1, 1),
+          gfx_hal::image::Kind::D2(size.width, size.height, 1, 1),
           1,
           FORMAT,
           gfx_hal::image::Tiling::Optimal,
