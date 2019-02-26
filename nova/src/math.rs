@@ -5,9 +5,11 @@
 //! The `math` module exposes common functions and types for working with
 //! scalar numbers, vectors, matrices, and geometric dimensions.
 
+mod rect;
 mod size;
 
-pub use self::size::*;
+pub use self::rect::Rect;
+pub use self::size::Size;
 pub use nalgebra::Matrix4;
 pub use nalgebra::{Point2, Point3};
 pub use nalgebra::{Real, Scalar};

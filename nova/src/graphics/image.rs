@@ -2,14 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod slice;
+
+pub use self::slice::ImageSlice;
+pub use image::{ImageError as Error, ImageFormat};
+
 use crate::assets;
 use crate::math::Size;
 use image::RgbaImage;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::sync::Arc;
-
-pub use image::{ImageError as Error, ImageFormat};
 
 #[derive(Debug, Clone)]
 pub struct Image(Arc<Inner>);

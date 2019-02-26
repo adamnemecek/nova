@@ -6,4 +6,4 @@ mod color;
 mod image;
 
 pub use self::color::Color4;
-pub use self::image::Image;
+pub use self::image::{Image, ImageSlice};

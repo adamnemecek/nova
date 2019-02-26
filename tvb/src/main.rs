@@ -1,11 +1,15 @@
 extern crate nova;
 
 use nova::el;
+use nova::graphics::{Image, ImageSlice};
 use nova::log;
+use nova::math::Rect;
 use nova::ui;
 
-#[derive(Debug, Default, PartialEq)]
-struct Game;
+#[derive(Debug, PartialEq)]
+struct Game {
+  image: ImageSlice,
+}
 
 impl el::Element for Game {
   type State = ();
@@ -20,7 +24,7 @@ impl el::Element for Game {
             ..Default::default()
           },
           style: ui::Style {
-            bg_color: ui::Color::new(0.0, 0.0, 1.0, 0.8),
+            bg_image: Some(self.image.clone()),
             ..Default::default()
           },
         },
@@ -52,7 +56,17 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mut app = nova::App::new();
 
   // Add a root `Game` element.
-  app.add_element(Game);
+  app.add_element(Game {
+    image: ImageSlice::new(
+      Image::from_bytes(include_bytes!("../assets/do-it.jpg"))?,
+      Rect {
+        x: 0.0,
+        y: 0.25,
+        width: 1.0,
+        height: 0.5,
+      },
+    ),
+  });
 
   // Run the app until exit.
   app.run();

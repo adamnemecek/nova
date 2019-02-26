@@ -4,14 +4,14 @@
 
 use super::Color;
 use crate::ecs;
-use crate::graphics::Image;
+use crate::graphics::ImageSlice;
 use crate::renderer::TextureId;
 use crate::Engine;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Style {
   pub bg_color: Color,
-  pub bg_image: Option<Image>,
+  pub bg_image: Option<ImageSlice>,
 }
 
 impl Default for Style {
