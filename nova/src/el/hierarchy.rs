@@ -3,8 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod node;
+mod read;
 
 pub(crate) use self::node::{Children, Node};
+pub use self::read::ReadHierarchyNodes;
 
 use super::context::NodeContext;
 use super::{Element, Instance, Message, MessageQueue, ShouldRebuild, Spec};

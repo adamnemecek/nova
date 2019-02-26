@@ -72,14 +72,13 @@ pub struct SolveLayout;
 
 impl<'a> ecs::System<'a> for SolveLayout {
   type SystemData = (
-    ecs::ReadResource<'a, el::Hierarchy>,
-    ecs::ReadComponents<'a, el::hierarchy::Node>,
+    el::hierarchy::ReadHierarchyNodes<'a>,
     ecs::ReadResource<'a, Screen>,
     ecs::ReadComponents<'a, Layout>,
     ecs::WriteComponents<'a, ScreenRect>,
   );
 
-  fn run(&mut self, (hierarchy, nodes, screen, layouts, mut screen_rects): Self::SystemData) {
+  fn run(&mut self, (hierarchy, screen, layouts, mut screen_rects): Self::SystemData) {
     let mut stack = Vec::new();
 
     let screen_rect = ScreenRect {
@@ -117,10 +116,8 @@ impl<'a> ecs::System<'a> for SolveLayout {
 
       screen_rects.insert(entity, rect).unwrap();
 
-      if let Some(node) = nodes.get(entity) {
-        for child in node.children() {
-          stack.push((child, rect));
-        }
+      for child in hierarchy.get_children_of(entity) {
+        stack.push((child, rect));
       }
     }
   }
