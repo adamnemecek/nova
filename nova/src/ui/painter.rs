@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::layout::ScreenRect;
-use super::{Color, Screen, Style, StyleCache};
+use super::style::{Style, StyleCache};
+use super::{Color, Screen};
 use crate::ecs;
 use crate::el::hierarchy::Hierarchy;
 use crate::engine;

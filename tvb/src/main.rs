@@ -14,7 +14,7 @@ impl el::Element for Game {
   fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
     el::spec::list(vec![
       el::spec(
-        ui::Div {
+        ui::Container {
           layout: ui::Layout {
             right: ui::layout::Dimension::Auto,
             ..Default::default()
@@ -27,7 +27,7 @@ impl el::Element for Game {
         [],
       ),
       el::spec(
-        ui::Div {
+        ui::Container {
           layout: ui::Layout {
             left: ui::layout::Dimension::Auto,
             width: ui::layout::Dimension::Fraction(0.3),
