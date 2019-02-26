@@ -3,14 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::layout::ScreenRect;
-use super::{Color, Style, StyleCache};
+use super::{Color, Screen, Style, StyleCache};
 use crate::ecs;
 use crate::el::hierarchy::Hierarchy;
 use crate::engine;
 use crate::graphics::Image;
 use crate::math::Matrix4;
 use crate::renderer::{self, Render, Renderer};
-use crate::window::Window;
 
 pub struct Painter {
   pipeline: renderer::Pipeline,
@@ -54,22 +53,10 @@ impl Painter {
   }
 
   pub fn draw(&mut self, render: &mut Render, res: &engine::Resources) {
-    // Scale the entire UI based on the size of the window.
-    let size = res.fetch::<Window>().size();
-
-    let scale = if size.height > size.width {
-      (size.width / 1280).max(1) as f32
-    } else {
-      (size.height / 720).max(1) as f32
-    };
-
-    // Create a projection matrix that converts UI units to screen space.
-    let projection =
-      Matrix4::new_orthographic(0.0, size.width as f32, 0.0, size.height as f32, -1.0, 1.0)
-        .prepend_scaling(scale);
+    let screen = res.fetch::<Screen>();
 
     render.bind_pipeline(&self.pipeline);
-    render.push_constant(&self.pipeline, 0, &projection);
+    render.push_constant(&self.pipeline, 0, screen.projection());
 
     let hierarchy = res.fetch::<Hierarchy>();
     let rects = ecs::read_components::<ScreenRect>(res);

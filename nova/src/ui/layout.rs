@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use super::Screen;
 use crate::ecs;
 use crate::el;
 use crate::engine::{self, Engine};
 use crate::math::Size;
-use crate::window::Window;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Layout {
@@ -68,38 +68,28 @@ impl ecs::Component for ScreenRect {
 }
 
 #[derive(Debug, Default)]
-pub struct SolveLayout {}
+pub struct SolveLayout;
 
 impl<'a> ecs::System<'a> for SolveLayout {
   type SystemData = (
     ecs::ReadResource<'a, el::Hierarchy>,
     ecs::ReadComponents<'a, el::hierarchy::Node>,
-    ecs::ReadResource<'a, Window>,
+    ecs::ReadResource<'a, Screen>,
     ecs::ReadComponents<'a, Layout>,
     ecs::WriteComponents<'a, ScreenRect>,
   );
 
-  fn run(&mut self, (hierarchy, nodes, window, layouts, mut screen_rects): Self::SystemData) {
+  fn run(&mut self, (hierarchy, nodes, screen, layouts, mut screen_rects): Self::SystemData) {
     let mut stack = Vec::new();
 
-    let window_rect = {
-      let size = window.size();
-
-      let scale = if size.height > size.width {
-        (size.width / 1280).max(1) as f32
-      } else {
-        (size.height / 720).max(1) as f32
-      };
-
-      ScreenRect {
-        left: 0.0,
-        top: 0.0,
-        size: Size::<f32>::from(size) / scale,
-      }
+    let screen_rect = ScreenRect {
+      left: 0.0,
+      top: 0.0,
+      size: screen.size(),
     };
 
     for root in hierarchy.roots() {
-      stack.push((root, window_rect));
+      stack.push((root, screen_rect));
     }
 
     while let Some((entity, parent_rect)) = stack.pop() {
