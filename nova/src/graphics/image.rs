@@ -9,7 +9,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-pub use image::{ImageError, ImageFormat};
+pub use image::{ImageError as Error, ImageFormat};
 
 #[derive(Debug, Clone)]
 pub struct Image(Arc<Inner>);
@@ -21,6 +21,12 @@ struct Inner {
 }
 
 impl Image {
+  pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    let data = image::load_from_memory(bytes)?;
+
+    Ok(Self::from_rgba(data.to_rgba()))
+  }
+
   fn from_rgba(image: RgbaImage) -> Self {
     Image(Arc::new(Inner {
       size: image.dimensions().into(),
@@ -56,12 +62,9 @@ impl assets::Load for Image {
       "hdr" => ImageFormat::HDR,
       "pbm" | "pam" | "ppm" | "pgm" => ImageFormat::PNM,
       format => {
-        return Err(assets::LoadError::Other(Box::new(
-          ImageError::UnsupportedError(format!(
-            "Image format image/{:?} is not supported.",
-            format
-          )),
-        )));
+        return Err(assets::LoadError::Other(Box::new(Error::UnsupportedError(
+          format!("Image format image/{:?} is not supported.", format),
+        ))));
       }
     };
 
@@ -70,7 +73,7 @@ impl assets::Load for Image {
 
     let image = image::load(reader, format)
       .map_err(|err| match err {
-        ImageError::IoError(err) => assets::LoadError::Io(err),
+        Error::IoError(err) => assets::LoadError::Io(err),
         _ => assets::LoadError::Other(Box::new(err)),
       })?
       .to_rgba();

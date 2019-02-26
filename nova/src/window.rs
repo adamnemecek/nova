@@ -31,7 +31,7 @@ impl Window {
       .with_title(options.title)
       .with_resizable(false)
       .with_dimensions(
-        winit::dpi::PhysicalSize::new(options.size.width().into(), options.size.height().into())
+        winit::dpi::PhysicalSize::new(options.size.width.into(), options.size.height.into())
           .to_logical(events_loop.get_primary_monitor().get_hidpi_factor()),
       )
       .build(&events_loop)

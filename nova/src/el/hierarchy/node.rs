@@ -9,9 +9,9 @@ use std::collections::BTreeSet;
 #[derive(Debug)]
 pub struct Node {
   pub(crate) instance: Instance,
-  pub spec_children: Children,
-  pub real_children: Children,
-  pub needs_build: bool,
+  pub(crate) spec_children: Children,
+  pub(crate) real_children: Children,
+  pub(crate) needs_build: bool,
 }
 
 impl Node {
@@ -22,6 +22,10 @@ impl Node {
       real_children: Children::default(),
       needs_build: true,
     }
+  }
+
+  pub fn children<'a>(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+    self.real_children.entities.iter().cloned()
   }
 }
 

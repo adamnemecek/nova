@@ -1,37 +1,25 @@
-use super::{Num, Scalar, Vector2};
+use super::{Num, Scalar};
 use derive_more::*;
 use std::fmt;
+use std::ops::Div;
 
 /// Two-dimensional size with width and height.
 #[derive(Clone, Copy, PartialEq, Eq, From)]
 pub struct Size<T: Scalar> {
-  /// Vector whose components are the width and height of the size.
-  pub vector: Vector2<T>,
+  pub width: T,
+  pub height: T,
 }
 
 impl<T: Scalar> Size<T> {
   /// Creates a new size with the given width and height.
   pub fn new(width: T, height: T) -> Self {
-    Size {
-      vector: Vector2::new(width, height),
-    }
-  }
-
-  /// Gets the width component of the size.
-  pub fn width(&self) -> T {
-    self.vector.x
-  }
-
-  /// Gets the height component of the size.
-  pub fn height(&self) -> T {
-    self.vector.y
+    Size { width, height }
   }
 }
 
-// Implement `From` to convert to and from equivalent types.
-impl From<(u32, u32)> for Size<u32> {
-  fn from(size: (u32, u32)) -> Self {
-    Size::new(size.0, size.1)
+impl From<Size<u32>> for Size<f32> {
+  fn from(input: Size<u32>) -> Self {
+    Size::new(input.width as f32, input.height as f32)
   }
 }
 
@@ -44,8 +32,8 @@ impl From<gfx_hal::image::Extent> for Size<u32> {
 impl From<Size<u32>> for gfx_hal::image::Extent {
   fn from(size: Size<u32>) -> Self {
     gfx_hal::image::Extent {
-      width: size.width(),
-      height: size.height(),
+      width: size.width,
+      height: size.height,
       depth: 1,
     }
   }
@@ -60,21 +48,28 @@ impl From<gfx_hal::window::Extent2D> for Size<u32> {
 impl From<Size<u32>> for gfx_hal::window::Extent2D {
   fn from(size: Size<u32>) -> Self {
     gfx_hal::window::Extent2D {
-      width: size.width(),
-      height: size.height(),
+      width: size.width,
+      height: size.height,
     }
   }
 }
 
-// Implement `Default` to provide a zero size.
 impl<T: Scalar + Num> Default for Size<T> {
   fn default() -> Self {
     Size::new(T::zero(), T::zero())
   }
 }
 
+impl<T: Scalar + Num> Div<T> for Size<T> {
+  type Output = Self;
+
+  fn div(self, divisor: T) -> Self {
+    Size::new(self.width / divisor, self.height / divisor)
+  }
+}
+
 impl<T: Scalar + Num> fmt::Debug for Size<T> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "({:?}, {:?})", self.width(), self.height())
+    write!(f, "({:?}, {:?})", &self.width, &self.height)
   }
 }

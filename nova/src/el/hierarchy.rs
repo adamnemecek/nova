@@ -3,8 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod node;
+mod read;
 
 pub(crate) use self::node::{Children, Node};
+pub use self::read::ReadHierarchyNodes;
 
 use super::context::NodeContext;
 use super::{Element, Instance, Message, MessageQueue, ShouldRebuild, Spec};
@@ -45,6 +47,14 @@ impl Default for Hierarchy {
 impl Hierarchy {
   pub fn new() -> Self {
     Self::default()
+  }
+
+  pub fn roots<'a>(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+    self.roots.iter().cloned()
+  }
+
+  pub fn sorted<'a>(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+    self.sorted.iter().cloned()
   }
 
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {
@@ -144,7 +154,7 @@ impl Hierarchy {
 
         // Rebuild the element if needed.
         if node.needs_build {
-          let spec = node.instance.build(&node.real_children, ctx);
+          let spec = node.instance.build(&node.spec_children, ctx);
 
           self.push_apply_children(ctx, spec, &mut node.real_children);
 
@@ -218,13 +228,10 @@ impl Hierarchy {
         }
       };
 
-      if let ShouldRebuild(true) =
-        self.push_apply_children(ctx, prototype.children, &mut node.spec_children)
-      {
-        *should_rebuild = true;
-      }
-
-      node.needs_build = node.needs_build || *should_rebuild;
+      node.needs_build =
+        *self.push_apply_children(ctx, prototype.children, &mut node.spec_children)
+          || node.needs_build
+          || *should_rebuild;
     }
   }
 
