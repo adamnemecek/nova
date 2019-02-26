@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod layout;
 mod painter;
 
 use crate::ecs;
@@ -10,20 +11,9 @@ use crate::graphics::Image;
 use crate::renderer::TextureId;
 use crate::Engine;
 
+pub use self::layout::Layout;
 pub use self::painter::Painter;
 pub use crate::graphics::Color4 as Color;
-
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
-pub struct Layout {
-  pub x: f32,
-  pub y: f32,
-  pub width: f32,
-  pub height: f32,
-}
-
-impl ecs::Component for Layout {
-  type Storage = ecs::BTreeStorage<Self>;
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Style {
@@ -34,7 +24,7 @@ pub struct Style {
 impl Default for Style {
   fn default() -> Self {
     Self {
-      bg_color: Color::TRANSPARENT,
+      bg_color: Color::WHITE,
       bg_image: None,
     }
   }
@@ -83,11 +73,13 @@ impl el::Element for Div {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::register::<Layout>(engine.resources_mut());
   ecs::register::<Style>(engine.resources_mut());
   ecs::register::<StyleCache>(engine.resources_mut());
+
+  layout::setup(engine);
 }
 
+/*
 mod layout {
   use crate::ecs;
   use crate::el;
@@ -204,3 +196,4 @@ mod layout {
     }
   }
 }
+*/

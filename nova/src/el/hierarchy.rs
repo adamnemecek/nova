@@ -51,6 +51,10 @@ impl Hierarchy {
     self.roots.iter().cloned()
   }
 
+  pub fn sorted<'a>(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+    self.sorted.iter().cloned()
+  }
+
   pub fn add_element<E: Element + 'static>(&mut self, res: &engine::Resources, element: E) {
     let entities = res.fetch::<ecs::Entities>();
     let entity = entities.create();
@@ -148,7 +152,7 @@ impl Hierarchy {
 
         // Rebuild the element if needed.
         if node.needs_build {
-          let spec = node.instance.build(&node.real_children, ctx);
+          let spec = node.instance.build(&node.spec_children, ctx);
 
           self.push_apply_children(ctx, spec, &mut node.real_children);
 
@@ -222,13 +226,10 @@ impl Hierarchy {
         }
       };
 
-      if let ShouldRebuild(true) =
-        self.push_apply_children(ctx, prototype.children, &mut node.spec_children)
-      {
-        *should_rebuild = true;
-      }
-
-      node.needs_build = node.needs_build || *should_rebuild;
+      node.needs_build =
+        *self.push_apply_children(ctx, prototype.children, &mut node.spec_children)
+          || node.needs_build
+          || *should_rebuild;
     }
   }
 
