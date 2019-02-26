@@ -1,6 +1,7 @@
 use super::{Num, Scalar};
 use derive_more::*;
 use std::fmt;
+use std::ops::Div;
 
 /// Two-dimensional size with width and height.
 #[derive(Clone, Copy, PartialEq, Eq, From)]
@@ -56,6 +57,14 @@ impl From<Size<u32>> for gfx_hal::window::Extent2D {
 impl<T: Scalar + Num> Default for Size<T> {
   fn default() -> Self {
     Size::new(T::zero(), T::zero())
+  }
+}
+
+impl<T: Scalar + Num> Div<T> for Size<T> {
+  type Output = Self;
+
+  fn div(self, divisor: T) -> Self {
+    Size::new(self.width / divisor, self.height / divisor)
   }
 }
 

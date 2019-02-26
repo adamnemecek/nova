@@ -79,10 +79,7 @@ impl Painter {
     for entity in hierarchy.sorted() {
       let (rect, style) = match (rects.get(entity), styles.get(entity)) {
         (Some(rect), Some(style)) if style.bg_color.a > 0.0 => (rect, style),
-        x => {
-          dbg!(x);
-          continue;
-        }
+        _ => continue,
       };
 
       let style_cache = style_caches

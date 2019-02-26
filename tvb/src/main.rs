@@ -12,31 +12,35 @@ impl el::Element for Game {
   type Message = ();
 
   fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
-    el::spec(
-      ui::Div {
-        layout: ui::Layout {
-          top: ui::layout::Dimension::Fixed(100.0),
-          ..Default::default()
-        },
-        style: ui::Style {
-          bg_color: ui::Color::new(1.0, 1.0, 1.0, 0.5),
-          ..Default::default()
-        },
-      },
+    el::spec::list(vec![
       el::spec(
         ui::Div {
           layout: ui::Layout {
-            top: ui::layout::Dimension::Fixed(100.0),
+            right: ui::layout::Dimension::Auto,
             ..Default::default()
           },
           style: ui::Style {
-            bg_color: ui::Color::new(1.0, 0.0, 0.0, 0.5),
+            bg_color: ui::Color::new(0.0, 0.0, 1.0, 0.8),
             ..Default::default()
           },
         },
         [],
       ),
-    )
+      el::spec(
+        ui::Div {
+          layout: ui::Layout {
+            left: ui::layout::Dimension::Auto,
+            width: ui::layout::Dimension::Fraction(0.3),
+            ..Default::default()
+          },
+          style: ui::Style {
+            bg_color: ui::Color::new(1.0, 0.0, 0.0, 0.8),
+            ..Default::default()
+          },
+        },
+        [],
+      ),
+    ])
   }
 }
 

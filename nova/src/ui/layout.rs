@@ -43,6 +43,17 @@ impl ecs::Component for Layout {
 pub enum Dimension {
   Auto,
   Fixed(f32),
+  Fraction(f32),
+}
+
+impl Dimension {
+  fn into_scalar(self, total: f32) -> Option<f32> {
+    match self {
+      Dimension::Auto => None,
+      Dimension::Fixed(val) => Some(val),
+      Dimension::Fraction(val) => Some(total * val),
+    }
+  }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -71,10 +82,20 @@ impl<'a> ecs::System<'a> for SolveLayout {
   fn run(&mut self, (hierarchy, nodes, window, layouts, mut screen_rects): Self::SystemData) {
     let mut stack = Vec::new();
 
-    let window_rect = ScreenRect {
-      left: 0.0,
-      top: 0.0,
-      size: window.size().into(),
+    let window_rect = {
+      let size = window.size();
+
+      let scale = if size.height > size.width {
+        (size.width / 1280).max(1) as f32
+      } else {
+        (size.height / 720).max(1) as f32
+      };
+
+      ScreenRect {
+        left: 0.0,
+        top: 0.0,
+        size: Size::<f32>::from(size) / scale,
+      }
     };
 
     for root in hierarchy.roots() {
@@ -120,35 +141,37 @@ pub fn setup(engine: &mut Engine) {
 }
 
 fn solve_dimension(
-  mut total: f32,
+  total: f32,
   to_start: Dimension,
   middle: Dimension,
   from_end: Dimension,
 ) -> (f32, f32) {
   let mut result = (0.0, 0.0);
+
+  let mut remaining = total;
   let mut autos = 3;
 
-  if let Dimension::Fixed(to_start) = to_start {
+  if let Some(to_start) = to_start.into_scalar(total) {
     result.0 = to_start;
 
-    total -= to_start;
+    remaining -= to_start;
     autos -= 1;
   }
 
-  if let Dimension::Fixed(middle) = middle {
+  if let Some(middle) = middle.into_scalar(total) {
     result.1 = middle;
 
-    total -= middle;
+    remaining -= middle;
     autos -= 1;
   }
 
-  if let Dimension::Fixed(from_end) = from_end {
-    total -= from_end;
+  if let Some(from_end) = from_end.into_scalar(total) {
+    remaining -= from_end;
     autos -= 1;
   }
 
   if autos > 0 {
-    let part = total / autos as f32;
+    let part = remaining / autos as f32;
 
     if let Dimension::Auto = to_start {
       result.0 = part;
