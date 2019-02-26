@@ -3,11 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Layout, Style};
-use crate::ecs;
 use crate::el;
-use crate::graphics::Image;
-use crate::renderer::TextureId;
-use crate::Engine;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Container {

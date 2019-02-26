@@ -4,7 +4,6 @@
 
 use super::Color;
 use crate::ecs;
-use crate::el;
 use crate::graphics::Image;
 use crate::renderer::TextureId;
 use crate::Engine;
