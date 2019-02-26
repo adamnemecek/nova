@@ -164,6 +164,8 @@ impl Renderer {
     let device = self.gpu.device();
 
     self.texture_cache.destroy(device, &mut self.allocator);
+    self.texture_commands.destroy(device);
+
     self.presenter.destroy(device);
     self.commands.destroy(device);
 
