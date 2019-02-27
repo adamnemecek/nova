@@ -31,3 +31,14 @@ impl<T: ScalarNum> Rect<T> {
     Size::new(self.x2 - self.x1, self.y2 - self.y1)
   }
 }
+
+impl Rect<f32> {
+  pub const fn unit() -> Self {
+    Rect {
+      x1: 0.0,
+      y1: 0.0,
+      x2: 1.0,
+      y2: 1.0,
+    }
+  }
+}

@@ -4,7 +4,7 @@
 
 use super::commands::{CommandBufferExt, Commands};
 use super::pipeline::Pipeline;
-use super::texture::{TextureCache, TextureId};
+use super::texture::TextureCache;
 use super::{Allocator, Device};
 use crate::graphics;
 use std::iter;
@@ -23,17 +23,35 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn bind_cached_image(
+  pub fn bind_texture_or_default(
     &mut self,
     pipeline: &Pipeline,
     binding: usize,
-    image: &graphics::Image,
-    id_cache: &mut Option<TextureId>,
+    texture: Option<&graphics::Image>,
   ) {
-    let descriptor_set =
-      self
-        .texture_cache
-        .get_cached(image, id_cache, &self.device, &mut self.allocator);
+    match texture {
+      Some(texture) => self.bind_texture(pipeline, binding, texture),
+      None => self.bind_default_texture(pipeline, binding),
+    }
+  }
+
+  pub fn bind_default_texture(&mut self, pipeline: &Pipeline, binding: usize) {
+    let descriptor_set = self.texture_cache.get_default();
+
+    unsafe {
+      self.cmd.buffer.bind_graphics_descriptor_sets(
+        &pipeline.raw_layout,
+        binding,
+        iter::once(descriptor_set),
+        &[],
+      );
+    }
+  }
+
+  pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, texture: &graphics::Image) {
+    let descriptor_set = self
+      .texture_cache
+      .get_cached(texture, &self.device, &mut self.allocator);
 
     unsafe {
       self.cmd.buffer.bind_graphics_descriptor_sets(

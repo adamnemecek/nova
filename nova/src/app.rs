@@ -31,7 +31,7 @@ impl App {
     ui::setup(&mut engine);
 
     let renderer = Renderer::new(&engine);
-    let ui_painter = ui::Painter::new(&mut engine, &renderer);
+    let ui_painter = ui::Painter::new(&renderer);
 
     App {
       ui_painter,

@@ -52,45 +52,54 @@ impl TextureCache {
         .expect("Could not create texture sampler")
     };
 
-    TextureCache {
+    let mut cache = TextureCache {
       table: BTreeMap::new(),
       entries: Vec::new(),
       descriptor_pool,
       changes: Vec::new(),
       staging_buffer,
       sampler,
-    }
+    };
+
+    // Load the default texture into the cache.
+    cache.get_cached(
+      &graphics::Image::from_bytes(include_bytes!("1x1.png")).unwrap(),
+      device,
+      allocator,
+    );
+
+    cache
   }
 
   pub fn descriptor_layout(&self) -> &DescriptorLayout {
     &self.descriptor_pool.layout
   }
 
+  pub fn get_default(&self) -> &DescriptorSet {
+    &self.entries[0].as_ref().unwrap().descriptor_set
+  }
+
   pub fn get_cached(
     &mut self,
     image: &graphics::Image,
-    id_cache: &mut Option<TextureId>,
     device: &Device,
     allocator: &mut Allocator,
   ) -> &DescriptorSet {
     let image_addr = &image.bytes()[0] as *const _ as usize;
 
-    let index = match id_cache {
-      Some(id) if id.image == image_addr => id.index,
-      _ => match self.table.get(&image_addr) {
-        Some(id) => id.index,
-        None => {
-          let id = TextureId {
-            index: self.entries.len(),
-            image: image_addr,
-          };
+    let index = match self.table.get(&image_addr) {
+      Some(id) => id.index,
+      None => {
+        let id = TextureId {
+          index: self.entries.len(),
+          image: image_addr,
+        };
 
-          self.table.insert(image_addr, id);
-          self.entries.push(None);
+        self.table.insert(image_addr, id);
+        self.entries.push(None);
 
-          id.index
-        }
-      },
+        id.index
+      }
     };
 
     let entry = &mut self.entries[index];

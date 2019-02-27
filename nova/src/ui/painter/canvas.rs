@@ -9,7 +9,6 @@ use crate::renderer::{self, Render};
 
 pub struct Canvas<'a, 'b> {
   render: &'a mut Render<'b>,
-  default_texture: &'a graphics::ImageSlice,
   pipeline: &'a renderer::Pipeline,
 }
 
@@ -18,27 +17,14 @@ impl<'a, 'b> Canvas<'a, 'b> {
     screen: &Screen,
     render: &'a mut Render<'b>,
     pipeline: &'a renderer::Pipeline,
-    default_texture: &'a graphics::ImageSlice,
   ) -> Self {
     render.bind_pipeline(pipeline);
     render.push_constant(pipeline, super::PUSH_CONST_TRANSFORM, screen.projection());
 
-    Self {
-      render,
-      default_texture,
-      pipeline,
-    }
+    Self { render, pipeline }
   }
 
-  pub fn paint(
-    &mut self,
-    rect: &Rect<f32>,
-    color: Color,
-    texture: Option<&graphics::ImageSlice>,
-    texture_id_cache: &mut Option<renderer::TextureId>,
-  ) {
-    let texture = texture.unwrap_or(self.default_texture);
-
+  pub fn paint(&mut self, rect: &Rect<f32>, color: Color, texture: Option<&graphics::ImageSlice>) {
     self
       .render
       .push_constant(&self.pipeline, super::PUSH_CONST_RECT, rect);
@@ -47,17 +33,16 @@ impl<'a, 'b> Canvas<'a, 'b> {
       .render
       .push_constant(&self.pipeline, super::PUSH_CONST_TINT, &color);
 
-    self.render.bind_cached_image(
+    self.render.bind_texture_or_default(
       &self.pipeline,
       super::DESCRIPTOR_TEXTURE,
-      texture.image(),
-      texture_id_cache,
+      texture.map(|t| t.image()),
     );
 
     self.render.push_constant(
       &self.pipeline,
       super::PUSH_CONST_TEXTURE_RECT,
-      texture.rect(),
+      texture.map(|t| t.rect()).unwrap_or(&Rect::unit()),
     );
 
     self.render.draw(0..4);
