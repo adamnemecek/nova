@@ -22,3 +22,14 @@ impl<T: ScalarNum> Rect<T> {
     Size::new(self.x2 - self.x1, self.y2 - self.y1)
   }
 }
+
+impl<T: ScalarNum> From<(Point2<T>, Size<T>)> for Rect<T> {
+  fn from((position, size): (Point2<T>, Size<T>)) -> Self {
+    Self {
+      x1: position.x,
+      y1: position.y,
+      x2: position.x + size.width,
+      y2: position.y + size.height,
+    }
+  }
+}

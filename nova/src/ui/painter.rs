@@ -85,12 +85,7 @@ impl Painter {
         &mut style_cache.bg_texture,
       );
 
-      render.push_constant(
-        &self.pipeline,
-        1,
-        &[rect.left, rect.top, rect.size.width, rect.size.height],
-      );
-
+      render.push_constant(&self.pipeline, 1, rect);
       render.push_constant(&self.pipeline, 2, bg_image.rect());
       render.push_constant(&self.pipeline, 3, &style.bg_color);
 

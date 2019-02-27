@@ -9,10 +9,8 @@ vec2 texCoords[4] = vec2[] (
 
 layout(push_constant) uniform PushConstants {
   mat4 transform;
-  float left;
-  float top;
-  float width;
-  float height;
+  vec2 pos1;
+  vec2 pos2;
   vec2 tex1;
   vec2 tex2;
   vec4 tint;
@@ -26,19 +24,19 @@ void main() {
 
   switch (gl_VertexIndex) {
     case 0:
-      gl_Position = pushed.transform * vec4(pushed.left, pushed.top, 0.0, 1.0);
+      gl_Position = pushed.transform * vec4(pushed.pos1, 0.0, 1.0);
       outTexCoord = pushed.tex1;
       break;
     case 1:
-      gl_Position = pushed.transform * vec4(pushed.left, pushed.top + pushed.height, 0.0, 1.0);
+      gl_Position = pushed.transform * vec4(pushed.pos1.x, pushed.pos2.y, 0.0, 1.0);
       outTexCoord = vec2(pushed.tex1.x, pushed.tex2.y);
       break;
     case 2:
-      gl_Position = pushed.transform * vec4(pushed.left + pushed.width, pushed.top, 0.0, 1.0);
+      gl_Position = pushed.transform * vec4(pushed.pos2.x, pushed.pos1.y, 0.0, 1.0);
       outTexCoord = vec2(pushed.tex2.x, pushed.tex1.y);
       break;
     case 3:
-      gl_Position = pushed.transform * vec4(pushed.left + pushed.width, pushed.top + pushed.height, 0.0, 1.0);
+      gl_Position = pushed.transform * vec4(pushed.pos2, 0.0, 1.0);
       outTexCoord = pushed.tex2;
       break;
   }

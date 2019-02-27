@@ -6,7 +6,8 @@ use super::Screen;
 use crate::ecs;
 use crate::el;
 use crate::engine::{self, Engine};
-use crate::math::Size;
+use crate::math::{Point2, Rect, Size};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Layout {
@@ -56,11 +57,22 @@ impl Dimension {
   }
 }
 
+#[repr(transparent)]
 #[derive(Debug, Copy, Clone)]
-pub struct ScreenRect {
-  pub left: f32,
-  pub top: f32,
-  pub size: Size<f32>,
+pub struct ScreenRect(Rect<f32>);
+
+impl Deref for ScreenRect {
+  type Target = Rect<f32>;
+
+  fn deref(&self) -> &Rect<f32> {
+    &self.0
+  }
+}
+
+impl DerefMut for ScreenRect {
+  fn deref_mut(&mut self) -> &mut Rect<f32> {
+    &mut self.0
+  }
 }
 
 impl ecs::Component for ScreenRect {
@@ -81,38 +93,26 @@ impl<'a> ecs::System<'a> for SolveLayout {
   fn run(&mut self, (hierarchy, screen, layouts, mut screen_rects): Self::SystemData) {
     let mut stack = Vec::new();
 
-    let screen_rect = ScreenRect {
-      left: 0.0,
-      top: 0.0,
-      size: screen.size(),
-    };
+    let screen_rect = ScreenRect(screen.rect());
 
     for root in hierarchy.roots() {
       stack.push((root, screen_rect));
     }
 
     while let Some((entity, parent_rect)) = stack.pop() {
+      let parent_size = parent_rect.size();
       let layout = layouts.get(entity).unwrap_or(&Layout::DEFAULT);
 
-      let (left, width) = solve_dimension(
-        parent_rect.size.width,
-        layout.left,
-        layout.width,
-        layout.right,
-      );
+      let (left, width) =
+        solve_dimension(parent_size.width, layout.left, layout.width, layout.right);
 
-      let (top, height) = solve_dimension(
-        parent_rect.size.height,
-        layout.top,
-        layout.height,
-        layout.bottom,
-      );
+      let (top, height) =
+        solve_dimension(parent_size.height, layout.top, layout.height, layout.bottom);
 
-      let rect = ScreenRect {
-        left: parent_rect.left + left,
-        top: parent_rect.top + top,
-        size: Size::new(width, height),
-      };
+      let rect = ScreenRect(Rect::from((
+        Point2::new(left, top),
+        Size::new(width, height),
+      )));
 
       screen_rects.insert(entity, rect).unwrap();
 

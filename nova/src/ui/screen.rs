@@ -4,7 +4,7 @@
 
 use crate::ecs;
 use crate::engine::{self, Engine};
-use crate::math::{Matrix4, Size};
+use crate::math::{Matrix4, Rect, Size};
 use crate::window::Window;
 
 #[derive(Debug)]
@@ -18,6 +18,15 @@ impl Screen {
     Self {
       size: Size::default(),
       projection: Matrix4::identity(),
+    }
+  }
+
+  pub fn rect(&self) -> Rect<f32> {
+    Rect {
+      x1: 0.0,
+      y1: 0.0,
+      x2: self.size.width,
+      y2: self.size.height,
     }
   }
 
