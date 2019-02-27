@@ -23,7 +23,7 @@ impl Painter {
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
         renderer::ShaderKind::Vertex,
-        include_str!("shaders/panels.vert"),
+        include_str!("./painter/shaders/panels.vert"),
       ),
     );
 
@@ -31,7 +31,7 @@ impl Painter {
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
         renderer::ShaderKind::Fragment,
-        include_str!("shaders/panels.frag"),
+        include_str!("./painter/shaders/panels.frag"),
       ),
     );
 
@@ -46,7 +46,7 @@ impl Painter {
       .build(renderer.device(), renderer.render_pass())
       .expect("Could not create graphics pipeline");
 
-    let default_image = Image::from_bytes(include_bytes!("1x1.png")).unwrap().into();
+    let default_image = Image::from_bytes(include_bytes!("./painter/1x1.png")).unwrap().into();
 
     Painter {
       pipeline,
