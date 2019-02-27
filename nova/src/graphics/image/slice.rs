@@ -30,10 +30,10 @@ impl From<Image> for ImageSlice {
     Self {
       image,
       rect: Rect {
-        x: 0.0,
-        y: 0.0,
-        width: 1.0,
-        height: 1.0,
+        x1: 0.0,
+        y1: 0.0,
+        x2: 1.0,
+        y2: 1.0,
       },
     }
   }

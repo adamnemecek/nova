@@ -7,18 +7,18 @@ use super::{Point2, ScalarNum, Size};
 #[repr(C)]
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Rect<T> {
-  pub x: T,
-  pub y: T,
-  pub width: T,
-  pub height: T,
+  pub x1: T,
+  pub y1: T,
+  pub x2: T,
+  pub y2: T,
 }
 
 impl<T: ScalarNum> Rect<T> {
   pub fn position(&self) -> Point2<T> {
-    Point2::new(self.x, self.y)
+    Point2::new(self.x1, self.y1)
   }
 
   pub fn size(&self) -> Size<T> {
-    Size::new(self.width, self.height)
+    Size::new(self.x2 - self.x1, self.y2 - self.y1)
   }
 }

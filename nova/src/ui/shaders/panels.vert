@@ -13,10 +13,8 @@ layout(push_constant) uniform PushConstants {
   float top;
   float width;
   float height;
-  float texLeft;
-  float texTop;
-  float texWidth;
-  float texHeight;
+  vec2 tex1;
+  vec2 tex2;
   vec4 tint;
 } pushed;
 
@@ -29,19 +27,19 @@ void main() {
   switch (gl_VertexIndex) {
     case 0:
       gl_Position = pushed.transform * vec4(pushed.left, pushed.top, 0.0, 1.0);
-      outTexCoord = vec2(pushed.texLeft, pushed.texTop);
+      outTexCoord = pushed.tex1;
       break;
     case 1:
       gl_Position = pushed.transform * vec4(pushed.left, pushed.top + pushed.height, 0.0, 1.0);
-      outTexCoord = vec2(pushed.texLeft, pushed.texTop + pushed.texHeight);
+      outTexCoord = vec2(pushed.tex1.x, pushed.tex2.y);
       break;
     case 2:
       gl_Position = pushed.transform * vec4(pushed.left + pushed.width, pushed.top, 0.0, 1.0);
-      outTexCoord = vec2(pushed.texLeft + pushed.texWidth, pushed.texTop);
+      outTexCoord = vec2(pushed.tex2.x, pushed.tex1.y);
       break;
     case 3:
       gl_Position = pushed.transform * vec4(pushed.left + pushed.width, pushed.top + pushed.height, 0.0, 1.0);
-      outTexCoord = vec2(pushed.texLeft + pushed.texWidth, pushed.texTop + pushed.texHeight);
+      outTexCoord = pushed.tex2;
       break;
   }
 }

@@ -60,10 +60,10 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     image: ImageSlice::new(
       Image::from_bytes(include_bytes!("../assets/do-it.jpg"))?,
       Rect {
-        x: 0.0,
-        y: 0.25,
-        width: 1.0,
-        height: 0.5,
+        x1: 0.0,
+        y1: 0.25,
+        x2: 1.0,
+        y2: 0.75,
       },
     ),
   });
