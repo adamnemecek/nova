@@ -14,22 +14,20 @@ pub struct Rect<T> {
 }
 
 impl<T: ScalarNum> Rect<T> {
-  pub fn position(&self) -> Point2<T> {
-    Point2::new(self.x1, self.y1)
-  }
-
-  pub fn size(&self) -> Size<T> {
-    Size::new(self.x2 - self.x1, self.y2 - self.y1)
-  }
-}
-
-impl<T: ScalarNum> From<(Point2<T>, Size<T>)> for Rect<T> {
-  fn from((position, size): (Point2<T>, Size<T>)) -> Self {
+  pub fn new(position: Point2<T>, size: Size<T>) -> Self {
     Self {
       x1: position.x,
       y1: position.y,
       x2: position.x + size.width,
       y2: position.y + size.height,
     }
+  }
+
+  pub fn position(&self) -> Point2<T> {
+    Point2::new(self.x1, self.y1)
+  }
+
+  pub fn size(&self) -> Size<T> {
+    Size::new(self.x2 - self.x1, self.y2 - self.y1)
   }
 }
