@@ -23,7 +23,7 @@ impl Default for Style {
 }
 
 impl ecs::Component for Style {
-  type Storage = ecs::BTreeStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 pub fn setup(engine: &mut Engine) {

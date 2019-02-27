@@ -81,7 +81,7 @@ impl MessageReceiver {
 }
 
 impl ecs::Component for MessageReceiver {
-  type Storage = ecs::BTreeStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 impl fmt::Debug for MessageReceiver {

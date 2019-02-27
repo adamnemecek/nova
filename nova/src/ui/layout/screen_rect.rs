@@ -25,5 +25,5 @@ impl DerefMut for ScreenRect {
 }
 
 impl ecs::Component for ScreenRect {
-  type Storage = ecs::BTreeStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }

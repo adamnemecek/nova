@@ -30,7 +30,7 @@ impl Node {
 }
 
 impl ecs::Component for Node {
-  type Storage = ecs::BTreeStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 #[derive(Debug, Default)]

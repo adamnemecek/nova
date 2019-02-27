@@ -39,7 +39,7 @@ impl Default for Layout {
 }
 
 impl ecs::Component for Layout {
-  type Storage = ecs::BTreeStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
