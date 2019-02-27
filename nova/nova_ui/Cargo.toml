@@ -1,0 +1,12 @@
+[package]
+name = "nova_ui"
+version = "0.3.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
+
+[dependencies]
+nova_core = { path = "../nova_core" }
+nova_graphics = { path = "../nova_graphics" }
+nova_math = { path = "../nova_math" }
+nova_renderer = { path = "../nova_renderer" }
+nova_window = { path = "../nova_window" }

@@ -19,7 +19,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .help("Path to a directory containing source files for a monster.")
         .index(1)
         .required(true),
-    ).arg(
+    )
+    .arg(
       Arg::with_name("dest")
         .help("Path to save imported Nova assets to.")
         .index(2)
