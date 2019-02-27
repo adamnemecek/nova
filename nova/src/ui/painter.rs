@@ -2,6 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod canvas;
+
+pub use self::canvas::Canvas;
+
 use super::layout::ScreenRect;
 use super::{Color, Screen, Style};
 use crate::ecs;
@@ -10,6 +14,13 @@ use crate::engine::{self, Engine};
 use crate::graphics::{Image, ImageSlice};
 use crate::math::{Matrix4, Rect};
 use crate::renderer::{self, Render, Renderer};
+
+const DESCRIPTOR_TEXTURE: usize = 0;
+
+const PUSH_CONST_TRANSFORM: usize = 0;
+const PUSH_CONST_RECT: usize = 1;
+const PUSH_CONST_TEXTURE_RECT: usize = 2;
+const PUSH_CONST_TINT: usize = 3;
 
 pub struct Painter {
   pipeline: renderer::Pipeline,
@@ -59,9 +70,7 @@ impl Painter {
 
   pub fn draw(&mut self, render: &mut Render, res: &engine::Resources) {
     let screen = res.fetch::<Screen>();
-
-    render.bind_pipeline(&self.pipeline);
-    render.push_constant(&self.pipeline, 0, screen.projection());
+    let mut canvas = Canvas::new(&screen, render, &self.pipeline, &self.default_image);
 
     let hierarchy = res.fetch::<Hierarchy>();
     let rects = ecs::read_components::<ScreenRect>(res);
@@ -79,20 +88,12 @@ impl Painter {
         .unwrap()
         .or_insert_with(StyleCache::default);
 
-      let bg_image = style.bg_image.as_ref().unwrap_or(&self.default_image);
-
-      render.bind_image_cached(
-        &self.pipeline,
-        0,
-        bg_image.image(),
+      canvas.paint(
+        rect,
+        style.bg_color,
+        style.bg_image.as_ref(),
         &mut style_cache.bg_texture,
       );
-
-      render.push_constant(&self.pipeline, 1, rect);
-      render.push_constant(&self.pipeline, 2, bg_image.rect());
-      render.push_constant(&self.pipeline, 3, &style.bg_color);
-
-      render.draw(0..4);
     }
   }
 

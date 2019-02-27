@@ -23,7 +23,7 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn bind_image_cached(
+  pub fn bind_cached_image(
     &mut self,
     pipeline: &Pipeline,
     binding: usize,
