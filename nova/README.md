@@ -1,7 +1,7 @@
 # nova
 
-Nova is a modular game engine written in Rust designed for 2D top-down adventure
-or RPG games.
+Nova is a game engine written in Rust and designed for 2D top-down adventure
+games or RPGs.
 
 Nova uses [gfx_hal][1] for cross-platforming rendering and [specs][2] for an
 Entity-Component-System design.
