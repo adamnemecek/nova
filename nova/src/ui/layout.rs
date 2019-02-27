@@ -93,7 +93,7 @@ impl<'a> ecs::System<'a> for SolveLayout {
   fn run(&mut self, (hierarchy, screen, layouts, mut screen_rects): Self::SystemData) {
     let mut stack = Vec::new();
 
-    let screen_rect = ScreenRect(screen.rect());
+    let screen_rect = ScreenRect((Point2::origin(), screen.size()).into());
 
     for root in hierarchy.roots() {
       stack.push((root, screen_rect));
@@ -109,10 +109,7 @@ impl<'a> ecs::System<'a> for SolveLayout {
       let (top, height) =
         solve_dimension(parent_size.height, layout.top, layout.height, layout.bottom);
 
-      let rect = ScreenRect(Rect::from((
-        Point2::new(left, top),
-        Size::new(width, height),
-      )));
+      let rect = ScreenRect((Point2::new(left, top), Size::new(width, height)).into());
 
       screen_rects.insert(entity, rect).unwrap();
 
