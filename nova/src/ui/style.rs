@@ -5,7 +5,6 @@
 use super::Color;
 use crate::ecs;
 use crate::graphics::ImageSlice;
-use crate::renderer::TextureId;
 use crate::Engine;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -27,16 +26,6 @@ impl ecs::Component for Style {
   type Storage = ecs::BTreeStorage<Self>;
 }
 
-#[derive(Debug, Default)]
-pub struct StyleCache {
-  pub(crate) bg_texture: Option<TextureId>,
-}
-
-impl ecs::Component for StyleCache {
-  type Storage = ecs::BTreeStorage<Self>;
-}
-
 pub fn setup(engine: &mut Engine) {
   ecs::register::<Style>(engine.resources_mut());
-  ecs::register::<StyleCache>(engine.resources_mut());
 }

@@ -33,7 +33,7 @@ use self::device::{QueueExt, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
 use self::presenter::Presenter;
 use self::sync::FrameSync;
-use crate::window::Window;
+use crate::Engine;
 use std::iter;
 
 pub struct Renderer {
@@ -50,7 +50,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(window: &Window) -> Self {
+  pub fn new(engine: &Engine) -> Self {
     let gpu = Gpu::new();
 
     let queue_index = gpu
@@ -63,7 +63,7 @@ impl Renderer {
 
     let frame_sync = FrameSync::new(gpu.device());
     let render_pass = render_pass::create(gpu.device());
-    let presenter = Presenter::new(&window, &gpu);
+    let presenter = Presenter::new(&engine.resources().fetch(), &gpu);
     let commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
 
     let texture_cache = TextureCache::new(gpu.device(), &mut allocator);

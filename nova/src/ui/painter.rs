@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::layout::ScreenRect;
-use super::style::{Style, StyleCache};
-use super::{Color, Screen};
+use super::{Color, Screen, Style};
 use crate::ecs;
 use crate::el::hierarchy::Hierarchy;
-use crate::engine;
+use crate::engine::{self, Engine};
 use crate::graphics::{Image, ImageSlice};
 use crate::math::{Matrix4, Rect};
 use crate::renderer::{self, Render, Renderer};
@@ -18,7 +17,9 @@ pub struct Painter {
 }
 
 impl Painter {
-  pub fn new(renderer: &Renderer) -> Self {
+  pub fn new(engine: &mut Engine, renderer: &Renderer) -> Self {
+    ecs::register::<StyleCache>(engine.resources_mut());
+
     let vertex_shader = renderer::Shader::new(
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
@@ -46,7 +47,9 @@ impl Painter {
       .build(renderer.device(), renderer.render_pass())
       .expect("Could not create graphics pipeline");
 
-    let default_image = Image::from_bytes(include_bytes!("./painter/1x1.png")).unwrap().into();
+    let default_image = Image::from_bytes(include_bytes!("./painter/1x1.png"))
+      .unwrap()
+      .into();
 
     Painter {
       pipeline,
@@ -96,4 +99,13 @@ impl Painter {
   pub fn destroy(self, device: &renderer::Device) {
     self.pipeline.destroy(device);
   }
+}
+
+#[derive(Debug, Default)]
+struct StyleCache {
+  bg_texture: Option<renderer::TextureId>,
+}
+
+impl ecs::Component for StyleCache {
+  type Storage = ecs::BTreeStorage<Self>;
 }
