@@ -2,12 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::Screen;
+mod screen_rect;
+mod solve;
+
+pub use self::screen_rect::ScreenRect;
+pub use self::solve::SolveLayout;
+
 use crate::ecs;
-use crate::el;
 use crate::engine::{self, Engine};
-use crate::math::{Point2, Rect, Size};
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Layout {
@@ -57,117 +59,6 @@ impl Dimension {
   }
 }
 
-#[repr(transparent)]
-#[derive(Debug, Copy, Clone)]
-pub struct ScreenRect(Rect<f32>);
-
-impl Deref for ScreenRect {
-  type Target = Rect<f32>;
-
-  fn deref(&self) -> &Rect<f32> {
-    &self.0
-  }
-}
-
-impl DerefMut for ScreenRect {
-  fn deref_mut(&mut self) -> &mut Rect<f32> {
-    &mut self.0
-  }
-}
-
-impl ecs::Component for ScreenRect {
-  type Storage = ecs::BTreeStorage<Self>;
-}
-
-#[derive(Debug, Default)]
-pub struct SolveLayout;
-
-impl<'a> ecs::System<'a> for SolveLayout {
-  type SystemData = (
-    el::hierarchy::ReadHierarchyNodes<'a>,
-    ecs::ReadResource<'a, Screen>,
-    ecs::ReadComponents<'a, Layout>,
-    ecs::WriteComponents<'a, ScreenRect>,
-  );
-
-  fn run(&mut self, (hierarchy, screen, layouts, mut screen_rects): Self::SystemData) {
-    let mut stack = Vec::new();
-
-    let screen_rect = ScreenRect(Rect::new(Point2::origin(), screen.size()));
-
-    for root in hierarchy.roots() {
-      stack.push((root, screen_rect));
-    }
-
-    while let Some((entity, parent_rect)) = stack.pop() {
-      let parent_size = parent_rect.size();
-      let layout = layouts.get(entity).unwrap_or(&Layout::DEFAULT);
-
-      let (left, width) =
-        solve_dimension(parent_size.width, layout.left, layout.width, layout.right);
-
-      let (top, height) =
-        solve_dimension(parent_size.height, layout.top, layout.height, layout.bottom);
-
-      let rect = ScreenRect(Rect::new(
-        Point2::new(parent_rect.x1 + left, parent_rect.y1 + top),
-        Size::new(width, height),
-      ));
-
-      screen_rects.insert(entity, rect).unwrap();
-
-      for child in hierarchy.get_children_of(entity) {
-        stack.push((child, rect));
-      }
-    }
-  }
-}
-
 pub fn setup(engine: &mut Engine) {
-  engine.on_event(engine::Event::TickEnding, SolveLayout::default());
-}
-
-fn solve_dimension(
-  total: f32,
-  to_start: Dimension,
-  middle: Dimension,
-  from_end: Dimension,
-) -> (f32, f32) {
-  let mut result = (0.0, 0.0);
-
-  let mut remaining = total;
-  let mut autos = 3;
-
-  if let Some(to_start) = to_start.into_scalar(total) {
-    result.0 = to_start;
-
-    remaining -= to_start;
-    autos -= 1;
-  }
-
-  if let Some(middle) = middle.into_scalar(total) {
-    result.1 = middle;
-
-    remaining -= middle;
-    autos -= 1;
-  }
-
-  if let Some(from_end) = from_end.into_scalar(total) {
-    remaining -= from_end;
-    autos -= 1;
-  }
-
-  if autos > 0 {
-    let part = remaining / autos as f32;
-
-    if let Dimension::Auto = to_start {
-      result.0 = part;
-    }
-
-    if let Dimension::Auto = middle {
-      result.1 = part.max(0.0);
-    }
-  }
-
-  result
+  engine.on_event(engine::Event::TickEnding, SolveLayout);
 }
