@@ -1,5 +1,7 @@
 # nova
 
+https://gitlab.com/bfrydl/nova
+
 Nova is a game engine written in Rust and designed for 2D top-down adventure
 games and RPGs.
 

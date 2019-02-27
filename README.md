@@ -1,5 +1,7 @@
 # tvb
 
+https://gitlab.com/bfrydl/tvb
+
 Project TVB is a 2D adventure RPG and engine.
 
 ## Running
