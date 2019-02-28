@@ -13,7 +13,7 @@ pub struct Canvas<'a, 'b> {
 }
 
 impl<'a, 'b> Canvas<'a, 'b> {
-  pub(super) fn new(
+  pub(crate) fn new(
     screen: &Screen,
     render: &'a mut renderer::Render<'b>,
     pipeline: &'a renderer::Pipeline,
@@ -24,16 +24,13 @@ impl<'a, 'b> Canvas<'a, 'b> {
     Self { render, pipeline }
   }
 
-  pub fn paint(
-    &mut self,
-    rect: &Rect<f32>,
-    color: Color,
-    texture: Option<&graphics::ImageSlice>,
-  ) {
-    self.render
+  pub fn paint(&mut self, rect: &Rect<f32>, color: Color, texture: Option<&graphics::ImageSlice>) {
+    self
+      .render
       .push_constant(&self.pipeline, super::PUSH_CONST_RECT, rect);
 
-    self.render
+    self
+      .render
       .push_constant(&self.pipeline, super::PUSH_CONST_TINT, &color);
 
     self.render.bind_texture_or_default(

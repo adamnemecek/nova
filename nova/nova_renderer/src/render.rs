@@ -10,10 +10,10 @@ use nova_graphics as graphics;
 use std::iter;
 
 pub struct Render<'a> {
-  pub(super) cmd: &'a mut Commands,
-  pub(super) device: &'a Device,
-  pub(super) allocator: &'a mut Allocator,
-  pub(super) texture_cache: &'a mut TextureCache,
+  pub(crate) cmd: &'a mut Commands,
+  pub(crate) device: &'a Device,
+  pub(crate) allocator: &'a mut Allocator,
+  pub(crate) texture_cache: &'a mut TextureCache,
 }
 
 impl<'a> Render<'a> {

@@ -8,7 +8,7 @@ use std::ops::{Deref, DerefMut};
 
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone)]
-pub struct ScreenRect(pub(super) Rect<f32>);
+pub struct ScreenRect(pub(crate) Rect<f32>);
 
 impl Deref for ScreenRect {
   type Target = Rect<f32>;
