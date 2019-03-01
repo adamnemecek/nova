@@ -8,9 +8,9 @@ games and RPGs.
 The renderer is built with [gfx_hal][1] and works on all major desktop operating
 systems.
 
-Game state can be managed through an Entity-Component-System design, powered by
-[specs][2], and also through *elements* which implement hierarchical state and
-messaging similar to [Elm][4], [Yew][5], or [React][3].
+Game state can be managed through an **Entity-Component-System** design, powered
+by [specs][2], and also through **elements** which implement hierarchical state
+and messaging similar to [Elm][4], [Yew][5], or [React][3].
 
 [1]: https://github.com/gfx-rs/gfx
 [2]: https://slide-rs.github.io/specs/
