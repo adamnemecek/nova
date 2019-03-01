@@ -20,3 +20,17 @@ The included Makefile can prepare a release build of the game:
     make
 
 This currently assumes Linux.
+
+## Pushing commits to the public Nova repository
+
+The files in the `nova` folder are open source and should be published to the
+public Nova repository.
+
+To set this up, add a remote for Nova:
+
+    git remote add nova git@gitlab.com:bfrydl/nova.git
+    git remote set-url nova --add git@github.com:bfrydl/nova.git
+
+Changes to files in the `nova` folder can then be published with a subtree push:
+
+    git subtree push nova master --prefix nova
