@@ -34,11 +34,7 @@ impl DescriptorPool {
     DescriptorPool { raw, layout }
   }
 
-  pub fn alloc<'a>(
-    &mut self,
-    device: &Device,
-    descriptors: impl IntoIterator<Item = Descriptor<'a>>,
-  ) -> DescriptorSet {
+  pub fn alloc(&mut self, device: &Device, descriptors: &[Descriptor]) -> DescriptorSet {
     let set = unsafe {
       self
         .raw
@@ -51,7 +47,7 @@ impl DescriptorPool {
         set: &set,
         binding: 0,
         array_offset: 0,
-        descriptors: descriptors.into_iter().map(gfx_hal::pso::Descriptor::from),
+        descriptors: descriptors.iter().map(gfx_hal::pso::Descriptor::from),
       }));
     }
 

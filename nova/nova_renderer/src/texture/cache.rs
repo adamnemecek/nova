@@ -112,7 +112,7 @@ impl TextureCache {
 
         let descriptor_set = self.descriptor_pool.alloc(
           device,
-          Some(Descriptor::SampledTexture(&texture, &self.sampler)),
+          &[Descriptor::SampledTexture(&texture, &self.sampler)],
         );
 
         self.changes.push((index, image.clone()));

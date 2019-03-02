@@ -39,9 +39,9 @@ pub enum Descriptor<'a> {
   SampledTexture(&'a Texture, &'a texture::Sampler),
 }
 
-impl<'a> From<Descriptor<'a>> for gfx_hal::pso::Descriptor<'a, Backend> {
-  fn from(desc: Descriptor<'a>) -> Self {
-    match desc {
+impl<'a> From<&Descriptor<'a>> for gfx_hal::pso::Descriptor<'a, Backend> {
+  fn from(desc: &Descriptor<'a>) -> Self {
+    match *desc {
       Descriptor::SampledTexture(texture, sampler) => {
         gfx_hal::pso::Descriptor::CombinedImageSampler(
           &texture.raw_view,

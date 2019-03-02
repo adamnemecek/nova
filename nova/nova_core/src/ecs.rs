@@ -8,8 +8,8 @@ use crate::engine;
 
 pub use specs::join::{Join, ParJoin};
 
-pub use specs::shred::{DynamicSystemData, System, SystemData};
 pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
+pub use specs::shred::{System, SystemData};
 
 pub use specs::storage;
 pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
@@ -36,10 +36,12 @@ where
   F: FnOnce() -> T::Storage,
   T: Component,
 {
-  res.entry()
+  res
+    .entry()
     .or_insert_with(move || storage::MaskedStorage::<T>::new(storage()));
 
-  res.fetch_mut::<engine::MetaTable<storage::AnyStorage>>()
+  res
+    .fetch_mut::<engine::MetaTable<storage::AnyStorage>>()
     .register(&*res.fetch::<storage::MaskedStorage<T>>());
 }
 
@@ -47,14 +49,14 @@ pub fn read_components<T>(res: &engine::Resources) -> ReadComponents<T>
 where
   T: Component,
 {
-  storage::Storage::new(res.fetch(), res.fetch::<storage::MaskedStorage<T>>())
+  ReadComponents::fetch(res)
 }
 
 pub fn write_components<T>(res: &engine::Resources) -> WriteComponents<T>
 where
   T: Component,
 {
-  storage::Storage::new(res.fetch(), res.fetch_mut::<storage::MaskedStorage<T>>())
+  WriteComponents::fetch(res)
 }
 
 pub fn entities(res: &engine::Resources) -> engine::FetchResource<Entities> {
