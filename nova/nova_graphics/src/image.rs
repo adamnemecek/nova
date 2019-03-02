@@ -8,10 +8,7 @@ pub use self::slice::ImageSlice;
 pub use image::{ImageError as Error, ImageFormat};
 
 use image::RgbaImage;
-use nova_core::assets;
 use nova_math::Size;
-use std::io::BufReader;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -46,6 +43,13 @@ impl Image {
   }
 }
 
+impl PartialEq for Image {
+  fn eq(&self, other: &Self) -> bool {
+    Arc::ptr_eq(&self.0, &other.0)
+  }
+}
+
+/*
 impl assets::Load for Image {
   fn load(path: PathBuf, fs: &assets::OverlayFs) -> assets::LoadResult<Self> {
     let ext = path
@@ -84,9 +88,4 @@ impl assets::Load for Image {
     Ok(Self::from_rgba(image))
   }
 }
-
-impl PartialEq for Image {
-  fn eq(&self, other: &Self) -> bool {
-    Arc::ptr_eq(&self.0, &other.0)
-  }
-}
+*/

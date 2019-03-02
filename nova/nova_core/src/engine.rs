@@ -7,7 +7,6 @@ pub mod dispatch;
 mod events;
 mod resources;
 
-use crate::assets;
 use crate::clock;
 use crate::el;
 
@@ -38,8 +37,6 @@ impl Engine {
       thread_pool,
       event_handlers: EventHandlerList::new(),
     };
-
-    engine.resources_mut().insert(assets::OverlayFs::default());
 
     clock::Time::setup(engine.resources_mut());
     el::setup(&mut engine);

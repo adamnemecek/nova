@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub extern crate nova_assets as assets;
 pub extern crate nova_graphics as graphics;
 pub extern crate nova_math as math;
 pub extern crate nova_renderer as renderer;
