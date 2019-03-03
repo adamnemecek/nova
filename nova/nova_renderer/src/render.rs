@@ -2,18 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::commands::{CommandBufferExt, Commands};
-use super::pipeline::Pipeline;
-use super::texture::TextureCache;
-use super::{Allocator, Device};
-use nova_graphics as graphics;
+use crate::commands::{CommandBufferExt, Commands};
+use crate::pipeline::Pipeline;
+use crate::textures::{TextureId, Textures};
 use std::iter;
 
 pub struct Render<'a> {
   pub(crate) cmd: &'a mut Commands,
-  pub(crate) device: &'a Device,
-  pub(crate) allocator: &'a mut Allocator,
-  pub(crate) texture_cache: &'a mut TextureCache,
+  pub(crate) textures: &'a mut Textures,
 }
 
 impl<'a> Render<'a> {
@@ -23,35 +19,16 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn bind_texture_or_default(
-    &mut self,
-    pipeline: &Pipeline,
-    binding: usize,
-    texture: Option<&graphics::Image>,
-  ) {
-    match texture {
-      Some(texture) => self.bind_texture(pipeline, binding, texture),
-      None => self.bind_default_texture(pipeline, binding),
-    }
+  pub fn textures(&self) -> &Textures {
+    self.textures
   }
 
-  pub fn bind_default_texture(&mut self, pipeline: &Pipeline, binding: usize) {
-    let descriptor_set = self.texture_cache.get_default();
-
-    unsafe {
-      self.cmd.buffer.bind_graphics_descriptor_sets(
-        &pipeline.raw_layout,
-        binding,
-        iter::once(descriptor_set),
-        &[],
-      );
-    }
+  pub fn textures_mut(&mut self) -> &mut Textures {
+    self.textures
   }
 
-  pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, texture: &graphics::Image) {
-    let descriptor_set =
-      self.texture_cache
-        .get_cached(texture, &self.device, &mut self.allocator);
+  pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, id: TextureId) {
+    let descriptor_set = &self.textures.get_or_transparent(id).descriptor_set;
 
     unsafe {
       self.cmd.buffer.bind_graphics_descriptor_sets(

@@ -10,3 +10,9 @@ build: clean
 
 clean:
 	@rm -rf release
+
+test:
+	@cd nova && cargo test --all
+	@cargo test --all
+
+.PHONY: build clean test

@@ -86,6 +86,8 @@ impl PartialEq for SharedStr {
   }
 }
 
+impl Eq for SharedStr {}
+
 impl Hash for SharedStr {
   fn hash<H: Hasher>(&self, state: &mut H) {
     match self {

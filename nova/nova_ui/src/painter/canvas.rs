@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Color, Screen};
-use nova_graphics as graphics;
+use nova_graphics::images::ImageSlice;
 use nova_math::Rect;
 use nova_renderer as renderer;
 
@@ -24,7 +24,7 @@ impl<'a, 'b> Canvas<'a, 'b> {
     Self { render, pipeline }
   }
 
-  pub fn paint(&mut self, rect: &Rect<f32>, color: Color, texture: Option<&graphics::ImageSlice>) {
+  pub fn paint(&mut self, rect: &Rect<f32>, color: Color, image_slice: Option<&ImageSlice>) {
     self
       .render
       .push_constant(&self.pipeline, super::PUSH_CONST_RECT, rect);
@@ -33,17 +33,33 @@ impl<'a, 'b> Canvas<'a, 'b> {
       .render
       .push_constant(&self.pipeline, super::PUSH_CONST_TINT, &color);
 
-    self.render.bind_texture_or_default(
-      &self.pipeline,
-      super::DESCRIPTOR_TEXTURE,
-      texture.map(|t| t.image()),
-    );
+    match image_slice {
+      Some(slice) => {
+        let texture_id = self.render.textures_mut().cache_image(slice.image_id);
 
-    self.render.push_constant(
-      &self.pipeline,
-      super::PUSH_CONST_TEXTURE_RECT,
-      texture.map(|t| t.rect()).unwrap_or(&Rect::unit()),
-    );
+        self
+          .render
+          .bind_texture(&self.pipeline, super::DESCRIPTOR_TEXTURE, texture_id);
+
+        self
+          .render
+          .push_constant(&self.pipeline, super::PUSH_CONST_TEXTURE_RECT, &slice.rect);
+      }
+
+      None => {
+        self.render.bind_texture(
+          &self.pipeline,
+          super::DESCRIPTOR_TEXTURE,
+          self.render.textures().solid_id(),
+        );
+
+        self.render.push_constant(
+          &self.pipeline,
+          super::PUSH_CONST_TEXTURE_RECT,
+          &Rect::unit(),
+        );
+      }
+    };
 
     self.render.draw(0..4);
   }

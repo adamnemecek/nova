@@ -787,12 +787,20 @@ dependencies = [
  "gfx-backend-dx12 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx-backend-metal 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx-backend-vulkan 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
  "nova_math 0.3.0",
  "nova_renderer 0.3.0",
  "nova_ui 0.3.0",
  "nova_window 0.3.0",
+]
+
+[[package]]
+name = "nova_assets"
+version = "0.3.0"
+dependencies = [
+ "nova_core 0.3.0",
 ]
 
 [[package]]
@@ -815,6 +823,7 @@ name = "nova_graphics"
 version = "0.3.0"
 dependencies = [
  "image 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_math 0.3.0",
 ]

@@ -12,11 +12,12 @@ mod buffer;
 mod commands;
 mod descriptors;
 mod framebuffer;
+mod images;
 mod presenter;
 mod render;
 mod render_pass;
 mod sync;
-mod texture;
+mod textures;
 
 pub use self::backend::Backend;
 pub use self::commands::Commands;
@@ -25,27 +26,26 @@ pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 pub use self::render::Render;
 pub use self::render_pass::RenderPass;
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
-pub use self::texture::{Texture, TextureCache, TextureFormat, TextureId};
+pub use self::textures::Textures;
 
 use self::alloc::Allocator;
-use self::descriptors::DescriptorLayout;
 use self::device::{QueueExt, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
 use self::presenter::Presenter;
 use self::sync::FrameSync;
-use nova_core::Engine;
+use nova_core::engine::{self, Engine};
 use std::iter;
 
 pub struct Renderer {
   gpu: Gpu,
   queue_index: usize,
   allocator: Allocator,
+  textures: Textures,
   frame_sync: FrameSync,
   render_pass: RenderPass,
   presenter: Presenter,
   commands: Commands,
-  texture_cache: TextureCache,
-  texture_commands: Commands,
+  transfer_commands: Commands,
   framebuffer: Option<Framebuffer>,
 }
 
@@ -60,25 +60,23 @@ impl Renderer {
       .expect("Device does not support graphics commands.");
 
     let mut allocator = Allocator::new(gpu.physical_device());
-
+    let textures = Textures::new(gpu.device(), &mut allocator);
     let frame_sync = FrameSync::new(gpu.device());
     let render_pass = render_pass::create(gpu.device());
     let presenter = Presenter::new(&engine.resources().fetch(), &gpu);
     let commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
-
-    let texture_cache = TextureCache::new(gpu.device(), &mut allocator);
-    let texture_commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
+    let transfer_commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
 
     Renderer {
       gpu,
       queue_index,
       allocator,
+      textures,
       frame_sync,
       render_pass,
       commands,
       presenter,
-      texture_cache,
-      texture_commands,
+      transfer_commands,
       framebuffer: None,
     }
   }
@@ -91,15 +89,16 @@ impl Renderer {
     &self.render_pass
   }
 
-  pub fn texture_descriptor_layout(&self) -> &DescriptorLayout {
-    self.texture_cache.descriptor_layout()
+  pub fn textures(&self) -> &Textures {
+    &self.textures
   }
 
   pub fn begin(&mut self) -> Render {
     self.frame_sync.wait_for_fence(self.gpu.device());
     self.destroy_framebuffer();
 
-    self.presenter
+    self
+      .presenter
       .begin(&self.gpu, &self.frame_sync.backbuffer_semaphore);
 
     let framebuffer = Framebuffer::new(
@@ -110,36 +109,39 @@ impl Renderer {
 
     self.commands.begin();
 
-    self.commands
+    self
+      .commands
       .begin_render_pass(&self.render_pass, &framebuffer);
 
     self.framebuffer = Some(framebuffer);
 
     Render {
       cmd: &mut self.commands,
-      device: self.gpu.device(),
-      allocator: &mut self.allocator,
-      texture_cache: &mut self.texture_cache,
+      textures: &mut self.textures,
     }
   }
 
-  pub fn finish(&mut self) {
+  pub fn finish(&mut self, res: &engine::Resources) {
     self.commands.finish_render_pass();
     self.commands.finish();
 
-    self.texture_commands.begin();
+    self.transfer_commands.begin();
 
-    self.texture_cache
-      .record_commands(&mut self.texture_commands);
+    self.textures.flush_changes(
+      res,
+      self.gpu.device(),
+      &mut self.allocator,
+      &mut self.transfer_commands,
+    );
 
-    self.texture_commands.finish();
+    self.transfer_commands.finish();
 
     let queue = self.gpu.queue_mut(self.queue_index);
 
     unsafe {
       queue.submit(
         gfx_hal::Submission {
-          command_buffers: &[&self.texture_commands.buffer, &self.commands.buffer][..],
+          command_buffers: &[&self.transfer_commands.buffer, &self.commands.buffer][..],
           wait_semaphores: vec![(
             &self.frame_sync.backbuffer_semaphore,
             PipelineStage::COLOR_ATTACHMENT_OUTPUT,
@@ -150,7 +152,8 @@ impl Renderer {
       );
     }
 
-    self.presenter
+    self
+      .presenter
       .finish(&mut self.gpu, &self.frame_sync.render_semaphore);
   }
 
@@ -159,10 +162,8 @@ impl Renderer {
 
     let device = self.gpu.device();
 
-    self.texture_cache.destroy(device, &mut self.allocator);
-    self.texture_commands.destroy(device);
-
     self.presenter.destroy(device);
+    self.transfer_commands.destroy(device);
     self.commands.destroy(device);
 
     unsafe {
@@ -170,6 +171,7 @@ impl Renderer {
     }
 
     self.frame_sync.destroy(device);
+    self.textures.destroy(device, &mut self.allocator);
   }
 
   fn destroy_framebuffer(&mut self) {

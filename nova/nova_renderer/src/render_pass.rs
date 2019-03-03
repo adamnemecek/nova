@@ -2,16 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Backend, TextureFormat};
+use super::images::DeviceImageFormat;
+use super::Backend;
 use super::{Device, DeviceExt};
 
 pub type RenderPass = <Backend as gfx_hal::Backend>::RenderPass;
 
 pub fn create(device: &Device) -> RenderPass {
-  let format = TextureFormat::Bgra8Unorm;
+  const FORMAT: DeviceImageFormat = DeviceImageFormat::Bgra8Unorm;
 
   let color_attachment = gfx_hal::pass::Attachment {
-    format: Some(format),
+    format: Some(FORMAT),
     samples: 1,
     ops: gfx_hal::pass::AttachmentOps::new(
       gfx_hal::pass::AttachmentLoadOp::Clear,

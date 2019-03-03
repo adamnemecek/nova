@@ -5,7 +5,7 @@
 use super::Color;
 use nova_core::ecs;
 use nova_core::Engine;
-use nova_graphics::ImageSlice;
+use nova_graphics::images::ImageSlice;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Style {

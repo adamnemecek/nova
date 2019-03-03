@@ -1,5 +1,6 @@
+use nova::assets;
 use nova::el;
-use nova::graphics::{Image, ImageSlice};
+use nova::graphics::images::{self, ImageSlice};
 use nova::log;
 use nova::math::Rect;
 use nova::ui;
@@ -22,7 +23,7 @@ impl el::Element for Game {
             ..Default::default()
           },
           style: ui::Style {
-            bg_image: Some(self.image.clone()),
+            bg_image: Some(self.image),
             ..Default::default()
           },
         },
@@ -53,17 +54,25 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Create a new nova app.
   let mut app = nova::App::new();
 
+  let image_id = {
+    let assets = assets::read(app.resources());
+    let mut images = images::write(app.resources());
+    let path = "/do-it.jpg".into();
+
+    images.load_asset_at_path(&path, &assets)
+  };
+
   // Add a root `Game` element.
   app.add_element(Game {
-    image: ImageSlice::new(
-      Image::from_bytes(include_bytes!("../assets/do-it.jpg"))?,
-      Rect {
+    image: ImageSlice {
+      image_id,
+      rect: Rect {
         x1: 0.0,
         y1: 0.25,
         x2: 1.0,
         y2: 0.75,
       },
-    ),
+    },
   });
 
   // Run the app until exit.

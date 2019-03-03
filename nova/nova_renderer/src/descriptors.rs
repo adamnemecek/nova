@@ -8,8 +8,9 @@ mod pool;
 pub use self::layout::DescriptorLayout;
 pub use self::pool::DescriptorPool;
 
-use super::texture::{self, Texture, TextureLayout};
-use super::Backend;
+use crate::images::{DeviceImage, DeviceImageLayout};
+use crate::textures::TextureSampler;
+use crate::Backend;
 
 pub type DescriptorSet = <Backend as gfx_hal::Backend>::DescriptorSet;
 
@@ -36,19 +37,17 @@ impl DescriptorKind {
 
 #[derive(Debug)]
 pub enum Descriptor<'a> {
-  SampledTexture(&'a Texture, &'a texture::Sampler),
+  Texture(&'a DeviceImage, &'a TextureSampler),
 }
 
 impl<'a> From<&Descriptor<'a>> for gfx_hal::pso::Descriptor<'a, Backend> {
   fn from(desc: &Descriptor<'a>) -> Self {
     match *desc {
-      Descriptor::SampledTexture(texture, sampler) => {
-        gfx_hal::pso::Descriptor::CombinedImageSampler(
-          &texture.raw_view,
-          TextureLayout::ShaderReadOnlyOptimal,
-          sampler,
-        )
-      }
+      Descriptor::Texture(image, sampler) => gfx_hal::pso::Descriptor::CombinedImageSampler(
+        &image.raw_view,
+        DeviceImageLayout::ShaderReadOnlyOptimal,
+        sampler,
+      ),
     }
   }
 }

@@ -4,8 +4,8 @@
 
 use super::backend::Backend;
 use super::device::{Device, DeviceExt, QueueExt};
+use super::images::{self, DeviceImageFormat, RawDeviceImage, RawDeviceImageView};
 use super::sync::Semaphore;
-use super::texture::{self, RawTexture, RawTextureView, TextureFormat};
 use super::Gpu;
 use nova_math::Size;
 use nova_window::Window;
@@ -53,7 +53,8 @@ impl Presenter {
       }
 
       let result = unsafe {
-        self.swapchain
+        self
+          .swapchain
           .as_mut()
           .unwrap()
           .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_semaphore))
@@ -93,7 +94,8 @@ impl Presenter {
     let swapchain = self.swapchain.as_ref().expect("Swapchain not created.");
 
     let result = unsafe {
-      gpu.queue_mut(self.queue_index)
+      gpu
+        .queue_mut(self.queue_index)
         .present(Some((swapchain, backbuffer_index as u32)), Some(wait_for))
     };
 
@@ -103,7 +105,7 @@ impl Presenter {
   }
 
   fn create_swapchain(&mut self, gpu: &Gpu) {
-    const FORMAT: TextureFormat = TextureFormat::Bgra8Unorm;
+    const FORMAT: DeviceImageFormat = DeviceImageFormat::Bgra8Unorm;
 
     let (capabilities, _, _, _) = self.surface.compatibility(gpu.physical_device());
 
@@ -134,7 +136,8 @@ impl Presenter {
     };
 
     let (swapchain, backbuffers) = unsafe {
-      gpu.device()
+      gpu
+        .device()
         .create_swapchain(&mut self.surface, config, None)
         .expect("Could not create swapchain")
     };
@@ -143,13 +146,14 @@ impl Presenter {
     self.size = Size::new(extent.width, extent.height);
 
     match backbuffers {
-      gfx_hal::Backbuffer::Images(raw_images) => {
-        for raw_image in raw_images {
-          let raw_view = texture::create_view(gpu.device(), &raw_image, FORMAT);
+      gfx_hal::Backbuffer::Images(images) => {
+        for image in images {
+          let view = images::create_raw_view(gpu.device(), &image, FORMAT)
+            .expect("Could not create device image view");
 
           self.backbuffers.push(Backbuffer {
-            raw_image,
-            raw_view,
+            image,
+            view,
             size: self.size,
           });
         }
@@ -183,15 +187,15 @@ impl Presenter {
 
 pub struct Backbuffer {
   #[allow(dead_code)]
-  pub(crate) raw_image: RawTexture,
-  pub(crate) raw_view: RawTextureView,
+  image: RawDeviceImage,
+  pub(crate) view: RawDeviceImageView,
   pub(crate) size: Size<u32>,
 }
 
 impl Backbuffer {
   fn destroy(self, device: &Device) {
     unsafe {
-      device.destroy_image_view(self.raw_view);
+      device.destroy_image_view(self.view);
     }
   }
 }
