@@ -5,7 +5,9 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+nova_assets = { path = "../nova_assets" }
 nova_core = { path = "../nova_core" }
 nova_graphics = { path = "../nova_graphics" }
 nova_renderer = { path = "../nova_renderer" }
 nova_window = { path = "../nova_window" }
+rusttype = "0.7.5"

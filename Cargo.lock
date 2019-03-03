@@ -846,10 +846,12 @@ dependencies = [
 name = "nova_ui"
 version = "0.3.0"
 dependencies = [
+ "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
  "nova_renderer 0.3.0",
  "nova_window 0.3.0",
+ "rusttype 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
