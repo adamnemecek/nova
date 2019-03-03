@@ -9,7 +9,7 @@ pub use self::screen_rect::ScreenRect;
 pub use self::solve::SolveLayout;
 
 use nova_core::ecs;
-use nova_core::engine::{self, Engine};
+use nova_core::engine::{Engine, EngineEvent};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Layout {
@@ -60,5 +60,5 @@ impl Dimension {
 }
 
 pub fn setup(engine: &mut Engine) {
-  engine.on_event(engine::Event::TickEnding, SolveLayout);
+  engine.on_event(EngineEvent::TickEnding, SolveLayout);
 }

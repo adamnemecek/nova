@@ -11,8 +11,8 @@ pub use gfx_hal::image::ViewError as CreateViewError;
 use crate::alloc::{Allocator, Memory, MemoryBindError, MemoryKind};
 use crate::pipeline::MemoryBarrier;
 use crate::{Backend, Device, DeviceExt};
+use nova_core::math::Size;
 use nova_core::quick_error;
-use nova_math::Size;
 
 pub type RawDeviceImage = <Backend as gfx_hal::Backend>::Image;
 pub type RawDeviceImageView = <Backend as gfx_hal::Backend>::ImageView;

@@ -4,7 +4,7 @@
 
 use super::{Color, Screen};
 use nova_graphics::images::ImageSlice;
-use nova_math::Rect;
+use nova_core::math::Rect;
 use nova_renderer as renderer;
 
 pub struct Canvas<'a, 'b> {

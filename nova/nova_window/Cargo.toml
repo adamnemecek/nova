@@ -6,5 +6,4 @@ edition = "2018"
 
 [dependencies]
 nova_core = { path = "../nova_core" }
-nova_math = { path = "../nova_math" }
 winit = "0.18"

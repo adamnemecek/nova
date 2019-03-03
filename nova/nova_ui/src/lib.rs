@@ -15,7 +15,7 @@ pub use self::screen::Screen;
 pub use self::style::Style;
 pub use nova_graphics::Color4 as Color;
 
-use nova_core::Engine;
+use nova_core::engine::Engine;
 
 pub fn setup(engine: &mut Engine) {
   layout::setup(engine);

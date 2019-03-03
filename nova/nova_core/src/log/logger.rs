@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Color, ContextBuilder, Level, LevelFilter, PrettyLevel};
-use crate::SharedStr;
+use crate::shared_str::SharedStr;
 use chrono::{Datelike, Timelike};
 use std::fmt;
 use std::io::{self, Write};

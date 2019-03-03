@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::ImageId;
-use nova_math::Rect;
+use nova_core::math::Rect;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ImageSlice {

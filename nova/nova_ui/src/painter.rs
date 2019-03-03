@@ -10,8 +10,8 @@ use super::layout::ScreenRect;
 use super::{Color, Screen, Style};
 use nova_core::ecs;
 use nova_core::el::hierarchy::Hierarchy;
-use nova_core::engine;
-use nova_math::{Matrix4, Rect};
+use nova_core::engine::Resources;
+use nova_core::math::{Matrix4, Rect};
 use nova_renderer::{self as renderer, Render, Renderer};
 
 const DESCRIPTOR_TEXTURE: usize = 0;
@@ -57,7 +57,7 @@ impl Painter {
     Painter { pipeline }
   }
 
-  pub fn draw(&mut self, render: &mut Render, res: &engine::Resources) {
+  pub fn draw(&mut self, render: &mut Render, res: &Resources) {
     let screen = res.fetch::<Screen>();
     let mut canvas = Canvas::new(&screen, render, &self.pipeline);
 

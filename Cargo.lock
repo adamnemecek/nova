@@ -790,7 +790,6 @@ dependencies = [
  "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
- "nova_math 0.3.0",
  "nova_renderer 0.3.0",
  "nova_ui 0.3.0",
  "nova_window 0.3.0",
@@ -811,6 +810,8 @@ dependencies = [
  "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_more 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nalgebra 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -825,15 +826,6 @@ dependencies = [
  "image 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nova_assets 0.3.0",
  "nova_core 0.3.0",
- "nova_math 0.3.0",
-]
-
-[[package]]
-name = "nova_math"
-version = "0.3.0"
-dependencies = [
- "nalgebra 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -847,7 +839,6 @@ dependencies = [
  "glsl-to-spirv 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
- "nova_math 0.3.0",
  "nova_window 0.3.0",
 ]
 
@@ -857,7 +848,6 @@ version = "0.3.0"
 dependencies = [
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
- "nova_math 0.3.0",
  "nova_renderer 0.3.0",
  "nova_window 0.3.0",
 ]
@@ -867,7 +857,6 @@ name = "nova_window"
 version = "0.3.0"
 dependencies = [
  "nova_core 0.3.0",
- "nova_math 0.3.0",
  "winit 0.18.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

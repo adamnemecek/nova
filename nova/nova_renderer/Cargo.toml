@@ -9,7 +9,6 @@ gfx-hal = "0.1"
 glsl-to-spirv = "0.1"
 nova_core = { path = "../nova_core" }
 nova_graphics = { path = "../nova_graphics" }
-nova_math = { path = "../nova_math" }
 nova_window = { path = "../nova_window" }
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]

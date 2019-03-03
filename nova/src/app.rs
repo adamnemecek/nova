@@ -4,7 +4,7 @@
 
 use super::{assets, graphics};
 use nova_core::clock;
-use nova_core::Engine;
+use nova_core::engine::Engine;
 use nova_renderer::Renderer;
 use nova_ui as ui;
 use nova_window::{self as window, Window};

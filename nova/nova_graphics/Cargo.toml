@@ -8,4 +8,3 @@ edition = "2018"
 image = "0.21"
 nova_assets = { path = "../nova_assets" }
 nova_core = { path = "../nova_core" }
-nova_math = { path = "../nova_math" }

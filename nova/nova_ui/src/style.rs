@@ -4,7 +4,7 @@
 
 use super::Color;
 use nova_core::ecs;
-use nova_core::Engine;
+use nova_core::engine::Engine;
 use nova_graphics::images::ImageSlice;
 
 #[derive(Debug, PartialEq, Clone)]

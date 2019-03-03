@@ -5,8 +5,8 @@
 use super::{ImageError, ImageFormat};
 use ::image::RgbaImage;
 use nova_core::ecs;
+use nova_core::math::Size;
 use nova_core::quick_error;
-use nova_math::Size;
 use std::fs::File;
 use std::io::{self, BufReader};
 use std::path::Path;

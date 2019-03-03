@@ -9,6 +9,8 @@ chrono = "0.4"
 crossbeam = "0.7"
 derive_more = "0.14"
 log = { version = "0.4", features = ["std"] }
+nalgebra = "0.17"
+num-traits = "0.2"
 quick-error = "1.2"
 rayon = "1.0"
 shrev = "1.0"

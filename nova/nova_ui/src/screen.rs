@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use nova_core::ecs;
-use nova_core::engine::{self, Engine};
-use nova_math::{Matrix4, Size};
+use nova_core::engine::{Engine, EngineEvent};
+use nova_core::math::{Matrix4, Size};
 use nova_window::Window;
 
 #[derive(Debug)]
@@ -67,5 +67,5 @@ pub fn setup(engine: &mut Engine) {
     ecs::System::run(&mut update, ecs::SystemData::fetch(engine.resources()));
   }
 
-  engine.on_event(engine::Event::TickStarted, update);
+  engine.on_event(EngineEvent::TickStarted, update);
 }

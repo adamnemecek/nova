@@ -6,7 +6,7 @@ use super::{Dimension, Layout, ScreenRect};
 use crate::Screen;
 use nova_core::ecs;
 use nova_core::el;
-use nova_math::{Point2, Rect, Size};
+use nova_core::math::{Point2, Rect, Size};
 
 #[derive(Debug)]
 pub struct SolveLayout;

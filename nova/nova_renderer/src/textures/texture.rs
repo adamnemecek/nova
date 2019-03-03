@@ -7,7 +7,7 @@ use crate::alloc::Allocator;
 use crate::descriptors::{Descriptor, DescriptorPool, DescriptorSet};
 use crate::images::{DeviceImage, DeviceImageFormat};
 use crate::Device;
-use nova_math::Size;
+use nova_core::math::Size;
 
 #[derive(Debug)]
 pub struct Texture {

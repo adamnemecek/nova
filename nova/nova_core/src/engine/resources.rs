@@ -3,5 +3,5 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub use specs::shred::MetaTable;
-pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
+pub use specs::shred::{Fetch, FetchMut};
 pub use specs::shred::{Resource, Resources};

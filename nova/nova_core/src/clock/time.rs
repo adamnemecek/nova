@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Duration, Instant};
-use crate::engine;
+use crate::engine::Resources;
 
 #[derive(Debug)]
 pub struct Time {
@@ -12,7 +12,7 @@ pub struct Time {
 }
 
 impl Time {
-  pub fn setup(res: &mut engine::Resources) {
+  pub fn setup(res: &mut Resources) {
     res.entry().or_insert_with(|| Time {
       delta: Duration::ZERO,
       max_delta: Duration::from_hz(20),

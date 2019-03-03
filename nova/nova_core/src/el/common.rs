@@ -6,7 +6,7 @@ mod receive;
 
 pub use self::receive::Receive;
 
-use crate::Engine;
+use crate::engine::Engine;
 
 pub fn setup(engine: &mut Engine) {
   receive::setup(engine);

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use nova_core::ecs;
-use nova_math::Rect;
+use nova_core::math::Rect;
 use std::ops::{Deref, DerefMut};
 
 #[repr(transparent)]

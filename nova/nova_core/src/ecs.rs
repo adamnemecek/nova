@@ -22,16 +22,18 @@ pub use specs::world::{EntitiesRes as Entities, Entity};
 pub use specs::BitSet;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
+use crate::engine::Resources;
+
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
 
-pub fn register<T: Component>(res: &mut engine::Resources)
+pub fn register<T: Component>(res: &mut Resources)
 where
   T::Storage: Default,
 {
   register_with_storage::<_, T>(res, Default::default);
 }
 
-pub fn register_with_storage<F, T>(res: &mut engine::Resources, storage: F)
+pub fn register_with_storage<F, T>(res: &mut Resources, storage: F)
 where
   F: FnOnce() -> T::Storage,
   T: Component,
@@ -41,24 +43,24 @@ where
     .or_insert_with(move || storage::MaskedStorage::<T>::new(storage()));
 
   res
-    .fetch_mut::<engine::MetaTable<storage::AnyStorage>>()
+    .fetch_mut::<engine::resources::MetaTable<storage::AnyStorage>>()
     .register(&*res.fetch::<storage::MaskedStorage<T>>());
 }
 
-pub fn read_components<T>(res: &engine::Resources) -> ReadComponents<T>
+pub fn read_components<T>(res: &Resources) -> ReadComponents<T>
 where
   T: Component,
 {
   ReadComponents::fetch(res)
 }
 
-pub fn write_components<T>(res: &engine::Resources) -> WriteComponents<T>
+pub fn write_components<T>(res: &Resources) -> WriteComponents<T>
 where
   T: Component,
 {
   WriteComponents::fetch(res)
 }
 
-pub fn entities(res: &engine::Resources) -> engine::FetchResource<Entities> {
-  res.fetch()
+pub fn entities(res: &Resources) -> ReadEntities {
+  SystemData::fetch(res)
 }

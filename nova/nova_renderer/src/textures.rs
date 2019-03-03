@@ -15,10 +15,10 @@ use crate::{Backend, Device, DeviceExt};
 use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
-use nova_core::engine;
+use nova_core::engine::Resources;
+use nova_core::math::Size;
 use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
-use nova_math::Size;
 use std::collections::HashMap;
 use std::ops::Range;
 
@@ -135,7 +135,7 @@ impl Textures {
 
   pub(crate) fn flush_changes(
     &mut self,
-    res: &engine::Resources,
+    res: &Resources,
     device: &Device,
     allocator: &mut Allocator,
     cmd: &mut Commands,

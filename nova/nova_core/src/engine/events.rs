@@ -7,13 +7,13 @@ use super::{Resources, ThreadPool};
 use std::iter;
 
 #[repr(usize)]
-pub enum Event {
+pub enum EngineEvent {
   TickStarted,
   ClockTimeUpdated,
   TickEnding,
 }
 
-const EVENT_COUNT: usize = Event::TickEnding as usize + 1;
+const EVENT_COUNT: usize = EngineEvent::TickEnding as usize + 1;
 
 pub enum EventHandler {
   FnMut(Box<dyn FnMut(&mut Resources, &ThreadPool)>),
@@ -36,11 +36,11 @@ impl EventHandlerList {
     EventHandlerList(iter::repeat_with(Vec::new).take(EVENT_COUNT).collect())
   }
 
-  pub fn add(&mut self, event: Event, handler: EventHandler) {
+  pub fn add(&mut self, event: EngineEvent, handler: EventHandler) {
     self.0[event as usize].push(handler);
   }
 
-  pub fn run(&mut self, event: Event, res: &mut Resources, pool: &ThreadPool) {
+  pub fn run(&mut self, event: EngineEvent, res: &mut Resources, pool: &ThreadPool) {
     for handler in &mut self.0[event as usize] {
       handler.run(res, pool);
     }

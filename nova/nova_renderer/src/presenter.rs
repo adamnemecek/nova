@@ -7,7 +7,7 @@ use super::device::{Device, DeviceExt, QueueExt};
 use super::images::{self, DeviceImageFormat, RawDeviceImage, RawDeviceImageView};
 use super::sync::Semaphore;
 use super::Gpu;
-use nova_math::Size;
+use nova_core::math::Size;
 use nova_window::Window;
 use std::cmp;
 

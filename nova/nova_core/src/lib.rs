@@ -7,6 +7,7 @@ pub mod ecs;
 pub mod el;
 pub mod engine;
 pub mod log;
+pub mod math;
 
 pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};
@@ -14,8 +15,6 @@ pub mod events {
 
 mod shared_str;
 
-pub use self::engine::Engine;
-pub use self::shared_str::SharedStr;
 pub use crossbeam;
 pub use quick_error::quick_error;
 pub use specs::{self, shred};

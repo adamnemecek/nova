@@ -6,8 +6,8 @@ mod events;
 mod options;
 mod update;
 
-use nova_core::engine::{self, Engine};
-use nova_math::Size;
+use nova_core::engine::{Engine, EngineEvent};
+use nova_core::math::Size;
 use winit::Window as RawWindow;
 
 pub use self::events::*;
@@ -31,11 +31,8 @@ impl Window {
       .with_title(options.title)
       .with_resizable(false)
       .with_dimensions(
-        winit::dpi::PhysicalSize::new(
-          options.size.width.into(),
-          options.size.height.into(),
-        )
-        .to_logical(events_loop.get_primary_monitor().get_hidpi_factor()),
+        winit::dpi::PhysicalSize::new(options.size.width.into(), options.size.height.into())
+          .to_logical(events_loop.get_primary_monitor().get_hidpi_factor()),
       )
       .build(&events_loop)
       .expect("Could not create window");
@@ -48,7 +45,7 @@ impl Window {
     engine.resources_mut().insert(window);
     engine.resources_mut().insert(Events::default());
 
-    engine.on_event(engine::Event::TickStarted, UpdateWindow { events_loop });
+    engine.on_event(EngineEvent::TickStarted, UpdateWindow { events_loop });
   }
 
   pub fn raw(&self) -> &RawWindow {

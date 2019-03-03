@@ -19,7 +19,7 @@ pub use self::spec::{spec, Spec};
 
 use self::instance::Instance;
 use crate::ecs;
-use crate::Engine;
+use crate::engine::Engine;
 
 pub fn setup(engine: &mut Engine) {
   engine.resources_mut().insert(Hierarchy::new());

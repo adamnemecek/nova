@@ -5,7 +5,7 @@
 use super::device::{Device, DeviceExt};
 use super::presenter::Backbuffer;
 use super::{Backend, RenderPass};
-use nova_math::Size;
+use nova_core::math::Size;
 
 pub type RawFramebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
 
