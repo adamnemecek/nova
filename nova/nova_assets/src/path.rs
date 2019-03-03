@@ -11,7 +11,7 @@ pub struct AssetPath {
 
 impl From<String> for AssetPath {
   fn from(mut string: String) -> Self {
-    if !string.starts_with('/') && !string.starts_with("./") {
+    if !string.starts_with('/') && !string.starts_with("./") && !string.starts_with("../") {
       string.insert_str(0, "./");
     }
 

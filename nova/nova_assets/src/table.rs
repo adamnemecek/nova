@@ -16,6 +16,8 @@ impl AssetTable {
   }
 
   pub fn get(&self, path: &AssetPath) -> Option<AssetId> {
+    debug_assert!(path.has_root(), "The given asset path cannot be relative.");
+
     self.entries.get(path).cloned()
   }
 
