@@ -34,3 +34,8 @@ To set this up, add a remote for Nova:
 Changes to files in the `nova` folder can then be published with a subtree push:
 
     git subtree push nova master --prefix nova
+
+There is also a Makefile target for pushing to this repository and the Nova
+repository:
+
+    make push-all

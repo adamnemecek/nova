@@ -15,4 +15,8 @@ test:
 	@cd nova && cargo test --all
 	@cargo test --all
 
-.PHONY: build clean test
+push-all:
+	@git push
+	@git subtree push nova master --prefix nova
+
+.PHONY: build clean test push-all
