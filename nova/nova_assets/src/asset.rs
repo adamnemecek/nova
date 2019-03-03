@@ -3,10 +3,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use nova_core::ecs;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug, Default)]
-pub struct Asset;
+#[derive(Debug)]
+pub struct Asset {
+  pub(crate) fs_path: PathBuf,
+}
+
+impl Asset {
+  pub fn fs_path(&self) -> &Path {
+    &self.fs_path
+  }
+}
 
 impl ecs::Component for Asset {
-  type Storage = ecs::NullStorage<Self>;
+  type Storage = ecs::HashMapStorage<Self>;
 }

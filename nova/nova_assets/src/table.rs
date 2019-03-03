@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{AssetId, AssetPath};
+use nova_core::engine::Resources;
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]

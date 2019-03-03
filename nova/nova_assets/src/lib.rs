@@ -81,7 +81,11 @@ fn create_assets(
     } else if file_type.is_file() && !table.has(asset_path) {
       let entity = entities.create();
 
-      assets.insert(entity, Asset).unwrap();
+      let asset = Asset {
+        fs_path: entry.path(),
+      };
+
+      assets.insert(entity, asset).unwrap();
       table.insert(asset_path.clone(), AssetId(entity));
 
       debug!("Created asset {:?} at path {:?}.", entity.id(), asset_path);

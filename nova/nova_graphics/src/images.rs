@@ -5,14 +5,16 @@
 mod image;
 mod read;
 mod slice;
+mod write;
 
 pub use self::image::Image;
 pub use self::read::ReadImages;
 pub use self::slice::ImageSlice;
-pub use ::image::ImageError;
+pub use self::write::WriteImages;
+pub use ::image::{ImageError, ImageFormat};
 
-use nova_assets::AssetId;
 use nova_core::ecs;
+use nova_core::Engine;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageId(ecs::Entity);
@@ -23,8 +25,6 @@ impl From<ImageId> for ecs::Entity {
   }
 }
 
-impl From<AssetId> for ImageId {
-  fn from(id: AssetId) -> ImageId {
-    ImageId(id.into())
-  }
+pub fn setup(engine: &mut Engine) {
+  ecs::register::<Image>(engine.resources_mut());
 }

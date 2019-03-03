@@ -5,7 +5,6 @@
 use super::{Image, ImageId};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
-use std::ops::Deref;
 
 #[derive(SystemData)]
 pub struct ReadImages<'a>(ecs::ReadComponents<'a, Image>);
@@ -13,13 +12,5 @@ pub struct ReadImages<'a>(ecs::ReadComponents<'a, Image>);
 impl<'a> ReadImages<'a> {
   pub fn get(&self, id: impl Into<ImageId>) -> Option<&Image> {
     self.0.get(id.into().into())
-  }
-}
-
-impl<'a> Deref for ReadImages<'a> {
-  type Target = ecs::ReadComponents<'a, Image>;
-
-  fn deref(&self) -> &Self::Target {
-    &self.0
   }
 }

@@ -117,8 +117,6 @@ impl Renderer {
 
     Render {
       cmd: &mut self.commands,
-      device: self.gpu.device(),
-      allocator: &mut self.allocator,
       textures: &mut self.textures,
     }
   }
@@ -129,9 +127,12 @@ impl Renderer {
 
     self.transfer_commands.begin();
 
-    self
-      .textures
-      .record_pending_changes(res, &mut self.transfer_commands);
+    self.textures.flush_changes(
+      res,
+      self.gpu.device(),
+      &mut self.allocator,
+      &mut self.transfer_commands,
+    );
 
     self.transfer_commands.finish();
 

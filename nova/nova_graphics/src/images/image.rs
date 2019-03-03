@@ -2,10 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::ImageError;
+use super::{ImageError, ImageFormat};
 use ::image::RgbaImage;
 use nova_core::ecs;
+use nova_core::quick_error;
 use nova_math::Size;
+use std::fs::File;
+use std::io::{self, BufReader};
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct Image {
@@ -23,6 +27,37 @@ impl From<RgbaImage> for Image {
 }
 
 impl Image {
+  pub fn load(path: &Path) -> Result<Self, ImageLoadError> {
+    let ext = path
+      .extension()
+      .and_then(|s| s.to_str())
+      .unwrap_or("")
+      .to_ascii_lowercase();
+
+    let format = match &ext[..] {
+      "jpg" | "jpeg" => ImageFormat::JPEG,
+      "png" => ImageFormat::PNG,
+      "gif" => ImageFormat::GIF,
+      "webp" => ImageFormat::WEBP,
+      "tif" | "tiff" => ImageFormat::TIFF,
+      "tga" => ImageFormat::TGA,
+      "bmp" => ImageFormat::BMP,
+      "ico" => ImageFormat::ICO,
+      "hdr" => ImageFormat::HDR,
+      "pbm" | "pam" | "ppm" | "pgm" => ImageFormat::PNM,
+
+      _ => {
+        return Err(ImageLoadError::UnknownExtension(ext));
+      }
+    };
+
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let image = image::load(reader, format)?;
+
+    Ok(Self::from(image.to_rgba()))
+  }
+
   pub fn from_bytes(bytes: &[u8]) -> Result<Self, ImageError> {
     let data = image::load_from_memory(bytes)?;
 
@@ -42,43 +77,20 @@ impl ecs::Component for Image {
   type Storage = ecs::HashMapStorage<Self>;
 }
 
-/*
-impl assets::Load for Image {
-  fn load(path: PathBuf, fs: &assets::OverlayFs) -> assets::LoadResult<Self> {
-    let ext = path
-      .extension()
-      .and_then(|s| s.to_str())
-      .map_or("".to_string(), |s| s.to_ascii_lowercase());
-
-    let format = match &ext[..] {
-      "jpg" | "jpeg" => ImageFormat::JPEG,
-      "png" => ImageFormat::PNG,
-      "gif" => ImageFormat::GIF,
-      "webp" => ImageFormat::WEBP,
-      "tif" | "tiff" => ImageFormat::TIFF,
-      "tga" => ImageFormat::TGA,
-      "bmp" => ImageFormat::BMP,
-      "ico" => ImageFormat::ICO,
-      "hdr" => ImageFormat::HDR,
-      "pbm" | "pam" | "ppm" | "pgm" => ImageFormat::PNM,
-      format => {
-        return Err(assets::LoadError::Other(Box::new(Error::UnsupportedError(
-          format!("Image format image/{:?} is not supported.", format),
-        ))));
-      }
-    };
-
-    let file = fs.open(path)?;
-    let reader = BufReader::new(file);
-
-    let image = image::load(reader, format)
-      .map_err(|err| match err {
-        Error::IoError(err) => assets::LoadError::Io(err),
-        _ => assets::LoadError::Other(Box::new(err)),
-      })?
-      .to_rgba();
-
-    Ok(Self::from_rgba(image))
+quick_error! {
+  #[derive(Debug)]
+  pub enum ImageLoadError {
+    Io(err: io::Error) {
+      from()
+      display("io error: {}", err)
+    }
+    UnknownExtension(ext: String) {
+      from()
+      display("unknown file extension {:?}", ext)
+    }
+    Image(err: ::image::ImageError) {
+      from()
+      display("{}", err)
+    }
   }
 }
-*/

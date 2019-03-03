@@ -33,23 +33,33 @@ impl<'a, 'b> Canvas<'a, 'b> {
       .render
       .push_constant(&self.pipeline, super::PUSH_CONST_TINT, &color);
 
-    if let Some(image_slice) = image_slice {
-      self.render.bind_image(
-        &self.pipeline,
-        super::DESCRIPTOR_TEXTURE,
-        image_slice.image_id,
-      );
-    } else {
-      self
-        .render
-        .bind_solid_texture(&self.pipeline, super::DESCRIPTOR_TEXTURE);
-    }
+    match image_slice {
+      Some(slice) => {
+        let texture_id = self.render.textures_mut().cache_image(slice.image_id);
 
-    self.render.push_constant(
-      &self.pipeline,
-      super::PUSH_CONST_TEXTURE_RECT,
-      image_slice.map(|s| &s.rect).unwrap_or(&Rect::unit()),
-    );
+        self
+          .render
+          .bind_texture(&self.pipeline, super::DESCRIPTOR_TEXTURE, texture_id);
+
+        self
+          .render
+          .push_constant(&self.pipeline, super::PUSH_CONST_TEXTURE_RECT, &slice.rect);
+      }
+
+      None => {
+        self.render.bind_texture(
+          &self.pipeline,
+          super::DESCRIPTOR_TEXTURE,
+          self.render.textures().solid_id(),
+        );
+
+        self.render.push_constant(
+          &self.pipeline,
+          super::PUSH_CONST_TEXTURE_RECT,
+          &Rect::unit(),
+        );
+      }
+    };
 
     self.render.draw(0..4);
   }

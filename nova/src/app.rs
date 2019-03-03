@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::assets;
+use super::{assets, graphics};
 use nova_core::clock;
 use nova_core::Engine;
 use nova_renderer::Renderer;
@@ -27,6 +27,7 @@ impl App {
     let mut engine = Engine::new();
 
     assets::setup(&mut engine, Default::default());
+    graphics::setup(&mut engine);
     Window::setup(&mut engine, Default::default());
     ui::setup(&mut engine);
 
