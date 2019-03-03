@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Color, Screen};
-use nova_graphics::images::ImageSlice;
 use nova_core::math::Rect;
+use nova_graphics::images::ImageSlice;
 use nova_renderer as renderer;
 
 pub struct Canvas<'a, 'b> {
@@ -50,7 +50,7 @@ impl<'a, 'b> Canvas<'a, 'b> {
         self.render.bind_texture(
           &self.pipeline,
           super::DESCRIPTOR_TEXTURE,
-          self.render.textures().solid_id(),
+          renderer::TextureId::SOLID,
         );
 
         self.render.push_constant(

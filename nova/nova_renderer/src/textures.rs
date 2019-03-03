@@ -27,6 +27,13 @@ pub(crate) type TextureSampler = <Backend as gfx_hal::Backend>::Sampler;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TextureId(u64);
 
+impl TextureId {
+  pub const TRANSPARENT: Self = Self(0);
+  pub const SOLID: Self = Self(1);
+
+  const FIRST_AVAILABLE: Self = Self(2);
+}
+
 pub struct Textures {
   sampler: TextureSampler,
   descriptor_pool: DescriptorPool,
@@ -67,7 +74,7 @@ impl Textures {
       sampler,
       descriptor_pool,
       table: HashMap::new(),
-      next_id: TextureId(2),
+      next_id: TextureId::FIRST_AVAILABLE,
       image_cache: HashMap::new(),
       staging_buffer,
       staging_offset: 0,
@@ -78,8 +85,8 @@ impl Textures {
       ],
     };
 
-    textures.insert_new(device, allocator, TextureId(0), Size::new(1, 1));
-    textures.insert_new(device, allocator, TextureId(1), Size::new(1, 1));
+    textures.insert_new(device, allocator, TextureId::TRANSPARENT, Size::new(1, 1));
+    textures.insert_new(device, allocator, TextureId::SOLID, Size::new(1, 1));
 
     textures
   }
@@ -88,20 +95,12 @@ impl Textures {
     self.descriptor_pool.layout()
   }
 
-  pub fn transparent_id(&self) -> TextureId {
-    TextureId(0)
-  }
-
   pub fn transparent(&self) -> &Texture {
-    &self.table[&self.transparent_id()]
-  }
-
-  pub fn solid_id(&self) -> TextureId {
-    TextureId(1)
+    &self.table[&TextureId::TRANSPARENT]
   }
 
   pub fn solid(&self) -> &Texture {
-    &self.table[&self.solid_id()]
+    &self.table[&TextureId::SOLID]
   }
 
   pub fn get(&self, id: TextureId) -> Option<&Texture> {

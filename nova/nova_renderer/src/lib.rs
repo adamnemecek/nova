@@ -26,7 +26,7 @@ pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 pub use self::render::Render;
 pub use self::render_pass::RenderPass;
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
-pub use self::textures::Textures;
+pub use self::textures::{Textures, TextureId};
 
 use self::alloc::Allocator;
 use self::device::{QueueExt, QueueFamilyExt};
