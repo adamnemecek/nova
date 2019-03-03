@@ -5,19 +5,15 @@
 use super::{Color, Screen};
 use nova_core::math::Rect;
 use nova_graphics::images::ImageSlice;
-use nova_renderer as renderer;
+use nova_renderer::{Pipeline, Render, TextureId};
 
 pub struct Canvas<'a, 'b> {
-  render: &'a mut renderer::Render<'b>,
-  pipeline: &'a renderer::Pipeline,
+  render: &'a mut Render<'b>,
+  pipeline: &'a Pipeline,
 }
 
 impl<'a, 'b> Canvas<'a, 'b> {
-  pub(crate) fn new(
-    screen: &Screen,
-    render: &'a mut renderer::Render<'b>,
-    pipeline: &'a renderer::Pipeline,
-  ) -> Self {
+  pub(crate) fn new(screen: &Screen, render: &'a mut Render<'b>, pipeline: &'a Pipeline) -> Self {
     render.bind_pipeline(pipeline);
     render.push_constant(pipeline, super::PUSH_CONST_TRANSFORM, screen.projection());
 
@@ -47,11 +43,9 @@ impl<'a, 'b> Canvas<'a, 'b> {
       }
 
       None => {
-        self.render.bind_texture(
-          &self.pipeline,
-          super::DESCRIPTOR_TEXTURE,
-          renderer::TextureId::SOLID,
-        );
+        self
+          .render
+          .bind_texture(&self.pipeline, super::DESCRIPTOR_TEXTURE, TextureId::SOLID);
 
         self.render.push_constant(
           &self.pipeline,
