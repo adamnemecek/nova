@@ -46,7 +46,7 @@ impl Painter {
     let pipeline = renderer::PipelineBuilder::new()
       .set_vertex_shader(&vertex_shader)
       .set_fragment_shader(&fragment_shader)
-      .add_descriptor_layout(renderer.texture_descriptor_layout().clone())
+      .add_descriptor_layout(renderer.textures().descriptor_layout().clone())
       .add_push_constant::<Matrix4<f32>>()
       .add_push_constant::<Rect<f32>>()
       .add_push_constant::<Rect<f32>>()

@@ -2,16 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::buffer::Buffer;
-use super::device::{self, Device, DeviceExt, QueueFamilyExt};
-use super::pipeline::{MemoryBarrier, PipelineStage};
-use super::texture::{Texture, TextureLayout};
-use super::{Backend, Framebuffer, RenderPass};
-use std::ops::{Deref, DerefMut};
-
 pub use gfx_hal::command::RawCommandBuffer as CommandBufferExt;
 pub use gfx_hal::command::RawLevel as CommandLevel;
 pub use gfx_hal::pool::RawCommandPool as CommandPoolExt;
+
+use super::buffer::Buffer;
+use super::device::{self, Device, DeviceExt, QueueFamilyExt};
+use super::images::{DeviceImage, DeviceImageLayout};
+use super::pipeline::{MemoryBarrier, PipelineStage};
+use super::{Backend, Framebuffer, RenderPass};
+use nova_graphics::Color4;
+use std::iter;
+use std::ops::{Deref, DerefMut};
 
 pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
@@ -58,14 +60,35 @@ impl Commands {
     }
   }
 
-  pub fn copy_buffer_to_texture(&mut self, buffer: &Buffer, offset: usize, texture: &Texture) {
-    let texture_size = texture.size();
+  pub fn clear_image(&mut self, image: &DeviceImage, color: Color4) {
+    unsafe {
+      self.buffer.clear_image(
+        &image.raw,
+        DeviceImageLayout::TransferDstOptimal,
+        gfx_hal::command::ClearColorRaw {
+          float32: [color.r, color.g, color.b, color.a],
+        },
+        gfx_hal::command::ClearDepthStencilRaw {
+          depth: 0.0,
+          stencil: 0,
+        },
+        iter::once(gfx_hal::image::SubresourceRange {
+          aspects: gfx_hal::format::Aspects::COLOR,
+          levels: 0..1,
+          layers: 0..1,
+        }),
+      );
+    }
+  }
+
+  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, offset: usize, image: &DeviceImage) {
+    let image_size = image.size();
 
     unsafe {
       self.buffer.copy_buffer_to_image(
         &buffer.raw,
-        &texture.raw,
-        TextureLayout::TransferDstOptimal,
+        &image.raw,
+        DeviceImageLayout::TransferDstOptimal,
         &[gfx_hal::command::BufferImageCopy {
           buffer_offset: offset as u64,
           buffer_width: 0,
@@ -77,8 +100,8 @@ impl Commands {
           },
           image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
           image_extent: gfx_hal::image::Extent {
-            width: texture_size.width,
-            height: texture_size.height,
+            width: image_size.width,
+            height: image_size.height,
             depth: 1,
           },
         }],

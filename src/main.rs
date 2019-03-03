@@ -1,5 +1,5 @@
 use nova::el;
-use nova::graphics::{Image, ImageSlice};
+use nova::graphics::images::{ImageId, ImageSlice};
 use nova::log;
 use nova::math::Rect;
 use nova::ui;

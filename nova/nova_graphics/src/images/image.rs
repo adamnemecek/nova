@@ -2,51 +2,44 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod slice;
-
-pub use self::slice::ImageSlice;
-pub use image::{ImageError as Error, ImageFormat};
-
-use image::RgbaImage;
+use super::ImageError;
+use ::image::RgbaImage;
+use nova_core::ecs;
 use nova_math::Size;
-use std::sync::Arc;
-
-#[derive(Debug, Clone)]
-pub struct Image(Arc<Inner>);
 
 #[derive(Debug)]
-struct Inner {
-  bytes: Vec<u8>,
+pub struct Image {
+  bytes: Box<[u8]>,
   size: Size<u32>,
 }
 
-impl Image {
-  pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
-    let data = image::load_from_memory(bytes)?;
-
-    Ok(Self::from_rgba(data.to_rgba()))
-  }
-
-  fn from_rgba(image: RgbaImage) -> Self {
-    Image(Arc::new(Inner {
-      size: image.dimensions().into(),
-      bytes: image.into_vec(),
-    }))
-  }
-
-  pub fn bytes(&self) -> &[u8] {
-    &self.0.bytes
-  }
-
-  pub fn size(&self) -> Size<u32> {
-    self.0.size
+impl From<RgbaImage> for Image {
+  fn from(rgba: RgbaImage) -> Self {
+    Image {
+      size: rgba.dimensions().into(),
+      bytes: rgba.into_vec().into_boxed_slice(),
+    }
   }
 }
 
-impl PartialEq for Image {
-  fn eq(&self, other: &Self) -> bool {
-    Arc::ptr_eq(&self.0, &other.0)
+impl Image {
+  pub fn from_bytes(bytes: &[u8]) -> Result<Self, ImageError> {
+    let data = image::load_from_memory(bytes)?;
+
+    Ok(Self::from(data.to_rgba()))
   }
+
+  pub fn bytes(&self) -> &[u8] {
+    &self.bytes
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.size
+  }
+}
+
+impl ecs::Component for Image {
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 /*

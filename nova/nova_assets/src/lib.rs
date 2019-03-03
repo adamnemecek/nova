@@ -23,8 +23,14 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AssetId(ecs::Entity);
+
+impl From<AssetId> for ecs::Entity {
+  fn from(id: AssetId) -> Self {
+    id.0
+  }
+}
 
 pub fn setup(engine: &mut Engine, roots: AssetRoots) {
   ecs::register::<Asset>(engine.resources_mut());

@@ -85,7 +85,7 @@ impl App {
 
     self.ui_painter.draw(&mut render, self.engine.resources());
 
-    self.renderer.finish();
+    self.renderer.finish(self.engine.resources());
   }
 }
 

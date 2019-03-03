@@ -20,7 +20,7 @@ impl Framebuffer {
       device
         .create_framebuffer(
           &render_pass,
-          Some(&backbuffer.raw_view),
+          Some(&backbuffer.view),
           gfx_hal::image::Extent {
             width: backbuffer.size.width,
             height: backbuffer.size.height,

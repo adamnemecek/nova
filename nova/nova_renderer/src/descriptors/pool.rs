@@ -14,7 +14,7 @@ pub type RawDescriptorPool = <Backend as gfx_hal::Backend>::DescriptorPool;
 #[derive(Debug)]
 pub struct DescriptorPool {
   pub(crate) raw: RawDescriptorPool,
-  pub(crate) layout: DescriptorLayout,
+  layout: DescriptorLayout,
 }
 
 impl DescriptorPool {
@@ -32,6 +32,10 @@ impl DescriptorPool {
     };
 
     DescriptorPool { raw, layout }
+  }
+
+  pub fn layout(&self) -> &DescriptorLayout {
+    &self.layout
   }
 
   pub fn alloc(&mut self, device: &Device, descriptors: &[Descriptor]) -> DescriptorSet {

@@ -2,18 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::commands::{CommandBufferExt, Commands};
-use super::pipeline::Pipeline;
-use super::texture::TextureCache;
-use super::{Allocator, Device};
-use nova_graphics as graphics;
+use crate::alloc::Allocator;
+use crate::commands::{CommandBufferExt, Commands};
+use crate::device::Device;
+use crate::pipeline::Pipeline;
+use crate::textures::{TextureId, Textures};
+use nova_graphics::images::ImageId;
 use std::iter;
 
 pub struct Render<'a> {
   pub(crate) cmd: &'a mut Commands,
   pub(crate) device: &'a Device,
   pub(crate) allocator: &'a mut Allocator,
-  pub(crate) texture_cache: &'a mut TextureCache,
+  pub(crate) textures: &'a mut Textures,
 }
 
 impl<'a> Render<'a> {
@@ -23,20 +24,8 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn bind_texture_or_default(
-    &mut self,
-    pipeline: &Pipeline,
-    binding: usize,
-    texture: Option<&graphics::Image>,
-  ) {
-    match texture {
-      Some(texture) => self.bind_texture(pipeline, binding, texture),
-      None => self.bind_default_texture(pipeline, binding),
-    }
-  }
-
-  pub fn bind_default_texture(&mut self, pipeline: &Pipeline, binding: usize) {
-    let descriptor_set = self.texture_cache.get_default();
+  pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, id: TextureId) {
+    let descriptor_set = &self.textures.get(id).descriptor_set;
 
     unsafe {
       self.cmd.buffer.bind_graphics_descriptor_sets(
@@ -48,10 +37,21 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, texture: &graphics::Image) {
-    let descriptor_set =
-      self.texture_cache
-        .get_cached(texture, &self.device, &mut self.allocator);
+  pub fn bind_solid_texture(&mut self, pipeline: &Pipeline, binding: usize) {
+    let descriptor_set = &self.textures.solid().descriptor_set;
+
+    unsafe {
+      self.cmd.buffer.bind_graphics_descriptor_sets(
+        &pipeline.raw_layout,
+        binding,
+        iter::once(descriptor_set),
+        &[],
+      );
+    }
+  }
+
+  pub fn bind_image(&mut self, pipeline: &Pipeline, binding: usize, id: ImageId) {
+    let descriptor_set = &self.textures.get_from_image_cached(id).descriptor_set;
 
     unsafe {
       self.cmd.buffer.bind_graphics_descriptor_sets(
