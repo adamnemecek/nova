@@ -11,3 +11,4 @@ nova_graphics = { path = "../nova_graphics" }
 nova_renderer = { path = "../nova_renderer" }
 nova_window = { path = "../nova_window" }
 rusttype = "0.7.5"
+glyph_brush_layout = "0.1.5"
