@@ -10,6 +10,7 @@ use nova_window::Window;
 #[derive(Debug)]
 pub struct Screen {
   size: Size<f32>,
+  pixels_per_unit: f32,
   projection: Matrix4<f32>,
 }
 
@@ -17,6 +18,7 @@ impl Screen {
   fn new() -> Self {
     Screen {
       size: Size::default(),
+      pixels_per_unit: 1.0,
       projection: Matrix4::identity(),
     }
   }
@@ -25,22 +27,26 @@ impl Screen {
     self.size
   }
 
+  pub fn pixels_per_unit(&self) -> f32 {
+    self.pixels_per_unit
+  }
+
   pub fn projection(&self) -> &Matrix4<f32> {
     &self.projection
   }
 
   fn set_pixel_size(&mut self, size: Size<u32>) {
-    let pixels_per_unit = if size.height > size.width {
+    self.pixels_per_unit = if size.height > size.width {
       (size.width / 1280).max(1) as f32
     } else {
       (size.height / 720).max(1) as f32
     };
 
-    self.size = Size::<f32>::from(size) / pixels_per_unit;
+    self.size = Size::<f32>::from(size) / self.pixels_per_unit;
 
     self.projection =
       Matrix4::new_orthographic(0.0, size.width as f32, 0.0, size.height as f32, -1.0, 1.0)
-        .prepend_scaling(pixels_per_unit);
+        .prepend_scaling(self.pixels_per_unit);
   }
 }
 
