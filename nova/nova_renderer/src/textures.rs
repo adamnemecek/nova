@@ -16,7 +16,7 @@ use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
 use nova_core::engine;
-use nova_graphics::images::{ImageId, ReadImages};
+use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
 use nova_math::Size;
 use std::collections::HashMap;
@@ -140,9 +140,7 @@ impl Textures {
     allocator: &mut Allocator,
     cmd: &mut Commands,
   ) {
-    use nova_core::ecs::SystemData as _;
-
-    let images = ReadImages::fetch(res);
+    let images = images::read(res);
     let sampler = &self.sampler;
     let descriptor_pool = &mut self.descriptor_pool;
 

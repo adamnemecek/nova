@@ -17,7 +17,7 @@ impl<'a> ReadAssets<'a> {
     self.assets.get(id.0)
   }
 
-  pub fn lookup_id(&self, path: impl Into<AssetPath>) -> Option<AssetId> {
-    self.table.get(&path.into())
+  pub fn lookup_id(&self, path: &AssetPath) -> Option<AssetId> {
+    self.table.get(path)
   }
 }

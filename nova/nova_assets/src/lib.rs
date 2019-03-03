@@ -17,8 +17,9 @@ pub use self::table::AssetTable;
 // TODO: Remove after creating a custom `SystemData` derive macro.
 use nova_core::shred;
 
+use nova_core::ecs;
+use nova_core::engine::{Engine, Resources};
 use nova_core::log::debug;
-use nova_core::{ecs, Engine};
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -63,6 +64,10 @@ pub fn setup(engine: &mut Engine, roots: AssetRoots) {
   engine.resources_mut().insert(roots);
 }
 
+pub fn read(res: &Resources) -> ReadAssets {
+  ecs::SystemData::fetch(res)
+}
+
 fn create_assets(
   path: &Path,
   entities: &ecs::Entities,
@@ -78,7 +83,7 @@ fn create_assets(
 
     if file_type.is_dir() {
       create_assets(&entry.path(), entities, asset_path, table, assets)?;
-    } else if file_type.is_file() && !table.has(asset_path) {
+    } else if file_type.is_file() && !table.contains(asset_path) {
       let entity = entities.create();
 
       let asset = Asset {

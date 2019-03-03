@@ -1,6 +1,6 @@
-use nova::assets::{AssetTable, ReadAssets};
+use nova::assets;
 use nova::el;
-use nova::graphics::images::{ImageSlice, WriteImages};
+use nova::graphics::images::{self, ImageSlice};
 use nova::log;
 use nova::math::Rect;
 use nova::ui;
@@ -55,14 +55,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mut app = nova::App::new();
 
   let image_id = {
-    use nova::ecs::SystemData as _;
-
-    let asset_table = app.resources().fetch::<AssetTable>();
-    let assets = ReadAssets::fetch(app.resources());
-    let mut images = WriteImages::fetch(app.resources());
+    let assets = assets::read(app.resources());
+    let mut images = images::write(app.resources());
     let path = "/do-it.jpg".into();
 
-    images.load_asset(asset_table.get(&path).unwrap(), &assets)
+    images.load_asset_at_path(&path, &assets)
   };
 
   // Add a root `Game` element.

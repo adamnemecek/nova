@@ -4,7 +4,7 @@
 
 use std::fmt;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct AssetPath {
   string: String,
 }

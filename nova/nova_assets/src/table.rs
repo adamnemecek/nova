@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{AssetId, AssetPath};
-use nova_core::engine::Resources;
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
@@ -12,7 +11,7 @@ pub struct AssetTable {
 }
 
 impl AssetTable {
-  pub fn has(&self, path: &AssetPath) -> bool {
+  pub fn contains(&self, path: &AssetPath) -> bool {
     self.entries.contains_key(path)
   }
 

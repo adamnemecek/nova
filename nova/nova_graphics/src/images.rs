@@ -14,7 +14,7 @@ pub use self::write::WriteImages;
 pub use ::image::{ImageError, ImageFormat};
 
 use nova_core::ecs;
-use nova_core::Engine;
+use nova_core::engine::{Engine, Resources};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ImageId(ecs::Entity);
@@ -27,4 +27,12 @@ impl From<ImageId> for ecs::Entity {
 
 pub fn setup(engine: &mut Engine) {
   ecs::register::<Image>(engine.resources_mut());
+}
+
+pub fn read(res: &Resources) -> ReadImages {
+  ecs::SystemData::fetch(res)
+}
+
+pub fn write(res: &Resources) -> WriteImages {
+  ecs::SystemData::fetch(res)
 }
