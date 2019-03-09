@@ -47,12 +47,12 @@ impl<'a> ecs::System<'a> for PositionText {
         .calculate_glyphs(
           &*fonts,
           &SectionGeometry {
-            screen_position: (rect.x1, rect.y1),
-            bounds: (rect.x2 - rect.x1, rect.y2 - rect.y1),
+            screen_position: ((rect.x1 + rect.x2) / 2.0, (rect.y1 + rect.y2) / 2.0),
+            bounds: (rect.width(), rect.height()),
           },
           &[SectionText {
             text: &text.content,
-            scale: rusttype::Scale::uniform(16.0),
+            scale: rusttype::Scale::uniform(64.0),
             color: [0.0, 0.0, 0.0, 1.0],
             font_id: FontId::default(),
           }],

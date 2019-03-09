@@ -9,7 +9,7 @@ use crate::alloc::Allocator;
 use crate::buffer::{Buffer, BufferKind};
 use crate::commands::Commands;
 use crate::descriptors::{DescriptorKind, DescriptorLayout, DescriptorPool};
-use crate::images::{DeviceImageAccess, DeviceImageLayout};
+use crate::images::{DeviceImageAccess, DeviceImageFormat, DeviceImageLayout};
 use crate::pipeline::PipelineStage;
 use crate::{Backend, Device, DeviceExt};
 use gfx_hal::image::Filter as TextureFilter;
@@ -20,6 +20,7 @@ use nova_core::math::{Rect, Size};
 use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
 use std::collections::{HashMap, HashSet};
+use std::mem;
 
 pub(crate) type TextureSampler = <Backend as gfx_hal::Backend>::Sampler;
 
@@ -29,8 +30,6 @@ pub struct TextureId(u64);
 impl TextureId {
   pub const TRANSPARENT: Self = Self(0);
   pub const SOLID: Self = Self(1);
-
-  const FIRST_AVAILABLE: Self = Self(2);
 }
 
 pub struct Textures {
@@ -74,7 +73,7 @@ impl Textures {
       sampler,
       descriptor_pool,
       table: HashMap::new(),
-      next_id: TextureId::FIRST_AVAILABLE,
+      next_id: TextureId(0),
       image_cache: HashMap::new(),
       staging_buffer,
       staging_offset: 0,
@@ -83,8 +82,19 @@ impl Textures {
       has_pending_changes: HashSet::new(),
     };
 
-    textures.insert_new(device, allocator, TextureId::TRANSPARENT, Size::new(1, 1));
-    textures.insert_new(device, allocator, TextureId::SOLID, Size::new(1, 1));
+    textures.create_texture(
+      device,
+      allocator,
+      Size::new(1, 1),
+      DeviceImageFormat::Rgba8Unorm,
+    );
+
+    textures.create_texture(
+      device,
+      allocator,
+      Size::new(1, 1),
+      DeviceImageFormat::Rgba8Unorm,
+    );
 
     textures.clear_texture(TextureId::TRANSPARENT, Color4::TRANSPARENT);
     textures.clear_texture(TextureId::SOLID, Color4::WHITE);
@@ -104,6 +114,32 @@ impl Textures {
     &self.table[&TextureId::SOLID]
   }
 
+  pub fn create_texture(
+    &mut self,
+    device: &Device,
+    allocator: &mut Allocator,
+    size: Size<u32>,
+    format: DeviceImageFormat,
+  ) -> TextureId {
+    let id = self.next_id;
+
+    self.next_id = TextureId(id.0 + 1);
+
+    self.table.insert(
+      id,
+      Texture::new(
+        device,
+        allocator,
+        size,
+        format,
+        &self.sampler,
+        &mut self.descriptor_pool,
+      ),
+    );
+
+    id
+  }
+
   pub fn get_texture(&self, id: TextureId) -> Option<&Texture> {
     self.table.get(&id)
   }
@@ -116,7 +152,6 @@ impl Textures {
   pub fn copy_to_texture(&mut self, id: TextureId, rect: Rect<u32>, data: &[u8]) {
     let range = self.staging_offset..self.staging_offset + data.len();
 
-    self.staging_offset = range.end;
     self.staging_buffer[range.clone()].copy_from_slice(data);
 
     self
@@ -124,6 +159,7 @@ impl Textures {
       .push((id, Change::CopyStagingBuffer(range.start, rect)));
 
     self.has_pending_changes.insert(id);
+    self.staging_offset = range.end - range.end % 4 + 4;
   }
 
   pub fn cache_image(&mut self, image_id: ImageId) -> TextureId {
@@ -151,10 +187,7 @@ impl Textures {
     cmd: &mut Commands,
   ) {
     let images = images::read(res);
-
     let mut image_copies = Vec::new();
-
-    use std::mem;
 
     mem::swap(&mut self.pending_image_copies, &mut image_copies);
 
@@ -169,10 +202,16 @@ impl Textures {
       let sampler = &self.sampler;
       let descriptor_pool = &mut self.descriptor_pool;
 
-      self
-        .table
-        .entry(id)
-        .or_insert_with(|| Texture::new(device, allocator, image.size(), sampler, descriptor_pool));
+      self.table.entry(id).or_insert_with(|| {
+        Texture::new(
+          device,
+          allocator,
+          size,
+          DeviceImageFormat::Rgba8Unorm,
+          sampler,
+          descriptor_pool,
+        )
+      });
 
       self.copy_to_texture(
         id,
@@ -241,6 +280,7 @@ impl Textures {
       }),
     );
 
+    self.staging_offset = 0;
     self.has_pending_changes.clear();
   }
 
@@ -255,24 +295,5 @@ impl Textures {
     unsafe {
       device.destroy_sampler(self.sampler);
     }
-  }
-
-  fn insert_new(
-    &mut self,
-    device: &Device,
-    allocator: &mut Allocator,
-    id: TextureId,
-    size: Size<u32>,
-  ) -> Option<Texture> {
-    self.table.insert(
-      id,
-      Texture::new(
-        device,
-        allocator,
-        size,
-        &self.sampler,
-        &mut self.descriptor_pool,
-      ),
-    )
   }
 }

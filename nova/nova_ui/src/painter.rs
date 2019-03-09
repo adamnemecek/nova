@@ -6,13 +6,16 @@ mod canvas;
 
 pub use self::canvas::Canvas;
 
-use super::layout::ScreenRect;
-use super::{Color, Screen, Style};
+use crate::layout::ScreenRect;
+use crate::text::cache::GlyphCache;
+use crate::text::position::PositionedText;
+use crate::{Color, Screen, Style};
 use nova_core::ecs;
 use nova_core::el::hierarchy::Hierarchy;
 use nova_core::engine::Resources;
-use nova_core::math::{Matrix4, Rect};
-use nova_renderer::{self as renderer, Render, Renderer};
+use nova_core::math::{Matrix4, Rect, Size};
+use nova_renderer::images::DeviceImageFormat;
+use nova_renderer::{self as renderer, Render, Renderer, TextureId};
 
 const DESCRIPTOR_TEXTURE: usize = 0;
 
@@ -23,10 +26,11 @@ const PUSH_CONST_TINT: usize = 3;
 
 pub struct Painter {
   pipeline: renderer::Pipeline,
+  glyph_cache_texture: TextureId,
 }
 
 impl Painter {
-  pub fn new(renderer: &Renderer) -> Self {
+  pub fn new(renderer: &mut Renderer) -> Self {
     let vertex_shader = renderer::Shader::new(
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
@@ -54,24 +58,62 @@ impl Painter {
       .build(renderer.device(), renderer.render_pass())
       .expect("Could not create graphics pipeline");
 
-    Painter { pipeline }
+    let glyph_cache_texture =
+      renderer.create_texture(Size::new(1024, 1024), DeviceImageFormat::R8Unorm);
+
+    Painter {
+      pipeline,
+      glyph_cache_texture,
+    }
   }
 
   pub fn draw(&mut self, render: &mut Render, res: &Resources) {
     let screen = res.fetch::<Screen>();
-    let mut canvas = Canvas::new(&screen, render, &self.pipeline);
-
     let hierarchy = res.fetch::<Hierarchy>();
+    let mut glyph_cache = res.fetch_mut::<GlyphCache>();
+
     let rects = ecs::read_components::<ScreenRect>(res);
     let styles = ecs::read_components::<Style>(res);
+    let texts = ecs::read_components::<PositionedText>(res);
+
+    glyph_cache
+      .cache_queued(|rect, bytes| {
+        dbg!(rect);
+        dbg!(bytes.len());
+
+        render.textures_mut().copy_to_texture(
+          self.glyph_cache_texture,
+          Rect {
+            x1: rect.min.x,
+            y1: rect.min.y,
+            x2: rect.max.x,
+            y2: rect.max.y,
+          },
+          bytes,
+        )
+      })
+      .expect("Could not update glyph cache texture");
+
+    render.bind_pipeline(&self.pipeline);
+    render.push_constant(&self.pipeline, PUSH_CONST_TRANSFORM, screen.projection());
+
+    let mut canvas = Canvas {
+      render,
+      pipeline: &self.pipeline,
+    };
 
     for entity in hierarchy.sorted() {
-      let (rect, style) = match (rects.get(entity), styles.get(entity)) {
-        (Some(rect), Some(style)) if style.bg_color.a > 0.0 => (rect, style),
-        _ => continue,
+      match (rects.get(entity), styles.get(entity)) {
+        (Some(rect), Some(style)) if style.bg_color.a > 0.0 => {
+          canvas.draw_image(rect.0, style.bg_color, style.bg_image.as_ref());
+        }
+
+        _ => {}
       };
 
-      canvas.paint(rect, style.bg_color, style.bg_image.as_ref());
+      if let Some(text) = texts.get(entity) {
+        canvas.draw_cached_glyphs(&mut glyph_cache, self.glyph_cache_texture, &text.glyphs);
+      }
     }
   }
 

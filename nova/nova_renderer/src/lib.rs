@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod device;
+pub mod images;
 pub mod pipeline;
 pub mod shader;
 
@@ -12,7 +13,6 @@ mod buffer;
 mod commands;
 mod descriptors;
 mod framebuffer;
-mod images;
 mod presenter;
 mod render;
 mod render_pass;
@@ -26,14 +26,16 @@ pub use self::pipeline::{Pipeline, PipelineBuilder, PipelineStage};
 pub use self::render::Render;
 pub use self::render_pass::RenderPass;
 pub use self::shader::{Shader, ShaderKind, ShaderSet};
-pub use self::textures::{Textures, TextureId};
+pub use self::textures::{TextureId, Textures};
 
 use self::alloc::Allocator;
 use self::device::{QueueExt, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
+use self::images::DeviceImageFormat;
 use self::presenter::Presenter;
 use self::sync::FrameSync;
 use nova_core::engine::{self, Engine};
+use nova_core::math::Size;
 use std::iter;
 
 pub struct Renderer {
@@ -91,6 +93,16 @@ impl Renderer {
 
   pub fn textures(&self) -> &Textures {
     &self.textures
+  }
+
+  pub fn textures_mut(&mut self) -> &mut Textures {
+    &mut self.textures
+  }
+
+  pub fn create_texture(&mut self, size: Size<u32>, format: DeviceImageFormat) -> TextureId {
+    self
+      .textures
+      .create_texture(&self.gpu.device(), &mut self.allocator, size, format)
   }
 
   pub fn begin(&mut self) -> Render {

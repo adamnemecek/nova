@@ -24,11 +24,6 @@ impl<'a> ecs::System<'a> for CacheGlyphs {
         cache.queue_glyph(font_id.0, glyph);
       }
     }
-
-    cache.cache_queued(|rect, bytes| {
-      dbg!(rect);
-      dbg!(bytes.len());
-    }).unwrap();
   }
 }
 
