@@ -18,3 +18,4 @@ mod shared_str;
 pub use crossbeam;
 pub use quick_error::quick_error;
 pub use specs::{self, shred};
+pub use self::shared_str::SharedStr;

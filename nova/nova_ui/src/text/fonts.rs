@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub use glyph_brush_layout::FontId;
 pub use rusttype::Error as CreateFontError;
 
 use nova_assets::{AssetId, ReadAssets};
@@ -17,9 +18,6 @@ pub type Font = rusttype::Font<'static>;
 pub type ReadFonts<'a> = ecs::ReadResource<'a, Fonts>;
 pub type WriteFonts<'a> = ecs::WriteResource<'a, Fonts>;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FontId(usize);
-
 #[derive(Debug, Default)]
 pub struct Fonts {
   asset_table: HashMap<AssetId, FontId>,
@@ -33,7 +31,7 @@ impl Fonts {
 
   pub fn create(
     &mut self,
-    bytes: impl Into<rusttype::SharedBytes<'static>>,
+    bytes: &'static [u8],
   ) -> Result<FontId, CreateFontError> {
     self.list.push(Font::from_bytes(bytes)?);
 
@@ -63,6 +61,12 @@ impl Fonts {
     self.list.push(Font::from_bytes(bytes)?);
 
     Ok(FontId(self.list.len() - 1))
+  }
+}
+
+impl glyph_brush_layout::FontMap<'static> for Fonts {
+  fn font(&self, i: glyph_brush_layout::FontId) -> &Font {
+    &self.list[i.0]
   }
 }
 
