@@ -25,7 +25,8 @@ const PUSH_CONST_TEXTURE_RECT: usize = 2;
 const PUSH_CONST_TINT: usize = 3;
 
 pub struct Painter {
-  pipeline: renderer::Pipeline,
+  image_pipeline: renderer::Pipeline,
+  text_pipeline: renderer::Pipeline,
   glyph_cache_texture: TextureId,
 }
 
@@ -35,34 +36,54 @@ impl Painter {
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
         renderer::ShaderKind::Vertex,
-        include_str!("./painter/shaders/panels.vert"),
+        include_str!("./painter/shaders/quad.vert"),
       ),
     );
 
-    let fragment_shader = renderer::Shader::new(
+    let image_shader = renderer::Shader::new(
       renderer.device(),
       &renderer::shader::Spirv::from_glsl(
         renderer::ShaderKind::Fragment,
-        include_str!("./painter/shaders/panels.frag"),
+        include_str!("./painter/shaders/image.frag"),
       ),
     );
 
-    let pipeline = renderer::PipelineBuilder::new()
+    let text_shader = renderer::Shader::new(
+      renderer.device(),
+      &renderer::shader::Spirv::from_glsl(
+        renderer::ShaderKind::Fragment,
+        include_str!("./painter/shaders/text.frag"),
+      ),
+    );
+
+    let image_pipeline = renderer::PipelineBuilder::new()
       .set_vertex_shader(&vertex_shader)
-      .set_fragment_shader(&fragment_shader)
+      .set_fragment_shader(&image_shader)
       .add_descriptor_layout(renderer.textures().descriptor_layout().clone())
       .add_push_constant::<Matrix4<f32>>()
       .add_push_constant::<Rect<f32>>()
       .add_push_constant::<Rect<f32>>()
       .add_push_constant::<Color>()
       .build(renderer.device(), renderer.render_pass())
-      .expect("Could not create graphics pipeline");
+      .expect("Could not create image pipeline");
+
+    let text_pipeline = renderer::PipelineBuilder::new()
+      .set_vertex_shader(&vertex_shader)
+      .set_fragment_shader(&text_shader)
+      .add_descriptor_layout(renderer.textures().descriptor_layout().clone())
+      .add_push_constant::<Matrix4<f32>>()
+      .add_push_constant::<Rect<f32>>()
+      .add_push_constant::<Rect<f32>>()
+      .add_push_constant::<Color>()
+      .build(renderer.device(), renderer.render_pass())
+      .expect("Could not create text pipeline");
 
     let glyph_cache_texture =
       renderer.create_texture(Size::new(1024, 1024), DeviceImageFormat::R8Unorm);
 
     Painter {
-      pipeline,
+      image_pipeline,
+      text_pipeline,
       glyph_cache_texture,
     }
   }
@@ -78,9 +99,6 @@ impl Painter {
 
     glyph_cache
       .cache_queued(|rect, bytes| {
-        dbg!(rect);
-        dbg!(bytes.len());
-
         render.textures_mut().copy_to_texture(
           self.glyph_cache_texture,
           Rect {
@@ -94,12 +112,11 @@ impl Painter {
       })
       .expect("Could not update glyph cache texture");
 
-    render.bind_pipeline(&self.pipeline);
-    render.push_constant(&self.pipeline, PUSH_CONST_TRANSFORM, screen.projection());
-
     let mut canvas = Canvas {
       render,
-      pipeline: &self.pipeline,
+      image_pipeline: &self.image_pipeline,
+      text_pipeline: &self.text_pipeline,
+      screen: &screen,
     };
 
     for entity in hierarchy.sorted() {
@@ -118,6 +135,7 @@ impl Painter {
   }
 
   pub fn destroy(self, device: &renderer::Device) {
-    self.pipeline.destroy(device);
+    self.image_pipeline.destroy(device);
+    self.text_pipeline.destroy(device);
   }
 }

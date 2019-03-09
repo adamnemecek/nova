@@ -5,41 +5,56 @@
 use crate::text::cache::GlyphCache;
 use crate::text::fonts::FontId;
 use crate::text::position::PositionedGlyph;
-use crate::Color;
+use crate::{Color, Screen};
 use nova_core::math::Rect;
 use nova_graphics::images::ImageSlice;
 use nova_renderer::{Pipeline, Render, TextureId};
 
 pub struct Canvas<'a, 'b> {
   pub(crate) render: &'a mut Render<'b>,
-  pub(crate) pipeline: &'a Pipeline,
+  pub(crate) image_pipeline: &'a Pipeline,
+  pub(crate) text_pipeline: &'a Pipeline,
+  pub(crate) screen: &'a Screen,
 }
 
 impl<'a, 'b> Canvas<'a, 'b> {
-  pub fn draw_texture(
+  fn draw_texture(
     &mut self,
+    is_text: bool,
     rect: Rect<f32>,
     color: Color,
     texture_id: TextureId,
     texture_rect: Rect<f32>,
   ) {
-    self
-      .render
-      .push_constant(&self.pipeline, super::PUSH_CONST_RECT, &rect);
+    let pipeline = if is_text {
+      &self.text_pipeline
+    } else {
+      &self.image_pipeline
+    };
 
-    self
-      .render
-      .push_constant(&self.pipeline, super::PUSH_CONST_TINT, &color);
-
-    self
-      .render
-      .bind_texture(&self.pipeline, super::DESCRIPTOR_TEXTURE, texture_id);
+    self.render.bind_pipeline(pipeline);
 
     self.render.push_constant(
-      &self.pipeline,
-      super::PUSH_CONST_TEXTURE_RECT,
-      &texture_rect,
+      pipeline,
+      super::PUSH_CONST_TRANSFORM,
+      self.screen.projection(),
     );
+
+    self
+      .render
+      .push_constant(pipeline, super::PUSH_CONST_RECT, &rect);
+
+    self
+      .render
+      .push_constant(pipeline, super::PUSH_CONST_TINT, &color);
+
+    self
+      .render
+      .bind_texture(pipeline, super::DESCRIPTOR_TEXTURE, texture_id);
+
+    self
+      .render
+      .push_constant(pipeline, super::PUSH_CONST_TEXTURE_RECT, &texture_rect);
 
     self.render.draw(0..4);
   }
@@ -49,11 +64,11 @@ impl<'a, 'b> Canvas<'a, 'b> {
       Some(slice) => {
         let texture_id = self.render.textures_mut().cache_image(slice.image_id);
 
-        self.draw_texture(rect, color, texture_id, slice.rect);
+        self.draw_texture(false, rect, color, texture_id, slice.rect);
       }
 
       None => {
-        self.draw_texture(rect, color, TextureId::SOLID, Rect::unit());
+        self.draw_texture(false, rect, color, TextureId::SOLID, Rect::unit());
       }
     }
   }
@@ -71,6 +86,7 @@ impl<'a, 'b> Canvas<'a, 'b> {
       };
 
       self.draw_texture(
+        true,
         Rect {
           x1: coords.min.x as f32,
           y1: coords.min.y as f32,
@@ -86,8 +102,6 @@ impl<'a, 'b> Canvas<'a, 'b> {
           y2: tex_coords.max.y,
         },
       );
-
-      self.render.draw(0..4);
     }
   }
 }
