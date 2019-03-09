@@ -16,11 +16,10 @@ use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
 use nova_core::engine::Resources;
-use nova_core::math::Size;
+use nova_core::math::{Rect, Size};
 use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
-use std::collections::HashMap;
-use std::ops::Range;
+use std::collections::{HashMap, HashSet};
 
 pub(crate) type TextureSampler = <Backend as gfx_hal::Backend>::Sampler;
 
@@ -44,12 +43,13 @@ pub struct Textures {
   staging_offset: usize,
   pending_image_copies: Vec<(TextureId, ImageId)>,
   pending_changes: Vec<(TextureId, Change)>,
+  has_pending_changes: HashSet<TextureId>,
 }
 
 #[derive(Debug)]
 enum Change {
   Clear(Color4),
-  CopyStagingBuffer(Range<usize>),
+  CopyStagingBuffer(usize, Rect<u32>),
 }
 
 impl Textures {
@@ -79,14 +79,15 @@ impl Textures {
       staging_buffer,
       staging_offset: 0,
       pending_image_copies: Vec::new(),
-      pending_changes: vec![
-        (TextureId(0), Change::Clear(Color4::TRANSPARENT)),
-        (TextureId(1), Change::Clear(Color4::WHITE)),
-      ],
+      pending_changes: Vec::new(),
+      has_pending_changes: HashSet::new(),
     };
 
     textures.insert_new(device, allocator, TextureId::TRANSPARENT, Size::new(1, 1));
     textures.insert_new(device, allocator, TextureId::SOLID, Size::new(1, 1));
+
+    textures.clear_texture(TextureId::TRANSPARENT, Color4::TRANSPARENT);
+    textures.clear_texture(TextureId::SOLID, Color4::WHITE);
 
     textures
   }
@@ -103,16 +104,26 @@ impl Textures {
     &self.table[&TextureId::SOLID]
   }
 
-  pub fn get(&self, id: TextureId) -> Option<&Texture> {
+  pub fn get_texture(&self, id: TextureId) -> Option<&Texture> {
     self.table.get(&id)
   }
 
-  pub fn get_or_transparent(&self, id: TextureId) -> &Texture {
-    self.table.get(&id).unwrap_or_else(|| self.transparent())
+  pub fn clear_texture(&mut self, id: TextureId, color: Color4) {
+    self.pending_changes.push((id, Change::Clear(color)));
+    self.has_pending_changes.insert(id);
   }
 
-  pub fn get_or_solid(&self, id: TextureId) -> &Texture {
-    self.table.get(&id).unwrap_or_else(|| self.solid())
+  pub fn copy_to_texture(&mut self, id: TextureId, rect: Rect<u32>, data: &[u8]) {
+    let range = self.staging_offset..self.staging_offset + data.len();
+
+    self.staging_offset = range.end;
+    self.staging_buffer[range.clone()].copy_from_slice(data);
+
+    self
+      .pending_changes
+      .push((id, Change::CopyStagingBuffer(range.start, rect)));
+
+    self.has_pending_changes.insert(id);
   }
 
   pub fn cache_image(&mut self, image_id: ImageId) -> TextureId {
@@ -140,29 +151,39 @@ impl Textures {
     cmd: &mut Commands,
   ) {
     let images = images::read(res);
-    let sampler = &self.sampler;
-    let descriptor_pool = &mut self.descriptor_pool;
 
-    for (id, image_id) in self.pending_image_copies.drain(..) {
+    let mut image_copies = Vec::new();
+
+    use std::mem;
+
+    mem::swap(&mut self.pending_image_copies, &mut image_copies);
+
+    for (id, image_id) in image_copies.drain(..) {
       let image = match images.get(image_id) {
         Some(image) => image,
         None => continue,
       };
+
+      let size = image.size();
+
+      let sampler = &self.sampler;
+      let descriptor_pool = &mut self.descriptor_pool;
 
       self
         .table
         .entry(id)
         .or_insert_with(|| Texture::new(device, allocator, image.size(), sampler, descriptor_pool));
 
-      let bytes = image.bytes();
-      let range = self.staging_offset..self.staging_offset + bytes.len();
-
-      self.staging_offset = range.end;
-      self.staging_buffer[range.clone()].copy_from_slice(bytes);
-
-      self
-        .pending_changes
-        .push((id, Change::CopyStagingBuffer(range)));
+      self.copy_to_texture(
+        id,
+        Rect {
+          x1: 0,
+          y1: 0,
+          x2: size.width,
+          y2: size.height,
+        },
+        image.bytes(),
+      )
     }
 
     if self.pending_changes.is_empty() {
@@ -173,8 +194,8 @@ impl Textures {
     // barrier.
     cmd.pipeline_barrier(
       (PipelineStage::FRAGMENT_SHADER, PipelineStage::TRANSFER),
-      self.pending_changes.iter().map(|(id, _)| {
-        self.get(*id).unwrap().image.memory_barrier(
+      self.has_pending_changes.iter().map(|id| {
+        self.table[id].image.memory_barrier(
           (
             DeviceImageAccess::empty(),
             DeviceImageAccess::TRANSFER_WRITE,
@@ -188,16 +209,16 @@ impl Textures {
     );
 
     // Record commands for each pending change.
-    for (id, change) in &self.pending_changes {
-      let texture = self.get(*id).unwrap();
+    for (id, change) in self.pending_changes.drain(..) {
+      let texture = &self.table[&id];
 
       match change {
         Change::Clear(color) => {
-          cmd.clear_image(&texture.image, *color);
+          cmd.clear_image(&texture.image, color);
         }
 
-        Change::CopyStagingBuffer(range) => {
-          cmd.copy_buffer_to_image(&self.staging_buffer, range.start, &texture.image);
+        Change::CopyStagingBuffer(offset, rect) => {
+          cmd.copy_buffer_to_image(&self.staging_buffer, offset, &texture.image, rect);
         }
       }
     }
@@ -206,8 +227,8 @@ impl Textures {
     // pipeline barrier.
     cmd.pipeline_barrier(
       (PipelineStage::TRANSFER, PipelineStage::FRAGMENT_SHADER),
-      self.pending_changes.iter().map(|(id, _)| {
-        self.get(*id).unwrap().image.memory_barrier(
+      self.has_pending_changes.iter().map(|id| {
+        self.table[id].image.memory_barrier(
           (
             DeviceImageAccess::TRANSFER_WRITE,
             DeviceImageAccess::SHADER_READ,
@@ -220,7 +241,7 @@ impl Textures {
       }),
     );
 
-    self.pending_changes.clear();
+    self.has_pending_changes.clear();
   }
 
   pub fn destroy(self, device: &Device, allocator: &mut Allocator) {

@@ -11,6 +11,7 @@ use super::device::{self, Device, DeviceExt, QueueFamilyExt};
 use super::images::{DeviceImage, DeviceImageLayout};
 use super::pipeline::{MemoryBarrier, PipelineStage};
 use super::{Backend, Framebuffer, RenderPass};
+use nova_core::math::Rect;
 use nova_graphics::Color4;
 use std::iter;
 use std::ops::{Deref, DerefMut};
@@ -81,9 +82,13 @@ impl Commands {
     }
   }
 
-  pub fn copy_buffer_to_image(&mut self, buffer: &Buffer, offset: usize, image: &DeviceImage) {
-    let image_size = image.size();
-
+  pub fn copy_buffer_to_image(
+    &mut self,
+    buffer: &Buffer,
+    offset: usize,
+    image: &DeviceImage,
+    rect: Rect<u32>,
+  ) {
     unsafe {
       self.buffer.copy_buffer_to_image(
         &buffer.raw,
@@ -98,10 +103,14 @@ impl Commands {
             level: 0,
             layers: 0..1,
           },
-          image_offset: gfx_hal::image::Offset { x: 0, y: 0, z: 0 },
+          image_offset: gfx_hal::image::Offset {
+            x: rect.x1 as i32,
+            y: rect.y1 as i32,
+            z: 0,
+          },
           image_extent: gfx_hal::image::Extent {
-            width: image_size.width,
-            height: image_size.height,
+            width: rect.width(),
+            height: rect.height(),
             depth: 1,
           },
         }],

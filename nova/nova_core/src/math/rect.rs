@@ -28,7 +28,15 @@ impl<T: ScalarNum> Rect<T> {
   }
 
   pub fn size(&self) -> Size<T> {
-    Size::new(self.x2 - self.x1, self.y2 - self.y1)
+    Size::new(self.width(), self.height())
+  }
+
+  pub fn width(&self) -> T {
+    self.x2 - self.x1
+  }
+
+  pub fn height(&self) -> T {
+    self.y2 - self.y1
   }
 }
 
