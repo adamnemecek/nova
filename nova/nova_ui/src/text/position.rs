@@ -15,7 +15,7 @@ pub type PositionedGlyph = rusttype::PositionedGlyph<'static>;
 
 #[derive(Debug, Default)]
 pub struct PositionedText {
-  pub glyphs: Vec<PositionedGlyph>,
+  pub glyphs: Vec<(FontId, PositionedGlyph)>,
 }
 
 impl ecs::Component for PositionedText {
@@ -58,7 +58,7 @@ impl<'a> ecs::System<'a> for PositionText {
           }],
         );
 
-      positioned.glyphs = result.into_iter().map(|g| g.0).collect();
+      positioned.glyphs = result.into_iter().map(|g| (g.2, g.0)).collect();
     }
   }
 }

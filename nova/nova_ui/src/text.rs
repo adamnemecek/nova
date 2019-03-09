@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod cache;
 pub mod fonts;
 pub mod position;
 
@@ -55,6 +56,7 @@ impl el::Element for Text {
 pub fn setup(engine: &mut Engine) {
   ecs::register::<Text>(engine.resources_mut());
 
+  cache::setup(engine);
   fonts::setup(engine);
   position::setup(engine);
 }
