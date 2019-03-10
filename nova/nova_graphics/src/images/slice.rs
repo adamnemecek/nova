@@ -10,3 +10,12 @@ pub struct ImageSlice {
   pub image_id: ImageId,
   pub rect: Rect<f32>,
 }
+
+impl From<ImageId> for ImageSlice {
+  fn from(id: ImageId) -> Self {
+    Self {
+      image_id: id,
+      rect: Rect::unit(),
+    }
+  }
+}

@@ -3,32 +3,20 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::layout::Layout;
-use crate::Style;
 use nova_core::el;
 
-#[derive(Debug, Default, PartialEq)]
-pub struct Container {
-  pub layout: Layout,
-  pub style: Style,
-}
+#[derive(Debug, PartialEq)]
+pub struct Fill;
 
-impl el::Element for Container {
+impl el::Element for Fill {
   type State = ();
   type Message = ();
 
   fn on_awake(&self, ctx: el::Context<Self>) {
-    ctx.put_component(self.layout);
-    ctx.put_component(self.style.clone());
-  }
-
-  fn on_change(&self, _: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
-    self.on_awake(ctx);
-
-    el::ShouldRebuild(true)
+    ctx.put_component(Layout::Fill);
   }
 
   fn on_sleep(&self, ctx: el::Context<Self>) {
     ctx.remove_component::<Layout>();
-    ctx.remove_component::<Style>();
   }
 }

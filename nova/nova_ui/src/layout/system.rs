@@ -74,7 +74,7 @@ fn calculate_size(
 
   let size = match layout {
     Layout::Constrained(layout_constraints) => {
-      let constraints = layout_constraints.narrow_by(constraints);
+      let constraints = (layout_constraints * input.screen.dpi()).narrow_by(constraints);
 
       stack_children(input, output, entity, constraints)
     }

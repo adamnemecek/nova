@@ -5,23 +5,23 @@
 pub mod layout;
 pub mod text;
 
-mod container;
+mod image;
 mod painter;
 mod screen;
-mod style;
 
-pub use self::container::Container;
+pub use self::image::Image;
+pub use self::layout::elements::Fill;
 pub use self::painter::Painter;
 pub use self::screen::Screen;
-pub use self::style::Style;
+pub use self::text::Text;
 pub use nova_graphics::Color4 as Color;
 
 use nova_core::engine::Engine;
 use nova_core::shred;
 
 pub fn setup(engine: &mut Engine) {
+  image::setup(engine);
   layout::setup(engine);
   screen::setup(engine);
-  style::setup(engine);
   text::setup(engine);
 }

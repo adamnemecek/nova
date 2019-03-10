@@ -6,10 +6,11 @@ mod canvas;
 
 pub use self::canvas::Canvas;
 
+use crate::image::Image;
 use crate::screen::ScreenRect;
 use crate::text::cache::GlyphCache;
 use crate::text::position::PositionedText;
-use crate::{Color, Screen, Style};
+use crate::{Color, Screen};
 use nova_core::ecs;
 use nova_core::el::hierarchy::Hierarchy;
 use nova_core::engine::Resources;
@@ -98,7 +99,7 @@ impl Painter {
     let mut glyph_cache = res.fetch_mut::<GlyphCache>();
 
     let rects = ecs::read_components::<ScreenRect>(res);
-    let styles = ecs::read_components::<Style>(res);
+    let images = ecs::read_components::<Image>(res);
     let texts = ecs::read_components::<PositionedText>(res);
 
     glyph_cache
@@ -137,13 +138,9 @@ impl Painter {
     );
 
     for entity in hierarchy.sorted() {
-      match (rects.get(entity), styles.get(entity)) {
-        (Some(rect), Some(style)) if style.bg_color.a > 0.0 => {
-          canvas.draw_image(rect.0, style.bg_color, style.bg_image.as_ref());
-        }
-
-        _ => {}
-      };
+      if let (Some(rect), Some(image)) = (rects.get(entity), images.get(entity)) {
+        canvas.draw_image(rect.0, Color::WHITE, image.slice);
+      }
 
       if let Some(text) = texts.get(entity) {
         canvas.draw_cached_glyphs(&mut glyph_cache, self.glyph_cache_texture, &text.glyphs);

@@ -4,6 +4,7 @@
 
 use nova_core::math::Size;
 use std::f32;
+use std::ops::Mul;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Constraints {
@@ -41,6 +42,17 @@ impl From<Size<f32>> for Constraints {
     Constraints {
       min: size,
       max: size,
+    }
+  }
+}
+
+impl Mul<f32> for Constraints {
+  type Output = Self;
+
+  fn mul(self, by: f32) -> Self {
+    Constraints {
+      min: self.min * by,
+      max: self.max * by,
     }
   }
 }
