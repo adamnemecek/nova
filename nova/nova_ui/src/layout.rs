@@ -4,9 +4,11 @@
 
 pub mod elements;
 
+mod align;
 mod constraints;
 mod system;
 
+pub use self::align::{HorizontalAlign, VerticalAlign};
 pub use self::constraints::Constraints;
 
 use nova_core::ecs;
@@ -17,6 +19,7 @@ pub enum Layout {
   Constrained(Constraints),
   Fill,
   AspectRatioFill(f32),
+  Align(HorizontalAlign, VerticalAlign),
 }
 
 impl ecs::Component for Layout {

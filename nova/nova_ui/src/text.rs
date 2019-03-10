@@ -6,9 +6,7 @@ pub mod cache;
 pub mod fonts;
 pub mod position;
 
-pub use glyph_brush_layout::{HorizontalAlign, VerticalAlign};
-
-use crate::layout::Layout;
+use crate::layout::{HorizontalAlign, Layout, VerticalAlign};
 use crate::Color;
 use nova_core::ecs;
 use nova_core::el;

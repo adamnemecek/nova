@@ -3,8 +3,7 @@ use nova::el;
 use nova::graphics::images::{self, ImageId};
 use nova::log;
 use nova::ui::text::fonts;
-use nova::ui::text::{HorizontalAlign, Text, VerticalAlign};
-use nova::ui::{AspectRatioFill, Color, Fill, Image};
+use nova::ui::{Align, Color, HorizontalAlign, Image, Text, VerticalAlign};
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -18,7 +17,7 @@ impl el::Element for Game {
   fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
     el::spec::list(vec![
       el::spec(
-        AspectRatioFill::default(),
+        Align(HorizontalAlign::Left, VerticalAlign::Bottom),
         el::spec(Image::new(self.bg_image), []),
       ),
       el::spec(

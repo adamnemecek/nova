@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::layout::{Constraints, Layout};
+use crate::layout::{Constraints, HorizontalAlign, Layout, VerticalAlign};
 use crate::screen::{Screen, ScreenRect};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
@@ -121,6 +121,17 @@ fn calculate_size(
 
       stack_children(input, output, entity, constraints)
     }
+
+    Layout::Align(_, _) => {
+      let size = stack_children(input, output, entity, constraints);
+
+      let constraints = Constraints {
+        min: constraints.largest_finite_size(),
+        max: constraints.max,
+      };
+
+      constraints.constrain(size)
+    }
   };
 
   output
@@ -167,11 +178,27 @@ fn offset_children(
   entity: ecs::Entity,
   rect: Rect<f32>,
 ) {
+  let layout = input.layout.get(entity);
+
+  let (h_align, v_align) = match layout {
+    Some(Layout::Align(h, v)) => (*h, *v),
+    _ => (HorizontalAlign::Center, VerticalAlign::Center),
+  };
+
   for child in input.nodes.get_children_of(entity) {
     let child_rect = output.rects.get_mut(child).unwrap();
 
-    let x = rect.x1 + (rect.width() - child_rect.width()) / 2.0;
-    let y = rect.y1 + (rect.height() - child_rect.height()) / 2.0;
+    let x = match h_align {
+      HorizontalAlign::Left => rect.x1,
+      HorizontalAlign::Center => rect.x1 + (rect.width() - child_rect.width()) / 2.0,
+      HorizontalAlign::Right => rect.x2 - child_rect.width(),
+    };
+
+    let y = match v_align {
+      VerticalAlign::Top => rect.y1,
+      VerticalAlign::Center => rect.y1 + (rect.height() - child_rect.height()) / 2.0,
+      VerticalAlign::Bottom => rect.y2 - child_rect.height(),
+    };
 
     child_rect.x1 += x;
     child_rect.y1 += y;

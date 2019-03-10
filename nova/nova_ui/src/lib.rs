@@ -10,7 +10,8 @@ mod painter;
 mod screen;
 
 pub use self::image::Image;
-pub use self::layout::elements::{AspectRatioFill, Fill};
+pub use self::layout::elements::{Align, AspectRatioFill, Fill};
+pub use self::layout::{HorizontalAlign, VerticalAlign};
 pub use self::painter::Painter;
 pub use self::screen::Screen;
 pub use self::text::Text;
