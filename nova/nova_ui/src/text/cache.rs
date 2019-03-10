@@ -20,7 +20,7 @@ impl<'a> ecs::System<'a> for CacheGlyphs {
 
   fn run(&mut self, (entities, texts, mut cache): Self::SystemData) {
     for (_, text) in (&*entities, &texts).join() {
-      for (font_id, glyph) in text.glyphs.iter().cloned() {
+      for (glyph, _, font_id) in text.glyphs.iter().cloned() {
         cache.queue_glyph(font_id.0, glyph);
       }
     }

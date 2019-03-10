@@ -81,6 +81,10 @@ impl Painter {
     let glyph_cache_texture =
       renderer.create_texture(Size::new(1024, 1024), DeviceImageFormat::R8Unorm);
 
+    renderer
+      .textures_mut()
+      .clear_texture(glyph_cache_texture, Color::TRANSPARENT);
+
     Painter {
       image_pipeline,
       text_pipeline,
@@ -118,6 +122,19 @@ impl Painter {
       text_pipeline: &self.text_pipeline,
       screen: &screen,
     };
+
+    canvas.draw_texture(
+      true,
+      Rect {
+        x1: 0.0,
+        y1: 0.0,
+        x2: 1024.0,
+        y2: 1024.0,
+      },
+      [0.0, 1.0, 0.0, 0.85].into(),
+      self.glyph_cache_texture,
+      Rect::unit(),
+    );
 
     for entity in hierarchy.sorted() {
       match (rects.get(entity), styles.get(entity)) {

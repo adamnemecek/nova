@@ -8,6 +8,7 @@ pub mod position;
 
 pub use glyph_brush_layout::{HorizontalAlign, VerticalAlign};
 
+use crate::Color;
 use nova_core::ecs;
 use nova_core::el;
 use nova_core::engine::Engine;
@@ -18,6 +19,8 @@ pub struct Text {
   pub content: SharedStr,
   pub h_align: HorizontalAlign,
   pub v_align: VerticalAlign,
+  pub color: Color,
+  pub size: f32,
 }
 
 impl Default for Text {
@@ -26,6 +29,8 @@ impl Default for Text {
       content: SharedStr::default(),
       h_align: HorizontalAlign::Center,
       v_align: VerticalAlign::Center,
+      color: Color::BLACK,
+      size: 16.0,
     }
   }
 }

@@ -18,7 +18,7 @@ pub struct Canvas<'a, 'b> {
 }
 
 impl<'a, 'b> Canvas<'a, 'b> {
-  fn draw_texture(
+  pub(crate) fn draw_texture(
     &mut self,
     is_text: bool,
     rect: Rect<f32>,
@@ -77,9 +77,9 @@ impl<'a, 'b> Canvas<'a, 'b> {
     &mut self,
     cache: &mut GlyphCache,
     texture_id: TextureId,
-    glyphs: &[(FontId, PositionedGlyph)],
+    glyphs: &[(PositionedGlyph, Color, FontId)],
   ) {
-    for (font_id, glyph) in glyphs {
+    for (glyph, color, font_id) in glyphs {
       let (tex_coords, coords) = match cache.rect_for(font_id.0, glyph) {
         Ok(Some(x)) => x,
         _ => continue,
@@ -93,7 +93,7 @@ impl<'a, 'b> Canvas<'a, 'b> {
           x2: coords.max.x as f32,
           y2: coords.max.y as f32,
         },
-        Color::WHITE,
+        *color,
         texture_id,
         Rect {
           x1: tex_coords.min.x,

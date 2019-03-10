@@ -28,19 +28,29 @@ impl<'a> ecs::System<'a> for SolveLayout {
       stack.push((root, screen_rect));
     }
 
+    let dpi = screen.dpi();
+
     while let Some((entity, parent_rect)) = stack.pop() {
       let parent_size = parent_rect.size();
       let layout = layouts.get(entity).unwrap_or(&Layout::DEFAULT);
 
-      let (left, width) =
-        solve_dimension(parent_size.width, layout.left, layout.width, layout.right);
+      let (left, width) = solve_dimension(
+        parent_size.width / dpi,
+        layout.left,
+        layout.width,
+        layout.right,
+      );
 
-      let (top, height) =
-        solve_dimension(parent_size.height, layout.top, layout.height, layout.bottom);
+      let (top, height) = solve_dimension(
+        parent_size.height / dpi,
+        layout.top,
+        layout.height,
+        layout.bottom,
+      );
 
       let rect = ScreenRect(Rect::new(
-        Point2::new(parent_rect.x1 + left, parent_rect.y1 + top),
-        Size::new(width, height),
+        Point2::new(parent_rect.x1 + left * dpi, parent_rect.y1 + top * dpi),
+        Size::new(width * dpi, height * dpi),
       ));
 
       screen_rects.insert(entity, rect).unwrap();

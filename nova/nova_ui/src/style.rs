@@ -16,7 +16,7 @@ pub struct Style {
 impl Default for Style {
   fn default() -> Self {
     Self {
-      bg_color: Color::WHITE,
+      bg_color: Color::TRANSPARENT,
       bg_image: None,
     }
   }
