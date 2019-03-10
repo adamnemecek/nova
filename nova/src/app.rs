@@ -31,8 +31,8 @@ impl App {
     Window::setup(&mut engine, Default::default());
     ui::setup(&mut engine);
 
-    let renderer = Renderer::new(&engine);
-    let ui_painter = ui::Painter::new(&renderer);
+    let mut renderer = Renderer::new(&engine);
+    let ui_painter = ui::Painter::new(&mut renderer);
 
     App {
       ui_painter,

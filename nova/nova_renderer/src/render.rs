@@ -28,13 +28,16 @@ impl<'a> Render<'a> {
   }
 
   pub fn bind_texture(&mut self, pipeline: &Pipeline, binding: usize, id: TextureId) {
-    let descriptor_set = &self.textures.get_or_transparent(id).descriptor_set;
+    let texture = match self.textures.get_texture(id) {
+      Some(t) => t,
+      None => self.textures.transparent(),
+    };
 
     unsafe {
       self.cmd.buffer.bind_graphics_descriptor_sets(
         &pipeline.raw_layout,
         binding,
-        iter::once(descriptor_set),
+        iter::once(&texture.descriptor_set),
         &[],
       );
     }

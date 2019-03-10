@@ -20,11 +20,12 @@ impl Texture {
     device: &Device,
     allocator: &mut Allocator,
     size: Size<u32>,
+    format: DeviceImageFormat,
     sampler: &TextureSampler,
     descriptor_pool: &mut DescriptorPool,
   ) -> Texture {
-    let image = DeviceImage::new(device, allocator, size, DeviceImageFormat::Rgba8Unorm)
-      .expect("Could not create texture image");
+    let image =
+      DeviceImage::new(device, allocator, size, format).expect("Could not create texture image");
 
     let descriptor_set = descriptor_pool.alloc(device, &[Descriptor::Texture(&image, &sampler)]);
 

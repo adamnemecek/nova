@@ -5,6 +5,9 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+glyph_brush_layout = "0.1"
+rusttype = { version = "0.7", features = ["gpu_cache"] }
+nova_assets = { path = "../nova_assets" }
 nova_core = { path = "../nova_core" }
 nova_graphics = { path = "../nova_graphics" }
 nova_renderer = { path = "../nova_renderer" }

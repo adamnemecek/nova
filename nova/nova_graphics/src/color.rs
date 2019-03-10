@@ -14,6 +14,7 @@ pub struct Color4 {
 impl Color4 {
   pub const TRANSPARENT: Self = Color4::new(0.0, 0.0, 0.0, 0.0);
   pub const WHITE: Self = Color4::new(1.0, 1.0, 1.0, 1.0);
+  pub const BLACK: Self = Color4::new(0.0, 0.0, 0.0, 1.0);
 
   /// Creates a new color with the given component values.
   pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
@@ -21,9 +22,14 @@ impl Color4 {
   }
 }
 
-// Implement `From` to convert from arrays of color components.
 impl From<[f32; 4]> for Color4 {
   fn from(values: [f32; 4]) -> Self {
     Color4::new(values[0], values[1], values[2], values[3])
+  }
+}
+
+impl From<Color4> for [f32; 4] {
+  fn from(color: Color4) -> Self {
+    [color.r, color.g, color.b, color.a]
   }
 }
