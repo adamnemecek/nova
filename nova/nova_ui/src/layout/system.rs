@@ -15,19 +15,19 @@ use std::f32;
 struct LayoutElements;
 
 #[derive(SystemData)]
-struct LayoutElementsInput<'a> {
-  nodes: ReadHierarchyNodes<'a>,
+struct InputData<'a> {
+  hierarchy: ReadHierarchyNodes<'a>,
   screen: ecs::ReadResource<'a, Screen>,
-  layout: ecs::ReadComponents<'a, Layout>,
+  layouts: ecs::ReadComponents<'a, Layout>,
 }
 
 #[derive(SystemData)]
-struct LayoutElementsOutput<'a> {
+struct OutputData<'a> {
   rects: ecs::WriteComponents<'a, ScreenRect>,
 }
 
 impl<'a> ecs::System<'a> for LayoutElements {
-  type SystemData = (LayoutElementsInput<'a>, LayoutElementsOutput<'a>);
+  type SystemData = (InputData<'a>, OutputData<'a>);
 
   fn run(&mut self, (input, mut output): Self::SystemData) {
     let screen_size = input.screen.size();
@@ -37,7 +37,7 @@ impl<'a> ecs::System<'a> for LayoutElements {
       max: screen_size,
     };
 
-    for root in input.nodes.roots() {
+    for root in input.hierarchy.roots() {
       let size = calculate_size(&input, &mut output, root, constraints);
 
       let x = (screen_size.width - size.width) / 2.0;
@@ -65,12 +65,12 @@ pub fn setup(engine: &mut Engine) {
 }
 
 fn calculate_size(
-  input: &LayoutElementsInput,
-  output: &mut LayoutElementsOutput,
+  input: &InputData,
+  output: &mut OutputData,
   entity: ecs::Entity,
   constraints: Constraints,
 ) -> Size<f32> {
-  let layout = input.layout.get(entity).cloned().unwrap_or_default();
+  let layout = input.layouts.get(entity).cloned().unwrap_or_default();
 
   let size = match layout {
     Layout::Constrained(layout_constraints) => {
@@ -90,8 +90,8 @@ fn calculate_size(
 
     Layout::AspectRatioFill(mut ratio) => {
       if ratio == 0.0 {
-        for child in input.nodes.get_children_of(entity) {
-          let child_layout = input.layout.get(child);
+        for child in input.hierarchy.get_children_of(entity) {
+          let child_layout = input.layouts.get(child);
 
           if let Some(Layout::AspectRatioFill(r)) = child_layout {
             ratio = ratio.max(*r);
@@ -151,14 +151,14 @@ fn calculate_size(
 }
 
 fn stack_children(
-  input: &LayoutElementsInput,
-  output: &mut LayoutElementsOutput,
+  input: &InputData,
+  output: &mut OutputData,
   entity: ecs::Entity,
   constraints: Constraints,
 ) -> Size<f32> {
   let mut size = constraints.min;
 
-  for child in input.nodes.get_children_of(entity) {
+  for child in input.hierarchy.get_children_of(entity) {
     let child_size = calculate_size(input, output, child, constraints);
 
     size.width = size.width.max(child_size.width).min(constraints.max.width);
@@ -173,19 +173,19 @@ fn stack_children(
 }
 
 fn offset_children(
-  input: &LayoutElementsInput,
-  output: &mut LayoutElementsOutput,
+  input: &InputData,
+  output: &mut OutputData,
   entity: ecs::Entity,
   rect: Rect<f32>,
 ) {
-  let layout = input.layout.get(entity);
+  let layout = input.layouts.get(entity);
 
   let (h_align, v_align) = match layout {
     Some(Layout::Align(h, v)) => (*h, *v),
     _ => (HorizontalAlign::Center, VerticalAlign::Center),
   };
 
-  for child in input.nodes.get_children_of(entity) {
+  for child in input.hierarchy.get_children_of(entity) {
     let child_rect = output.rects.get_mut(child).unwrap();
 
     let x = match h_align {
