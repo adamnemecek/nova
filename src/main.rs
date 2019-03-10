@@ -17,15 +17,7 @@ impl el::Element for Game {
 
   fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
     el::spec::list(vec![
-      el::spec(
-        Fill,
-        el::spec(
-          Image {
-            slice: self.bg_image.into(),
-          },
-          [],
-        ),
-      ),
+      el::spec(Fill, el::spec(Image::new(self.bg_image), [])),
       el::spec(
         Text {
           content: "Hello world.".into(),

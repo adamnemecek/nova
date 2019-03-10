@@ -13,6 +13,14 @@ pub struct Image {
   pub slice: ImageSlice,
 }
 
+impl Image {
+  pub fn new(slice: impl Into<ImageSlice>) -> Self {
+    Image {
+      slice: slice.into(),
+    }
+  }
+}
+
 impl ecs::Component for Image {
   type Storage = ecs::HashMapStorage<Self>;
 }
