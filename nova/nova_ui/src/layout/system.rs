@@ -80,21 +80,46 @@ fn calculate_size(
     }
 
     Layout::Fill => {
-      let size = Size {
-        width: if constraints.max.width.is_finite() {
-          constraints.max.width
-        } else {
-          constraints.min.width
-        },
-
-        height: if constraints.max.height.is_finite() {
-          constraints.max.height
-        } else {
-          constraints.min.height
-        },
+      let constraints = Constraints {
+        min: constraints.largest_finite_size(),
+        max: constraints.max,
       };
 
-      stack_children(input, output, entity, size.into())
+      stack_children(input, output, entity, constraints)
+    }
+
+    Layout::AspectRatioFill(mut ratio) => {
+      if ratio == 0.0 {
+        for child in input.nodes.get_children_of(entity) {
+          let child_layout = input.layout.get(child);
+
+          if let Some(Layout::AspectRatioFill(r)) = child_layout {
+            ratio = ratio.max(*r);
+          } else if let Some(Layout::Constrained(c)) = child_layout {
+            ratio = ratio.max(c.largest_finite_size().ratio());
+          }
+        }
+      }
+
+      let constraints = if ratio == 0.0 {
+        constraints
+      } else if constraints.max.width.is_finite() {
+        let height = (constraints.max.width / ratio)
+          .max(constraints.min.height)
+          .min(constraints.max.height);
+
+        Size::new(height * ratio, height).into()
+      } else if constraints.max.height.is_finite() {
+        let width = (constraints.max.height * ratio)
+          .max(constraints.min.width)
+          .min(constraints.max.width);
+
+        Size::new(width, width / ratio).into()
+      } else {
+        constraints
+      };
+
+      stack_children(input, output, entity, constraints)
     }
   };
 

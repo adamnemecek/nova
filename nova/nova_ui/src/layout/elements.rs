@@ -20,3 +20,25 @@ impl el::Element for Fill {
     ctx.remove_component::<Layout>();
   }
 }
+
+#[derive(Debug, Default, PartialEq)]
+pub struct AspectRatioFill(pub f32);
+
+impl el::Element for AspectRatioFill {
+  type State = ();
+  type Message = ();
+
+  fn on_awake(&self, ctx: el::Context<Self>) {
+    ctx.put_component(Layout::AspectRatioFill(self.0));
+  }
+
+  fn on_change(&self, _old_self: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
+    ctx.put_component(Layout::AspectRatioFill(self.0));
+
+    el::ShouldRebuild(true)
+  }
+
+  fn on_sleep(&self, ctx: el::Context<Self>) {
+    ctx.remove_component::<Layout>();
+  }
+}

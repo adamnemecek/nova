@@ -4,7 +4,7 @@ use nova::graphics::images::{self, ImageId};
 use nova::log;
 use nova::ui::text::fonts;
 use nova::ui::text::{HorizontalAlign, Text, VerticalAlign};
-use nova::ui::{Color, Fill, Image};
+use nova::ui::{AspectRatioFill, Color, Fill, Image};
 
 #[derive(Debug, PartialEq)]
 struct Game {
@@ -17,7 +17,10 @@ impl el::Element for Game {
 
   fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
     el::spec::list(vec![
-      el::spec(Fill, el::spec(Image::new(self.bg_image), [])),
+      el::spec(
+        AspectRatioFill::default(),
+        el::spec(Image::new(self.bg_image), []),
+      ),
       el::spec(
         Text {
           content: "Hello world.".into(),

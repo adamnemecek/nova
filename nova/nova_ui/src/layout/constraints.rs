@@ -35,6 +35,26 @@ impl Constraints {
       height: size.height.max(self.min.height).min(self.max.height),
     }
   }
+
+  pub fn largest_finite_size(&self) -> Size<f32> {
+    Size {
+      width: if self.max.width.is_finite() {
+        self.max.width
+      } else if self.min.width.is_finite() {
+        self.min.width
+      } else {
+        0.0
+      },
+
+      height: if self.max.height.is_finite() {
+        self.max.height
+      } else if self.min.height.is_finite() {
+        self.min.height
+      } else {
+        0.0
+      },
+    }
+  }
 }
 
 impl From<Size<f32>> for Constraints {

@@ -16,6 +16,7 @@ use nova_core::engine::Engine;
 pub enum Layout {
   Constrained(Constraints),
   Fill,
+  AspectRatioFill(f32),
 }
 
 impl ecs::Component for Layout {

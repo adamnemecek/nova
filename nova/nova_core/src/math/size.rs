@@ -32,6 +32,16 @@ impl<T: ScalarNum> Size<T> {
   }
 }
 
+impl Size<f32> {
+  pub fn ratio(self) -> f32 {
+    if self.height == 0.0 {
+      0.0
+    } else {
+      self.width / self.height
+    }
+  }
+}
+
 impl From<Size<u32>> for Size<f32> {
   fn from(input: Size<u32>) -> Self {
     Size::new(input.width as f32, input.height as f32)
