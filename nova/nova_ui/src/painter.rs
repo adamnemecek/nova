@@ -6,7 +6,7 @@ mod canvas;
 
 pub use self::canvas::Canvas;
 
-use crate::layout::ScreenRect;
+use crate::screen::ScreenRect;
 use crate::text::cache::GlyphCache;
 use crate::text::position::PositionedText;
 use crate::{Color, Screen, Style};

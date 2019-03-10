@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::layout::ScreenRect;
+use crate::screen::ScreenRect;
 use crate::text::fonts::{FontId, ReadFonts};
 use crate::text::{HorizontalAlign, Text, VerticalAlign};
 use crate::{Color, Screen};

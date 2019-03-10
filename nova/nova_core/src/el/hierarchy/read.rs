@@ -9,25 +9,25 @@ use std::ops::Deref;
 
 #[derive(SystemData)]
 pub struct ReadHierarchyNodes<'a> {
-    hierarchy: ecs::ReadResource<'a, Hierarchy>,
-    pub nodes: ecs::ReadComponents<'a, Node>,
+  hierarchy: ecs::ReadResource<'a, Hierarchy>,
+  pub nodes: ecs::ReadComponents<'a, Node>,
 }
 
 impl<'a> ReadHierarchyNodes<'a> {
-    pub fn get_children_of<'b>(
-        &'b self,
-        entity: ecs::Entity,
-    ) -> impl Iterator<Item = ecs::Entity> + 'b {
-        let node = self.nodes.get(entity);
+  pub fn get_children_of<'b>(
+    &'b self,
+    entity: ecs::Entity,
+  ) -> impl Iterator<Item = ecs::Entity> + 'b {
+    let node = self.nodes.get(entity);
 
-        node.map(Node::children).into_iter().flatten()
-    }
+    node.map(Node::children).into_iter().flatten()
+  }
 }
 
 impl<'a> Deref for ReadHierarchyNodes<'a> {
-    type Target = Hierarchy;
+  type Target = Hierarchy;
 
-    fn deref(&self) -> &Hierarchy {
-        &self.hierarchy
-    }
+  fn deref(&self) -> &Hierarchy {
+    &self.hierarchy
+  }
 }

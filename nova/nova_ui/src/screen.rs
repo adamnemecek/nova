@@ -2,6 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod rect;
+
+pub use self::rect::ScreenRect;
+
 use nova_core::ecs;
 use nova_core::engine::{Engine, EngineEvent};
 use nova_core::math::{Matrix4, Size};
@@ -50,7 +54,7 @@ impl Screen {
 }
 
 #[derive(Debug)]
-pub struct UpdateScreenInfo;
+struct UpdateScreenInfo;
 
 impl<'a> ecs::System<'a> for UpdateScreenInfo {
   type SystemData = (
@@ -64,13 +68,9 @@ impl<'a> ecs::System<'a> for UpdateScreenInfo {
 }
 
 pub fn setup(engine: &mut Engine) {
+  ecs::register::<ScreenRect>(engine.resources_mut());
+
   engine.resources_mut().entry().or_insert_with(Screen::new);
 
-  let mut update = UpdateScreenInfo;
-
-  if engine.resources().has_value::<Window>() {
-    ecs::System::run(&mut update, ecs::SystemData::fetch(engine.resources()));
-  }
-
-  engine.on_event(EngineEvent::TickStarted, update);
+  engine.on_event(EngineEvent::TickStarted, UpdateScreenInfo);
 }

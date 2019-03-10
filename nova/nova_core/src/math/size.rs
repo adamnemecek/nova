@@ -4,7 +4,7 @@
 
 use super::ScalarNum;
 use std::fmt;
-use std::ops::Div;
+use std::ops::{Div, Mul};
 
 /// Two-dimensional size with width and height.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -35,6 +35,14 @@ impl<T: ScalarNum> Size<T> {
 impl From<Size<u32>> for Size<f32> {
   fn from(input: Size<u32>) -> Self {
     Size::new(input.width as f32, input.height as f32)
+  }
+}
+
+impl<T: ScalarNum> Mul<T> for Size<T> {
+  type Output = Self;
+
+  fn mul(self, operand: T) -> Self {
+    Size::new(self.width * operand, self.height * operand)
   }
 }
 

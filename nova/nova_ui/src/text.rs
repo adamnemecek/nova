@@ -8,6 +8,7 @@ pub mod position;
 
 pub use glyph_brush_layout::{HorizontalAlign, VerticalAlign};
 
+use crate::layout::Layout;
 use crate::Color;
 use nova_core::ecs;
 use nova_core::el;
@@ -44,16 +45,18 @@ impl el::Element for Text {
   type Message = ();
 
   fn on_awake(&self, ctx: el::Context<Self>) {
+    ctx.put_component(Layout::Fill);
     ctx.put_component(self.clone());
   }
 
   fn on_change(&self, _: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
-    self.on_awake(ctx);
+    ctx.put_component(self.clone());
 
     el::ShouldRebuild(true)
   }
 
   fn on_sleep(&self, ctx: el::Context<Self>) {
+    ctx.remove_component::<Layout>();
     ctx.remove_component::<Text>();
   }
 }

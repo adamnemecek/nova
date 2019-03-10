@@ -11,13 +11,13 @@ mod screen;
 mod style;
 
 pub use self::container::Container;
-pub use self::layout::Layout;
 pub use self::painter::Painter;
 pub use self::screen::Screen;
 pub use self::style::Style;
 pub use nova_graphics::Color4 as Color;
 
 use nova_core::engine::Engine;
+use nova_core::shred;
 
 pub fn setup(engine: &mut Engine) {
   layout::setup(engine);
