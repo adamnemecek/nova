@@ -5,17 +5,15 @@
 mod constraints;
 mod system;
 
-use self::constraints::Constraints;
+pub use self::constraints::Constraints;
+
 use nova_core::ecs;
-use nova_core::engine::{Engine};
-use nova_core::math::{Size};
-use std::f32;
+use nova_core::engine::Engine;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Layout {
-  Stack,
+  Constrained(Constraints),
   Fill,
-  FixedSize(Size<f32>),
 }
 
 impl ecs::Component for Layout {
@@ -24,7 +22,7 @@ impl ecs::Component for Layout {
 
 impl Default for Layout {
   fn default() -> Self {
-    Layout::Stack
+    Layout::Constrained(Constraints::default())
   }
 }
 

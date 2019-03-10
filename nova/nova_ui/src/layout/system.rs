@@ -73,7 +73,11 @@ fn calculate_size(
   let layout = input.layout.get(entity).cloned().unwrap_or_default();
 
   let size = match layout {
-    Layout::Stack => stack_children(input, output, entity, constraints),
+    Layout::Constrained(layout_constraints) => {
+      let constraints = layout_constraints.narrow_by(constraints);
+
+      stack_children(input, output, entity, constraints)
+    }
 
     Layout::Fill => {
       let size = Size {
@@ -89,12 +93,6 @@ fn calculate_size(
           constraints.min.height
         },
       };
-
-      stack_children(input, output, entity, size.into())
-    }
-
-    Layout::FixedSize(size) => {
-      let size = size * input.screen.dpi();
 
       stack_children(input, output, entity, size.into())
     }

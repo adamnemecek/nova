@@ -5,7 +5,7 @@
 use nova_core::math::Size;
 use std::f32;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Constraints {
   pub min: Size<f32>,
   pub max: Size<f32>,
@@ -16,6 +16,22 @@ impl Default for Constraints {
     Self {
       min: Size::default(),
       max: Size::new(f32::INFINITY, f32::INFINITY),
+    }
+  }
+}
+
+impl Constraints {
+  pub fn narrow_by(&self, constraints: Constraints) -> Self {
+    Constraints {
+      min: constraints.constrain(self.min),
+      max: constraints.constrain(self.max),
+    }
+  }
+
+  pub fn constrain(&self, size: Size<f32>) -> Size<f32> {
+    Size {
+      width: size.width.max(self.min.width).min(self.max.width),
+      height: size.height.max(self.min.height).min(self.max.height),
     }
   }
 }
