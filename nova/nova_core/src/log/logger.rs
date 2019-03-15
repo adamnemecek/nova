@@ -114,6 +114,19 @@ impl log::Log for Logger {
   }
 
   fn log(&self, record: &log::Record) {
+    let module_path = record.module_path().unwrap_or("");
+
+    // Hard code a few filters for now.
+    if module_path.starts_with("gilrs") {
+      return;
+    }
+
+    if (module_path.starts_with("gfx_") || module_path.starts_with("winit"))
+      && record.level() > Level::Warn
+    {
+      return;
+    }
+
     let source = if self.source.is_empty() {
       record.module_path().unwrap_or("")
     } else {
