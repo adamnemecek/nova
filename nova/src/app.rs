@@ -3,16 +3,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{assets, graphics};
-use nova_core::clock;
-use nova_core::engine::Engine;
-use nova_renderer::Renderer;
-use nova_ui as ui;
-use nova_window::{self as window, Window};
+use crate::clock;
+use crate::ecs;
+use crate::engine::Engine;
+use crate::renderer::Renderer;
+use crate::ui;
+use crate::window::{self, Window};
 use std::ops::{Deref, DerefMut};
 
 pub struct App {
   ui_painter: ui::Painter,
   renderer: Renderer,
+  gamepad_updater: input::gamepad::UpdateGamepad,
   engine: Engine,
 }
 
@@ -34,9 +36,14 @@ impl App {
     let mut renderer = Renderer::new(&engine);
     let ui_painter = ui::Painter::new(&mut renderer);
 
+    let mut gamepad_updater = input::gamepad::UpdateGamepad::new();
+
+    ecs::System::setup(&mut gamepad_updater, engine.resources_mut());
+
     App {
       ui_painter,
       renderer,
+      gamepad_updater,
       engine,
     }
   }
@@ -53,6 +60,12 @@ impl App {
     };
 
     loop {
+      // Update input before each frame.
+      ecs::System::run(
+        &mut self.gamepad_updater,
+        ecs::SystemData::fetch(self.engine.resources()),
+      );
+
       // Tick the engine once.
       self.tick(clock::DeltaTime::SincePrevious(&mut previous_instant));
 

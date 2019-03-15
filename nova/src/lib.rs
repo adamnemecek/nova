@@ -4,6 +4,7 @@
 
 pub extern crate nova_assets as assets;
 pub extern crate nova_graphics as graphics;
+pub extern crate nova_input as input;
 pub extern crate nova_renderer as renderer;
 pub extern crate nova_ui as ui;
 pub extern crate nova_window as window;

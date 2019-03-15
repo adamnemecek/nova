@@ -13,6 +13,7 @@ lto = true
 nova_assets = { path = "./nova_assets" }
 nova_core = { path = "./nova_core" }
 nova_graphics = { path = "./nova_graphics" }
+nova_input = { path = "./nova_input" }
 nova_renderer = { path = "./nova_renderer" }
 nova_ui = { path = "./nova_ui" }
 nova_window = { path = "./nova_window" }

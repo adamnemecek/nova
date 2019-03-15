@@ -1,0 +1,9 @@
+[package]
+name = "nova_input"
+version = "0.3.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
+
+[dependencies]
+nova_core = { path = "../nova_core" }
+gilrs = "0.7.1"
