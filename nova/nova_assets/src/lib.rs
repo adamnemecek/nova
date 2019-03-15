@@ -19,7 +19,6 @@ use nova_core::shred;
 
 use nova_core::ecs;
 use nova_core::engine::{Engine, Resources};
-use nova_core::log::debug;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -92,8 +91,6 @@ fn create_assets(
 
       assets.insert(entity, asset).unwrap();
       table.insert(asset_path.clone(), AssetId(entity));
-
-      debug!("Created asset {:?} at path {:?}.", entity.id(), asset_path);
     }
 
     asset_path.pop_component();
