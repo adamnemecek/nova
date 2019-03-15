@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use winit::EventsLoop;
+pub use winit::{EventsLoop, MouseButton};
 pub use winit::VirtualKeyCode as KeyCode;
 pub use winit::WindowEvent as Event;
-pub use winit::ElementState as KeyState;
+pub use winit::ElementState as ButtonState;
 
 use nova_core::ecs;
 use nova_core::engine::Resources;

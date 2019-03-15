@@ -50,7 +50,7 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
         None => continue,
       };
 
-      let state = input.state == nova_window::KeyState::Pressed;
+      let state = input.state == nova_window::ButtonState::Pressed;
 
       keyboard.set_key(key_code, state);
     }
