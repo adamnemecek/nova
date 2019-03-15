@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 nova_core = { path = "../nova_core" }
+nova_window = { path = "../nova_window" }
 gilrs = "0.7.1"

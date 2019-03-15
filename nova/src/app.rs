@@ -15,6 +15,7 @@ pub struct App {
   ui_painter: ui::Painter,
   renderer: Renderer,
   gamepad_updater: input::gamepad::UpdateGamepad,
+  keyboard_updater: input::keyboard::UpdateKeyboard,
   engine: Engine,
 }
 
@@ -37,13 +38,16 @@ impl App {
     let ui_painter = ui::Painter::new(&mut renderer);
 
     let mut gamepad_updater = input::gamepad::UpdateGamepad::new();
+    let mut keyboard_updater = input::keyboard::UpdateKeyboard::new();
 
     ecs::System::setup(&mut gamepad_updater, engine.resources_mut());
+    ecs::System::setup(&mut keyboard_updater, engine.resources_mut());
 
     App {
       ui_painter,
       renderer,
       gamepad_updater,
+      keyboard_updater,
       engine,
     }
   }
@@ -63,6 +67,11 @@ impl App {
       // Update input before each frame.
       ecs::System::run(
         &mut self.gamepad_updater,
+        ecs::SystemData::fetch(self.engine.resources()),
+      );
+
+      ecs::System::run(
+        &mut self.keyboard_updater,
         ecs::SystemData::fetch(self.engine.resources()),
       );
 

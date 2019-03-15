@@ -29,7 +29,7 @@ impl Window {
 
     let raw = winit::WindowBuilder::new()
       .with_title(options.title)
-      .with_resizable(false)
+      .with_resizable(true)
       .with_dimensions(
         winit::dpi::PhysicalSize::new(options.size.width.into(), options.size.height.into())
           .to_logical(events_loop.get_primary_monitor().get_hidpi_factor()),
