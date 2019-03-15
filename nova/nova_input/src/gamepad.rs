@@ -12,16 +12,19 @@ pub use self::update::UpdateGamepad;
 
 use nova_core::ecs;
 use nova_core::engine::Resources;
+use nova_core::events;
 use std::collections::HashMap;
+use std::f32;
 
 pub type ReadGamepad<'a> = ecs::ReadResource<'a, Gamepad>;
 
 type WriteGamepad<'a> = ecs::WriteResource<'a, Gamepad>;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Gamepad {
   buttons: HashMap<GamepadButton, f32>,
   axes: HashMap<GamepadAxis, f32>,
+  events: events::Channel<GamepadEvent>,
 }
 
 impl Gamepad {
@@ -39,6 +42,32 @@ impl Gamepad {
   pub fn get_axis(&self, axis: GamepadAxis) -> f32 {
     self.axes.get(&axis).cloned().unwrap_or_default()
   }
+
+  fn set_button(&mut self, button: GamepadButton, value: f32) {
+    let prev = self.buttons.insert(button, value).unwrap_or_default();
+
+    if (prev - value).abs() > f32::EPSILON {
+      self
+        .events
+        .single_write(GamepadEvent::ButtonChanged { button, value });
+    }
+  }
+
+  fn set_axis(&mut self, axis: GamepadAxis, value: f32) {
+    let prev = self.axes.insert(axis, value).unwrap_or_default();
+
+    if (prev - value).abs() > f32::EPSILON {
+      self
+        .events
+        .single_write(GamepadEvent::AxisChanged { axis, value });
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum GamepadEvent {
+  ButtonChanged { button: GamepadButton, value: f32 },
+  AxisChanged { axis: GamepadAxis, value: f32 },
 }
 
 pub fn read(res: &Resources) -> ReadGamepad {

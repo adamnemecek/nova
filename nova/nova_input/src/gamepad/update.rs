@@ -10,8 +10,9 @@ use nova_core::log;
 
 #[derive(Debug)]
 pub struct UpdateGamepad {
-  gilrs: Gilrs,
+  /// ID of the gamepad currently used for input events.
   gamepad_id: Option<gilrs::GamepadId>,
+  gilrs: Gilrs,
   log: log::Logger,
 }
 
@@ -88,15 +89,15 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
             .with("reason", log::Display("Disconnected"));
         }
 
-        gilrs::EventType::AxisChanged(axis, state, _) if self.gamepad_id == Some(id) => {
+        gilrs::EventType::AxisChanged(axis, value, _) if self.gamepad_id == Some(id) => {
           if let Some(axis) = GamepadAxis::from_gilrs(axis) {
-            gamepad.axes.insert(axis, state);
+            gamepad.set_axis(axis, value);
           }
         }
 
-        gilrs::EventType::ButtonChanged(button, state, _) if self.gamepad_id == Some(id) => {
+        gilrs::EventType::ButtonChanged(button, value, _) if self.gamepad_id == Some(id) => {
           if let Some(button) = GamepadButton::from_gilrs(button) {
-            gamepad.buttons.insert(button, state);
+            gamepad.set_button(button, value);
           }
         }
 
@@ -106,9 +107,7 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
           | gilrs::Button::DPadRight
           | gilrs::Button::DPadUp = button
           {
-            gamepad
-              .buttons
-              .insert(GamepadButton::from_gilrs(button).unwrap(), 1.0);
+            gamepad.set_button(GamepadButton::from_gilrs(button).unwrap(), 1.0);
           }
         }
 
@@ -118,9 +117,7 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
           | gilrs::Button::DPadRight
           | gilrs::Button::DPadUp = button
           {
-            gamepad
-              .buttons
-              .insert(GamepadButton::from_gilrs(button).unwrap(), 0.0);
+            gamepad.set_button(GamepadButton::from_gilrs(button).unwrap(), 0.0);
           }
         }
 
