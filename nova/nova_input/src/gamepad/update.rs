@@ -55,6 +55,14 @@ impl UpdateGamepad {
   pub fn new() -> Self {
     Self::default()
   }
+
+  fn log_connected(&self, gamepad: gilrs::Gamepad) {
+    self
+      .log
+      .info("Gamepad connected.")
+      .with("id", gamepad.id())
+      .with("name", gamepad.name());
+  }
 }
 
 impl<'a> ecs::System<'a> for UpdateGamepad {
@@ -62,6 +70,10 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
 
   fn setup(&mut self, res: &mut Resources) {
     res.entry().or_insert_with(Gamepad::default);
+
+    for gamepad in self.gilrs.gamepads() {
+      self.log_connected(gamepad.1);
+    }
   }
 
   fn run(&mut self, mut gamepad: Self::SystemData) {
@@ -90,18 +102,32 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
         }
 
         gilrs::EventType::AxisChanged(axis, value, _) if self.gamepad_id == Some(id) => {
+          self
+            .log
+            .trace("Axis changed.")
+            .with("axis", axis)
+            .with("value", value);
+
           if let Some(axis) = GamepadAxis::from_gilrs(axis) {
             gamepad.set_axis(axis, value);
           }
         }
 
         gilrs::EventType::ButtonChanged(button, value, _) if self.gamepad_id == Some(id) => {
+          self
+            .log
+            .trace("Button changed.")
+            .with("button", button)
+            .with("value", value);
+
           if let Some(button) = GamepadButton::from_gilrs(button) {
             gamepad.set_button(button, value);
           }
         }
 
         gilrs::EventType::ButtonPressed(button, _) if self.gamepad_id == Some(id) => {
+          self.log.trace("Button pressed.").with("button", button);
+
           if let gilrs::Button::DPadDown
           | gilrs::Button::DPadLeft
           | gilrs::Button::DPadRight
@@ -112,6 +138,8 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
         }
 
         gilrs::EventType::ButtonReleased(button, _) if self.gamepad_id == Some(id) => {
+          self.log.trace("Button released.").with("button", button);
+
           if let gilrs::Button::DPadDown
           | gilrs::Button::DPadLeft
           | gilrs::Button::DPadRight
