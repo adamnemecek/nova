@@ -23,13 +23,6 @@ impl<'a> WriteNodes<'a> {
     self.nodes.get_mut(entity)
   }
 
-  pub fn children_of(&'a self, entity: ecs::Entity) -> impl Iterator<Item = ecs::Entity> + 'a {
-    match self.nodes.get(entity) {
-      Some(node) => node.real_children.entities.iter().cloned(),
-      None => [].iter().cloned(),
-    }
-  }
-
   pub(crate) fn create_element(
     &mut self,
     prototype: ElementPrototype,
