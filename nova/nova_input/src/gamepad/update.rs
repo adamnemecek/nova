@@ -7,6 +7,7 @@ use gilrs::Gilrs;
 use nova_core::ecs;
 use nova_core::engine::Resources;
 use nova_core::log;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct UpdateGamepad {
@@ -35,17 +36,9 @@ impl Default for UpdateGamepad {
       Err(err) => panic!("Could not initialize gilrs: {}", err),
     };
 
-    // Use the first available gamepad.
-    let gamepad_id = gilrs.gamepads().next().map(|g| g.0);
-
-    log
-      .info("Gamepad changed.")
-      .with("id", gamepad_id)
-      .with("reason", log::Display("Initial"));
-
     Self {
       gilrs,
-      gamepad_id,
+      gamepad_id: None,
       log,
     }
   }
@@ -60,8 +53,28 @@ impl UpdateGamepad {
     self
       .log
       .info("Gamepad connected.")
-      .with("id", gamepad.id())
-      .with("name", gamepad.name());
+      .with("name", gamepad.name())
+      .with("uuid", Uuid::from_bytes(gamepad.uuid()));
+  }
+
+  fn log_disconnected(&self, gamepad: gilrs::Gamepad) {
+    self
+      .log
+      .info("Gamepad disconnected.")
+      .with("name", gamepad.name())
+      .with("uuid", Uuid::from_bytes(gamepad.uuid()));
+  }
+
+  fn log_selected(&self, gamepad: Option<gilrs::Gamepad>) {
+    if let Some(gamepad) = gamepad {
+      self
+        .log
+        .info("Gamepad selected.")
+        .with("name", gamepad.name())
+        .with("uuid", Uuid::from_bytes(gamepad.uuid()));
+    } else {
+      self.log.info("No gamepads available.");
+    }
   }
 }
 
@@ -71,81 +84,89 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
   fn setup(&mut self, res: &mut Resources) {
     res.entry().or_insert_with(Gamepad::default);
 
-    for gamepad in self.gilrs.gamepads() {
-      self.log_connected(gamepad.1);
+    for (id, gamepad) in self.gilrs.gamepads() {
+      self.log_connected(gamepad);
+
+      if self.gamepad_id.is_none() {
+        self.gamepad_id = Some(id);
+      }
     }
+
+    self.log_selected(self.gamepad_id.map(|id| self.gilrs.gamepad(id)));
   }
 
   fn run(&mut self, mut gamepad: Self::SystemData) {
     while let Some(gilrs::Event { id, event, .. }) = self.gilrs.next_event() {
       match event {
         // Use the first gamepad that connects.
-        gilrs::EventType::Connected if self.gamepad_id.is_none() => {
-          self.gamepad_id = Some(id);
+        gilrs::EventType::Connected => {
+          let gamepad = self.gilrs.gamepad(id);
 
-          self
-            .log
-            .info("Gamepad changed.")
-            .with("id", self.gamepad_id)
-            .with("reason", log::Display("Connected"));
-        }
+          self.log_connected(gamepad);
 
-        // Use the next available gamepad when the current one is disconnected.
-        gilrs::EventType::Disconnected if self.gamepad_id == Some(id) => {
-          self.gamepad_id = self.gilrs.gamepads().next().map(|g| g.0);
-
-          self
-            .log
-            .info("Gamepad changed.")
-            .with("id", self.gamepad_id)
-            .with("reason", log::Display("Disconnected"));
-        }
-
-        gilrs::EventType::AxisChanged(axis, value, _) if self.gamepad_id == Some(id) => {
-          self
-            .log
-            .trace("Axis changed.")
-            .with("axis", axis)
-            .with("value", value);
-
-          if let Some(axis) = GamepadAxis::from_gilrs(axis) {
-            gamepad.set_axis(axis, value);
+          if self.gamepad_id.is_none() {
+            self.gamepad_id = Some(id);
+            self.log_selected(Some(gamepad));
           }
         }
 
-        gilrs::EventType::ButtonChanged(button, value, _) if self.gamepad_id == Some(id) => {
-          self
-            .log
-            .trace("Button changed.")
-            .with("button", button)
-            .with("value", value);
+        // Use the next available gamepad when the current one is disconnected.
+        gilrs::EventType::Disconnected => {
+          self.log_disconnected(self.gilrs.gamepad(id));
 
+          if self.gamepad_id == Some(id) {
+            let gamepad = self.gilrs.gamepads().next();
+
+            self.gamepad_id = gamepad.map(|g| g.0);
+            self.log_selected(gamepad.map(|g| g.1));
+          }
+        }
+
+        gilrs::EventType::AxisChanged(axis, value, _) if self.gamepad_id == Some(id) => {
+          match axis {
+            gilrs::Axis::DPadX => {
+              if value > 0.0 {
+                gamepad.set_button(GamepadButton::DPadLeft, 0.0);
+                gamepad.set_button(GamepadButton::DPadRight, value);
+              } else {
+                gamepad.set_button(GamepadButton::DPadLeft, -value);
+                gamepad.set_button(GamepadButton::DPadRight, 0.0);
+              }
+            }
+
+            gilrs::Axis::DPadY => {
+              if value > 0.0 {
+                gamepad.set_button(GamepadButton::DPadDown, 0.0);
+                gamepad.set_button(GamepadButton::DPadUp, value);
+              } else {
+                gamepad.set_button(GamepadButton::DPadDown, -value);
+                gamepad.set_button(GamepadButton::DPadUp, 0.0);
+              }
+            }
+
+            axis => {
+              if let Some(axis) = GamepadAxis::from_gilrs(axis) {
+                gamepad.set_axis(axis, value);
+              }
+            }
+          };
+        }
+
+        gilrs::EventType::ButtonChanged(button, value, _) if self.gamepad_id == Some(id) => {
           if let Some(button) = GamepadButton::from_gilrs(button) {
             gamepad.set_button(button, value);
           }
         }
 
         gilrs::EventType::ButtonPressed(button, _) if self.gamepad_id == Some(id) => {
-          self.log.trace("Button pressed.").with("button", button);
-
-          if let gilrs::Button::DPadDown
-          | gilrs::Button::DPadLeft
-          | gilrs::Button::DPadRight
-          | gilrs::Button::DPadUp = button
-          {
-            gamepad.set_button(GamepadButton::from_gilrs(button).unwrap(), 1.0);
+          if let Some(button) = GamepadButton::from_gilrs(button) {
+            gamepad.set_button(button, 1.0);
           }
         }
 
         gilrs::EventType::ButtonReleased(button, _) if self.gamepad_id == Some(id) => {
-          self.log.trace("Button released.").with("button", button);
-
-          if let gilrs::Button::DPadDown
-          | gilrs::Button::DPadLeft
-          | gilrs::Button::DPadRight
-          | gilrs::Button::DPadUp = button
-          {
-            gamepad.set_button(GamepadButton::from_gilrs(button).unwrap(), 0.0);
+          if let Some(button) = GamepadButton::from_gilrs(button) {
+            gamepad.set_button(button, 0.0);
           }
         }
 

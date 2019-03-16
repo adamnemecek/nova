@@ -933,6 +933,7 @@ dependencies = [
  "gilrs 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "nova_core 0.3.0",
  "nova_window 0.3.0",
+ "uuid 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
