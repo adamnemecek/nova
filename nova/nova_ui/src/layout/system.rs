@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::layout::{Constraints, HorizontalAlign, Layout, VerticalAlign};
+use crate::nodes::ReadNodes;
 use crate::screen::{Screen, ScreenRect};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
-use nova_core::el::hierarchy::ReadHierarchyNodes;
 use nova_core::engine::{Engine, EngineEvent};
 use nova_core::math::{Rect, Size};
 use std::f32;
@@ -16,7 +16,7 @@ struct LayoutElements;
 
 #[derive(SystemData)]
 struct InputData<'a> {
-  hierarchy: ReadHierarchyNodes<'a>,
+  nodes: ReadNodes<'a>,
   screen: ecs::ReadResource<'a, Screen>,
   layouts: ecs::ReadComponents<'a, Layout>,
 }
@@ -37,7 +37,7 @@ impl<'a> ecs::System<'a> for LayoutElements {
       max: screen_size,
     };
 
-    for root in input.hierarchy.roots() {
+    for root in input.nodes.roots() {
       let size = calculate_size(&input, &mut output, root, constraints);
 
       let x = (screen_size.width - size.width) / 2.0;
@@ -90,7 +90,7 @@ fn calculate_size(
 
     Layout::AspectRatioFill(mut ratio) => {
       if ratio == 0.0 {
-        for child in input.hierarchy.get_children_of(entity) {
+        for child in input.nodes.children_of(entity) {
           let child_layout = input.layouts.get(child);
 
           if let Some(Layout::AspectRatioFill(r)) = child_layout {
@@ -158,7 +158,7 @@ fn stack_children(
 ) -> Size<f32> {
   let mut size = constraints.min;
 
-  for child in input.hierarchy.get_children_of(entity) {
+  for child in input.nodes.children_of(entity) {
     let child_size = calculate_size(input, output, child, constraints);
 
     size.width = size.width.max(child_size.width).min(constraints.max.width);
@@ -185,7 +185,7 @@ fn offset_children(
     _ => (HorizontalAlign::Center, VerticalAlign::Center),
   };
 
-  for child in input.hierarchy.get_children_of(entity) {
+  for child in input.nodes.children_of(entity) {
     let child_rect = output.rects.get_mut(child).unwrap();
 
     let x = match h_align {

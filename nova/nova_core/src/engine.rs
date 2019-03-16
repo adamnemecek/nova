@@ -8,7 +8,6 @@ pub mod resources;
 mod events;
 
 use crate::clock;
-use crate::el;
 
 pub use self::events::EngineEvent;
 pub use self::resources::{Resource, Resources};
@@ -41,7 +40,6 @@ impl Engine {
     };
 
     clock::Time::setup(engine.resources_mut());
-    el::setup(&mut engine);
 
     engine
   }
@@ -52,12 +50,6 @@ impl Engine {
 
   pub fn resources_mut(&mut self) -> &mut Resources {
     &mut self.world.res
-  }
-
-  pub fn add_element(&mut self, element: impl el::Element + 'static) {
-    let res = self.resources();
-
-    res.fetch_mut::<el::Hierarchy>().add_element(res, element);
   }
 
   pub fn on_event(
@@ -86,21 +78,14 @@ impl Engine {
     self.world.maintain();
 
     self.run_event_handlers(EngineEvent::TickStarted);
-
-    el::Hierarchy::deliver_messages(&mut self.world.res.fetch_mut(), &self.world.res);
-
     self.world.maintain();
 
     clock::Time::update(&mut self.world.res.fetch_mut(), delta_time);
 
     self.run_event_handlers(EngineEvent::ClockTimeUpdated);
-
-    el::Hierarchy::build(&mut self.world.res.fetch_mut(), &self.world.res);
-
     self.world.maintain();
 
     self.run_event_handlers(EngineEvent::TickEnding);
-
     self.world.maintain();
   }
 

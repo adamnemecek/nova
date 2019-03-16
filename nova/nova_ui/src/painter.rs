@@ -7,12 +7,12 @@ mod canvas;
 pub use self::canvas::Canvas;
 
 use crate::image::Image;
+use crate::nodes;
 use crate::screen::ScreenRect;
 use crate::text::cache::GlyphCache;
 use crate::text::position::PositionedText;
 use crate::{Color, Screen};
 use nova_core::ecs;
-use nova_core::el::hierarchy::Hierarchy;
 use nova_core::engine::Resources;
 use nova_core::math::{Matrix4, Rect, Size};
 use nova_renderer::images::DeviceImageFormat;
@@ -95,7 +95,7 @@ impl Painter {
 
   pub fn draw(&mut self, render: &mut Render, res: &Resources) {
     let screen = res.fetch::<Screen>();
-    let hierarchy = res.fetch::<Hierarchy>();
+    let nodes = nodes::read(res);
     let mut glyph_cache = res.fetch_mut::<GlyphCache>();
 
     let rects = ecs::read_components::<ScreenRect>(res);
@@ -137,7 +137,7 @@ impl Painter {
       Rect::unit(),
     );
 
-    for entity in hierarchy.sorted() {
+    for entity in nodes.sorted() {
       if let (Some(rect), Some(image)) = (rects.get(entity), images.get(entity)) {
         canvas.draw_image(rect.0, Color::WHITE, image.slice);
       }

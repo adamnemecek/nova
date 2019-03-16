@@ -1,7 +1,7 @@
 use nova::assets;
-use nova::el;
 use nova::graphics::images::{self, ImageId};
 use nova::log;
+use nova::ui;
 use nova::ui::text::fonts;
 use nova::ui::{Align, Color, HorizontalAlign, Image, Text, VerticalAlign};
 
@@ -10,26 +10,22 @@ struct Game {
   bg_image: ImageId,
 }
 
-impl el::Element for Game {
+impl ui::Element for Game {
   type State = ();
-  type Message = ();
 
-  fn build(&self, _: el::spec::Children, _: el::Context<Self>) -> el::Spec {
-    el::spec::list(vec![
-      el::spec(
+  fn build(&self, _: ui::ChildSpecs, _: ui::ElementContext<Self>) -> ui::Spec {
+    ui::Spec::from(vec![
+      ui::Spec::new(
         Align(HorizontalAlign::Left, VerticalAlign::Bottom),
-        el::spec(Image::new(self.bg_image), []),
+        Image::new(self.bg_image),
       ),
-      el::spec(
-        Text {
-          content: "Hello world.".into(),
-          color: Color::WHITE,
-          size: 24.0,
-          h_align: HorizontalAlign::Right,
-          v_align: VerticalAlign::Bottom,
-        },
-        [],
-      ),
+      ui::Spec::from(Text {
+        content: "Hello world.".into(),
+        color: Color::WHITE,
+        size: 24.0,
+        h_align: HorizontalAlign::Right,
+        v_align: VerticalAlign::Bottom,
+      }),
     ])
   }
 }
@@ -39,7 +35,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   log::set_as_default();
 
   // Create a new nova app.
-  let mut app = nova::App::new();
+  let app = nova::App::new();
 
   // Load a default font.
   fonts::write(app.resources())
@@ -51,7 +47,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     .load_asset_at_path(&"/do-it.jpg".into(), &assets::read(app.resources()));
 
   // Add a root `Game` element.
-  app.add_element(Game { bg_image });
+  ui::add_to_root(app.resources(), Game { bg_image });
 
   // Run the app until the window is closed.
   app.run();

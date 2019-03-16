@@ -4,7 +4,6 @@
 
 pub mod clock;
 pub mod ecs;
-pub mod el;
 pub mod engine;
 pub mod log;
 pub mod math;

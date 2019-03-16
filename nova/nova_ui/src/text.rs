@@ -6,10 +6,10 @@ pub mod cache;
 pub mod fonts;
 pub mod position;
 
+use crate::elements::{Element, ElementContext};
 use crate::layout::{HorizontalAlign, Layout, VerticalAlign};
 use crate::Color;
 use nova_core::ecs;
-use nova_core::el;
 use nova_core::engine::Engine;
 use nova_core::SharedStr;
 
@@ -38,22 +38,20 @@ impl ecs::Component for Text {
   type Storage = ecs::HashMapStorage<Self>;
 }
 
-impl el::Element for Text {
+impl Element for Text {
   type State = ();
-  type Message = ();
 
-  fn on_awake(&self, ctx: el::Context<Self>) {
+  fn on_awake(&self, ctx: ElementContext<Self>) {
     ctx.put_component(Layout::Fill);
     ctx.put_component(self.clone());
   }
 
-  fn on_change(&self, _: Self, ctx: el::Context<Self>) -> el::ShouldRebuild {
+  fn on_change(&self, _: Self, mut ctx: ElementContext<Self>) {
     ctx.put_component(self.clone());
-
-    el::ShouldRebuild(true)
+    ctx.rebuild();
   }
 
-  fn on_sleep(&self, ctx: el::Context<Self>) {
+  fn on_sleep(&self, ctx: ElementContext<Self>) {
     ctx.remove_component::<Layout>();
     ctx.remove_component::<Text>();
   }

@@ -2,12 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod receive;
+use nova_core::ecs;
+use std::collections::BTreeSet;
 
-pub use self::receive::Receive;
-
-use crate::engine::Engine;
-
-pub fn setup(engine: &mut Engine) {
-  receive::setup(engine);
+#[derive(Debug, Default)]
+pub struct ChildNodes {
+  pub entities: Vec<ecs::Entity>,
+  pub references: BTreeSet<ecs::Entity>,
 }

@@ -103,7 +103,10 @@ impl App {
         }
       }
 
-      // Otherwise render a frame.
+      // Build UI nodes before rendering.
+      ui::nodes::build(self.resources());
+
+      // Finally, render the frame.
       self.render();
     }
 
