@@ -19,4 +19,5 @@ mod shared_str;
 pub use self::shared_str::SharedStr;
 pub use crossbeam;
 pub use quick_error::quick_error;
+pub use rayon::ThreadPool;
 pub use specs::{self, shred};

@@ -2,14 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod dispatch;
-
-pub use rayon::ThreadPool;
-
 use crate::clock;
 use crate::ecs::entities::{self, Entities, Entity};
 use crate::ecs::Resources;
 use crate::scheduler::{Runnable, Scheduler};
+use crate::ThreadPool;
 use std::fmt;
 
 const EVENT_COUNT: usize = EngineEvent::TickEnding as usize + 1;
@@ -87,6 +84,8 @@ impl Engine {
 
 impl fmt::Debug for Engine {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    f.debug_struct("Engine").field("schedulers", &self.schedulers).finish()
+    f.debug_struct("Engine")
+      .field("schedulers", &self.schedulers)
+      .finish()
   }
 }

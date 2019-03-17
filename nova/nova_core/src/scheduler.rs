@@ -2,17 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod runnable;
+
+pub use self::runnable::Runnable;
+
 use crate::collections::FnvHashSet;
 use crate::ecs::resources::{ResourceId, Resources};
-use rayon::ThreadPool;
-use specs::shred::RunWithPool;
-use std::fmt;
+use crate::ThreadPool;
+use rayon::iter::{IntoParallelRefMutIterator as _, ParallelIterator as _};
 
 type ParRunnable = Box<dyn Runnable + Send>;
 type SeqRunnable = Box<dyn Runnable>;
 
+/// Automatically parallelizes systems and other runnable operations based on
+/// their resource dependencies.
 #[derive(Debug, Default)]
 pub struct Scheduler {
+  /// Sequential list of stages to run.
   stages: Vec<Stage>,
 }
 
@@ -21,34 +27,33 @@ impl Scheduler {
     Default::default()
   }
 
-  pub fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool) {
-    for stage in &mut self.stages {
-      match stage {
-        Stage::Seq { runnables } => {
-          for runnable in runnables {
-            runnable.run(resources, thread_pool);
-          }
-        }
-
-        Stage::Par { runnables, .. } => thread_pool.install(|| {
-          use rayon::iter::{IntoParallelRefMutIterator as _, ParallelIterator as _};
-
-          runnables.par_iter_mut().for_each(|runnable| {
-            runnable.run(resources, thread_pool);
-          });
-        }),
-      }
-    }
-  }
-
+  /// Adds an operation.
+  ///
+  /// It will be automatically scheduled to run in parallel with other
+  /// operations it does not conflict with.
   pub fn add(&mut self, runnable: impl Runnable + Send + 'static) {
+    // Determine resource dependencies.
     let mut reads = FnvHashSet::default();
     let mut writes = FnvHashSet::default();
 
     runnable.reads(&mut reads);
     runnable.writes(&mut writes);
 
-    let runnable = Box::new(runnable);
+    // Find the existing `Par` stage this runnable should be added to.
+    //
+    // The search begins from the last stage and searches backward, stopping
+    // when the stage has read/write conflicts or is a `Seq` stage. This means:
+    //
+    //   - The new runnable is placed as early as possible.
+    //
+    //   - `Seq` stages are treated as barriers, so the runnable will be placed
+    //     in a stage _after_ the last `Seq` stage.
+    //
+    //   - If the runnable reads a resource that a stage writes, it will be
+    //     placed in the _following_ stage. The logic is that if a runnable
+    //     reads from a resource, it probably benefits from more recent
+    //     information.
+    //
     let mut selected = None;
 
     for i in (0..self.stages.len()).rev() {
@@ -64,6 +69,9 @@ impl Scheduler {
         _ => break,
       }
     }
+
+    // Either place the runnable in the selected stage or create a new one.
+    let runnable = Box::new(runnable);
 
     if let Some(index) = selected {
       match &mut self.stages[index] {
@@ -89,9 +97,16 @@ impl Scheduler {
     }
   }
 
+  /// Adds a sequential runnable to the scheduler.
+  ///
+  /// It will be run after all previously added runnables have finished running.
+  /// Any runnables added after it will not run until this it has finished
+  /// running.
   pub fn add_seq(&mut self, runnable: impl Runnable + 'static) {
     let runnable = Box::new(runnable);
 
+    // If the last stage is a `Seq`, add the runnable to that. Otherwise, make
+    // a new stage.
     match self.stages.last_mut() {
       Some(Stage::Seq { runnables }) => {
         runnables.push(runnable);
@@ -102,46 +117,37 @@ impl Scheduler {
       }),
     }
   }
+
+  /// Runs the scheduled runnables.
+  pub fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool) {
+    for stage in &mut self.stages {
+      match stage {
+        Stage::Seq { runnables } => {
+          for runnable in runnables {
+            runnable.run(resources, thread_pool);
+          }
+        }
+
+        Stage::Par { runnables, .. } => thread_pool.install(|| {
+          runnables.par_iter_mut().for_each(|runnable| {
+            runnable.run(resources, thread_pool);
+          });
+        }),
+      }
+    }
+  }
 }
 
+/// A single stage in the `Scheduler` containing runnables.
 #[derive(Debug)]
 enum Stage {
+  /// A stage where all runnables run in parallel.
   Par {
     reads: FnvHashSet<ResourceId>,
     writes: FnvHashSet<ResourceId>,
     runnables: Vec<ParRunnable>,
   },
-  Seq {
-    runnables: Vec<SeqRunnable>,
-  },
-}
 
-pub trait Runnable: fmt::Debug {
-  fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool);
-
-  fn reads(&self, set: &mut FnvHashSet<ResourceId>);
-  fn writes(&self, set: &mut FnvHashSet<ResourceId>);
-}
-
-impl<T> Runnable for T
-where
-  T: for<'a> RunWithPool<'a> + fmt::Debug,
-{
-  fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool) {
-    RunWithPool::run(self, resources, thread_pool);
-  }
-
-  fn reads(&self, set: &mut FnvHashSet<ResourceId>) {
-    let mut buffer = Vec::new();
-
-    RunWithPool::reads(self, &mut buffer);
-    set.extend(buffer.into_iter());
-  }
-
-  fn writes(&self, set: &mut FnvHashSet<ResourceId>) {
-    let mut buffer = Vec::new();
-
-    RunWithPool::writes(self, &mut buffer);
-    set.extend(buffer.into_iter());
-  }
+  /// A stage where all runnables run in sequence.
+  Seq { runnables: Vec<SeqRunnable> },
 }
