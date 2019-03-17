@@ -21,7 +21,7 @@ pub struct Window {
 
 impl Window {
   pub fn setup(engine: &mut Engine, options: Options) {
-    if engine.res.has_value::<Window>() {
+    if engine.resources.has_value::<Window>() {
       panic!("A window has already been set up.");
     }
 
@@ -42,8 +42,8 @@ impl Window {
       raw,
     };
 
-    engine.res.insert(window);
-    engine.res.insert(Events::default());
+    engine.resources.insert(window);
+    engine.resources.insert(Events::default());
 
     engine.on_event(EngineEvent::TickStarted, UpdateWindow { events_loop });
   }

@@ -33,7 +33,7 @@ impl Default for Layout {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Layout>(&mut engine.res);
+  ecs::components::register::<Layout>(&mut engine.resources);
 
   system::setup(engine);
 }

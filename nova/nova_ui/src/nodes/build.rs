@@ -24,7 +24,7 @@ struct BuildState {
 }
 
 pub fn setup(engine: &mut Engine) {
-  engine.res.entry().or_insert_with(BuildState::default);
+  engine.resources.entry().or_insert_with(BuildState::default);
 }
 
 pub fn build(res: &Resources) {

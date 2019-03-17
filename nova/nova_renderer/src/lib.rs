@@ -65,7 +65,7 @@ impl Renderer {
     let textures = Textures::new(gpu.device(), &mut allocator);
     let frame_sync = FrameSync::new(gpu.device());
     let render_pass = render_pass::create(gpu.device());
-    let presenter = Presenter::new(&engine.res.fetch(), &gpu);
+    let presenter = Presenter::new(&engine.resources.fetch(), &gpu);
     let commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
     let transfer_commands = Commands::new(gpu.device(), &gpu.queue_families()[queue_index]);
 

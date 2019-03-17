@@ -17,7 +17,7 @@ pub use rayon::ThreadPool;
 use self::events::{EventHandler, EventHandlerList};
 
 pub struct Engine {
-  pub res: Resources,
+  pub resources: Resources,
   thread_pool: ThreadPool,
   event_handlers: EventHandlerList,
   entity_buffer: Vec<Entity>,
@@ -36,15 +36,15 @@ impl Engine {
       .expect("Could not create thread pool");
 
     let mut engine = Engine {
-      res: Resources::new(),
+      resources: Resources::new(),
       thread_pool,
       event_handlers: EventHandlerList::new(),
       entity_buffer: Vec::new(),
     };
 
-    engine.res.insert(Entities::default());
+    engine.resources.insert(Entities::default());
 
-    clock::Time::setup(&mut engine.res);
+    clock::Time::setup(&mut engine.resources);
 
     engine
   }
@@ -54,7 +54,7 @@ impl Engine {
     event: EngineEvent,
     mut dispatch: impl for<'a> dispatch::RunWithPool<'a> + 'static,
   ) {
-    dispatch.setup(&mut self.res);
+    dispatch.setup(&mut self.resources);
 
     self
       .event_handlers
@@ -72,26 +72,26 @@ impl Engine {
   }
 
   pub fn tick(&mut self, delta_time: clock::DeltaTime) {
-    entities::maintain(&mut self.res, &mut self.entity_buffer);
+    entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
     self.run_event_handlers(EngineEvent::TickStarted);
 
-    entities::maintain(&mut self.res, &mut self.entity_buffer);
+    entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
-    clock::Time::update(&mut self.res.fetch_mut(), delta_time);
+    clock::Time::update(&mut self.resources.fetch_mut(), delta_time);
 
     self.run_event_handlers(EngineEvent::ClockTimeUpdated);
 
-    entities::maintain(&mut self.res, &mut self.entity_buffer);
+    entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
     self.run_event_handlers(EngineEvent::TickEnding);
 
-    entities::maintain(&mut self.res, &mut self.entity_buffer);
+    entities::maintain(&mut self.resources, &mut self.entity_buffer);
   }
 
   fn run_event_handlers(&mut self, event: EngineEvent) {
     self
       .event_handlers
-      .run(event, &mut self.res, &self.thread_pool);
+      .run(event, &mut self.resources, &self.thread_pool);
   }
 }
