@@ -6,12 +6,12 @@ use crate::nodes::{self, NodeContext};
 use crossbeam::queue::SegQueue;
 use nova_core::ecs;
 use nova_core::engine::{Engine, Resources};
-use std::any::Any;
+use std::any::{Any, TypeId};
+use std::collections::{HashMap, HashSet};
+use std::iter;
 use std::sync::Arc;
 
-pub type ReadMessages<'a> = ecs::ReadResource<'a, MessageQueue>;
-pub type WriteMessages<'a> = ReadMessages<'a>;
-
+pub type WriteMessages<'a> = ecs::ReadResource<'a, MessageQueue>;
 pub type MessagePayload = Arc<dyn Any + Send + Sync>;
 
 #[derive(Debug)]
@@ -23,9 +23,26 @@ pub struct Message {
 #[derive(Debug, Default)]
 pub struct MessageQueue {
   pub(crate) entries: SegQueue<Message>,
+  pub(crate) subscriptions: HashMap<TypeId, HashSet<ecs::Entity>>,
 }
 
 impl MessageQueue {
+  pub fn broadcast<M>(&self, payload: M) -> &Self
+  where
+    M: Any + Send + Sync + Clone,
+  {
+    let targets = match self.subscriptions.get(&TypeId::of::<M>()) {
+      Some(targets) => targets,
+      _ => return self,
+    };
+
+    for (target, payload) in targets.iter().cloned().zip(iter::repeat(payload)) {
+      self.send(target, payload);
+    }
+
+    self
+  }
+
   pub fn send<M>(&self, target: ecs::Entity, payload: M) -> &Self
   where
     M: Any + Send + Sync,
@@ -41,6 +58,20 @@ impl MessageQueue {
   pub(crate) fn next(&self) -> Option<Message> {
     self.entries.pop().ok()
   }
+
+  pub(crate) fn add_subscription(&mut self, target: ecs::Entity, type_id: TypeId) {
+    self
+      .subscriptions
+      .entry(type_id)
+      .or_default()
+      .insert(target);
+  }
+
+  pub(crate) fn remove_subscription(&mut self, target: ecs::Entity, type_id: TypeId) {
+    if let Some(subscriptions) = self.subscriptions.get_mut(&type_id) {
+      subscriptions.remove(&target);
+    }
+  }
 }
 
 pub fn setup(engine: &mut Engine) {
@@ -50,20 +81,16 @@ pub fn setup(engine: &mut Engine) {
     .or_insert_with(MessageQueue::default);
 }
 
-pub fn read(res: &Resources) -> ReadMessages {
-  ecs::SystemData::fetch(res)
-}
-
 pub fn write(res: &Resources) -> WriteMessages {
   ecs::SystemData::fetch(res)
 }
 
 pub fn deliver(res: &Resources) {
-  let messages = write(res);
-  let entities = ecs::entities::read(res);
+  let message_queue = &mut res.fetch_mut::<MessageQueue>();
+  let entities = &ecs::entities::read(res);
   let mut nodes = nodes::write(res);
 
-  while let Some(message) = messages.next() {
+  while let Some(message) = message_queue.next() {
     let node = match nodes.get_mut(message.target) {
       Some(node) => node,
       None => continue,
@@ -72,7 +99,8 @@ pub fn deliver(res: &Resources) {
     let result = node.element.on_message(
       NodeContext {
         resources: res,
-        entities: &entities,
+        entities,
+        message_queue,
         entity: message.target,
         parent: node.parent,
         should_rebuild: &mut node.should_rebuild,
@@ -81,7 +109,7 @@ pub fn deliver(res: &Resources) {
     );
 
     if let (Err(payload), Some(parent)) = (result, node.parent) {
-      messages.entries.push(Message {
+      message_queue.entries.push(Message {
         target: parent,
         payload,
       });

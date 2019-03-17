@@ -36,22 +36,11 @@ impl ui::Element for Game {
         h_align: HorizontalAlign::Right,
         v_align: VerticalAlign::Bottom,
       }),
-      ui::Spec::from(TestDispatch),
     ])
   }
 }
 
-#[derive(Debug, PartialEq)]
-struct TestDispatch;
-
-impl ui::Element for TestDispatch {
-  type State = ();
-
-  fn on_awake(&self, ctx: ui::ElementContext<Self>) {
-    ctx.dispatch(TestMessage("Awake"));
-  }
-}
-
+#[derive(Clone)]
 struct TestMessage(&'static str);
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,19 +60,11 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     .load_asset_at_path(&"/do-it.jpg".into(), &assets::read(app.resources()));
 
   // Add a root `Game` element.
-  let game = ui::add_to_root(app.resources(), Game { bg_image });
+  ui::add_to_root(app.resources(), Game { bg_image });
 
   // Test message delivery.
   ui::nodes::build(app.resources());
-
-  let entity = ui::nodes::read(app.resources())
-    .sorted()
-    .rev()
-    .next()
-    .unwrap();
-
-  ui::messages::write(app.resources()).send(game, TestMessage("Direct!"));
-  ui::messages::write(app.resources()).send(entity, TestMessage("Bubbled!"));
+  ui::messages::write(app.resources()).broadcast(TestMessage("Broadcasted!"));
 
   // Run the app until the window is closed.
   app.run();

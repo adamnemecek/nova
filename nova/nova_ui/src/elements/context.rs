@@ -21,8 +21,10 @@ impl<'a, E: Element> ElementContext<'a, E> {
     M: Any + Send + Sync,
     H: for<'b> FnMut(&E, ElementContext<'b, E>, M) + Send + Sync + 'static,
   {
+    let type_id = TypeId::of::<M>();
+
     self.message_handlers.insert(
-      TypeId::of::<M>(),
+      type_id,
       Box::new(move |element, ctx, payload| {
         let payload = payload.downcast::<M>()?;
 
@@ -37,6 +39,19 @@ impl<'a, E: Element> ElementContext<'a, E> {
         }
       }),
     );
+
+    self.node.subscribe(type_id);
+  }
+
+  pub fn unsubscribe<M>(&mut self)
+  where
+    M: Any + Send + Sync,
+  {
+    let type_id = TypeId::of::<M>();
+
+    if self.message_handlers.remove(&type_id).is_some() {
+      self.node.unsubscribe(type_id);
+    }
   }
 }
 

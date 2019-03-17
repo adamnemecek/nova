@@ -39,9 +39,11 @@ pub fn setup(engine: &mut Engine) {
 }
 
 pub fn add_to_root(res: &Resources, element: impl Element + 'static) -> ecs::Entity {
-  let entities = ecs::entities::read(res);
-  let entity = entities.create();
+  let entities = &ecs::entities::read(res);
+  let message_queue = &mut res.fetch_mut();
   let mut nodes = nodes::write(res);
+
+  let entity = entities.create();
 
   nodes.create_on_entity(
     entity,
@@ -49,9 +51,10 @@ pub fn add_to_root(res: &Resources, element: impl Element + 'static) -> ecs::Ent
       element,
       NodeContext {
         resources: res,
-        entities: &entities,
+        entities,
         entity,
         parent: None,
+        message_queue,
         // Ignored because the element is new.
         should_rebuild: &mut true,
       },

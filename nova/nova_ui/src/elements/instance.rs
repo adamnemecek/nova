@@ -109,9 +109,13 @@ impl<T: Element + 'static> NodeElement for NodeElementImpl<T> {
     });
   }
 
-  fn sleep(&mut self, ctx: NodeContext) {
+  fn sleep(&mut self, mut ctx: NodeContext) {
     if !self.awake {
       return;
+    }
+
+    for (type_id, _) in self.message_handlers.drain() {
+      ctx.unsubscribe(type_id);
     }
 
     self.element.on_sleep(ElementContext {
@@ -121,7 +125,6 @@ impl<T: Element + 'static> NodeElement for NodeElementImpl<T> {
     });
 
     self.awake = false;
-    self.message_handlers.clear();
   }
 
   fn build(&mut self, children: ChildSpecs, ctx: NodeContext) -> Spec {
