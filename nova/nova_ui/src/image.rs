@@ -5,7 +5,7 @@
 use crate::elements::{Element, ElementContext};
 use crate::layout::{Constraints, Layout};
 use nova_core::ecs::{self, Join as _};
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 use nova_graphics::images::{ImageSlice, ReadImages};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -76,5 +76,5 @@ impl<'a> ecs::System<'a> for UpdateImageSizes {
 pub fn setup(engine: &mut Engine) {
   ecs::components::register::<Image>(&mut engine.resources);
 
-  engine.on_event(EngineEvent::TickEnding, UpdateImageSizes);
+  engine.schedule(EnginePhase::AfterUpdate, UpdateImageSizes);
 }

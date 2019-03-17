@@ -10,8 +10,18 @@ pub mod resources;
 pub use self::components::{Component, Join, ParJoin, ReadComponents, WriteComponents};
 pub use self::entities::{Entities, Entity, ReadEntities, WriteEntities};
 pub use self::resources::{ReadResource, Resource, Resources, WriteResource};
+use crate::engine::Engine;
 pub use specs::shred::{System, SystemData};
 pub use specs::storage;
 pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
 pub use specs::storage::{ComponentEvent, FlaggedStorage};
 pub use specs::BitSet;
+
+pub(crate) fn setup(engine: &mut Engine) {
+  engine.resources.entry().or_insert_with(Entities::default);
+
+  engine
+    .resources
+    .entry()
+    .or_insert_with(resources::MetaTable::<storage::AnyStorage>::default);
+}

@@ -4,7 +4,6 @@
 
 use super::{assets, graphics};
 use crate::clock;
-use crate::ecs;
 use crate::engine::Engine;
 use crate::renderer::Renderer;
 use crate::ui;
@@ -14,9 +13,6 @@ use std::ops::{Deref, DerefMut};
 pub struct App {
   ui_painter: ui::Painter,
   renderer: Renderer,
-  gamepad_updater: input::gamepad::UpdateGamepad,
-  keyboard_updater: input::keyboard::UpdateKeyboard,
-  mouse_updater: input::mouse::UpdateMouse,
   pub engine: Engine,
 }
 
@@ -33,25 +29,15 @@ impl App {
     assets::setup(&mut engine, Default::default());
     graphics::setup(&mut engine);
     Window::setup(&mut engine, Default::default());
+    input::setup(&mut engine);
     ui::setup(&mut engine);
 
     let mut renderer = Renderer::new(&engine);
     let ui_painter = ui::Painter::new(&mut renderer);
 
-    let mut gamepad_updater = input::gamepad::UpdateGamepad::new();
-    let mut keyboard_updater = input::keyboard::UpdateKeyboard::new();
-    let mut mouse_updater = input::mouse::UpdateMouse::new();
-
-    ecs::System::setup(&mut gamepad_updater, &mut engine.resources);
-    ecs::System::setup(&mut keyboard_updater, &mut engine.resources);
-    ecs::System::setup(&mut mouse_updater, &mut engine.resources);
-
     App {
       ui_painter,
       renderer,
-      gamepad_updater,
-      keyboard_updater,
-      mouse_updater,
       engine,
     }
   }
@@ -68,22 +54,6 @@ impl App {
     };
 
     loop {
-      // Update input before each frame.
-      ecs::System::run(
-        &mut self.gamepad_updater,
-        ecs::SystemData::fetch(&self.engine.resources),
-      );
-
-      ecs::System::run(
-        &mut self.keyboard_updater,
-        ecs::SystemData::fetch(&self.engine.resources),
-      );
-
-      ecs::System::run(
-        &mut self.mouse_updater,
-        ecs::SystemData::fetch(&self.engine.resources),
-      );
-
       // Tick the engine once.
       self.tick(clock::DeltaTime::SincePrevious(&mut previous_instant));
 

@@ -7,6 +7,7 @@ mod update;
 pub use self::update::UpdateMouse;
 
 use nova_core::ecs;
+use nova_core::engine::Engine;
 use nova_core::events;
 use nova_core::math::Point2;
 use std::iter;
@@ -59,4 +60,10 @@ impl Mouse {
 pub enum MouseEvent {
   PositionChanged(Option<Point2<f32>>),
   ButtonChanged { index: usize, value: bool },
+}
+
+pub fn setup(engine: &mut Engine) {
+  engine.resources.insert(Mouse::default());
+
+  update::setup(engine);
 }

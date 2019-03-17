@@ -8,6 +8,7 @@ pub use self::update::UpdateKeyboard;
 pub use nova_window::KeyCode;
 
 use nova_core::ecs;
+use nova_core::engine::Engine;
 use nova_core::events;
 use std::mem;
 
@@ -54,4 +55,10 @@ impl Keyboard {
 #[derive(Debug)]
 pub enum KeyboardEvent {
   KeyChanged { key: KeyCode, value: bool },
+}
+
+pub fn setup(engine: &mut Engine) {
+  engine.resources.insert(Keyboard::default());
+
+  update::setup(engine);
 }

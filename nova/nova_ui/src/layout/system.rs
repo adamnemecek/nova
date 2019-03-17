@@ -7,7 +7,7 @@ use crate::nodes::ReadNodes;
 use crate::screen::{Screen, ScreenRect};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 use nova_core::math::{Rect, Size};
 use std::f32;
 
@@ -61,7 +61,7 @@ impl<'a> ecs::System<'a> for LayoutElements {
 pub fn setup(engine: &mut Engine) {
   ecs::components::register::<Layout>(&mut engine.resources);
 
-  engine.on_event(EngineEvent::TickEnding, LayoutElements);
+  engine.schedule(EnginePhase::AfterUpdate, LayoutElements);
 }
 
 fn calculate_size(

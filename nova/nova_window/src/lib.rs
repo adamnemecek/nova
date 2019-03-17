@@ -6,7 +6,7 @@ mod events;
 mod options;
 mod update;
 
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 use nova_core::math::Size;
 use winit::Window as RawWindow;
 
@@ -45,7 +45,7 @@ impl Window {
     engine.resources.insert(window);
     engine.resources.insert(Events::default());
 
-    engine.on_event_seq(EngineEvent::TickStarted, UpdateWindow { events_loop });
+    engine.schedule_seq(EnginePhase::BeforeUpdate, UpdateWindow { events_loop });
   }
 
   pub fn raw(&self) -> &RawWindow {

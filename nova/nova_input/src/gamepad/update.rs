@@ -5,6 +5,7 @@
 use super::{Gamepad, GamepadAxis, GamepadButton, WriteGamepad};
 use gilrs::Gilrs;
 use nova_core::ecs;
+use nova_core::engine::{Engine, EnginePhase};
 use nova_core::log;
 use uuid::Uuid;
 
@@ -16,36 +17,17 @@ pub struct UpdateGamepad {
   log: log::Logger,
 }
 
-impl Default for UpdateGamepad {
-  fn default() -> Self {
-    let log = log::Logger::new(module_path!());
-
-    // Initialize gilrs which manages gamepads.
-    let gilrs = match Gilrs::new() {
-      Ok(gilrs) => gilrs,
-
-      Err(gilrs::Error::NotImplemented(gilrs)) => {
-        log.warn("Cannot initialize gamepad input: gilrs is not supported on this platform.");
-
-        // Gilrs still works when it isn't implemented, but no gamepads will
-        // ever be connected.
-        gilrs
-      }
-
-      Err(err) => panic!("Could not initialize gilrs: {}", err),
-    };
-
-    Self {
-      gilrs,
-      gamepad_id: None,
-      log,
-    }
-  }
-}
-
 impl UpdateGamepad {
-  pub fn new() -> Self {
-    Self::default()
+  fn select_initial(&mut self) {
+    for (id, gamepad) in self.gilrs.gamepads() {
+      self.log_connected(gamepad);
+
+      if self.gamepad_id.is_none() {
+        self.gamepad_id = Some(id);
+      }
+    }
+
+    self.log_selected(self.gamepad_id.map(|id| self.gilrs.gamepad(id)));
   }
 
   fn log_connected(&self, gamepad: gilrs::Gamepad) {
@@ -82,16 +64,6 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
 
   fn setup(&mut self, res: &mut ecs::Resources) {
     res.entry().or_insert_with(Gamepad::default);
-
-    for (id, gamepad) in self.gilrs.gamepads() {
-      self.log_connected(gamepad);
-
-      if self.gamepad_id.is_none() {
-        self.gamepad_id = Some(id);
-      }
-    }
-
-    self.log_selected(self.gamepad_id.map(|id| self.gilrs.gamepad(id)));
   }
 
   fn run(&mut self, mut gamepad: Self::SystemData) {
@@ -173,4 +145,34 @@ impl<'a> ecs::System<'a> for UpdateGamepad {
       }
     }
   }
+}
+
+pub fn setup(engine: &mut Engine) {
+  let log = log::Logger::new(module_path!());
+
+  // Initialize gilrs which manages gamepads.
+  let gilrs = match Gilrs::new() {
+    Ok(gilrs) => gilrs,
+
+    Err(gilrs::Error::NotImplemented(gilrs)) => {
+      log.warn("Cannot initialize gamepad input: gilrs is not supported on this platform.");
+
+      // Gilrs still works when it isn't implemented, but no gamepads will
+      // ever be connected.
+      gilrs
+    }
+
+    Err(err) => panic!("Could not initialize gilrs: {}", err),
+  };
+
+  // Initialize the system and schedule it.
+  let mut update_gamepad = UpdateGamepad {
+    gilrs,
+    gamepad_id: None,
+    log,
+  };
+
+  update_gamepad.select_initial();
+
+  engine.schedule_seq(EnginePhase::BeforeUpdate, update_gamepad);
 }

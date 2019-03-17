@@ -10,7 +10,7 @@ use glyph_brush_layout::{
   GlyphPositioner as _, Layout as GlyphBrushLayout, SectionGeometry, SectionText,
 };
 use nova_core::ecs::{self, Join as _};
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 
 pub type PositionedGlyph = rusttype::PositionedGlyph<'static>;
 
@@ -83,5 +83,5 @@ impl<'a> ecs::System<'a> for PositionText {
 pub fn setup(engine: &mut Engine) {
   ecs::components::register::<PositionedText>(&mut engine.resources);
 
-  engine.on_event(EngineEvent::TickEnding, PositionText);
+  engine.schedule(EnginePhase::AfterUpdate, PositionText);
 }

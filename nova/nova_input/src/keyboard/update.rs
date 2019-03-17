@@ -2,18 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Keyboard, WriteKeyboard};
+use super::WriteKeyboard;
 use nova_core::ecs;
+use nova_core::engine::{Engine, EnginePhase};
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct UpdateKeyboard {
-  reader: Option<nova_window::EventReader>,
-}
-
-impl UpdateKeyboard {
-  pub fn new() -> Self {
-    Self::default()
-  }
+  reader: nova_window::EventReader,
 }
 
 impl<'a> ecs::System<'a> for UpdateKeyboard {
@@ -22,23 +17,8 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
     WriteKeyboard<'a>,
   );
 
-  fn setup(&mut self, res: &mut ecs::Resources) {
-    res.entry().or_insert_with(Keyboard::default);
-
-    self.reader = Some(
-      nova_window::write_events(res)
-        .channel_mut()
-        .register_reader(),
-    );
-  }
-
   fn run(&mut self, (window_events, mut keyboard): Self::SystemData) {
-    let reader = match self.reader.as_mut() {
-      Some(reader) => reader,
-      None => return,
-    };
-
-    for event in window_events.channel().read(reader) {
+    for event in window_events.channel().read(&mut self.reader) {
       let input = match event {
         nova_window::Event::KeyboardInput { input, .. } => input,
         _ => continue,
@@ -54,4 +34,12 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
       keyboard.set_key(key_code, state);
     }
   }
+}
+
+pub fn setup(engine: &mut Engine) {
+  let reader = nova_window::write_events(&engine.resources)
+    .channel_mut()
+    .register_reader();
+
+  engine.schedule(EnginePhase::BeforeUpdate, UpdateKeyboard { reader });
 }

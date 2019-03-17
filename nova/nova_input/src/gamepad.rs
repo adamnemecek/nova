@@ -12,6 +12,7 @@ pub use self::update::UpdateGamepad;
 
 use nova_core::collections::FnvHashMap;
 use nova_core::ecs;
+use nova_core::engine::Engine;
 use nova_core::events;
 use std::f32;
 
@@ -71,4 +72,10 @@ pub enum GamepadEvent {
 
 pub fn read(res: &ecs::Resources) -> ReadGamepad {
   ecs::SystemData::fetch(res)
+}
+
+pub fn setup(engine: &mut Engine) {
+  engine.resources.insert(Gamepad::default());
+
+  update::setup(engine);
 }

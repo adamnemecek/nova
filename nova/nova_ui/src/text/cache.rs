@@ -4,7 +4,7 @@
 
 use crate::text::position::PositionedText;
 use nova_core::ecs::{self, Join as _};
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 
 pub type GlyphCache = rusttype::gpu_cache::Cache<'static>;
 
@@ -33,5 +33,5 @@ pub fn setup(engine: &mut Engine) {
     .entry()
     .or_insert_with(|| GlyphCache::builder().dimensions(1024, 1024).build());
 
-  engine.on_event(EngineEvent::TickEnding, CacheGlyphs);
+  engine.schedule(EnginePhase::AfterUpdate, CacheGlyphs);
 }

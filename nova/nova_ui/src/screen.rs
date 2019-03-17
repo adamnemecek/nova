@@ -7,7 +7,7 @@ mod rect;
 pub use self::rect::ScreenRect;
 
 use nova_core::ecs;
-use nova_core::engine::{Engine, EngineEvent};
+use nova_core::engine::{Engine, EnginePhase};
 use nova_core::math::{Matrix4, Size};
 use nova_window::Window;
 
@@ -72,5 +72,5 @@ pub fn setup(engine: &mut Engine) {
 
   engine.resources.entry().or_insert_with(Screen::new);
 
-  engine.on_event(EngineEvent::TickStarted, UpdateScreenInfo);
+  engine.schedule(EnginePhase::BeforeUpdate, UpdateScreenInfo);
 }
