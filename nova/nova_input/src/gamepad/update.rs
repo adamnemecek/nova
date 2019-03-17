@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{Gamepad, GamepadAxis, GamepadButton, WriteGamepad};
+use super::{GamepadAxis, GamepadButton, WriteGamepad};
 use gilrs::Gilrs;
 use nova_core::ecs;
 use nova_core::engine::{Engine, EnginePhase};
@@ -60,13 +60,9 @@ impl UpdateGamepad {
 }
 
 impl<'a> ecs::System<'a> for UpdateGamepad {
-  type SystemData = WriteGamepad<'a>;
+  type Data = WriteGamepad<'a>;
 
-  fn setup(&mut self, res: &mut ecs::Resources) {
-    res.entry().or_insert_with(Gamepad::default);
-  }
-
-  fn run(&mut self, mut gamepad: Self::SystemData) {
+  fn run(&mut self, mut gamepad: Self::Data) {
     while let Some(gilrs::Event { id, event, .. }) = self.gilrs.next_event() {
       match event {
         // Use the first gamepad that connects.

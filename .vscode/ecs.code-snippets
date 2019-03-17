@@ -21,9 +21,9 @@
 		"prefix": "ecs::System",
 		"body": [
 			"impl<'a> ecs::System<'a> for ${1:MyType} {",
-			"  type SystemData = ${2:()};",
+			"  type Data = ${2:()};",
 			"",
-			"  fn run(&mut self, ${3:_}: Self::SystemData) {",
+			"  fn run(&mut self, ${3:_}: Self::Data) {",
 			"    $0",
 			"  }",
 			"}"

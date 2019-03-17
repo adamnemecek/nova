@@ -13,9 +13,9 @@ pub struct UpdateMouse {
 }
 
 impl<'a> ecs::System<'a> for UpdateMouse {
-  type SystemData = (ecs::ReadResource<'a, nova_window::Events>, WriteMouse<'a>);
+  type Data = (ecs::ReadResource<'a, nova_window::Events>, WriteMouse<'a>);
 
-  fn run(&mut self, (window_events, mut mouse): Self::SystemData) {
+  fn run(&mut self, (window_events, mut mouse): Self::Data) {
     for event in window_events.channel().read(&mut self.reader) {
       match event {
         nova_window::Event::CursorMoved { position, .. } => {

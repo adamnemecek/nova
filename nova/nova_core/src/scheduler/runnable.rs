@@ -4,13 +4,13 @@
 
 use crate::collections::FnvHashSet;
 use crate::ecs::resources::{ResourceId, Resources};
+use crate::ecs::system::{System, SystemData};
 use crate::ThreadPool;
-use specs::shred::RunWithPool;
 use std::fmt;
 
 /// Generic trait for an operation that can be run by a `Scheduler`.
-pub trait Runnable: fmt::Debug {
-  fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool);
+pub trait Runnable<'a>: fmt::Debug {
+  fn run(&mut self, resources: &'a Resources, thread_pool: &ThreadPool);
 
   /// Adds to the given set the resources this runnable needs to read.
   fn reads(&self, set: &mut FnvHashSet<ResourceId>);
@@ -20,26 +20,22 @@ pub trait Runnable: fmt::Debug {
 }
 
 // Blanket implementation for `RunWithPool`, shred's equivalent trait.
-impl<T> Runnable for T
+impl<'a, T> Runnable<'a> for T
 where
-  T: for<'a> RunWithPool<'a> + fmt::Debug,
+  T: System<'a> + fmt::Debug,
 {
-  fn run(&mut self, resources: &Resources, thread_pool: &ThreadPool) {
-    RunWithPool::run(self, resources, thread_pool);
+  fn run(&mut self, resources: &'a Resources, _: &ThreadPool) {
+    System::run(self, SystemData::fetch(resources));
   }
 
   fn reads(&self, set: &mut FnvHashSet<ResourceId>) {
-    let mut buffer = Vec::new();
-
-    RunWithPool::reads(self, &mut buffer);
+    let buffer = T::Data::reads();
 
     set.extend(buffer.into_iter());
   }
 
   fn writes(&self, set: &mut FnvHashSet<ResourceId>) {
-    let mut buffer = Vec::new();
-
-    RunWithPool::writes(self, &mut buffer);
+    let buffer = T::Data::writes();
 
     set.extend(buffer.into_iter());
   }

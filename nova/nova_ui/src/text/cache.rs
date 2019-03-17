@@ -12,13 +12,13 @@ pub type GlyphCache = rusttype::gpu_cache::Cache<'static>;
 pub struct CacheGlyphs;
 
 impl<'a> ecs::System<'a> for CacheGlyphs {
-  type SystemData = (
+  type Data = (
     ecs::ReadEntities<'a>,
     ecs::ReadComponents<'a, PositionedText>,
     ecs::WriteResource<'a, GlyphCache>,
   );
 
-  fn run(&mut self, (entities, texts, mut cache): Self::SystemData) {
+  fn run(&mut self, (entities, texts, mut cache): Self::Data) {
     for (_, text) in (&*entities, &texts).join() {
       for (glyph, _, font_id) in text.glyphs.iter().cloned() {
         cache.queue_glyph(font_id.0, glyph);

@@ -11,12 +11,12 @@ pub struct UpdateWindow {
 }
 
 impl<'a> ecs::System<'a> for UpdateWindow {
-  type SystemData = (
+  type Data = (
     ecs::WriteResource<'a, Window>,
     ecs::WriteResource<'a, Events>,
   );
 
-  fn run(&mut self, (mut window, mut events): Self::SystemData) {
+  fn run(&mut self, (mut window, mut events): Self::Data) {
     self.events_loop.poll_events(|event| {
       if let winit::Event::WindowEvent { event, .. } = event {
         if let Event::Resized(_) = event {

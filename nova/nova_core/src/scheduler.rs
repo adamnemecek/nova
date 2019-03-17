@@ -11,8 +11,8 @@ use crate::ecs::resources::{ResourceId, Resources};
 use crate::ThreadPool;
 use rayon::iter::{IntoParallelRefMutIterator as _, ParallelIterator as _};
 
-type ParRunnable = Box<dyn Runnable + Send>;
-type SeqRunnable = Box<dyn Runnable>;
+type ParRunnable = Box<dyn for<'a> Runnable<'a> + Send>;
+type SeqRunnable = Box<dyn for<'a> Runnable<'a>>;
 
 /// Automatically parallelizes systems and other runnable operations based on
 /// their resource dependencies.
@@ -31,7 +31,7 @@ impl Scheduler {
   ///
   /// It will be automatically scheduled to run in parallel with other
   /// operations it does not conflict with.
-  pub fn add(&mut self, runnable: impl Runnable + Send + 'static) {
+  pub fn add(&mut self, runnable: impl for<'a> Runnable<'a> + Send + 'static) {
     // Determine resource dependencies.
     let mut reads = FnvHashSet::default();
     let mut writes = FnvHashSet::default();
@@ -102,7 +102,7 @@ impl Scheduler {
   /// It will be run after all previously added runnables have finished running.
   /// Any runnables added after it will not run until this it has finished
   /// running.
-  pub fn add_seq(&mut self, runnable: impl Runnable + 'static) {
+  pub fn add_seq(&mut self, runnable: impl for<'a> Runnable<'a> + 'static) {
     let runnable = Box::new(runnable);
 
     // If the last stage is a `Seq`, add the runnable to that. Otherwise, make

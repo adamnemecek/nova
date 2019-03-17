@@ -12,12 +12,12 @@ pub struct UpdateKeyboard {
 }
 
 impl<'a> ecs::System<'a> for UpdateKeyboard {
-  type SystemData = (
+  type Data = (
     ecs::ReadResource<'a, nova_window::Events>,
     WriteKeyboard<'a>,
   );
 
-  fn run(&mut self, (window_events, mut keyboard): Self::SystemData) {
+  fn run(&mut self, (window_events, mut keyboard): Self::Data) {
     for event in window_events.channel().read(&mut self.reader) {
       let input = match event {
         nova_window::Event::KeyboardInput { input, .. } => input,

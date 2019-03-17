@@ -46,14 +46,14 @@ impl Element for Image {
 struct UpdateImageSizes;
 
 impl<'a> ecs::System<'a> for UpdateImageSizes {
-  type SystemData = (
+  type Data = (
     ecs::ReadEntities<'a>,
     ReadImages<'a>,
     ecs::ReadComponents<'a, Image>,
     ecs::WriteComponents<'a, Layout>,
   );
 
-  fn run(&mut self, (entities, images, image_comps, mut layouts): Self::SystemData) {
+  fn run(&mut self, (entities, images, image_comps, mut layouts): Self::Data) {
     for (entity, image_comp) in (&*entities, &image_comps).join() {
       let size = images
         .get(image_comp.slice.image_id)

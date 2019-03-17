@@ -52,11 +52,19 @@ impl Engine {
     engine
   }
 
-  pub fn schedule(&mut self, phase: EnginePhase, runnable: impl Runnable + Send + 'static) {
+  pub fn schedule(
+    &mut self,
+    phase: EnginePhase,
+    runnable: impl for<'a> Runnable<'a> + Send + 'static,
+  ) {
     self.phases[phase as usize].add(runnable);
   }
 
-  pub fn schedule_seq(&mut self, phase: EnginePhase, runnable: impl Runnable + 'static) {
+  pub fn schedule_seq(
+    &mut self,
+    phase: EnginePhase,
+    runnable: impl for<'a> Runnable<'a> + 'static,
+  ) {
     self.phases[phase as usize].add_seq(runnable);
   }
 

@@ -27,9 +27,9 @@ struct OutputData<'a> {
 }
 
 impl<'a> ecs::System<'a> for LayoutElements {
-  type SystemData = (InputData<'a>, OutputData<'a>);
+  type Data = (InputData<'a>, OutputData<'a>);
 
-  fn run(&mut self, (input, mut output): Self::SystemData) {
+  fn run(&mut self, (input, mut output): Self::Data) {
     let screen_size = input.screen.size();
 
     let constraints = Constraints {

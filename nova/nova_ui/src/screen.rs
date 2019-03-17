@@ -57,12 +57,12 @@ impl Screen {
 struct UpdateScreenInfo;
 
 impl<'a> ecs::System<'a> for UpdateScreenInfo {
-  type SystemData = (
+  type Data = (
     ecs::ReadResource<'a, Window>,
     ecs::WriteResource<'a, Screen>,
   );
 
-  fn run(&mut self, (window, mut screen): Self::SystemData) {
+  fn run(&mut self, (window, mut screen): Self::Data) {
     screen.set_pixel_size(window.size());
   }
 }

@@ -27,7 +27,7 @@ impl ecs::Component for PositionedText {
 struct PositionText;
 
 impl<'a> ecs::System<'a> for PositionText {
-  type SystemData = (
+  type Data = (
     ecs::ReadEntities<'a>,
     ecs::ReadResource<'a, Screen>,
     ecs::ReadComponents<'a, ScreenRect>,
@@ -38,7 +38,7 @@ impl<'a> ecs::System<'a> for PositionText {
 
   fn run(
     &mut self,
-    (entities, screen, rects, texts, mut positioned_texts, fonts): Self::SystemData,
+    (entities, screen, rects, texts, mut positioned_texts, fonts): Self::Data,
   ) {
     for (entity, rect, text) in (&*entities, &rects, &texts).join() {
       let positioned = positioned_texts
