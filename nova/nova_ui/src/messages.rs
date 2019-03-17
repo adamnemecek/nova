@@ -4,10 +4,10 @@
 
 use crate::nodes::{self, NodeContext};
 use crossbeam::queue::SegQueue;
+use nova_core::collections::{FnvHashMap, FnvHashSet};
 use nova_core::ecs;
 use nova_core::engine::{Engine, Resources};
 use std::any::{Any, TypeId};
-use std::collections::{HashMap, HashSet};
 use std::iter;
 use std::sync::Arc;
 
@@ -23,7 +23,7 @@ pub struct Message {
 #[derive(Debug, Default)]
 pub struct MessageQueue {
   pub(crate) entries: SegQueue<Message>,
-  pub(crate) subscriptions: HashMap<TypeId, HashSet<ecs::Entity>>,
+  pub(crate) subscriptions: FnvHashMap<TypeId, FnvHashSet<ecs::Entity>>,
 }
 
 impl MessageQueue {

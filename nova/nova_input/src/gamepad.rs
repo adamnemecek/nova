@@ -10,10 +10,10 @@ pub use self::axis::GamepadAxis;
 pub use self::button::GamepadButton;
 pub use self::update::UpdateGamepad;
 
+use nova_core::collections::FnvHashMap;
 use nova_core::ecs;
 use nova_core::engine::Resources;
 use nova_core::events;
-use std::collections::HashMap;
 use std::f32;
 
 pub type ReadGamepad<'a> = ecs::ReadResource<'a, Gamepad>;
@@ -22,8 +22,8 @@ type WriteGamepad<'a> = ecs::WriteResource<'a, Gamepad>;
 
 #[derive(Default)]
 pub struct Gamepad {
-  buttons: HashMap<GamepadButton, f32>,
-  axes: HashMap<GamepadAxis, f32>,
+  buttons: FnvHashMap<GamepadButton, f32>,
+  axes: FnvHashMap<GamepadAxis, f32>,
   events: events::Channel<GamepadEvent>,
 }
 

@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod clock;
+pub mod collections;
 pub mod ecs;
 pub mod engine;
 pub mod log;
@@ -14,7 +15,7 @@ pub mod events {
 
 mod shared_str;
 
+pub use self::shared_str::SharedStr;
 pub use crossbeam;
 pub use quick_error::quick_error;
 pub use specs::{self, shred};
-pub use self::shared_str::SharedStr;

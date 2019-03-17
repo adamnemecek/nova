@@ -15,11 +15,11 @@ use crate::{Backend, Device, DeviceExt};
 use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
+use nova_core::collections::{FnvHashMap, FnvHashSet};
 use nova_core::engine::Resources;
 use nova_core::math::{Rect, Size};
 use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
-use std::collections::{HashMap, HashSet};
 use std::mem;
 
 pub(crate) type TextureSampler = <Backend as gfx_hal::Backend>::Sampler;
@@ -35,14 +35,14 @@ impl TextureId {
 pub struct Textures {
   sampler: TextureSampler,
   descriptor_pool: DescriptorPool,
-  table: HashMap<TextureId, Texture>,
+  table: FnvHashMap<TextureId, Texture>,
   next_id: TextureId,
-  image_cache: HashMap<ImageId, TextureId>,
+  image_cache: FnvHashMap<ImageId, TextureId>,
   staging_buffer: Buffer,
   staging_offset: usize,
   pending_image_copies: Vec<(TextureId, ImageId)>,
   pending_changes: Vec<(TextureId, Change)>,
-  has_pending_changes: HashSet<TextureId>,
+  has_pending_changes: FnvHashSet<TextureId>,
 }
 
 #[derive(Debug)]
@@ -72,14 +72,14 @@ impl Textures {
     let mut textures = Textures {
       sampler,
       descriptor_pool,
-      table: HashMap::new(),
+      table: FnvHashMap::default(),
       next_id: TextureId(0),
-      image_cache: HashMap::new(),
+      image_cache: FnvHashMap::default(),
       staging_buffer,
       staging_offset: 0,
       pending_image_copies: Vec::new(),
       pending_changes: Vec::new(),
-      has_pending_changes: HashSet::new(),
+      has_pending_changes: FnvHashSet::default(),
     };
 
     textures.create_texture(

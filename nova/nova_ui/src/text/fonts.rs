@@ -6,10 +6,10 @@ pub use glyph_brush_layout::FontId;
 pub use rusttype::Error as CreateFontError;
 
 use nova_assets::{AssetId, ReadAssets};
+use nova_core::collections::FnvHashMap;
 use nova_core::ecs;
 use nova_core::engine::{Engine, Resources};
 use nova_core::quick_error;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 
@@ -20,7 +20,7 @@ pub type WriteFonts<'a> = ecs::WriteResource<'a, Fonts>;
 
 #[derive(Debug, Default)]
 pub struct Fonts {
-  asset_table: HashMap<AssetId, FontId>,
+  asset_table: FnvHashMap<AssetId, FontId>,
   list: Vec<Font>,
 }
 
@@ -29,10 +29,7 @@ impl Fonts {
     &self.list[id.0]
   }
 
-  pub fn create(
-    &mut self,
-    bytes: &'static [u8],
-  ) -> Result<FontId, CreateFontError> {
+  pub fn create(&mut self, bytes: &'static [u8]) -> Result<FontId, CreateFontError> {
     self.list.push(Font::from_bytes(bytes)?);
 
     Ok(FontId(self.list.len() - 1))

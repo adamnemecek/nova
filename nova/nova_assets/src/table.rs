@@ -3,11 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{AssetId, AssetPath};
-use std::collections::HashMap;
+use nova_core::collections::FnvHashMap;
 
 #[derive(Debug, Default)]
 pub struct AssetTable {
-  entries: HashMap<AssetPath, AssetId>,
+  entries: FnvHashMap<AssetPath, AssetId>,
 }
 
 impl AssetTable {
