@@ -18,13 +18,13 @@ pub struct NodeContext<'a> {
 
 impl<'a> NodeContext<'a> {
   pub fn put_component<T: ecs::Component>(&self, component: T) {
-    ecs::write_components(&self.resources)
+    ecs::components::write(&self.resources)
       .insert(self.entity, component)
       .expect("The element entity is not alive.");
   }
 
   pub fn remove_component<T: ecs::Component>(&self) {
-    ecs::write_components::<T>(&self.resources).remove(self.entity);
+    ecs::components::write::<T>(&self.resources).remove(self.entity);
   }
 
   pub fn rebuild(&mut self) {

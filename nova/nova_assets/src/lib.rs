@@ -43,7 +43,7 @@ pub fn setup(engine: &mut Engine, roots: AssetRoots) {
   {
     let entities = engine.resources().fetch();
     let mut table = engine.resources().fetch_mut();
-    let mut assets = ecs::write_components(engine.resources());
+    let mut assets = ecs::components::write(engine.resources());
 
     for path in roots.fs_paths() {
       let result = create_assets(

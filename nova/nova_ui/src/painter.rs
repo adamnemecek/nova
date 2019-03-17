@@ -98,9 +98,9 @@ impl Painter {
     let nodes = nodes::read(res);
     let mut glyph_cache = res.fetch_mut::<GlyphCache>();
 
-    let rects = ecs::read_components::<ScreenRect>(res);
-    let images = ecs::read_components::<Image>(res);
-    let texts = ecs::read_components::<PositionedText>(res);
+    let rects = ecs::components::read::<ScreenRect>(res);
+    let images = ecs::components::read::<Image>(res);
+    let texts = ecs::components::read::<PositionedText>(res);
 
     glyph_cache
       .cache_queued(|rect, bytes| {
