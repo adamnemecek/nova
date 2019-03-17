@@ -9,15 +9,6 @@ use crate::scheduler::{Runnable, Scheduler};
 use crate::ThreadPool;
 use std::fmt;
 
-const PHASES: usize = EnginePhase::AfterUpdate as usize + 1;
-
-#[repr(usize)]
-pub enum EnginePhase {
-  BeforeUpdate,
-  Update,
-  AfterUpdate,
-}
-
 pub struct Engine {
   pub resources: Resources,
   pub thread_pool: ThreadPool,
@@ -84,3 +75,12 @@ impl fmt::Debug for Engine {
       .finish()
   }
 }
+
+#[repr(usize)]
+pub enum EnginePhase {
+  BeforeUpdate,
+  Update,
+  AfterUpdate,
+}
+
+const PHASES: usize = EnginePhase::AfterUpdate as usize + 1;
