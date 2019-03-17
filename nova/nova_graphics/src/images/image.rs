@@ -7,6 +7,7 @@ use ::image::RgbaImage;
 use nova_core::ecs;
 use nova_core::math::Size;
 use nova_core::quick_error;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{self, BufReader};
 use std::path::Path;
@@ -30,7 +31,7 @@ impl Image {
   pub fn load(path: &Path) -> Result<Self, ImageLoadError> {
     let ext = path
       .extension()
-      .and_then(|s| s.to_str())
+      .and_then(OsStr::to_str)
       .unwrap_or("")
       .to_ascii_lowercase();
 

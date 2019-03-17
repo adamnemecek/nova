@@ -29,7 +29,7 @@ pub use self::shader::{Shader, ShaderKind, ShaderSet};
 pub use self::textures::{TextureId, Textures};
 
 use self::alloc::Allocator;
-use self::device::{QueueExt, QueueFamilyExt};
+use self::device::{QueueExt, QueueFamily, QueueFamilyExt};
 use self::framebuffer::Framebuffer;
 use self::images::DeviceImageFormat;
 use self::presenter::Presenter;
@@ -58,7 +58,7 @@ impl Renderer {
     let queue_index = gpu
       .queue_families()
       .iter()
-      .position(|f| f.supports_graphics())
+      .position(QueueFamily::supports_graphics)
       .expect("Device does not support graphics commands.");
 
     let mut allocator = Allocator::new(gpu.physical_device());

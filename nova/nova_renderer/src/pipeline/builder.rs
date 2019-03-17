@@ -52,7 +52,8 @@ impl PipelineBuilder {
 
     let mut offset = 0;
 
-    self.vertex_attributes
+    self
+      .vertex_attributes
       .extend(T::ATTRIBUTES.iter().enumerate().map(|(i, attr)| {
         let desc = gfx_hal::pso::AttributeDesc {
           location: i as u32,
@@ -141,7 +142,7 @@ impl PipelineBuilder {
 
     let raw_layout = unsafe {
       device.create_pipeline_layout(
-        self.descriptor_layouts.iter().map(|layout| layout.raw()),
+        self.descriptor_layouts.iter().map(DescriptorLayout::raw),
         &push_constants,
       )?
     };
