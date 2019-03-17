@@ -5,6 +5,7 @@
 use super::{get_size_of, Event, Events, EventsLoop, Window};
 use nova_core::ecs;
 
+#[derive(Debug)]
 pub struct UpdateWindow {
   pub(crate) events_loop: EventsLoop,
 }

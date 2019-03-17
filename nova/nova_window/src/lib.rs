@@ -45,7 +45,7 @@ impl Window {
     engine.resources.insert(window);
     engine.resources.insert(Events::default());
 
-    engine.on_event(EngineEvent::TickStarted, UpdateWindow { events_loop });
+    engine.on_event_seq(EngineEvent::TickStarted, UpdateWindow { events_loop });
   }
 
   pub fn raw(&self) -> &RawWindow {

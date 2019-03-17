@@ -4,5 +4,5 @@
 
 pub use specs::shred::MetaTable;
 pub use specs::shred::{Fetch as FetchResource, FetchMut as FetchResourceMut};
-pub use specs::shred::{Resource, Resources};
+pub use specs::shred::{Resource, ResourceId, Resources};
 pub use specs::{ReadExpect as ReadResource, WriteExpect as WriteResource};

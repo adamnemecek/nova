@@ -66,6 +66,8 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   ui::nodes::build(&app.resources);
   ui::messages::write(&app.resources).broadcast(TestMessage("Broadcasted!"));
 
+  println!("{:#?}", app.engine);
+
   // Run the app until the window is closed.
   app.run();
 

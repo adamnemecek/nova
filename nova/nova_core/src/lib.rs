@@ -8,6 +8,7 @@ pub mod ecs;
 pub mod engine;
 pub mod log;
 pub mod math;
+pub mod scheduler;
 
 pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};

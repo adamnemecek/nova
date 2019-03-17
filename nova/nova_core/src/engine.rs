@@ -4,21 +4,27 @@
 
 pub mod dispatch;
 
-mod events;
+pub use rayon::ThreadPool;
 
 use crate::clock;
 use crate::ecs::entities::{self, Entities, Entity};
 use crate::ecs::Resources;
+use crate::scheduler::{Runnable, Scheduler};
+use std::fmt;
 
-pub use self::events::EngineEvent;
-pub use rayon::ThreadPool;
+const EVENT_COUNT: usize = EngineEvent::TickEnding as usize + 1;
 
-use self::events::{EventHandler, EventHandlerList};
+#[repr(usize)]
+pub enum EngineEvent {
+  TickStarted,
+  ClockTimeUpdated,
+  TickEnding,
+}
 
 pub struct Engine {
   pub resources: Resources,
-  thread_pool: ThreadPool,
-  event_handlers: EventHandlerList,
+  pub thread_pool: ThreadPool,
+  schedulers: [Scheduler; EVENT_COUNT],
   entity_buffer: Vec<Entity>,
 }
 
@@ -37,8 +43,8 @@ impl Engine {
     let mut engine = Engine {
       resources: Resources::new(),
       thread_pool,
-      event_handlers: EventHandlerList::new(),
-      entity_buffer: Vec::new(),
+      schedulers: Default::default(),
+      entity_buffer: Default::default(),
     };
 
     engine.resources.insert(Entities::default());
@@ -48,49 +54,39 @@ impl Engine {
     engine
   }
 
-  pub fn on_event(
-    &mut self,
-    event: EngineEvent,
-    mut dispatch: impl for<'a> dispatch::RunWithPool<'a> + 'static,
-  ) {
-    dispatch.setup(&mut self.resources);
-
-    self
-      .event_handlers
-      .add(event, EventHandler::RunWithPool(Box::new(dispatch)));
+  pub fn on_event(&mut self, event: EngineEvent, runnable: impl Runnable + Send + 'static) {
+    self.schedulers[event as usize].add(runnable);
   }
 
-  pub fn on_event_fn(
-    &mut self,
-    event: EngineEvent,
-    fn_mut: impl FnMut(&mut Resources, &ThreadPool) + 'static,
-  ) {
-    self
-      .event_handlers
-      .add(event, EventHandler::FnMut(Box::new(fn_mut)));
+  pub fn on_event_seq(&mut self, event: EngineEvent, runnable: impl Runnable + 'static) {
+    self.schedulers[event as usize].add_seq(runnable);
   }
 
   pub fn tick(&mut self, delta_time: clock::DeltaTime) {
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
-    self.run_event_handlers(EngineEvent::TickStarted);
+    self.run_scheduler(EngineEvent::TickStarted);
 
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
     clock::Time::update(&mut self.resources.fetch_mut(), delta_time);
 
-    self.run_event_handlers(EngineEvent::ClockTimeUpdated);
+    self.run_scheduler(EngineEvent::ClockTimeUpdated);
 
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
-    self.run_event_handlers(EngineEvent::TickEnding);
+    self.run_scheduler(EngineEvent::TickEnding);
 
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
   }
 
-  fn run_event_handlers(&mut self, event: EngineEvent) {
-    self
-      .event_handlers
-      .run(event, &mut self.resources, &self.thread_pool);
+  fn run_scheduler(&mut self, event: EngineEvent) {
+    self.schedulers[event as usize].run(&self.resources, &self.thread_pool);
+  }
+}
+
+impl fmt::Debug for Engine {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    f.debug_struct("Engine").field("schedulers", &self.schedulers).finish()
   }
 }
