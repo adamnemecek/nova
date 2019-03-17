@@ -6,9 +6,8 @@ pub mod components;
 pub mod derive;
 pub mod entities;
 
-pub use self::components::{Component, ReadComponents, WriteComponents};
+pub use self::components::{Component, Join, ParJoin, ReadComponents, WriteComponents};
 pub use self::entities::{Entities, Entity, ReadEntities, WriteEntities};
-pub use specs::join::{Join, ParJoin};
 pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
 pub use specs::shred::{System, SystemData};
 pub use specs::storage;
