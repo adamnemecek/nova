@@ -72,11 +72,18 @@ impl Engine {
     // Maintain entities in case of out-of-tick changes.
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
-    for phase in &mut self.phases {
-      phase.run(&self.resources, &self.thread_pool);
+    self.run_phase(EnginePhase::BeforeUpdate);
 
-      entities::maintain(&mut self.resources, &mut self.entity_buffer);
-    }
+    clock::Time::update(&mut self.resources.fetch_mut(), delta_time);
+
+    self.run_phase(EnginePhase::Update);
+    self.run_phase(EnginePhase::AfterUpdate);
+  }
+
+  fn run_phase(&mut self, phase: EnginePhase) {
+    self.phases[phase as usize].run(&self.resources, &self.thread_pool);
+
+    entities::maintain(&mut self.resources, &mut self.entity_buffer);
   }
 }
 
