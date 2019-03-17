@@ -5,8 +5,9 @@
 pub use specs::Component;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
+use crate::ecs::storage::{AnyStorage, MaskedStorage};
 use crate::ecs::SystemData;
-use crate::engine::Resources;
+use crate::engine::resources::{MetaTable, Resources};
 
 pub fn read<T: Component>(res: &Resources) -> ReadComponents<T> {
   SystemData::fetch(res)
@@ -14,4 +15,36 @@ pub fn read<T: Component>(res: &Resources) -> ReadComponents<T> {
 
 pub fn write<T: Component>(res: &Resources) -> WriteComponents<T> {
   SystemData::fetch(res)
+}
+
+pub fn register<T>(res: &mut Resources)
+where
+  T: Component,
+  T::Storage: Default,
+{
+  register_with_storage::<T, _>(res, Default::default);
+}
+
+pub fn register_with_storage<T, F>(res: &mut Resources, storage: F)
+where
+  T: Component,
+  F: FnOnce() -> T::Storage,
+{
+  res
+    .entry()
+    .or_insert_with(move || MaskedStorage::<T>::new(storage()));
+
+  {
+    let table = res.try_fetch_mut::<MetaTable<AnyStorage>>();
+
+    if let Some(mut table) = table {
+      table.register(&*res.fetch::<MaskedStorage<T>>());
+      return;
+    }
+  }
+
+  let mut table = MetaTable::<AnyStorage>::new();
+
+  table.register(&*res.fetch::<MaskedStorage<T>>());
+  res.insert(table);
 }

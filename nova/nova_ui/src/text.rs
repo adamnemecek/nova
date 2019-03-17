@@ -58,7 +58,7 @@ impl Element for Text {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::register::<Text>(engine.resources_mut());
+  ecs::components::register::<Text>(engine.resources_mut());
 
   cache::setup(engine);
   fonts::setup(engine);

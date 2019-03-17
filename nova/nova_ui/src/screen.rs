@@ -68,7 +68,7 @@ impl<'a> ecs::System<'a> for UpdateScreenInfo {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::register::<ScreenRect>(engine.resources_mut());
+  ecs::components::register::<ScreenRect>(engine.resources_mut());
 
   engine.resources_mut().entry().or_insert_with(Screen::new);
 

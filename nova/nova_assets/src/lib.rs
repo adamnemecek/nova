@@ -33,7 +33,7 @@ impl From<AssetId> for ecs::Entity {
 }
 
 pub fn setup(engine: &mut Engine, roots: AssetRoots) {
-  ecs::register::<Asset>(engine.resources_mut());
+  ecs::components::register::<Asset>(engine.resources_mut());
 
   engine
     .resources_mut()

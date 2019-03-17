@@ -5,8 +5,6 @@
 pub mod components;
 pub mod derive;
 
-use crate::engine;
-
 pub use self::components::{Component, ReadComponents, WriteComponents};
 pub use self::entities::{ReadEntities, WriteEntities};
 pub use specs::join::{Join, ParJoin};
@@ -18,39 +16,6 @@ pub use specs::storage::{ComponentEvent, FlaggedStorage};
 pub use specs::world::{Builder as BuildEntity, EntityBuilder};
 pub use specs::world::{EntitiesRes as Entities, Entity};
 pub use specs::BitSet;
-
-use crate::engine::Resources;
-
-pub fn register<T: Component>(res: &mut Resources)
-where
-  T::Storage: Default,
-{
-  register_with_storage::<_, T>(res, Default::default);
-}
-
-pub fn register_with_storage<F, T>(res: &mut Resources, storage: F)
-where
-  F: FnOnce() -> T::Storage,
-  T: Component,
-{
-  res
-    .entry()
-    .or_insert_with(move || storage::MaskedStorage::<T>::new(storage()));
-
-  {
-    let table = res.try_fetch_mut::<engine::resources::MetaTable<storage::AnyStorage>>();
-
-    if let Some(mut table) = table {
-      table.register(&*res.fetch::<storage::MaskedStorage<T>>());
-      return;
-    }
-  }
-
-  let mut table = engine::resources::MetaTable::<storage::AnyStorage>::new();
-
-  table.register(&*res.fetch::<storage::MaskedStorage<T>>());
-  res.insert(table);
-}
 
 pub mod entities {
   use crate::ecs::{Entities, ReadResource, SystemData, WriteResource};

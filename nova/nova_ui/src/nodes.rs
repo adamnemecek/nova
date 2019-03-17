@@ -36,7 +36,7 @@ pub(crate) fn setup(engine: &mut Engine) {
     .entry()
     .or_insert_with(NodeHierarchy::default);
 
-  ecs::register::<Node>(engine.resources_mut());
+  ecs::components::register::<Node>(engine.resources_mut());
 
   build::setup(engine);
 }
