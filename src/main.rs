@@ -51,20 +51,20 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   let app = nova::App::new();
 
   // Load a default font.
-  fonts::write(app.resources())
+  fonts::write(&app.res)
     .create(include_bytes!("fonts/fira_sans_regular.ttf"))
     .unwrap();
 
   // Load a background image.
-  let bg_image = images::write(app.resources())
-    .load_asset_at_path(&"/do-it.jpg".into(), &assets::read(app.resources()));
+  let bg_image =
+    images::write(&app.res).load_asset_at_path(&"/do-it.jpg".into(), &assets::read(&app.res));
 
   // Add a root `Game` element.
-  ui::add_to_root(app.resources(), Game { bg_image });
+  ui::add_to_root(&app.res, Game { bg_image });
 
   // Test message delivery.
-  ui::nodes::build(app.resources());
-  ui::messages::write(app.resources()).broadcast(TestMessage("Broadcasted!"));
+  ui::nodes::build(&app.res);
+  ui::messages::write(&app.res).broadcast(TestMessage("Broadcasted!"));
 
   // Run the app until the window is closed.
   app.run();

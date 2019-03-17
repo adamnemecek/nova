@@ -59,7 +59,7 @@ impl<'a> ecs::System<'a> for LayoutElements {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Layout>(engine.resources_mut());
+  ecs::components::register::<Layout>(&mut engine.res);
 
   engine.on_event(EngineEvent::TickEnding, LayoutElements);
 }

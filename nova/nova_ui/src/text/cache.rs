@@ -29,7 +29,7 @@ impl<'a> ecs::System<'a> for CacheGlyphs {
 
 pub fn setup(engine: &mut Engine) {
   engine
-    .resources_mut()
+    .res
     .entry()
     .or_insert_with(|| GlyphCache::builder().dimensions(1024, 1024).build());
 

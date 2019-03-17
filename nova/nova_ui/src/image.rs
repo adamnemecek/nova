@@ -74,7 +74,7 @@ impl<'a> ecs::System<'a> for UpdateImageSizes {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Image>(engine.resources_mut());
+  ecs::components::register::<Image>(&mut engine.res);
 
   engine.on_event(EngineEvent::TickEnding, UpdateImageSizes);
 }

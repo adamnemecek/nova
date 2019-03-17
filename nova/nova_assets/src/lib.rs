@@ -33,17 +33,14 @@ impl From<AssetId> for ecs::Entity {
 }
 
 pub fn setup(engine: &mut Engine, roots: AssetRoots) {
-  ecs::components::register::<Asset>(engine.resources_mut());
+  ecs::components::register::<Asset>(&mut engine.res);
 
-  engine
-    .resources_mut()
-    .entry()
-    .or_insert_with(AssetTable::default);
+  engine.res.entry().or_insert_with(AssetTable::default);
 
   {
-    let entities = engine.resources().fetch();
-    let mut table = engine.resources().fetch_mut();
-    let mut assets = ecs::components::write(engine.resources());
+    let entities = engine.res.fetch();
+    let mut table = engine.res.fetch_mut();
+    let mut assets = ecs::components::write(&engine.res);
 
     for path in roots.fs_paths() {
       let result = create_assets(
@@ -60,7 +57,7 @@ pub fn setup(engine: &mut Engine, roots: AssetRoots) {
     }
   }
 
-  engine.resources_mut().insert(roots);
+  engine.res.insert(roots);
 }
 
 pub fn read(res: &Resources) -> ReadAssets {

@@ -75,10 +75,7 @@ impl MessageQueue {
 }
 
 pub fn setup(engine: &mut Engine) {
-  engine
-    .resources_mut()
-    .entry()
-    .or_insert_with(MessageQueue::default);
+  engine.res.entry().or_insert_with(MessageQueue::default);
 }
 
 pub fn write(res: &Resources) -> WriteMessages {

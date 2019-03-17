@@ -26,7 +26,7 @@ impl From<ImageId> for ecs::Entity {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Image>(engine.resources_mut());
+  ecs::components::register::<Image>(&mut engine.res);
 }
 
 pub fn read(res: &Resources) -> ReadImages {

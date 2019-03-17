@@ -31,12 +31,9 @@ pub(crate) fn write(res: &Resources) -> WriteNodes {
 }
 
 pub(crate) fn setup(engine: &mut Engine) {
-  engine
-    .resources_mut()
-    .entry()
-    .or_insert_with(NodeHierarchy::default);
+  engine.res.entry().or_insert_with(NodeHierarchy::default);
 
-  ecs::components::register::<Node>(engine.resources_mut());
+  ecs::components::register::<Node>(&mut engine.res);
 
   build::setup(engine);
 }

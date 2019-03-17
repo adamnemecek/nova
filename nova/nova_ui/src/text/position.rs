@@ -81,7 +81,7 @@ impl<'a> ecs::System<'a> for PositionText {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<PositionedText>(engine.resources_mut());
+  ecs::components::register::<PositionedText>(&mut engine.res);
 
   engine.on_event(EngineEvent::TickEnding, PositionText);
 }

@@ -42,9 +42,9 @@ impl App {
     let mut keyboard_updater = input::keyboard::UpdateKeyboard::new();
     let mut mouse_updater = input::mouse::UpdateMouse::new();
 
-    ecs::System::setup(&mut gamepad_updater, engine.resources_mut());
-    ecs::System::setup(&mut keyboard_updater, engine.resources_mut());
-    ecs::System::setup(&mut mouse_updater, engine.resources_mut());
+    ecs::System::setup(&mut gamepad_updater, &mut engine.res);
+    ecs::System::setup(&mut keyboard_updater, &mut engine.res);
+    ecs::System::setup(&mut mouse_updater, &mut engine.res);
 
     App {
       ui_painter,
@@ -62,7 +62,7 @@ impl App {
 
     // Register an event reader for window events.
     let mut event_reader = {
-      let mut events = self.engine.resources().fetch_mut::<window::Events>();
+      let mut events = self.engine.res.fetch_mut::<window::Events>();
 
       events.channel_mut().register_reader()
     };
@@ -71,17 +71,17 @@ impl App {
       // Update input before each frame.
       ecs::System::run(
         &mut self.gamepad_updater,
-        ecs::SystemData::fetch(self.engine.resources()),
+        ecs::SystemData::fetch(&self.engine.res),
       );
 
       ecs::System::run(
         &mut self.keyboard_updater,
-        ecs::SystemData::fetch(self.engine.resources()),
+        ecs::SystemData::fetch(&self.engine.res),
       );
 
       ecs::System::run(
         &mut self.mouse_updater,
-        ecs::SystemData::fetch(self.engine.resources()),
+        ecs::SystemData::fetch(&self.engine.res),
       );
 
       // Tick the engine once.
@@ -89,7 +89,7 @@ impl App {
 
       // Exit if the player tried to close the window.
       {
-        let events = self.engine.resources().fetch::<window::Events>();
+        let events = self.engine.res.fetch::<window::Events>();
         let mut close_requested = false;
 
         for event in events.channel().read(&mut event_reader) {
@@ -104,8 +104,8 @@ impl App {
       }
 
       // Update UI before rendering.
-      ui::messages::deliver(self.resources());
-      ui::nodes::build(self.resources());
+      ui::messages::deliver(&self.res);
+      ui::nodes::build(&self.res);
 
       // Finally, render the frame.
       self.render();
@@ -119,9 +119,9 @@ impl App {
   pub fn render(&mut self) {
     let mut render = self.renderer.begin();
 
-    self.ui_painter.draw(&mut render, self.engine.resources());
+    self.ui_painter.draw(&mut render, &self.engine.res);
 
-    self.renderer.finish(self.engine.resources());
+    self.renderer.finish(&self.engine.res);
   }
 }
 

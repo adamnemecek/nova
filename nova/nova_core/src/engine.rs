@@ -8,6 +8,7 @@ pub mod resources;
 mod events;
 
 use crate::clock;
+use crate::ecs::entities::{self, Entities, Entity};
 
 pub use self::events::EngineEvent;
 pub use self::resources::{Resource, Resources};
@@ -16,9 +17,10 @@ pub use rayon::ThreadPool;
 use self::events::{EventHandler, EventHandlerList};
 
 pub struct Engine {
-  world: specs::World,
+  pub res: Resources,
   thread_pool: ThreadPool,
   event_handlers: EventHandlerList,
+  entity_buffer: Vec<Entity>,
 }
 
 impl Default for Engine {
@@ -34,22 +36,17 @@ impl Engine {
       .expect("Could not create thread pool");
 
     let mut engine = Engine {
-      world: specs::World::new(),
+      res: Resources::new(),
       thread_pool,
       event_handlers: EventHandlerList::new(),
+      entity_buffer: Vec::new(),
     };
 
-    clock::Time::setup(engine.resources_mut());
+    engine.res.insert(Entities::default());
+
+    clock::Time::setup(&mut engine.res);
 
     engine
-  }
-
-  pub fn resources(&self) -> &Resources {
-    &self.world.res
-  }
-
-  pub fn resources_mut(&mut self) -> &mut Resources {
-    &mut self.world.res
   }
 
   pub fn on_event(
@@ -57,7 +54,7 @@ impl Engine {
     event: EngineEvent,
     mut dispatch: impl for<'a> dispatch::RunWithPool<'a> + 'static,
   ) {
-    dispatch.setup(&mut self.world.res);
+    dispatch.setup(&mut self.res);
 
     self
       .event_handlers
@@ -75,23 +72,26 @@ impl Engine {
   }
 
   pub fn tick(&mut self, delta_time: clock::DeltaTime) {
-    self.world.maintain();
+    entities::maintain(&mut self.res, &mut self.entity_buffer);
 
     self.run_event_handlers(EngineEvent::TickStarted);
-    self.world.maintain();
 
-    clock::Time::update(&mut self.world.res.fetch_mut(), delta_time);
+    entities::maintain(&mut self.res, &mut self.entity_buffer);
+
+    clock::Time::update(&mut self.res.fetch_mut(), delta_time);
 
     self.run_event_handlers(EngineEvent::ClockTimeUpdated);
-    self.world.maintain();
+
+    entities::maintain(&mut self.res, &mut self.entity_buffer);
 
     self.run_event_handlers(EngineEvent::TickEnding);
-    self.world.maintain();
+
+    entities::maintain(&mut self.res, &mut self.entity_buffer);
   }
 
   fn run_event_handlers(&mut self, event: EngineEvent) {
     self
       .event_handlers
-      .run(event, &mut self.world.res, &self.thread_pool);
+      .run(event, &mut self.res, &self.thread_pool);
   }
 }
