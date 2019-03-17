@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::clock;
 use crate::ecs;
 use crate::ecs::entities::{self, Entity};
 use crate::ecs::resources::Resources;
@@ -47,8 +46,6 @@ impl Engine {
 
     ecs::setup(&mut engine);
 
-    clock::Time::setup(&mut engine.resources);
-
     engine
   }
 
@@ -68,22 +65,15 @@ impl Engine {
     self.phases[phase as usize].add_seq(runnable);
   }
 
-  pub fn tick(&mut self, delta_time: clock::DeltaTime) {
+  pub fn tick(&mut self) {
     // Maintain entities in case of out-of-tick changes.
     entities::maintain(&mut self.resources, &mut self.entity_buffer);
 
-    self.run_phase(EnginePhase::BeforeUpdate);
+    for phase in &mut self.phases {
+      phase.run(&self.resources, &self.thread_pool);
 
-    clock::Time::update(&mut self.resources.fetch_mut(), delta_time);
-
-    self.run_phase(EnginePhase::Update);
-    self.run_phase(EnginePhase::AfterUpdate);
-  }
-
-  fn run_phase(&mut self, phase: EnginePhase) {
-    self.phases[phase as usize].run(&self.resources, &self.thread_pool);
-
-    entities::maintain(&mut self.resources, &mut self.entity_buffer);
+      entities::maintain(&mut self.resources, &mut self.entity_buffer);
+    }
   }
 }
 

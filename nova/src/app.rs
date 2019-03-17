@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{assets, graphics};
-use crate::clock;
-use crate::engine::Engine;
+use crate::clock::{Clock, UpdateClock};
+use crate::engine::{Engine, EnginePhase};
 use crate::renderer::Renderer;
 use crate::ui;
 use crate::window::{self, Window};
@@ -26,11 +26,15 @@ impl App {
   pub fn new() -> Self {
     let mut engine = Engine::new();
 
+    engine.resources.insert(Clock::default());
+
     assets::setup(&mut engine, Default::default());
     graphics::setup(&mut engine);
     Window::setup(&mut engine, Default::default());
     input::setup(&mut engine);
     ui::setup(&mut engine);
+
+    engine.schedule(EnginePhase::BeforeUpdate, UpdateClock::default());
 
     let mut renderer = Renderer::new(&engine);
     let ui_painter = ui::Painter::new(&mut renderer);
@@ -43,9 +47,6 @@ impl App {
   }
 
   pub fn run(mut self) {
-    // Previous time storage for delta time calculation.
-    let mut previous_instant = None;
-
     // Register an event reader for window events.
     let mut event_reader = {
       let mut events = self.resources.fetch_mut::<window::Events>();
@@ -54,8 +55,7 @@ impl App {
     };
 
     loop {
-      // Tick the engine once.
-      self.tick(clock::DeltaTime::SincePrevious(&mut previous_instant));
+      self.tick();
 
       // Exit if the player tried to close the window.
       {
@@ -73,17 +73,17 @@ impl App {
         }
       }
 
-      // Update UI before rendering.
-      ui::messages::deliver(&self.resources);
-      ui::nodes::build(&self.resources);
-
-      // Finally, render the frame.
       self.render();
     }
 
-    // Clean up device resources.
-    self.ui_painter.destroy(self.renderer.device());
-    self.renderer.destroy();
+    self.destroy();
+  }
+
+  pub fn tick(&mut self) {
+    self.engine.tick();
+
+    ui::messages::deliver(&self.resources);
+    ui::nodes::build(&self.resources);
   }
 
   pub fn render(&mut self) {
@@ -92,6 +92,11 @@ impl App {
     self.ui_painter.draw(&mut render, &self.engine.resources);
 
     self.renderer.finish(&self.engine.resources);
+  }
+
+  pub fn destroy(self) {
+    self.ui_painter.destroy(self.renderer.device());
+    self.renderer.destroy();
   }
 }
 
