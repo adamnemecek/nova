@@ -17,7 +17,7 @@ pub struct App {
   gamepad_updater: input::gamepad::UpdateGamepad,
   keyboard_updater: input::keyboard::UpdateKeyboard,
   mouse_updater: input::mouse::UpdateMouse,
-  engine: Engine,
+  pub engine: Engine,
 }
 
 impl Default for App {
