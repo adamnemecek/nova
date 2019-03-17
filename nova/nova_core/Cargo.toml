@@ -16,4 +16,4 @@ quick-error = "1.2"
 rayon = "1.0"
 shrev = "1.0"
 shred-derive = "0.5"
-specs = "0.14"
+specs = { git = "https://gitlab.com/bfrydl/specs.git" }
