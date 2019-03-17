@@ -14,3 +14,8 @@ pub use self::state::ElementState;
 
 pub(crate) use self::instance::ElementInstance;
 pub(crate) use self::prototype::ElementPrototype;
+
+use crate::messages::MessagePayload;
+
+type MessageHandler<E> =
+  Box<dyn FnMut(&E, ElementContext<E>, MessagePayload) -> Result<(), MessagePayload> + Send + Sync>;

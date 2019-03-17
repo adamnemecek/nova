@@ -954,6 +954,7 @@ dependencies = [
 name = "nova_ui"
 version = "0.3.0"
 dependencies = [
+ "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "glyph_brush_layout 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "nova_assets 0.3.0",
  "nova_core 0.3.0",

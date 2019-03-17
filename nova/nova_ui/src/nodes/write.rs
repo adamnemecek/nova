@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::elements::ElementPrototype;
-use crate::nodes::{Node, NodeContext, NodeHierarchy};
+use crate::elements::ElementInstance;
+use crate::nodes::{Node, NodeHierarchy};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
 use std::iter::DoubleEndedIterator;
@@ -23,22 +23,18 @@ impl<'a> WriteNodes<'a> {
     self.nodes.get_mut(entity)
   }
 
-  pub(crate) fn create_element(
+  pub(crate) fn create_on_entity(
     &mut self,
-    prototype: ElementPrototype,
-    ctx: NodeContext,
+    entity: ecs::Entity,
+    element: ElementInstance,
+    parent: Option<ecs::Entity>,
   ) -> &mut Node {
-    let entity = ctx.entity;
-
     self
       .nodes
-      .insert(entity, Node::new((prototype.new)(prototype.element, ctx)))
-      .expect("Could not create element node");
+      .insert(entity, Node::new(element, parent))
+      .unwrap();
 
-    self
-      .nodes
-      .get_mut(entity)
-      .expect("Could not get newly created element node")
+    self.nodes.get_mut(entity).unwrap()
   }
 
   pub(crate) fn delete(&mut self, entity: ecs::Entity) {

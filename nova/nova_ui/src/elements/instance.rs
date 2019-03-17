@@ -2,10 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::elements::{Element, ElementContext, ElementState as _};
+use crate::elements::{Element, ElementContext, ElementState as _, MessageHandler};
+use crate::messages::MessagePayload;
 use crate::nodes::NodeContext;
 use crate::specs::{ChildSpecs, Spec};
-use std::any::Any;
+use std::any::{Any, TypeId};
+use std::collections::HashMap;
 use std::fmt;
 use std::mem;
 use std::ops::{Deref, DerefMut};
@@ -15,7 +17,7 @@ pub(crate) struct ElementInstance(Box<dyn NodeElement>);
 
 impl ElementInstance {
   pub fn new<T: Element + 'static>(element: T, ctx: NodeContext) -> Self {
-    ElementInstance(Box::new(Inner::new(element, ctx)))
+    ElementInstance(Box::new(NodeElementImpl::new(element, ctx)))
   }
 }
 
@@ -44,28 +46,32 @@ pub(crate) trait NodeElement: Any + Send + Sync + fmt::Debug {
   fn sleep(&mut self, ctx: NodeContext);
 
   fn build(&mut self, children: ChildSpecs, ctx: NodeContext) -> Spec;
+
+  fn on_message(&mut self, ctx: NodeContext, payload: MessagePayload)
+    -> Result<(), MessagePayload>;
 }
 
-#[derive(Debug)]
-struct Inner<T: Element> {
+struct NodeElementImpl<T: Element> {
   element: T,
   state: T::State,
   awake: bool,
+  message_handlers: HashMap<TypeId, MessageHandler<T>>,
 }
 
-impl<T: Element> Inner<T> {
+impl<T: Element> NodeElementImpl<T> {
   fn new(element: T, ctx: NodeContext) -> Self {
     let state = T::State::new(ctx);
 
-    Self {
+    NodeElementImpl {
       element,
       state,
       awake: false,
+      message_handlers: HashMap::new(),
     }
   }
 }
 
-impl<T: Element + 'static> NodeElement for Inner<T> {
+impl<T: Element + 'static> NodeElement for NodeElementImpl<T> {
   fn replace_element(
     &mut self,
     element: Box<dyn Any>,
@@ -76,9 +82,14 @@ impl<T: Element + 'static> NodeElement for Inner<T> {
     if *element != self.element {
       mem::swap(&mut self.element, &mut *element);
 
-      self
-        .element
-        .on_change(*element, ElementContext::new(&mut self.state, ctx));
+      self.element.on_change(
+        *element,
+        ElementContext {
+          node: ctx,
+          state: &mut self.state,
+          message_handlers: &mut self.message_handlers,
+        },
+      );
     }
 
     Ok(())
@@ -91,9 +102,11 @@ impl<T: Element + 'static> NodeElement for Inner<T> {
 
     self.awake = true;
 
-    self
-      .element
-      .on_awake(ElementContext::new(&mut self.state, ctx));
+    self.element.on_awake(ElementContext {
+      node: ctx,
+      state: &mut self.state,
+      message_handlers: &mut self.message_handlers,
+    });
   }
 
   fn sleep(&mut self, ctx: NodeContext) {
@@ -101,15 +114,61 @@ impl<T: Element + 'static> NodeElement for Inner<T> {
       return;
     }
 
-    self
-      .element
-      .on_sleep(ElementContext::new(&mut self.state, ctx));
+    self.element.on_sleep(ElementContext {
+      node: ctx,
+      state: &mut self.state,
+      message_handlers: &mut self.message_handlers,
+    });
+
     self.awake = false;
   }
 
   fn build(&mut self, children: ChildSpecs, ctx: NodeContext) -> Spec {
-    self
-      .element
-      .build(children, ElementContext::new(&mut self.state, ctx))
+    self.element.build(
+      children,
+      ElementContext {
+        node: ctx,
+        state: &mut self.state,
+        message_handlers: &mut self.message_handlers,
+      },
+    )
+  }
+
+  fn on_message(
+    &mut self,
+    ctx: NodeContext,
+    payload: MessagePayload,
+  ) -> Result<(), MessagePayload> {
+    let type_id = (*payload).type_id();
+
+    match self.message_handlers.remove(&type_id) {
+      Some(mut handler) => {
+        let result = handler(
+          &self.element,
+          ElementContext {
+            node: ctx,
+            state: &mut self.state,
+            message_handlers: &mut self.message_handlers,
+          },
+          payload,
+        );
+
+        self.message_handlers.insert(type_id, handler);
+
+        result
+      }
+
+      _ => Err(payload),
+    }
+  }
+}
+
+impl<E: Element> fmt::Debug for NodeElementImpl<E> {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    f.debug_struct("NodeElement")
+      .field("element", &self.element)
+      .field("state", &self.state)
+      .field("awake", &self.awake)
+      .finish()
   }
 }

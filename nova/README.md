@@ -19,3 +19,8 @@ and messaging similar to [Elm][4], [Yew][5], or [React][3].
 [5]: https://github.com/DenisKolodin/yew
 
 This is a work heavily in progress.
+
+## Requirements
+
+Nova requires Rust v1.34+ and either Vulkan, DirectX, or Metal development
+libraries depending on your platform and what is bundled.

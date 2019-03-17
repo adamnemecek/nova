@@ -103,7 +103,8 @@ impl App {
         }
       }
 
-      // Build UI nodes before rendering.
+      // Update UI before rendering.
+      ui::messages::deliver(self.resources());
       ui::nodes::build(self.resources());
 
       // Finally, render the frame.

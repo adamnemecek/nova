@@ -13,11 +13,11 @@ pub struct ReadNodes<'a> {
 }
 
 impl<'a> ReadNodes<'a> {
-  pub fn roots(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+  pub fn roots(&'a self) -> impl DoubleEndedIterator<Item = ecs::Entity> + 'a {
     self.hierarchy.roots.iter().cloned()
   }
 
-  pub fn sorted(&'a self) -> impl Iterator<Item = ecs::Entity> + 'a {
+  pub fn sorted(&'a self) -> impl DoubleEndedIterator<Item = ecs::Entity> + 'a {
     self.hierarchy.sorted.iter().cloned()
   }
 

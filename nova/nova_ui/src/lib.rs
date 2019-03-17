@@ -4,6 +4,7 @@
 
 pub mod elements;
 pub mod layout;
+pub mod messages;
 pub mod nodes;
 pub mod specs;
 pub mod text;
@@ -23,7 +24,7 @@ pub use self::specs::{ChildSpecs, Spec};
 pub use self::text::Text;
 pub use nova_graphics::Color4 as Color;
 
-use self::elements::ElementPrototype;
+use self::elements::ElementInstance;
 use nova_core::ecs;
 use nova_core::engine::{Engine, Resources};
 use nova_core::shred;
@@ -31,6 +32,7 @@ use nova_core::shred;
 pub fn setup(engine: &mut Engine) {
   image::setup(engine);
   layout::setup(engine);
+  messages::setup(engine);
   nodes::setup(engine);
   screen::setup(engine);
   text::setup(engine);
@@ -41,15 +43,20 @@ pub fn add_to_root(res: &Resources, element: impl Element + 'static) -> ecs::Ent
   let entity = entities.create();
   let mut nodes = nodes::write(res);
 
-  nodes.create_element(
-    ElementPrototype::new(element, Vec::new()),
-    NodeContext {
-      resources: res,
-      entities: &entities,
-      entity,
-      // Ignored because the element is new.
-      should_rebuild: &mut true,
-    },
+  nodes.create_on_entity(
+    entity,
+    ElementInstance::new(
+      element,
+      NodeContext {
+        resources: res,
+        entities: &entities,
+        entity,
+        parent: None,
+        // Ignored because the element is new.
+        should_rebuild: &mut true,
+      },
+    ),
+    None,
   );
 
   nodes.hierarchy.roots.push(entity);

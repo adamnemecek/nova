@@ -10,8 +10,18 @@ struct Game {
   bg_image: ImageId,
 }
 
+impl Game {
+  fn on_test_message(&self, _: ui::ElementContext<Self>, message: TestMessage) {
+    println!("{}", message.0);
+  }
+}
+
 impl ui::Element for Game {
   type State = ();
+
+  fn on_awake(&self, mut ctx: ui::ElementContext<Self>) {
+    ctx.subscribe(Self::on_test_message);
+  }
 
   fn build(&self, _: ui::ChildSpecs, _: ui::ElementContext<Self>) -> ui::Spec {
     ui::Spec::from(vec![
@@ -26,9 +36,23 @@ impl ui::Element for Game {
         h_align: HorizontalAlign::Right,
         v_align: VerticalAlign::Bottom,
       }),
+      ui::Spec::from(TestDispatch),
     ])
   }
 }
+
+#[derive(Debug, PartialEq)]
+struct TestDispatch;
+
+impl ui::Element for TestDispatch {
+  type State = ();
+
+  fn on_awake(&self, ctx: ui::ElementContext<Self>) {
+    ctx.dispatch(TestMessage("Awake"));
+  }
+}
+
+struct TestMessage(&'static str);
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Set up log macros to use nova logging.
@@ -47,7 +71,19 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     .load_asset_at_path(&"/do-it.jpg".into(), &assets::read(app.resources()));
 
   // Add a root `Game` element.
-  ui::add_to_root(app.resources(), Game { bg_image });
+  let game = ui::add_to_root(app.resources(), Game { bg_image });
+
+  // Test message delivery.
+  ui::nodes::build(app.resources());
+
+  let entity = ui::nodes::read(app.resources())
+    .sorted()
+    .rev()
+    .next()
+    .unwrap();
+
+  ui::messages::write(app.resources()).send(game, TestMessage("Direct!"));
+  ui::messages::write(app.resources()).send(entity, TestMessage("Bubbled!"));
 
   // Run the app until the window is closed.
   app.run();

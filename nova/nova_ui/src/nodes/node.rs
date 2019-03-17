@@ -9,15 +9,17 @@ use nova_core::ecs;
 #[derive(Debug)]
 pub struct Node {
   pub(crate) element: ElementInstance,
+  pub(crate) parent: Option<ecs::Entity>,
   pub(crate) spec_children: ChildNodes,
   pub(crate) real_children: ChildNodes,
   pub(crate) should_rebuild: bool,
 }
 
 impl Node {
-  pub(crate) fn new(element: ElementInstance) -> Self {
+  pub(crate) fn new(element: ElementInstance, parent: Option<ecs::Entity>) -> Self {
     Node {
       element,
+      parent,
       spec_children: ChildNodes::default(),
       real_children: ChildNodes::default(),
       should_rebuild: true,

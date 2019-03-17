@@ -5,6 +5,7 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+crossbeam = "0.7"
 glyph_brush_layout = "0.1"
 rusttype = { version = "0.7", features = ["gpu_cache"] }
 nova_assets = { path = "../nova_assets" }

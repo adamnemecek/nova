@@ -16,7 +16,7 @@ struct BuildState {
   build_stack: Vec<ecs::Entity>,
   /// Resuable temporary storage for the stack of entities that need new specs
   /// applied.
-  apply_stack: Vec<(ecs::Entity, Spec)>,
+  apply_stack: Vec<(ecs::Entity, Spec, Option<ecs::Entity>)>,
   /// Resuable temporary storage for the stack of entities that need to be
   /// deleted.
   delete_stack: Vec<ecs::Entity>,
@@ -56,6 +56,7 @@ pub fn build(res: &Resources) {
         entity,
         resources: res,
         entities: &entities,
+        parent: node.parent,
         should_rebuild: &mut node.should_rebuild,
       });
 
@@ -66,6 +67,7 @@ pub fn build(res: &Resources) {
             resources: res,
             entities: &entities,
             entity,
+            parent: node.parent,
             should_rebuild: &mut node.should_rebuild,
           },
         );
@@ -76,6 +78,7 @@ pub fn build(res: &Resources) {
             resources: res,
             entities: &entities,
             entity,
+            parent: node.parent,
             // Ignored because the element was just built.
             should_rebuild: &mut false,
           },
@@ -107,7 +110,7 @@ fn apply(
   entities: &ecs::Entities,
   nodes: &mut WriteNodes,
 ) {
-  while let Some((entity, spec)) = state.apply_stack.pop() {
+  while let Some((entity, spec, parent)) = state.apply_stack.pop() {
     let mut prototype = spec.into_element_prototype();
     let child_specs = mem::replace(&mut prototype.child_specs, Vec::new());
 
@@ -122,6 +125,7 @@ fn apply(
             resources: res,
             entities,
             entity,
+            parent: node.parent,
             should_rebuild: &mut node.should_rebuild,
           },
         );
@@ -133,6 +137,7 @@ fn apply(
             resources: res,
             entities,
             entity,
+            parent: node.parent,
             should_rebuild: &mut node.should_rebuild,
           });
 
@@ -142,6 +147,7 @@ fn apply(
               resources: res,
               entities,
               entity,
+              parent: node.parent,
               should_rebuild: &mut node.should_rebuild,
             },
           );
@@ -153,16 +159,19 @@ fn apply(
       None => {
         // If the node does not exist, create a new node with a new element
         // instance based on the prototype.
-        nodes.create_element(
-          prototype,
+        let element = (prototype.new)(
+          prototype.element,
           NodeContext {
             resources: res,
             entities,
             entity,
+            parent,
             // Ignored because the node is new and will be built regardless.
             should_rebuild: &mut true,
           },
-        )
+        );
+
+        nodes.create_on_entity(entity, element, parent)
       }
     };
 
@@ -172,6 +181,7 @@ fn apply(
         resources: res,
         entities,
         entity,
+        parent: node.parent,
         should_rebuild: &mut node.should_rebuild,
       },
       child_specs,
@@ -192,6 +202,7 @@ fn delete(
         resources: res,
         entities,
         entity,
+        parent: node.parent,
         should_rebuild: &mut node.should_rebuild,
       });
 
@@ -258,7 +269,9 @@ fn push_apply_children<I>(
         children.entities.push(ctx.entities.create());
       }
 
-      state.apply_stack.push((children.entities[i], child));
+      state
+        .apply_stack
+        .push((children.entities[i], child, Some(ctx.entity)));
     }
   }
 
