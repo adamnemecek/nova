@@ -8,7 +8,6 @@ pub use winit::WindowEvent as Event;
 pub use winit::ElementState as ButtonState;
 
 use nova_core::ecs;
-use nova_core::engine::Resources;
 use nova_core::events;
 
 pub type EventChannel = events::Channel<Event>;
@@ -32,10 +31,10 @@ impl Events {
   }
 }
 
-pub fn read_events(res: &Resources) -> ReadEvents {
+pub fn read_events(res: &ecs::Resources) -> ReadEvents {
   ecs::SystemData::fetch(res)
 }
 
-pub fn write_events(res: &Resources) -> WriteEvents {
+pub fn write_events(res: &ecs::Resources) -> WriteEvents {
   ecs::SystemData::fetch(res)
 }

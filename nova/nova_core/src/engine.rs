@@ -3,15 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod dispatch;
-pub mod resources;
 
 mod events;
 
 use crate::clock;
 use crate::ecs::entities::{self, Entities, Entity};
+use crate::ecs::Resources;
 
 pub use self::events::EngineEvent;
-pub use self::resources::{Resource, Resources};
 pub use rayon::ThreadPool;
 
 use self::events::{EventHandler, EventHandlerList};

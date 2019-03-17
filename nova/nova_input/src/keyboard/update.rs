@@ -4,7 +4,6 @@
 
 use super::{Keyboard, WriteKeyboard};
 use nova_core::ecs;
-use nova_core::engine::Resources;
 
 #[derive(Debug, Default)]
 pub struct UpdateKeyboard {
@@ -23,7 +22,7 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
     WriteKeyboard<'a>,
   );
 
-  fn setup(&mut self, res: &mut Resources) {
+  fn setup(&mut self, res: &mut ecs::Resources) {
     res.entry().or_insert_with(Keyboard::default);
 
     self.reader = Some(

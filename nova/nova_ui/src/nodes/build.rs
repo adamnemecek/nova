@@ -6,7 +6,7 @@ use crate::messages::MessageQueue;
 use crate::nodes::{self, ChildNodes, NodeContext, WriteNodes};
 use crate::specs::{ChildSpecs, Spec};
 use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::engine::Engine;
 use std::mem;
 use std::ops::RangeBounds;
 
@@ -27,7 +27,7 @@ pub fn setup(engine: &mut Engine) {
   engine.resources.entry().or_insert_with(BuildState::default);
 }
 
-pub fn build(res: &Resources) {
+pub fn build(res: &ecs::Resources) {
   let entities = ecs::entities::read(res);
   let message_queue = &mut res.fetch_mut();
   let mut state = res.fetch_mut::<BuildState>();
@@ -107,7 +107,7 @@ pub fn build(res: &Resources) {
 }
 
 fn apply(
-  res: &Resources,
+  res: &ecs::Resources,
   state: &mut BuildState,
   entities: &ecs::Entities,
   nodes: &mut WriteNodes,
@@ -199,7 +199,7 @@ fn apply(
 }
 
 fn delete(
-  res: &Resources,
+  res: &ecs::Resources,
   state: &mut BuildState,
   entities: &ecs::Entities,
   nodes: &mut WriteNodes,

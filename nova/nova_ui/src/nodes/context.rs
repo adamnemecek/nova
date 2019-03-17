@@ -4,11 +4,10 @@
 
 use crate::messages::{self, MessageQueue};
 use nova_core::ecs;
-use nova_core::engine;
 use std::any::{Any, TypeId};
 
 pub struct NodeContext<'a> {
-  pub resources: &'a engine::Resources,
+  pub resources: &'a ecs::Resources,
   pub entities: &'a ecs::Entities,
   pub entity: ecs::Entity,
   pub parent: Option<ecs::Entity>,

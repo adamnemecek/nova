@@ -6,7 +6,7 @@ use crate::nodes::{self, NodeContext};
 use crossbeam::queue::SegQueue;
 use nova_core::collections::{FnvHashMap, FnvHashSet};
 use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::engine::Engine;
 use std::any::{Any, TypeId};
 use std::iter;
 use std::sync::Arc;
@@ -75,14 +75,17 @@ impl MessageQueue {
 }
 
 pub fn setup(engine: &mut Engine) {
-  engine.resources.entry().or_insert_with(MessageQueue::default);
+  engine
+    .resources
+    .entry()
+    .or_insert_with(MessageQueue::default);
 }
 
-pub fn write(res: &Resources) -> WriteMessages {
+pub fn write(res: &ecs::Resources) -> WriteMessages {
   ecs::SystemData::fetch(res)
 }
 
-pub fn deliver(res: &Resources) {
+pub fn deliver(res: &ecs::Resources) {
   let message_queue = &mut res.fetch_mut::<MessageQueue>();
   let entities = &ecs::entities::read(res);
   let mut nodes = nodes::write(res);

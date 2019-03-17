@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Duration, Instant};
-use crate::engine::Resources;
+use crate::ecs::Resources;
 
 #[derive(Debug)]
 pub struct Time {

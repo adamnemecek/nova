@@ -6,9 +6,9 @@ pub use specs::join::{Join, ParJoin};
 pub use specs::Component;
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
+use crate::ecs::resources::{MetaTable, Resources};
 use crate::ecs::storage::{AnyStorage, MaskedStorage};
 use crate::ecs::SystemData;
-use crate::engine::resources::{MetaTable, Resources};
 
 pub fn read<T: Component>(res: &Resources) -> ReadComponents<T> {
   SystemData::fetch(res)

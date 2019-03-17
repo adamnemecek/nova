@@ -26,7 +26,7 @@ pub use nova_graphics::Color4 as Color;
 
 use self::elements::ElementInstance;
 use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::engine::Engine;
 use nova_core::shred;
 
 pub fn setup(engine: &mut Engine) {
@@ -38,7 +38,7 @@ pub fn setup(engine: &mut Engine) {
   text::setup(engine);
 }
 
-pub fn add_to_root(res: &Resources, element: impl Element + 'static) -> ecs::Entity {
+pub fn add_to_root(res: &ecs::Resources, element: impl Element + 'static) -> ecs::Entity {
   let entities = &ecs::entities::read(res);
   let message_queue = &mut res.fetch_mut();
   let mut nodes = nodes::write(res);

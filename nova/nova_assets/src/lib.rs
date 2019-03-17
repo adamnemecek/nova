@@ -17,8 +17,8 @@ pub use self::table::AssetTable;
 // TODO: Remove after creating a custom `SystemData` derive macro.
 use nova_core::shred;
 
-use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::ecs::{self, Resources};
+use nova_core::engine::Engine;
 use std::fs;
 use std::io;
 use std::path::Path;

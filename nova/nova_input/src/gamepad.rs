@@ -12,7 +12,6 @@ pub use self::update::UpdateGamepad;
 
 use nova_core::collections::FnvHashMap;
 use nova_core::ecs;
-use nova_core::engine::Resources;
 use nova_core::events;
 use std::f32;
 
@@ -70,6 +69,6 @@ pub enum GamepadEvent {
   AxisChanged { axis: GamepadAxis, value: f32 },
 }
 
-pub fn read(res: &Resources) -> ReadGamepad {
+pub fn read(res: &ecs::Resources) -> ReadGamepad {
   ecs::SystemData::fetch(res)
 }

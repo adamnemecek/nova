@@ -6,9 +6,9 @@ pub use specs::world::Builder as BuildEntity;
 pub use specs::world::EntitiesRes as Entities;
 pub use specs::world::{Entity, EntityBuilder};
 
+use crate::ecs::resources::{MetaTable, ReadResource, Resources, WriteResource};
 use crate::ecs::storage::AnyStorage;
-use crate::ecs::{ReadResource, SystemData, WriteResource};
-use crate::engine::resources::{MetaTable, Resources};
+use crate::ecs::SystemData;
 
 pub type ReadEntities<'a> = ReadResource<'a, Entities>;
 pub type WriteEntities<'a> = WriteResource<'a, Entities>;

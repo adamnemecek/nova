@@ -8,7 +8,7 @@ pub use rusttype::Error as CreateFontError;
 use nova_assets::{AssetId, ReadAssets};
 use nova_core::collections::FnvHashMap;
 use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::engine::Engine;
 use nova_core::quick_error;
 use std::fs::File;
 use std::io;
@@ -71,11 +71,11 @@ pub fn setup(engine: &mut Engine) {
   engine.resources.entry().or_insert_with(Fonts::default);
 }
 
-pub fn read(res: &Resources) -> ReadFonts {
+pub fn read(res: &ecs::Resources) -> ReadFonts {
   ecs::SystemData::fetch(res)
 }
 
-pub fn write(res: &Resources) -> WriteFonts {
+pub fn write(res: &ecs::Resources) -> WriteFonts {
   ecs::SystemData::fetch(res)
 }
 

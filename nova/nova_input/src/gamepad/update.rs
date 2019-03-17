@@ -5,7 +5,6 @@
 use super::{Gamepad, GamepadAxis, GamepadButton, WriteGamepad};
 use gilrs::Gilrs;
 use nova_core::ecs;
-use nova_core::engine::Resources;
 use nova_core::log;
 use uuid::Uuid;
 
@@ -81,7 +80,7 @@ impl UpdateGamepad {
 impl<'a> ecs::System<'a> for UpdateGamepad {
   type SystemData = WriteGamepad<'a>;
 
-  fn setup(&mut self, res: &mut Resources) {
+  fn setup(&mut self, res: &mut ecs::Resources) {
     res.entry().or_insert_with(Gamepad::default);
 
     for (id, gamepad) in self.gilrs.gamepads() {

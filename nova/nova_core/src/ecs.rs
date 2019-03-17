@@ -5,10 +5,11 @@
 pub mod components;
 pub mod derive;
 pub mod entities;
+pub mod resources;
 
 pub use self::components::{Component, Join, ParJoin, ReadComponents, WriteComponents};
 pub use self::entities::{Entities, Entity, ReadEntities, WriteEntities};
-pub use specs::shred::{ReadExpect as ReadResource, WriteExpect as WriteResource};
+pub use self::resources::{ReadResource, Resource, Resources, WriteResource};
 pub use specs::shred::{System, SystemData};
 pub use specs::storage;
 pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};

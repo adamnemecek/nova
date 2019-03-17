@@ -20,18 +20,21 @@ pub(crate) use self::hierarchy::NodeHierarchy;
 pub(crate) use self::write::WriteNodes;
 
 use nova_core::ecs;
-use nova_core::engine::{Engine, Resources};
+use nova_core::engine::Engine;
 
-pub fn read(res: &Resources) -> ReadNodes {
+pub fn read(res: &ecs::Resources) -> ReadNodes {
   ecs::SystemData::fetch(res)
 }
 
-pub(crate) fn write(res: &Resources) -> WriteNodes {
+pub(crate) fn write(res: &ecs::Resources) -> WriteNodes {
   ecs::SystemData::fetch(res)
 }
 
 pub(crate) fn setup(engine: &mut Engine) {
-  engine.resources.entry().or_insert_with(NodeHierarchy::default);
+  engine
+    .resources
+    .entry()
+    .or_insert_with(NodeHierarchy::default);
 
   ecs::components::register::<Node>(&mut engine.resources);
 

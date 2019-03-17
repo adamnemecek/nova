@@ -13,7 +13,6 @@ use crate::text::cache::GlyphCache;
 use crate::text::position::PositionedText;
 use crate::{Color, Screen};
 use nova_core::ecs;
-use nova_core::engine::Resources;
 use nova_core::math::{Matrix4, Rect, Size};
 use nova_renderer::images::DeviceImageFormat;
 use nova_renderer::{self as renderer, Render, Renderer, TextureId};
@@ -93,7 +92,7 @@ impl Painter {
     }
   }
 
-  pub fn draw(&mut self, render: &mut Render, res: &Resources) {
+  pub fn draw(&mut self, render: &mut Render, res: &ecs::Resources) {
     let screen = res.fetch::<Screen>();
     let nodes = nodes::read(res);
     let mut glyph_cache = res.fetch_mut::<GlyphCache>();

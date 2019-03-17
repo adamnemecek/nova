@@ -4,7 +4,6 @@
 
 use super::{Mouse, WriteMouse};
 use nova_core::ecs;
-use nova_core::engine::Resources;
 use nova_core::math::Point2;
 
 #[derive(Debug, Default)]
@@ -21,7 +20,7 @@ impl UpdateMouse {
 impl<'a> ecs::System<'a> for UpdateMouse {
   type SystemData = (ecs::ReadResource<'a, nova_window::Events>, WriteMouse<'a>);
 
-  fn setup(&mut self, res: &mut Resources) {
+  fn setup(&mut self, res: &mut ecs::Resources) {
     res.entry().or_insert_with(Mouse::default);
 
     self.reader = Some(

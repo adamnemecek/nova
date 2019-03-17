@@ -16,7 +16,7 @@ use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
 use nova_core::collections::{FnvHashMap, FnvHashSet};
-use nova_core::engine::Resources;
+use nova_core::ecs;
 use nova_core::math::{Rect, Size};
 use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
@@ -181,7 +181,7 @@ impl Textures {
 
   pub(crate) fn flush_changes(
     &mut self,
-    res: &Resources,
+    res: &ecs::Resources,
     device: &Device,
     allocator: &mut Allocator,
     cmd: &mut Commands,
