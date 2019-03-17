@@ -121,6 +121,7 @@ impl<T: Element + 'static> NodeElement for NodeElementImpl<T> {
     });
 
     self.awake = false;
+    self.message_handlers.clear();
   }
 
   fn build(&mut self, children: ChildSpecs, ctx: NodeContext) -> Spec {
