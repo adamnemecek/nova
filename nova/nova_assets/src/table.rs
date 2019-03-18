@@ -7,21 +7,17 @@ use nova_core::collections::FnvHashMap;
 
 #[derive(Debug, Default)]
 pub struct AssetTable {
-  entries: FnvHashMap<AssetPath, AssetId>,
+  pub(crate) by_path: FnvHashMap<AssetPath, AssetId>,
 }
 
 impl AssetTable {
   pub fn contains(&self, path: &AssetPath) -> bool {
-    self.entries.contains_key(path)
+    self.by_path.contains_key(path)
   }
 
   pub fn get(&self, path: &AssetPath) -> Option<AssetId> {
     debug_assert!(path.has_root(), "The given asset path cannot be relative.");
 
-    self.entries.get(path).cloned()
-  }
-
-  pub(crate) fn insert(&mut self, path: AssetPath, id: AssetId) {
-    self.entries.insert(path, id);
+    self.by_path.get(path).cloned()
   }
 }

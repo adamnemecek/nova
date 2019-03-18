@@ -5,6 +5,7 @@
 use super::{Asset, AssetId, AssetPath, AssetTable};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
+use std::path::Path;
 
 #[derive(SystemData)]
 pub struct ReadAssets<'a> {
@@ -13,11 +14,15 @@ pub struct ReadAssets<'a> {
 }
 
 impl<'a> ReadAssets<'a> {
-  pub fn get(&self, id: AssetId) -> Option<&Asset> {
-    self.assets.get(id.0)
+  pub fn get(&self, id: AssetId) -> &Asset {
+    self.assets.get(id.0).expect("Asset ID does not exist.")
   }
 
-  pub fn lookup_id(&self, path: &AssetPath) -> Option<AssetId> {
+  pub fn lookup(&self, path: &AssetPath) -> Option<AssetId> {
     self.table.get(path)
+  }
+
+  pub fn fs_path_of(&self, id: AssetId) -> &Path {
+    self.get(id).fs_path()
   }
 }

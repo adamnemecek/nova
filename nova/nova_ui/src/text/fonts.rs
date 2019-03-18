@@ -46,11 +46,7 @@ impl Fonts {
       return Ok(*id);
     }
 
-    let asset = assets
-      .get(asset_id)
-      .ok_or_else(|| LoadFontAssetError::AssetNotFound(asset_id))?;
-
-    let mut file = File::open(asset.fs_path())?;
+    let mut file = File::open(assets.fs_path_of(asset_id))?;
     let mut bytes = Vec::new();
 
     file.read_to_end(&mut bytes)?;

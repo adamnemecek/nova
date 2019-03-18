@@ -50,6 +50,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   // Create a new nova app.
   let app = nova::App::new();
+  let log = log::Logger::new(module_path!());
 
   {
     let assets = &assets::read(&app.resources);
@@ -67,11 +68,25 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Apply the default control map bindings.
     let mut controls = controls::write(&app.resources);
+    let control_map_path = "/control_map.toml".into();
 
-    let map = ControlMap::load(include_bytes!("controls/default.toml"))
-      .expect("Could not load default control map");
+    match assets.lookup(&control_map_path) {
+      Some(id) => match ControlMap::load_file(assets.fs_path_of(id)) {
+        Ok(map) => controls.apply_bindings(&map),
 
-    controls.apply_bindings(&map);
+        Err(err) => {
+          log
+            .error("Could not load control map.")
+            .with("err", log::Display(err));
+        }
+      },
+
+      None => {
+        log
+          .warn("No control map found. No input controls will be bound.")
+          .with("path", control_map_path);
+      }
+    };
   }
 
   // Run the app until the window is closed.

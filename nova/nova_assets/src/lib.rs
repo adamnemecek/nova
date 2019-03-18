@@ -79,15 +79,17 @@ fn create_assets(
 
     if file_type.is_dir() {
       create_assets(&entry.path(), entities, asset_path, table, assets)?;
-    } else if file_type.is_file() && !table.contains(asset_path) {
-      let entity = entities.create();
+    } else if file_type.is_file() {
+      let id = table
+        .by_path
+        .entry(asset_path.clone())
+        .or_insert_with(|| AssetId(entities.create()));
 
       let asset = Asset {
         fs_path: entry.path(),
       };
 
-      assets.insert(entity, asset).unwrap();
-      table.insert(asset_path.clone(), AssetId(entity));
+      assets.insert(id.0, asset).unwrap();
     }
 
     asset_path.pop_component();

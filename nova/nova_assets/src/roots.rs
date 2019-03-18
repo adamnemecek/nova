@@ -16,18 +16,20 @@ impl Default for AssetRoots {
   fn default() -> Self {
     let mut roots = AssetRoots::new();
 
-    // Adds the `assets/` and `assets-local/` directories from the binary's path
+    // Adds the `assets/` and `assets_local/` directories from the binary's path
     // as the lowest priority paths.
-    if let Ok(path) = env::current_exe() {
+    if let Ok(mut path) = env::current_exe() {
+      path.pop();
+
       let _ = roots.add_fs_path(path.join("assets"));
-      let _ = roots.add_fs_path(path.join("assets-local"));
+      let _ = roots.add_fs_path(path.join("assets_local"));
     }
 
-    // Adds the `assets/` and `assets-local/` directories from process working
+    // Adds the `assets/` and `assets_local/` directories from process working
     // directory as the highest priority paths.
     if let Ok(path) = env::current_dir() {
       let _ = roots.add_fs_path(path.join("assets"));
-      let _ = roots.add_fs_path(path.join("assets-local"));
+      let _ = roots.add_fs_path(path.join("assets_local"));
     }
 
     roots

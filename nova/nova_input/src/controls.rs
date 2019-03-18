@@ -103,7 +103,7 @@ impl Controls {
   }
 
   pub fn apply_bindings(&mut self, map: &ControlMap) {
-    for (name, bindings) in dbg!(&map.bindings) {
+    for (name, bindings) in &map.bindings {
       let id = self.lookup_or_add(name);
 
       for binding in &bindings.positive {

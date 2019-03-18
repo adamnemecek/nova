@@ -28,11 +28,7 @@ impl<'a> WriteImages<'a> {
   }
 
   pub fn load_asset(&mut self, asset_id: AssetId, assets: &ReadAssets) -> ImageId {
-    let asset = match assets.get(asset_id) {
-      Some(asset) => asset,
-      None => panic!(format!("Asset {:?} was not found.", asset_id)),
-    };
-
+    let asset = assets.get(asset_id);
     let entity = asset_id.into();
 
     if !self.0.contains(entity) {
@@ -45,7 +41,7 @@ impl<'a> WriteImages<'a> {
   }
 
   pub fn load_asset_at_path(&mut self, path: &AssetPath, assets: &ReadAssets) -> ImageId {
-    match assets.lookup_id(path) {
+    match assets.lookup(path) {
       Some(id) => self.load_asset(id, assets),
       None => panic!(format!("Asset path {:?} does not exist.", path)),
     }
