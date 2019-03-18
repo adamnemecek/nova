@@ -25,7 +25,7 @@ impl DescriptorPool {
           4096,
           layout.kinds().map(|kind| DescriptorRangeDesc {
             ty: kind.ty(),
-            count: 4096,
+            count: 1024,
           }),
         )
         .expect("Could not create descriptor pool")

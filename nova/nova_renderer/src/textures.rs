@@ -22,6 +22,8 @@ use nova_graphics::images::{self, ImageId};
 use nova_graphics::Color4;
 use std::mem;
 
+const STAGING_BUFFER_SIZE: usize = 32 * 1024 * 1024;
+
 pub(crate) type TextureSampler = <Backend as gfx_hal::Backend>::Sampler;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -67,7 +69,7 @@ impl Textures {
       DescriptorLayout::new(device, vec![DescriptorKind::SampledTexture]),
     );
 
-    let staging_buffer = Buffer::new(device, allocator, BufferKind::Staging, 128 * 1024 * 1024);
+    let staging_buffer = Buffer::new(device, allocator, BufferKind::Staging, STAGING_BUFFER_SIZE);
 
     let mut textures = Textures {
       sampler,
