@@ -9,6 +9,7 @@ use crate::renderer::Renderer;
 use crate::ui;
 use crate::window::{self, Window};
 use std::ops::{Deref, DerefMut};
+use std::time::{Duration, Instant};
 
 pub struct App {
   ui_painter: ui::Painter,
@@ -47,6 +48,8 @@ impl App {
   }
 
   pub fn run(mut self) {
+    const MIN_FRAME_TIME: Duration = Duration::from_micros(6994);
+
     // Register an event reader for window events.
     let mut event_reader = {
       let mut events = self.resources.fetch_mut::<window::Events>();
@@ -55,6 +58,8 @@ impl App {
     };
 
     loop {
+      let began = Instant::now();
+
       self.tick();
 
       // Exit if the player tried to close the window.
@@ -74,6 +79,12 @@ impl App {
       }
 
       self.render();
+
+      let duration = Instant::now() - began;
+
+      if duration < MIN_FRAME_TIME {
+        spin_sleep::sleep(MIN_FRAME_TIME - duration);
+      }
     }
 
     self.destroy();

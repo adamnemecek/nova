@@ -15,7 +15,7 @@ pub struct Duration(f64);
 impl Duration {
   pub const ZERO: Self = Duration(0.0);
 
-  pub fn from_secs(secs: u64) -> Self {
+  pub const fn from_secs(secs: u64) -> Self {
     Duration(secs as f64)
   }
 

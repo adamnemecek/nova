@@ -17,6 +17,7 @@ nova_input = { path = "./nova_input" }
 nova_renderer = { path = "./nova_renderer" }
 nova_ui = { path = "./nova_ui" }
 nova_window = { path = "./nova_window" }
+spin_sleep = "0.3.7"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.1"
