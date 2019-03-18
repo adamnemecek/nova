@@ -145,20 +145,18 @@ impl Controls {
 
       self
         .events
-        .single_write(dbg!(ControlEvent::Changed { id, value }));
+        .single_write(ControlEvent::Changed { id, value });
 
       if state.is_pressed {
         if abs_value < 0.65 {
           state.is_pressed = false;
 
-          self
-            .events
-            .single_write(dbg!(ControlEvent::Released { id }));
+          self.events.single_write(ControlEvent::Released { id });
         }
       } else if abs_value >= 0.75 {
         state.is_pressed = true;
 
-        self.events.single_write(dbg!(ControlEvent::Pressed { id }));
+        self.events.single_write(ControlEvent::Pressed { id });
       }
     }
   }
