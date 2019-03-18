@@ -7,6 +7,7 @@ use super::device::{Device, DeviceExt, QueueExt};
 use super::images::{self, DeviceImageFormat, RawDeviceImage, RawDeviceImageView};
 use super::sync::Semaphore;
 use super::Gpu;
+use nova_core::log;
 use nova_core::math::Size;
 use nova_window::Window;
 use std::cmp;
@@ -24,6 +25,7 @@ pub struct Presenter {
   swapchain: Option<Swapchain>,
   backbuffers: Vec<Backbuffer>,
   backbuffer_index: Option<usize>,
+  log: log::Logger,
 }
 
 impl Presenter {
@@ -43,6 +45,7 @@ impl Presenter {
       swapchain: None,
       backbuffers: Vec::new(),
       backbuffer_index: None,
+      log: log::Logger::new(module_path!()),
     }
   }
 
@@ -107,7 +110,7 @@ impl Presenter {
   fn create_swapchain(&mut self, gpu: &Gpu) {
     const FORMAT: DeviceImageFormat = DeviceImageFormat::Bgra8Unorm;
 
-    let (capabilities, _, _, _) = self.surface.compatibility(gpu.physical_device());
+    let (capabilities, _, present_modes, _) = self.surface.compatibility(gpu.physical_device());
 
     let extent = gfx_hal::window::Extent2D {
       width: cmp::max(
@@ -124,6 +127,12 @@ impl Presenter {
       0 => 2, // Any number of images is allowed. Only need two.
       x => cmp::min(x, 2),
     };
+
+    self
+      .log
+      .info("Creating swapchain.")
+      .with("mode", log::Display("Fifo"))
+      .with("available_modes", &present_modes);
 
     let config = gfx_hal::SwapchainConfig {
       present_mode: gfx_hal::window::PresentMode::Fifo,
