@@ -18,7 +18,7 @@
 
 	"impl ecs::System for T": {
 		"scope": "rust",
-		"prefix": "ecs::System",
+		"prefix": "impl_ecs_system",
 		"body": [
 			"impl<'a> ecs::System<'a> for ${1:MyType} {",
 			"  type Data = ${2:()};",
@@ -26,7 +26,19 @@
 			"  fn run(&mut self, ${3:_}: Self::Data) {",
 			"    $0",
 			"  }",
-			"}"
+			"}",
+			""
 		]
-	}
+	},
+
+	"impl ecs::Component for T": {
+		"scope": "rust",
+		"prefix": "impl_ecs_component",
+		"body": [
+			"impl ecs::Component for ${1:MyType} {",
+			"  type Storage = ${2:ecs::HashMapStorage<Self>};",
+			"}",
+			""
+		]
+	},
 }

@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod controls;
 pub mod gamepad;
 pub mod keyboard;
 pub mod mouse;
@@ -12,4 +13,6 @@ pub fn setup(engine: &mut Engine) {
   gamepad::setup(engine);
   keyboard::setup(engine);
   mouse::setup(engine);
+
+  controls::setup(engine);
 }

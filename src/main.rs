@@ -1,5 +1,8 @@
 use nova::assets;
 use nova::graphics::images::{self, ImageId};
+use nova::input::controls::{self, ControlBinding};
+use nova::input::gamepad::GamepadAxis;
+use nova::input::keyboard::KeyCode;
 use nova::log;
 use nova::ui;
 use nova::ui::text::fonts;
@@ -62,11 +65,21 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Add a root `Game` element.
   ui::add_to_root(&app.resources, Game { bg_image });
 
-  // Test message delivery.
-  ui::nodes::build(&app.resources);
-  ui::messages::write(&app.resources).broadcast(TestMessage("Broadcasted!"));
+  // Add some test controls.
+  {
+    let mut controls = controls::write(&app.resources);
 
-  println!("{:#?}", app.engine);
+    let move_x = controls.add("move_x");
+    let move_y = controls.add("move_y");
+
+    controls.bind(move_x, ControlBinding::GamepadAxis(GamepadAxis::LeftStickX));
+    controls.bind(move_x, ControlBinding::Key(KeyCode::A));
+    controls.bind_negative(move_x, ControlBinding::Key(KeyCode::D));
+
+    controls.bind(move_y, ControlBinding::GamepadAxis(GamepadAxis::LeftStickY));
+    controls.bind(move_y, ControlBinding::Key(KeyCode::W));
+    controls.bind_negative(move_y, ControlBinding::Key(KeyCode::S));
+  }
 
   // Run the app until the window is closed.
   app.run();

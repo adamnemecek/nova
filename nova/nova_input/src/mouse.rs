@@ -14,17 +14,24 @@ use std::iter;
 use std::mem;
 
 pub type ReadMouse<'a> = ecs::ReadResource<'a, Mouse>;
-
-type WriteMouse<'a> = ecs::WriteResource<'a, Mouse>;
+pub type WriteMouse<'a> = ecs::WriteResource<'a, Mouse>;
 
 #[derive(Default)]
 pub struct Mouse {
+  pub events: events::Channel<MouseEvent>,
   buttons: Vec<bool>,
   position: Option<Point2<f32>>,
-  events: events::Channel<MouseEvent>,
 }
 
 impl Mouse {
+  pub fn read(res: &ecs::Resources) -> ReadMouse {
+    ecs::SystemData::fetch(res)
+  }
+
+  pub fn write(res: &ecs::Resources) -> WriteMouse {
+    ecs::SystemData::fetch(res)
+  }
+
   pub fn button(&self, index: usize) -> bool {
     self.buttons.get(index).cloned().unwrap_or_default()
   }
@@ -41,9 +48,10 @@ impl Mouse {
     let old_value = mem::replace(&mut self.buttons[index], value);
 
     if old_value != value {
-      self
-        .events
-        .single_write(MouseEvent::ButtonChanged { index, value });
+      self.events.single_write(MouseEvent::ButtonChanged {
+        button: MouseButton(index),
+        value,
+      });
     }
   }
 
@@ -56,10 +64,13 @@ impl Mouse {
   }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MouseButton(pub usize);
+
 #[derive(Debug)]
 pub enum MouseEvent {
   PositionChanged(Option<Point2<f32>>),
-  ButtonChanged { index: usize, value: bool },
+  ButtonChanged { button: MouseButton, value: bool },
 }
 
 pub fn setup(engine: &mut Engine) {

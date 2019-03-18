@@ -17,17 +17,24 @@ use nova_core::events;
 use std::f32;
 
 pub type ReadGamepad<'a> = ecs::ReadResource<'a, Gamepad>;
-
-type WriteGamepad<'a> = ecs::WriteResource<'a, Gamepad>;
+pub type WriteGamepad<'a> = ecs::WriteResource<'a, Gamepad>;
 
 #[derive(Default)]
 pub struct Gamepad {
+  pub events: events::Channel<GamepadEvent>,
   buttons: FnvHashMap<GamepadButton, f32>,
   axes: FnvHashMap<GamepadAxis, f32>,
-  events: events::Channel<GamepadEvent>,
 }
 
 impl Gamepad {
+  pub fn read(res: &ecs::Resources) -> ReadGamepad {
+    ecs::SystemData::fetch(res)
+  }
+
+  pub fn write(res: &ecs::Resources) -> WriteGamepad {
+    ecs::SystemData::fetch(res)
+  }
+
   /// Gets the current value of a gamepad button.
   ///
   /// The value is between 0.0 and 1.0, where 1.0 is fully pressed and 0.0 is
@@ -68,10 +75,6 @@ impl Gamepad {
 pub enum GamepadEvent {
   ButtonChanged { button: GamepadButton, value: f32 },
   AxisChanged { axis: GamepadAxis, value: f32 },
-}
-
-pub fn read(res: &ecs::Resources) -> ReadGamepad {
-  ecs::SystemData::fetch(res)
 }
 
 pub fn setup(engine: &mut Engine) {

@@ -4,6 +4,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::Arc;
+use std::borrow::Borrow;
 
 /// An immutable `str` container that can be freely shared across threads.
 ///
@@ -64,6 +65,12 @@ impl Deref for SharedStr {
   type Target = str;
 
   fn deref(&self) -> &str {
+    self.as_ref()
+  }
+}
+
+impl Borrow<str> for SharedStr {
+  fn borrow(&self) -> &str {
     self.as_ref()
   }
 }

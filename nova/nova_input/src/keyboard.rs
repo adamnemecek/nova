@@ -15,12 +15,11 @@ use std::mem;
 const KEY_CODE_COUNT: usize = KeyCode::Cut as usize;
 
 pub type ReadKeyboard<'a> = ecs::ReadResource<'a, Keyboard>;
-
-type WriteKeyboard<'a> = ecs::WriteResource<'a, Keyboard>;
+pub type WriteKeyboard<'a> = ecs::WriteResource<'a, Keyboard>;
 
 pub struct Keyboard {
+  pub events: events::Channel<KeyboardEvent>,
   keys: [bool; KEY_CODE_COUNT],
-  events: events::Channel<KeyboardEvent>,
 }
 
 impl Default for Keyboard {
@@ -35,6 +34,14 @@ impl Default for Keyboard {
 impl Keyboard {
   pub fn new() -> Self {
     Self::default()
+  }
+
+  pub fn read(res: &ecs::Resources) -> ReadKeyboard {
+    ecs::SystemData::fetch(res)
+  }
+
+  pub fn write(res: &ecs::Resources) -> WriteKeyboard {
+    ecs::SystemData::fetch(res)
   }
 
   pub fn get_key(&self, key: KeyCode) -> bool {
