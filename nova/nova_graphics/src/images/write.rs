@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::{Image, ImageId};
-use nova_assets::{AssetId, AssetPath, ReadAssets};
+use nova_assets::{AssetId, ReadAssets};
 use nova_core::ecs;
 use nova_core::ecs::derive::*;
 
@@ -38,12 +38,5 @@ impl<'a> WriteImages<'a> {
     }
 
     ImageId(entity)
-  }
-
-  pub fn load_asset_at_path(&mut self, path: &AssetPath, assets: &ReadAssets) -> ImageId {
-    match assets.lookup(path) {
-      Some(id) => self.load_asset(id, assets),
-      None => panic!(format!("Asset path {:?} does not exist.", path)),
-    }
   }
 }

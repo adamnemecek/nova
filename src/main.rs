@@ -56,35 +56,61 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let assets = &assets::read(&app.resources);
 
     // Load a default font.
-    fonts::write(&app.resources)
-      .create(include_bytes!("fonts/fira_sans_regular.ttf"))
-      .unwrap();
+    let default_font_path = "/fonts/fira_sans_regular.ttf".into();
 
-    // Load a background image.
-    let bg_image = images::write(&app.resources).load_asset_at_path(&"/do-it.jpg".into(), &assets);
+    match assets.lookup(&default_font_path) {
+      Some(id) => {
+        if let Err(err) = fonts::write(&app.resources).load_asset(id, assets) {
+          log
+            .error("Could not load default font.")
+            .with("path", &default_font_path)
+            .with("err", log::Display(err));
+        }
+      }
 
-    // Add a root `Game` element.
-    ui::add_to_root(&app.resources, Game { bg_image });
+      None => {
+        log
+          .warn("Default font does not exist.")
+          .with("path", &default_font_path);
+      }
+    }
 
     // Apply the default control map bindings.
-    let mut controls = controls::write(&app.resources);
     let control_map_path = "/control_map.toml".into();
 
     match assets.lookup(&control_map_path) {
       Some(id) => match ControlMap::load_file(assets.fs_path_of(id)) {
-        Ok(map) => controls.apply_bindings(&map),
+        Ok(map) => controls::write(&app.resources).apply_bindings(&map),
 
         Err(err) => {
           log
             .error("Could not load control map.")
+            .with("path", &control_map_path)
             .with("err", log::Display(err));
         }
       },
 
       None => {
         log
-          .warn("No control map found. No input controls will be bound.")
+          .warn("Control map does not exist.")
           .with("path", control_map_path);
+      }
+    };
+
+    // Load "/do_it.jpg" and display it on the root `Game` UI element.
+    let bg_image_path = "/do_it.jpg".into();
+
+    match assets.lookup(&bg_image_path) {
+      Some(id) => {
+        let bg_image = images::write(&app.resources).load_asset(id, assets);
+
+        ui::add_to_root(&app.resources, Game { bg_image });
+      }
+
+      None => {
+        log
+          .error("Background image does not exist.")
+          .with("path", bg_image_path);
       }
     };
   }
