@@ -19,11 +19,6 @@ use nova_renderer::{self as renderer, Render, Renderer, TextureId};
 
 const DESCRIPTOR_TEXTURE: usize = 0;
 
-const PUSH_CONST_TRANSFORM: usize = 0;
-const PUSH_CONST_RECT: usize = 1;
-const PUSH_CONST_TEXTURE_RECT: usize = 2;
-const PUSH_CONST_TINT: usize = 3;
-
 pub struct Painter {
   image_pipeline: renderer::Pipeline,
   text_pipeline: renderer::Pipeline,
@@ -60,10 +55,7 @@ impl Painter {
       .set_vertex_shader(&vertex_shader)
       .set_fragment_shader(&image_shader)
       .add_descriptor_layout(renderer.textures().descriptor_layout().clone())
-      .add_push_constant::<Matrix4<f32>>()
-      .add_push_constant::<Rect<f32>>()
-      .add_push_constant::<Rect<f32>>()
-      .add_push_constant::<Color>()
+      .set_push_constants::<(Matrix4<f32>, Rect<f32>, Rect<f32>, Color)>()
       .build(renderer.device(), renderer.render_pass())
       .expect("Could not create image pipeline");
 
@@ -71,10 +63,7 @@ impl Painter {
       .set_vertex_shader(&vertex_shader)
       .set_fragment_shader(&text_shader)
       .add_descriptor_layout(renderer.textures().descriptor_layout().clone())
-      .add_push_constant::<Matrix4<f32>>()
-      .add_push_constant::<Rect<f32>>()
-      .add_push_constant::<Rect<f32>>()
-      .add_push_constant::<Color>()
+      .set_push_constants::<(Matrix4<f32>, Rect<f32>, Rect<f32>, Color)>()
       .build(renderer.device(), renderer.render_pass())
       .expect("Could not create text pipeline");
 

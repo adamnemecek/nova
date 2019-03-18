@@ -34,27 +34,14 @@ impl<'a, 'b> Canvas<'a, 'b> {
 
     self.render.bind_pipeline(pipeline);
 
-    self.render.push_constant(
+    self.render.push_constants(
       pipeline,
-      super::PUSH_CONST_TRANSFORM,
-      self.screen.projection(),
+      &(*self.screen.projection(), rect, texture_rect, color),
     );
 
     self
       .render
-      .push_constant(pipeline, super::PUSH_CONST_RECT, &rect);
-
-    self
-      .render
-      .push_constant(pipeline, super::PUSH_CONST_TINT, &color);
-
-    self
-      .render
       .bind_texture(pipeline, super::DESCRIPTOR_TEXTURE, texture_id);
-
-    self
-      .render
-      .push_constant(pipeline, super::PUSH_CONST_TEXTURE_RECT, &texture_rect);
 
     self.render.draw(0..4);
   }

@@ -7,7 +7,6 @@ use crate::descriptors::DescriptorLayout;
 use crate::device::{Device, DeviceExt};
 use crate::{RenderPass, Shader, ShaderSet};
 use nova_core::quick_error;
-use std::ops::Range;
 
 /// Builds a new [`Pipeline`].
 #[derive(Default)]
@@ -16,7 +15,7 @@ pub struct PipelineBuilder {
   fragment_shader: Option<Shader>,
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
-  push_constants: Vec<Range<u32>>,
+  push_constants: usize,
   descriptor_layouts: Vec<DescriptorLayout>,
 }
 
@@ -77,11 +76,8 @@ impl PipelineBuilder {
     self
   }
 
-  /// Adds a push constant to the pipeline.
-  ///
-  /// Push constants are bound in the order they are added starting from index
-  /// 0.
-  pub fn add_push_constant<T>(mut self) -> Self {
+  /// Sets the type that stores the push constants for this pipeline.
+  pub fn set_push_constants<T>(mut self) -> Self {
     let size = std::mem::size_of::<T>();
 
     assert!(
@@ -89,15 +85,14 @@ impl PipelineBuilder {
       "Push constants must be a multiple of 4 bytes in size."
     );
 
-    let start = self.push_constants.last().map(|r| r.end).unwrap_or(0);
-    let end = start + size as u32 / 4;
+    let size = size / 4;
 
     assert!(
-      end <= 32,
+      size <= 32,
       "Push constants should not exceed 128 bytes total."
     );
 
-    self.push_constants.push(start..end);
+    self.push_constants = size;
     self
   }
 
@@ -131,12 +126,12 @@ impl PipelineBuilder {
       main_pass: render_pass,
     };
 
-    let push_constants = if self.push_constants.is_empty() {
+    let push_constants = if self.push_constants == 0 {
       Vec::new()
     } else {
       vec![(
         gfx_hal::pso::ShaderStageFlags::VERTEX | gfx_hal::pso::ShaderStageFlags::FRAGMENT,
-        self.push_constants.first().unwrap().start..self.push_constants.last().unwrap().end,
+        0..self.push_constants as u32,
       )]
     };
 

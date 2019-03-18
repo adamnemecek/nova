@@ -43,18 +43,24 @@ impl<'a> Render<'a> {
     }
   }
 
-  pub fn push_constant<T>(&mut self, pipeline: &Pipeline, index: usize, value: &T) {
-    let range = pipeline.push_constant_range(index);
+  pub fn push_constants<T>(&mut self, pipeline: &Pipeline, constants: &T) {
+    let size = std::mem::size_of::<T>();
+
+    debug_assert!(
+      size == pipeline.push_constants * 4,
+      "Push constants must be the same size as the type defined by the pipeline."
+    );
 
     // Convert the constant to a slice of `u32` as vulkan/gfx-hal expects.
-    let constants =
-      unsafe { std::slice::from_raw_parts(value as *const T as *const u32, range.len()) };
+    let constants = unsafe {
+      std::slice::from_raw_parts(constants as *const T as *const u32, pipeline.push_constants)
+    };
 
     unsafe {
       self.cmd.buffer.push_graphics_constants(
         &pipeline.raw_layout,
         gfx_hal::pso::ShaderStageFlags::VERTEX | gfx_hal::pso::ShaderStageFlags::FRAGMENT,
-        range.start,
+        0,
         constants,
       );
     }

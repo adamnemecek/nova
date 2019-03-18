@@ -8,7 +8,6 @@ mod vertex;
 use super::descriptors::DescriptorLayout;
 use super::device::{Device, DeviceExt};
 use super::{Backend, ShaderSet};
-use std::ops::Range;
 
 pub use self::builder::PipelineBuilder;
 pub use self::vertex::*;
@@ -25,14 +24,10 @@ pub struct Pipeline {
   pub(crate) raw: RawPipeline,
   shaders: ShaderSet,
   descriptor_layouts: Vec<DescriptorLayout>,
-  push_constants: Vec<Range<u32>>,
+  pub(crate) push_constants: usize,
 }
 
 impl Pipeline {
-  pub(crate) fn push_constant_range(&self, index: usize) -> Range<u32> {
-    self.push_constants[index].clone()
-  }
-
   pub fn destroy(self, device: &Device) {
     device.wait_idle().expect("Could not wait for device idle");
 
