@@ -48,7 +48,7 @@ impl App {
   }
 
   pub fn run(mut self) {
-    const MIN_FRAME_TIME: Duration = Duration::from_micros(6994);
+    const MIN_FRAME_TIME: Duration = Duration::from_micros(16666); // Roughly 60 Hz.
 
     // Register an event reader for window events.
     let mut event_reader = {
