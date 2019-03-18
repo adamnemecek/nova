@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 nova_core = { path = "../nova_core" }
-winit = "0.18"
+winit = { version = "0.18", features = ["serde"] }

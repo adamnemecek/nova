@@ -40,6 +40,12 @@ impl From<String> for SharedStr {
   }
 }
 
+impl<'a> From<&'a String> for SharedStr {
+  fn from(value: &'a String) -> Self {
+    From::<String>::from(value.clone())
+  }
+}
+
 impl<'a> From<Cow<'a, str>> for SharedStr {
   fn from(value: Cow<'a, str>) -> Self {
     SharedStr::from(value.into_owned())

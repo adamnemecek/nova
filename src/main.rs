@@ -1,8 +1,6 @@
 use nova::assets;
 use nova::graphics::images::{self, ImageId};
-use nova::input::controls::{self, ControlBinding};
-use nova::input::gamepad::GamepadAxis;
-use nova::input::keyboard::KeyCode;
+use nova::input::controls::{self, ControlMap};
 use nova::log;
 use nova::ui;
 use nova::ui::text::fonts;
@@ -53,32 +51,27 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Create a new nova app.
   let app = nova::App::new();
 
-  // Load a default font.
-  fonts::write(&app.resources)
-    .create(include_bytes!("fonts/fira_sans_regular.ttf"))
-    .unwrap();
-
-  // Load a background image.
-  let bg_image = images::write(&app.resources)
-    .load_asset_at_path(&"/do-it.jpg".into(), &assets::read(&app.resources));
-
-  // Add a root `Game` element.
-  ui::add_to_root(&app.resources, Game { bg_image });
-
-  // Add some test controls.
   {
+    let assets = &assets::read(&app.resources);
+
+    // Load a default font.
+    fonts::write(&app.resources)
+      .create(include_bytes!("fonts/fira_sans_regular.ttf"))
+      .unwrap();
+
+    // Load a background image.
+    let bg_image = images::write(&app.resources).load_asset_at_path(&"/do-it.jpg".into(), &assets);
+
+    // Add a root `Game` element.
+    ui::add_to_root(&app.resources, Game { bg_image });
+
+    // Apply the default control map bindings.
     let mut controls = controls::write(&app.resources);
 
-    let move_x = controls.add("move_x");
-    let move_y = controls.add("move_y");
+    let map = ControlMap::load(include_bytes!("controls/default.toml"))
+      .expect("Could not load default control map");
 
-    controls.bind(move_x, ControlBinding::GamepadAxis(GamepadAxis::LeftStickX));
-    controls.bind(move_x, ControlBinding::Key(KeyCode::A));
-    controls.bind_negative(move_x, ControlBinding::Key(KeyCode::D));
-
-    controls.bind(move_y, ControlBinding::GamepadAxis(GamepadAxis::LeftStickY));
-    controls.bind(move_y, ControlBinding::Key(KeyCode::W));
-    controls.bind_negative(move_y, ControlBinding::Key(KeyCode::S));
+    controls.apply_bindings(&map);
   }
 
   // Run the app until the window is closed.

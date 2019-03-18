@@ -2,15 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod map;
+
+mod binding;
 mod control;
 mod update;
 
+pub use self::binding::ControlBinding;
 pub use self::control::Control;
+pub use self::map::ControlMap;
 pub use self::update::UpdateControls;
 
-use crate::gamepad::{GamepadAxis, GamepadButton};
-use crate::keyboard::KeyCode;
-use crate::mouse::MouseButton;
 use nova_core::collections::{FnvHashMap, FnvHashSet};
 use nova_core::ecs;
 use nova_core::engine::Engine;
@@ -55,6 +57,13 @@ impl Controls {
     self.by_name.get(name).cloned()
   }
 
+  pub fn lookup_or_add(&mut self, name: impl AsRef<str> + Into<SharedStr>) -> ControlId {
+    match self.lookup(name.as_ref()) {
+      Some(id) => id,
+      None => self.add(name),
+    }
+  }
+
   pub fn bind(&mut self, id: ControlId, binding: ControlBinding) {
     let state = &mut self.states[id.0];
 
@@ -81,6 +90,29 @@ impl Controls {
 
     if let Some(ids) = self.by_binding.get_mut(&input) {
       ids.remove(&id);
+    }
+  }
+
+  pub fn clear_bindings(&mut self) {
+    for state in &mut self.states {
+      state.bindings.clear();
+      state.negative_bindings.clear();
+    }
+
+    self.by_binding.clear();
+  }
+
+  pub fn apply_bindings(&mut self, map: &ControlMap) {
+    for (name, bindings) in dbg!(&map.bindings) {
+      let id = self.lookup_or_add(name);
+
+      for binding in &bindings.positive {
+        self.bind(id, *binding);
+      }
+
+      for binding in &bindings.negative {
+        self.bind_negative(id, *binding);
+      }
     }
   }
 
@@ -134,14 +166,6 @@ impl Controls {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ControlId(pub(crate) usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ControlBinding {
-  Key(KeyCode),
-  MouseButton(MouseButton),
-  GamepadButton(GamepadButton),
-  GamepadAxis(GamepadAxis),
-}
 
 #[derive(Debug)]
 pub enum ControlEvent {

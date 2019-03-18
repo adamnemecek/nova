@@ -10,6 +10,7 @@ use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::events;
 use nova_core::math::Point2;
+use serde::{Deserialize, Serialize};
 use std::iter;
 use std::mem;
 
@@ -64,7 +65,7 @@ impl Mouse {
   }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct MouseButton(pub usize);
 
 #[derive(Debug)]
