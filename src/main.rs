@@ -11,18 +11,8 @@ struct Game {
   bg_image: ImageId,
 }
 
-impl Game {
-  fn on_test_message(&self, _: ui::ElementContext<Self>, message: TestMessage) {
-    println!("{}", message.0);
-  }
-}
-
 impl ui::Element for Game {
   type State = ();
-
-  fn on_awake(&self, mut ctx: ui::ElementContext<Self>) {
-    ctx.subscribe(Self::on_test_message);
-  }
 
   fn build(&self, _: ui::ChildSpecs, _: ui::ElementContext<Self>) -> ui::Spec {
     ui::Spec::from(vec![
