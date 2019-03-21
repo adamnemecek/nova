@@ -89,6 +89,7 @@ pub fn build(res: &ecs::Resources) {
         );
 
         was_rebuilt = true;
+        node.should_rebuild = false;
       }
 
       // Push all children onto the build stack in reverse order so that
@@ -245,8 +246,9 @@ fn push_apply_children<I>(
     push_delete_children(state, children, new_len..);
   }
 
-  for (i, child) in specs.enumerate() {
-    if let Some(child_entity) = child.entity() {
+  // Apply the given specs over the existing children.
+  for (i, spec) in specs.enumerate() {
+    if let Some(child_entity) = spec.entity() {
       // The child is an entity so reference it directly.
 
       if i < children.entities.len() {
@@ -281,7 +283,7 @@ fn push_apply_children<I>(
 
       state
         .apply_stack
-        .push((children.entities[i], child, Some(ctx.entity)));
+        .push((children.entities[i], spec, Some(ctx.entity)));
     }
   }
 
