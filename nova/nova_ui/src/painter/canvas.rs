@@ -46,8 +46,8 @@ impl<'a, 'b> Canvas<'a, 'b> {
     self.render.draw(0..4);
   }
 
-  pub fn draw_image(&mut self, rect: Rect<f32>, color: Color, slice: ImageSlice) {
-    let texture_id = self.render.textures_mut().cache_image(slice.image_id);
+  pub fn draw_image(&mut self, rect: Rect<f32>, color: Color, slice: &ImageSlice) {
+    let texture_id = self.render.textures_mut().cache_image(&slice.data);
 
     self.draw_texture(false, rect, color, texture_id, slice.rect);
   }

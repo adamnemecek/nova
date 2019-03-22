@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use nova_core::ecs;
+use nova_core::components::{Component, HashMapStorage};
 use nova_core::math::Rect;
 use std::ops::{Deref, DerefMut};
 
@@ -24,6 +24,6 @@ impl DerefMut for ScreenRect {
   }
 }
 
-impl ecs::Component for ScreenRect {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for ScreenRect {
+  type Storage = HashMapStorage<Self>;
 }

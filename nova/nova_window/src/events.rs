@@ -2,39 +2,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use winit::{EventsLoop, MouseButton};
-pub use winit::VirtualKeyCode as KeyCode;
-pub use winit::WindowEvent as Event;
 pub use winit::ElementState as ButtonState;
+pub use winit::VirtualKeyCode as KeyCode;
+pub use winit::{EventsLoop, MouseButton, WindowEvent};
 
-use nova_core::ecs;
 use nova_core::events;
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 
-pub type EventChannel = events::Channel<Event>;
-pub type EventReader = events::ReaderId<Event>;
-
-pub type ReadEvents<'a> = ecs::ReadResource<'a, Events>;
-pub type WriteEvents<'a> = ecs::WriteResource<'a, Events>;
+pub type ReadWindowEvents<'a> = ReadResource<'a, WindowEvents>;
+pub type WriteWindowEvents<'a> = WriteResource<'a, WindowEvents>;
 
 #[derive(Default)]
-pub struct Events {
-  channel: EventChannel,
+pub struct WindowEvents {
+  channel: events::Channel<WindowEvent>,
 }
 
-impl Events {
-  pub fn channel(&self) -> &EventChannel {
+impl WindowEvents {
+  pub fn channel(&self) -> &events::Channel<WindowEvent> {
     &self.channel
   }
 
-  pub fn channel_mut(&mut self) -> &mut EventChannel {
+  pub fn channel_mut(&mut self) -> &mut events::Channel<WindowEvent> {
     &mut self.channel
   }
 }
 
-pub fn read_events(res: &ecs::Resources) -> ReadEvents {
-  ecs::SystemData::fetch(res)
+pub fn borrow(res: &Resources) -> ReadWindowEvents {
+  resources::borrow(res)
 }
 
-pub fn write_events(res: &ecs::Resources) -> WriteEvents {
-  ecs::SystemData::fetch(res)
+pub fn borrow_mut(res: &Resources) -> WriteWindowEvents {
+  resources::borrow_mut(res)
 }

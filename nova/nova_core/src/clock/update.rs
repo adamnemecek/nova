@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::clock::{Duration, Instant, WriteClock};
-use crate::ecs;
+use crate::systems::System;
 
 #[derive(Debug)]
 pub struct UpdateClock {
@@ -20,7 +20,7 @@ impl Default for UpdateClock {
   }
 }
 
-impl<'a> ecs::System<'a> for UpdateClock {
+impl<'a> System<'a> for UpdateClock {
   type Data = WriteClock<'a>;
 
   fn run(&mut self, mut clock: Self::Data) {

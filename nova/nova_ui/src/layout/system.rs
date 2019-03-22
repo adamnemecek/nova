@@ -5,10 +5,13 @@
 use crate::layout::{Constraints, HorizontalAlign, Layout, VerticalAlign};
 use crate::nodes::ReadNodes;
 use crate::screen::{Screen, ScreenRect};
-use nova_core::ecs;
-use nova_core::ecs::derive::*;
+use nova_core::components::{self, ReadComponents, WriteComponents};
 use nova_core::engine::{Engine, EnginePhase};
+use nova_core::entities::Entity;
 use nova_core::math::{Rect, Size};
+use nova_core::resources::ReadResource;
+use nova_core::systems::derive::*;
+use nova_core::systems::System;
 use std::f32;
 
 #[derive(Debug)]
@@ -17,16 +20,16 @@ struct LayoutElements;
 #[derive(SystemData)]
 struct InputData<'a> {
   nodes: ReadNodes<'a>,
-  screen: ecs::ReadResource<'a, Screen>,
-  layouts: ecs::ReadComponents<'a, Layout>,
+  screen: ReadResource<'a, Screen>,
+  layouts: ReadComponents<'a, Layout>,
 }
 
 #[derive(SystemData)]
 struct OutputData<'a> {
-  rects: ecs::WriteComponents<'a, ScreenRect>,
+  rects: WriteComponents<'a, ScreenRect>,
 }
 
-impl<'a> ecs::System<'a> for LayoutElements {
+impl<'a> System<'a> for LayoutElements {
   type Data = (InputData<'a>, OutputData<'a>);
 
   fn run(&mut self, (input, mut output): Self::Data) {
@@ -59,7 +62,7 @@ impl<'a> ecs::System<'a> for LayoutElements {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Layout>(&mut engine.resources);
+  components::register::<Layout>(&mut engine.resources);
 
   engine.schedule(EnginePhase::AfterUpdate, LayoutElements);
 }
@@ -67,7 +70,7 @@ pub fn setup(engine: &mut Engine) {
 fn calculate_size(
   input: &InputData,
   output: &mut OutputData,
-  entity: ecs::Entity,
+  entity: Entity,
   constraints: Constraints,
 ) -> Size<f32> {
   let layout = input.layouts.get(entity).cloned().unwrap_or_default();
@@ -153,7 +156,7 @@ fn calculate_size(
 fn stack_children(
   input: &InputData,
   output: &mut OutputData,
-  entity: ecs::Entity,
+  entity: Entity,
   constraints: Constraints,
 ) -> Size<f32> {
   let mut size = constraints.min;
@@ -172,12 +175,7 @@ fn stack_children(
   size
 }
 
-fn offset_children(
-  input: &InputData,
-  output: &mut OutputData,
-  entity: ecs::Entity,
-  rect: Rect<f32>,
-) {
+fn offset_children(input: &InputData, output: &mut OutputData, entity: Entity, rect: Rect<f32>) {
   let layout = input.layouts.get(entity);
 
   let (h_align, v_align) = match layout {

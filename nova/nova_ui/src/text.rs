@@ -9,7 +9,7 @@ pub mod position;
 use crate::elements::{Element, ElementContext};
 use crate::layout::{HorizontalAlign, Layout, VerticalAlign};
 use crate::Color;
-use nova_core::ecs;
+use nova_core::components::{self, Component, HashMapStorage};
 use nova_core::engine::Engine;
 use nova_core::SharedStr;
 
@@ -34,8 +34,8 @@ impl Default for Text {
   }
 }
 
-impl ecs::Component for Text {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for Text {
+  type Storage = HashMapStorage<Self>;
 }
 
 impl Element for Text {
@@ -58,7 +58,7 @@ impl Element for Text {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Text>(&mut engine.resources);
+  components::register::<Text>(&mut engine.resources);
 
   cache::setup(engine);
   fonts::setup(engine);

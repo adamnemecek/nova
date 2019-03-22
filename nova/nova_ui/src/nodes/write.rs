@@ -3,31 +3,33 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::elements::ElementInstance;
-use crate::nodes::{Node, NodeHierarchy};
-use nova_core::ecs;
-use nova_core::ecs::derive::*;
+use crate::nodes::hierarchy::WriteNodeHierarchy;
+use crate::nodes::Node;
+use nova_core::components::WriteComponents;
+use nova_core::entities::Entity;
+use nova_core::systems::derive::*;
 use std::iter::DoubleEndedIterator;
 
 #[derive(SystemData)]
 pub struct WriteNodes<'a> {
-  pub(crate) hierarchy: ecs::WriteResource<'a, NodeHierarchy>,
-  nodes: ecs::WriteComponents<'a, Node>,
+  pub(crate) hierarchy: WriteNodeHierarchy<'a>,
+  nodes: WriteComponents<'a, Node>,
 }
 
 impl<'a> WriteNodes<'a> {
-  pub fn roots(&'a self) -> impl DoubleEndedIterator<Item = ecs::Entity> + 'a {
+  pub fn roots(&'a self) -> impl DoubleEndedIterator<Item = Entity> + 'a {
     self.hierarchy.roots.iter().cloned()
   }
 
-  pub fn get_mut(&mut self, entity: ecs::Entity) -> Option<&mut Node> {
+  pub fn get_mut(&mut self, entity: Entity) -> Option<&mut Node> {
     self.nodes.get_mut(entity)
   }
 
   pub(crate) fn create_on_entity(
     &mut self,
-    entity: ecs::Entity,
+    entity: Entity,
     element: ElementInstance,
-    parent: Option<ecs::Entity>,
+    parent: Option<Entity>,
   ) -> &mut Node {
     self
       .nodes
@@ -37,7 +39,7 @@ impl<'a> WriteNodes<'a> {
     self.nodes.get_mut(entity).unwrap()
   }
 
-  pub(crate) fn delete(&mut self, entity: ecs::Entity) {
+  pub(crate) fn delete(&mut self, entity: Entity) {
     self.nodes.remove(entity);
   }
 }

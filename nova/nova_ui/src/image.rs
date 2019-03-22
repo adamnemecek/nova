@@ -4,11 +4,12 @@
 
 use crate::elements::{Element, ElementContext};
 use crate::layout::{Constraints, Layout};
-use nova_core::ecs::{self, Join as _};
-use nova_core::engine::{Engine, EnginePhase};
-use nova_graphics::images::{ImageSlice, ReadImages};
+use nova_core::components::{self, Component, HashMapStorage};
+use nova_core::math::Size;
+use nova_core::resources::Resources;
+use nova_graphics::images::ImageSlice;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Image {
   pub slice: ImageSlice,
 }
@@ -21,20 +22,31 @@ impl Image {
   }
 }
 
-impl ecs::Component for Image {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for Image {
+  type Storage = HashMapStorage<Self>;
 }
 
 impl Element for Image {
   type State = ();
 
   fn on_awake(&self, ctx: ElementContext<Self>) {
-    ctx.put_component(*self);
+    let mut size: Size<f32> = self.slice.data.size().into();
+
+    size.width *= self.slice.rect.width();
+    size.height *= self.slice.rect.height();
+
+    ctx.put_component(self.clone());
+
+    ctx.put_component(Layout::Constrained(Constraints {
+      min: size,
+      max: size,
+    }));
   }
 
   fn on_change(&self, _: Self, mut ctx: ElementContext<Self>) {
-    ctx.put_component(*self);
     ctx.rebuild();
+
+    self.on_awake(ctx);
   }
 
   fn on_sleep(&self, ctx: ElementContext<Self>) {
@@ -42,39 +54,6 @@ impl Element for Image {
   }
 }
 
-#[derive(Debug)]
-struct UpdateImageSizes;
-
-impl<'a> ecs::System<'a> for UpdateImageSizes {
-  type Data = (
-    ecs::ReadEntities<'a>,
-    ReadImages<'a>,
-    ecs::ReadComponents<'a, Image>,
-    ecs::WriteComponents<'a, Layout>,
-  );
-
-  fn run(&mut self, (entities, images, image_comps, mut layouts): Self::Data) {
-    for (entity, image_comp) in (&*entities, &image_comps).join() {
-      let size = images
-        .get(image_comp.slice.image_id)
-        .map(|i| i.size().into())
-        .unwrap_or_default();
-
-      layouts
-        .insert(
-          entity,
-          Layout::Constrained(Constraints {
-            min: size,
-            max: size,
-          }),
-        )
-        .unwrap();
-    }
-  }
-}
-
-pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Image>(&mut engine.resources);
-
-  engine.schedule(EnginePhase::AfterUpdate, UpdateImageSizes);
+pub fn setup(res: &mut Resources) {
+  components::register::<Image>(res);
 }

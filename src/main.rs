@@ -1,5 +1,4 @@
-use nova::assets;
-use nova::graphics::images::{self, ImageId};
+use nova::graphics::images::ImageData;
 use nova::input::controls::{self, ControlMap};
 use nova::log;
 use nova::ui;
@@ -8,7 +7,7 @@ use nova::ui::{Align, Color, HorizontalAlign, Image, Text, VerticalAlign};
 
 #[derive(Debug, PartialEq)]
 struct Game {
-  bg_image: ImageId,
+  bg_image: ImageData,
 }
 
 impl ui::Element for Game {
@@ -18,7 +17,7 @@ impl ui::Element for Game {
     ui::Spec::from(vec![
       ui::Spec::new(
         Align(HorizontalAlign::Left, VerticalAlign::Bottom),
-        Image::new(self.bg_image),
+        Image::new(&self.bg_image),
       ),
       ui::Spec::from(Text {
         content: "Hello world.".into(),
@@ -43,64 +42,43 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   let log = log::Logger::new(module_path!());
 
   {
-    let assets = &assets::read(&app.resources);
-
     // Load a default font.
-    let default_font_path = "/fonts/fira_sans_regular.ttf".into();
+    let default_font_path = "assets/fonts/fira_sans_regular.ttf";
 
-    match assets.lookup(&default_font_path) {
-      Some(id) => {
-        if let Err(err) = fonts::write(&app.resources).load_asset(id, assets) {
-          log
-            .error("Could not load default font.")
-            .with("path", &default_font_path)
-            .with("err", log::Display(err));
-        }
-      }
-
-      None => {
-        log
-          .warn("Default font does not exist.")
-          .with("path", &default_font_path);
-      }
+    if let Err(err) = fonts::borrow_mut(&app.resources).load_file(default_font_path) {
+      log
+        .error("Could not load default font.")
+        .with("path", default_font_path)
+        .with("err", err);
     }
 
     // Apply the default control map bindings.
-    let control_map_path = "/control_map.toml".into();
+    let control_map_path = "assets/control_map.toml";
 
-    match assets.lookup(&control_map_path) {
-      Some(id) => match ControlMap::load_file(assets.fs_path_of(id)) {
-        Ok(map) => controls::write(&app.resources).apply_bindings(&map),
+    match ControlMap::load_file(control_map_path) {
+      Ok(map) => controls::borrow_mut(&app.resources).apply_bindings(&map),
 
-        Err(err) => {
-          log
-            .error("Could not load control map.")
-            .with("path", &control_map_path)
-            .with("err", log::Display(err));
-        }
-      },
-
-      None => {
+      Err(err) => {
         log
-          .warn("Control map does not exist.")
-          .with("path", control_map_path);
+          .error("Could not load control map.")
+          .with("path", control_map_path)
+          .with("err", log::Display(err));
       }
     };
 
-    // Load "/do_it.jpg" and display it on the root `Game` UI element.
-    let bg_image_path = "/do_it.jpg".into();
+    // Load "do_it.jpg" and display it on the root `Game` UI element.
+    let bg_image_path = "assets/do_it.jpg";
 
-    match assets.lookup(&bg_image_path) {
-      Some(id) => {
-        let bg_image = images::write(&app.resources).load_asset(id, assets);
-
+    match ImageData::load_file(bg_image_path) {
+      Ok(bg_image) => {
         ui::add_to_root(&app.resources, Game { bg_image });
       }
 
-      None => {
+      Err(err) => {
         log
-          .error("Background image does not exist.")
-          .with("path", bg_image_path);
+          .error("Could not load background image.")
+          .with("path", bg_image_path)
+          .with("err", err);
       }
     };
   }

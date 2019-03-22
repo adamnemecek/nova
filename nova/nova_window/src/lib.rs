@@ -2,17 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod events;
+pub mod events;
+
 mod options;
 mod update;
 
-use nova_core::engine::{Engine, EnginePhase};
-use nova_core::math::Size;
-use winit::Window as RawWindow;
-
-pub use self::events::*;
 pub use self::options::*;
 pub use self::update::*;
+
+use self::events::{EventsLoop, WindowEvents};
+use nova_core::engine::{Engine, EnginePhase};
+use nova_core::math::Size;
+use nova_core::resources::{ReadResource, WriteResource};
+use winit::Window as RawWindow;
+
+pub type ReadWindow<'a> = ReadResource<'a, Window>;
+pub type WriteWindow<'a> = WriteResource<'a, Window>;
 
 pub struct Window {
   raw: RawWindow,
@@ -43,7 +48,7 @@ impl Window {
     };
 
     engine.resources.insert(window);
-    engine.resources.insert(Events::default());
+    engine.resources.insert(WindowEvents::default());
 
     engine.schedule_seq(EnginePhase::BeforeUpdate, UpdateWindow { events_loop });
   }

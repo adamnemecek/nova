@@ -2,33 +2,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{ImageError, ImageFormat};
-use ::image::RgbaImage;
-use nova_core::ecs;
+use image::{ImageFormat, RgbaImage};
+use nova_core::components::{Component, HashMapStorage};
 use nova_core::math::Size;
 use nova_core::quick_error;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{self, BufReader};
 use std::path::Path;
+use std::sync::Arc;
 
-#[derive(Debug)]
-pub struct Image {
-  bytes: Box<[u8]>,
+#[derive(Debug, Clone)]
+pub struct ImageData {
+  bytes: Arc<[u8]>,
   size: Size<u32>,
 }
 
-impl From<RgbaImage> for Image {
-  fn from(rgba: RgbaImage) -> Self {
-    Image {
-      size: rgba.dimensions().into(),
-      bytes: rgba.into_vec().into_boxed_slice(),
-    }
-  }
-}
+impl ImageData {
+  pub fn load_file(path: impl AsRef<Path>) -> Result<Self, ImageLoadError> {
+    let path = path.as_ref();
 
-impl Image {
-  pub fn load(path: &Path) -> Result<Self, ImageLoadError> {
     let ext = path
       .extension()
       .and_then(OsStr::to_str)
@@ -59,13 +52,13 @@ impl Image {
     Ok(Self::from(image.to_rgba()))
   }
 
-  pub fn from_bytes(bytes: &[u8]) -> Result<Self, ImageError> {
+  pub fn load_bytes(bytes: &[u8]) -> Result<Self, ImageLoadError> {
     let data = image::load_from_memory(bytes)?;
 
     Ok(Self::from(data.to_rgba()))
   }
 
-  pub fn bytes(&self) -> &[u8] {
+  pub fn bytes(&self) -> &Arc<[u8]> {
     &self.bytes
   }
 
@@ -74,8 +67,23 @@ impl Image {
   }
 }
 
-impl ecs::Component for Image {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for ImageData {
+  type Storage = HashMapStorage<Self>;
+}
+
+impl PartialEq for ImageData {
+  fn eq(&self, other: &ImageData) -> bool {
+    Arc::ptr_eq(&self.bytes, &other.bytes)
+  }
+}
+
+impl From<RgbaImage> for ImageData {
+  fn from(rgba: RgbaImage) -> Self {
+    Self {
+      size: rgba.dimensions().into(),
+      bytes: rgba.into_vec().into_boxed_slice().into(),
+    }
+  }
 }
 
 quick_error! {

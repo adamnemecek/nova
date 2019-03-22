@@ -4,11 +4,14 @@
 
 pub mod clock;
 pub mod collections;
-pub mod ecs;
+pub mod components;
 pub mod engine;
+pub mod entities;
 pub mod log;
 pub mod math;
+pub mod resources;
 pub mod scheduler;
+pub mod systems;
 
 pub mod events {
   pub use shrev::{Event, EventChannel as Channel, EventIterator, ReaderId};

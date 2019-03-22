@@ -3,10 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use nova_core::collections::FnvHashSet;
-use nova_core::ecs;
+use nova_core::entities::Entity;
 
 #[derive(Debug, Default)]
 pub struct ChildNodes {
-  pub entities: Vec<ecs::Entity>,
-  pub references: FnvHashSet<ecs::Entity>,
+  pub entities: Vec<Entity>,
+  pub references: FnvHashSet<Entity>,
 }

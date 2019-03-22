@@ -6,16 +6,16 @@ mod update;
 
 pub use self::update::UpdateMouse;
 
-use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::events;
 use nova_core::math::Point2;
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use serde::{Deserialize, Serialize};
 use std::iter;
 use std::mem;
 
-pub type ReadMouse<'a> = ecs::ReadResource<'a, Mouse>;
-pub type WriteMouse<'a> = ecs::WriteResource<'a, Mouse>;
+pub type ReadMouse<'a> = ReadResource<'a, Mouse>;
+pub type WriteMouse<'a> = WriteResource<'a, Mouse>;
 
 #[derive(Default)]
 pub struct Mouse {
@@ -25,12 +25,12 @@ pub struct Mouse {
 }
 
 impl Mouse {
-  pub fn read(res: &ecs::Resources) -> ReadMouse {
-    ecs::SystemData::fetch(res)
+  pub fn borrow(res: &Resources) -> ReadMouse {
+    resources::borrow(res)
   }
 
-  pub fn write(res: &ecs::Resources) -> WriteMouse {
-    ecs::SystemData::fetch(res)
+  pub fn borrow_mut(res: &Resources) -> WriteMouse {
+    resources::borrow_mut(res)
   }
 
   pub fn button(&self, index: usize) -> bool {

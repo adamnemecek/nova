@@ -6,9 +6,11 @@ mod rect;
 
 pub use self::rect::ScreenRect;
 
-use nova_core::ecs;
+use nova_core::components;
 use nova_core::engine::{Engine, EnginePhase};
 use nova_core::math::{Matrix4, Size};
+use nova_core::resources::{ReadResource, WriteResource};
+use nova_core::systems::System;
 use nova_window::Window;
 
 #[derive(Debug)]
@@ -56,11 +58,8 @@ impl Screen {
 #[derive(Debug)]
 struct UpdateScreenInfo;
 
-impl<'a> ecs::System<'a> for UpdateScreenInfo {
-  type Data = (
-    ecs::ReadResource<'a, Window>,
-    ecs::WriteResource<'a, Screen>,
-  );
+impl<'a> System<'a> for UpdateScreenInfo {
+  type Data = (ReadResource<'a, Window>, WriteResource<'a, Screen>);
 
   fn run(&mut self, (window, mut screen): Self::Data) {
     screen.set_pixel_size(window.size());
@@ -68,7 +67,7 @@ impl<'a> ecs::System<'a> for UpdateScreenInfo {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<ScreenRect>(&mut engine.resources);
+  components::register::<ScreenRect>(&mut engine.resources);
 
   engine.resources.entry().or_insert_with(Screen::new);
 

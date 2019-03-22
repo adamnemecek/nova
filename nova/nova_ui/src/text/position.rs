@@ -9,8 +9,13 @@ use crate::{Color, Screen};
 use glyph_brush_layout::{
   GlyphPositioner as _, Layout as GlyphBrushLayout, SectionGeometry, SectionText,
 };
-use nova_core::ecs::{self, Join as _};
+use nova_core::components::{
+  self, Component, HashMapStorage, Join as _, ReadComponents, WriteComponents,
+};
 use nova_core::engine::{Engine, EnginePhase};
+use nova_core::entities::Entities;
+use nova_core::resources::ReadResource;
+use nova_core::systems::System;
 
 pub type PositionedGlyph = rusttype::PositionedGlyph<'static>;
 
@@ -19,27 +24,24 @@ pub struct PositionedText {
   pub glyphs: Vec<(PositionedGlyph, Color, FontId)>,
 }
 
-impl ecs::Component for PositionedText {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for PositionedText {
+  type Storage = HashMapStorage<Self>;
 }
 
 #[derive(Debug)]
 struct PositionText;
 
-impl<'a> ecs::System<'a> for PositionText {
+impl<'a> System<'a> for PositionText {
   type Data = (
-    ecs::ReadEntities<'a>,
-    ecs::ReadResource<'a, Screen>,
-    ecs::ReadComponents<'a, ScreenRect>,
-    ecs::ReadComponents<'a, Text>,
-    ecs::WriteComponents<'a, PositionedText>,
+    Entities<'a>,
+    ReadResource<'a, Screen>,
+    ReadComponents<'a, ScreenRect>,
+    ReadComponents<'a, Text>,
+    WriteComponents<'a, PositionedText>,
     ReadFonts<'a>,
   );
 
-  fn run(
-    &mut self,
-    (entities, screen, rects, texts, mut positioned_texts, fonts): Self::Data,
-  ) {
+  fn run(&mut self, (entities, screen, rects, texts, mut positioned_texts, fonts): Self::Data) {
     for (entity, rect, text) in (&*entities, &rects, &texts).join() {
       let positioned = positioned_texts
         .entry(entity)
@@ -81,7 +83,7 @@ impl<'a> ecs::System<'a> for PositionText {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<PositionedText>(&mut engine.resources);
+  components::register::<PositionedText>(&mut engine.resources);
 
   engine.schedule(EnginePhase::AfterUpdate, PositionText);
 }

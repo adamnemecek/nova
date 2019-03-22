@@ -16,9 +16,8 @@ use gfx_hal::image::Filter as TextureFilter;
 use gfx_hal::image::SamplerInfo as TextureSamplerInfo;
 use gfx_hal::image::WrapMode as TextureWrapMode;
 use nova_core::collections::{FnvHashMap, FnvHashSet};
-use nova_core::ecs;
 use nova_core::math::{Rect, Size};
-use nova_graphics::images::{self, ImageId};
+use nova_graphics::images::ImageData;
 use nova_graphics::Color4;
 use std::mem;
 
@@ -39,10 +38,10 @@ pub struct Textures {
   descriptor_pool: DescriptorPool,
   table: FnvHashMap<TextureId, Texture>,
   next_id: TextureId,
-  image_cache: FnvHashMap<ImageId, TextureId>,
+  image_cache: FnvHashMap<usize, TextureId>,
   staging_buffer: Buffer,
   staging_offset: usize,
-  pending_image_copies: Vec<(TextureId, ImageId)>,
+  pending_image_copies: Vec<(TextureId, ImageData)>,
   pending_changes: Vec<(TextureId, Change)>,
   has_pending_changes: FnvHashSet<TextureId>,
 }
@@ -164,8 +163,10 @@ impl Textures {
     self.staging_offset = range.end - range.end % 4 + 4;
   }
 
-  pub fn cache_image(&mut self, image_id: ImageId) -> TextureId {
-    match self.image_cache.get(&image_id) {
+  pub fn cache_image(&mut self, image: &ImageData) -> TextureId {
+    let address = &image.bytes()[0] as *const u8 as usize;
+
+    match self.image_cache.get(&address) {
       Some(id) => *id,
 
       None => {
@@ -173,8 +174,8 @@ impl Textures {
 
         self.next_id = TextureId(self.next_id.0 + 1);
 
-        self.image_cache.insert(image_id, id);
-        self.pending_image_copies.push((id, image_id));
+        self.image_cache.insert(address, id);
+        self.pending_image_copies.push((id, image.clone()));
 
         id
       }
@@ -183,23 +184,16 @@ impl Textures {
 
   pub(crate) fn flush_changes(
     &mut self,
-    res: &ecs::Resources,
     device: &Device,
     allocator: &mut Allocator,
     cmd: &mut Commands,
   ) {
-    let images = images::read(res);
     let mut image_copies = Vec::new();
 
     mem::swap(&mut self.pending_image_copies, &mut image_copies);
 
-    for (id, image_id) in image_copies.drain(..) {
-      let image = match images.get(image_id) {
-        Some(image) => image,
-        None => continue,
-      };
-
-      let size = image.size();
+    for (id, data) in image_copies.drain(..) {
+      let size = data.size();
 
       let sampler = &self.sampler;
       let descriptor_pool = &mut self.descriptor_pool;
@@ -223,7 +217,7 @@ impl Textures {
           x2: size.width,
           y2: size.height,
         },
-        image.bytes(),
+        data.bytes(),
       )
     }
 

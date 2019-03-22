@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::{assets, graphics};
 use crate::clock::{Clock, UpdateClock};
 use crate::engine::{Engine, EnginePhase};
 use crate::renderer::Renderer;
 use crate::ui;
+use crate::window::events::WindowEvent;
 use crate::window::{self, Window};
 use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
@@ -29,8 +29,6 @@ impl App {
 
     engine.resources.insert(Clock::default());
 
-    assets::setup(&mut engine, Default::default());
-    graphics::setup(&mut engine);
     Window::setup(&mut engine, Default::default());
     input::setup(&mut engine);
     ui::setup(&mut engine);
@@ -51,11 +49,9 @@ impl App {
     const MIN_FRAME_TIME: Duration = Duration::from_micros(16666); // Roughly 60 Hz.
 
     // Register an event reader for window events.
-    let mut event_reader = {
-      let mut events = self.resources.fetch_mut::<window::Events>();
-
-      events.channel_mut().register_reader()
-    };
+    let mut event_reader = window::events::borrow_mut(&self.resources)
+      .channel_mut()
+      .register_reader();
 
     loop {
       let began = Instant::now();
@@ -64,11 +60,11 @@ impl App {
 
       // Exit if the player tried to close the window.
       {
-        let events = self.resources.fetch::<window::Events>();
+        let events = window::events::borrow(&self.resources);
         let mut close_requested = false;
 
         for event in events.channel().read(&mut event_reader) {
-          if let window::Event::CloseRequested = event {
+          if let WindowEvent::CloseRequested = event {
             close_requested = true;
           }
         }
@@ -102,7 +98,7 @@ impl App {
 
     self.ui_painter.draw(&mut render, &self.engine.resources);
 
-    self.renderer.finish(&self.engine.resources);
+    self.renderer.finish();
   }
 
   pub fn destroy(self) {

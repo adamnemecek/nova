@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::ecs;
-use crate::ecs::entities::{self, Entity};
-use crate::ecs::resources::Resources;
-use crate::scheduler::{Runnable, Scheduler};
-use crate::ThreadPool;
+use crate::components;
+use crate::entities::{self, Entity};
+use crate::resources::Resources;
+use crate::scheduler::{Runnable, Scheduler, ThreadPool};
 use std::fmt;
 
 pub struct Engine {
@@ -35,7 +34,8 @@ impl Engine {
       entity_buffer: Default::default(),
     };
 
-    ecs::setup(&mut engine);
+    entities::setup(&mut engine.resources);
+    components::setup(&mut engine.resources);
 
     engine
   }

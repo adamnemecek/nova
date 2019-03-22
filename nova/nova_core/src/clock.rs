@@ -11,10 +11,10 @@ pub use self::duration::Duration;
 pub use self::instant::Instant;
 pub use self::update::UpdateClock;
 
-use crate::ecs;
+use crate::resources::{self, ReadResource, Resources, WriteResource};
 
-pub type ReadClock<'a> = ecs::ReadResource<'a, Clock>;
-pub type WriteClock<'a> = ecs::WriteResource<'a, Clock>;
+pub type ReadClock<'a> = ReadResource<'a, Clock>;
+pub type WriteClock<'a> = WriteResource<'a, Clock>;
 
 #[derive(Debug, Default)]
 pub struct Clock {
@@ -22,11 +22,11 @@ pub struct Clock {
 }
 
 impl Clock {
-  pub fn read(res: &ecs::Resources) -> ReadClock {
-    ecs::SystemData::fetch(res)
+  pub fn borrow(res: &Resources) -> ReadClock {
+    resources::borrow(res)
   }
 
-  pub fn write(res: &ecs::Resources) -> WriteClock {
-    ecs::SystemData::fetch(res)
+  pub fn borrow_mut(res: &Resources) -> WriteClock {
+    resources::borrow_mut(res)
   }
 }

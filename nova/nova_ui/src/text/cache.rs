@@ -3,19 +3,22 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::text::position::PositionedText;
-use nova_core::ecs::{self, Join as _};
+use nova_core::components::{Join as _, ReadComponents};
 use nova_core::engine::{Engine, EnginePhase};
+use nova_core::entities::Entities;
+use nova_core::resources::WriteResource;
+use nova_core::systems::System;
 
 pub type GlyphCache = rusttype::gpu_cache::Cache<'static>;
 
 #[derive(Debug)]
 pub struct CacheGlyphs;
 
-impl<'a> ecs::System<'a> for CacheGlyphs {
+impl<'a> System<'a> for CacheGlyphs {
   type Data = (
-    ecs::ReadEntities<'a>,
-    ecs::ReadComponents<'a, PositionedText>,
-    ecs::WriteResource<'a, GlyphCache>,
+    Entities<'a>,
+    ReadComponents<'a, PositionedText>,
+    WriteResource<'a, GlyphCache>,
   );
 
   fn run(&mut self, (entities, texts, mut cache): Self::Data) {

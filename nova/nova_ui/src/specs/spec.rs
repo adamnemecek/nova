@@ -5,7 +5,7 @@
 pub use crate::specs::ChildSpecs;
 
 use crate::elements::{Element, ElementPrototype};
-use nova_core::ecs;
+use nova_core::entities::Entity;
 use std::iter;
 use std::mem;
 use std::vec;
@@ -17,7 +17,7 @@ pub struct Spec(Content);
 enum Content {
   List(Vec<Spec>),
   Element(ElementPrototype),
-  Entity(ecs::Entity),
+  Entity(Entity),
 }
 
 impl Default for Spec {
@@ -37,11 +37,11 @@ impl Spec {
     )))
   }
 
-  pub(crate) fn from_entity(entity: ecs::Entity) -> Self {
+  pub(crate) fn from_entity(entity: Entity) -> Self {
     Self(Content::Entity(entity))
   }
 
-  pub(crate) fn entity(&self) -> Option<ecs::Entity> {
+  pub(crate) fn entity(&self) -> Option<Entity> {
     match &self.0 {
       Content::Entity(entity) => Some(*entity),
       _ => None,

@@ -11,13 +11,13 @@ pub use self::button::GamepadButton;
 pub use self::update::UpdateGamepad;
 
 use nova_core::collections::FnvHashMap;
-use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::events;
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::f32;
 
-pub type ReadGamepad<'a> = ecs::ReadResource<'a, Gamepad>;
-pub type WriteGamepad<'a> = ecs::WriteResource<'a, Gamepad>;
+pub type ReadGamepad<'a> = ReadResource<'a, Gamepad>;
+pub type WriteGamepad<'a> = WriteResource<'a, Gamepad>;
 
 #[derive(Default)]
 pub struct Gamepad {
@@ -27,12 +27,12 @@ pub struct Gamepad {
 }
 
 impl Gamepad {
-  pub fn read(res: &ecs::Resources) -> ReadGamepad {
-    ecs::SystemData::fetch(res)
+  pub fn borrow(res: &Resources) -> ReadGamepad {
+    resources::borrow(res)
   }
 
-  pub fn write(res: &ecs::Resources) -> WriteGamepad {
-    ecs::SystemData::fetch(res)
+  pub fn borrow_mut(res: &Resources) -> WriteGamepad {
+    resources::borrow_mut(res)
   }
 
   /// Gets the current value of a gamepad button.

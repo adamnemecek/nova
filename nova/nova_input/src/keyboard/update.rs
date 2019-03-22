@@ -3,24 +3,23 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::WriteKeyboard;
-use nova_core::ecs;
 use nova_core::engine::{Engine, EnginePhase};
+use nova_core::events;
+use nova_core::systems::System;
+use nova_window::events::{ButtonState, ReadWindowEvents, WindowEvent};
 
 #[derive(Debug)]
 pub struct UpdateKeyboard {
-  reader: nova_window::EventReader,
+  reader: events::ReaderId<WindowEvent>,
 }
 
-impl<'a> ecs::System<'a> for UpdateKeyboard {
-  type Data = (
-    ecs::ReadResource<'a, nova_window::Events>,
-    WriteKeyboard<'a>,
-  );
+impl<'a> System<'a> for UpdateKeyboard {
+  type Data = (ReadWindowEvents<'a>, WriteKeyboard<'a>);
 
   fn run(&mut self, (window_events, mut keyboard): Self::Data) {
     for event in window_events.channel().read(&mut self.reader) {
       let input = match event {
-        nova_window::Event::KeyboardInput { input, .. } => input,
+        WindowEvent::KeyboardInput { input, .. } => input,
         _ => continue,
       };
 
@@ -29,7 +28,7 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
         None => continue,
       };
 
-      let state = input.state == nova_window::ButtonState::Pressed;
+      let state = input.state == ButtonState::Pressed;
 
       keyboard.set_key(key_code, state);
     }
@@ -37,7 +36,7 @@ impl<'a> ecs::System<'a> for UpdateKeyboard {
 }
 
 pub fn setup(engine: &mut Engine) {
-  let reader = nova_window::write_events(&engine.resources)
+  let reader = nova_window::events::borrow_mut(&engine.resources)
     .channel_mut()
     .register_reader();
 

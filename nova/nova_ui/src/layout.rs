@@ -11,7 +11,7 @@ mod system;
 pub use self::align::{HorizontalAlign, VerticalAlign};
 pub use self::constraints::Constraints;
 
-use nova_core::ecs;
+use nova_core::components::{self, Component, HashMapStorage};
 use nova_core::engine::Engine;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -22,8 +22,8 @@ pub enum Layout {
   Align(HorizontalAlign, VerticalAlign),
 }
 
-impl ecs::Component for Layout {
-  type Storage = ecs::HashMapStorage<Self>;
+impl Component for Layout {
+  type Storage = HashMapStorage<Self>;
 }
 
 impl Default for Layout {
@@ -33,7 +33,7 @@ impl Default for Layout {
 }
 
 pub fn setup(engine: &mut Engine) {
-  ecs::components::register::<Layout>(&mut engine.resources);
+  components::register::<Layout>(&mut engine.resources);
 
   system::setup(engine);
 }

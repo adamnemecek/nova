@@ -7,12 +7,3 @@ pub mod images;
 mod color;
 
 pub use self::color::Color4;
-
-// TODO: Remove after creating a custom `SystemData` derive macro.
-use nova_core::shred;
-
-use nova_core::engine::Engine;
-
-pub fn setup(engine: &mut Engine) {
-  images::setup(engine);
-}

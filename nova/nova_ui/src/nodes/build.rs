@@ -2,11 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::messages::MessageQueue;
+use crate::messages::{self, MessageQueue};
 use crate::nodes::{self, ChildNodes, NodeContext, WriteNodes};
 use crate::specs::{ChildSpecs, Spec};
-use nova_core::ecs;
 use nova_core::engine::Engine;
+use nova_core::entities::{self, Entities, Entity};
+use nova_core::resources::{self, Resources};
 use std::mem;
 use std::ops::RangeBounds;
 
@@ -14,24 +15,25 @@ use std::ops::RangeBounds;
 struct BuildState {
   /// Resuable temporary storage for the stack of entities that need to be
   /// built.
-  build_stack: Vec<ecs::Entity>,
+  build_stack: Vec<Entity>,
   /// Resuable temporary storage for the stack of entities that need new specs
   /// applied.
-  apply_stack: Vec<(ecs::Entity, Spec, Option<ecs::Entity>)>,
+  apply_stack: Vec<(Entity, Spec, Option<Entity>)>,
   /// Resuable temporary storage for the stack of entities that need to be
   /// deleted.
-  delete_stack: Vec<ecs::Entity>,
+  delete_stack: Vec<Entity>,
 }
 
 pub fn setup(engine: &mut Engine) {
   engine.resources.entry().or_insert_with(BuildState::default);
 }
 
-pub fn build(res: &ecs::Resources) {
-  let entities = ecs::entities::read(res);
-  let message_queue = &mut res.fetch_mut();
-  let mut state = res.fetch_mut::<BuildState>();
-  let mut nodes = nodes::write(res);
+pub fn build(res: &Resources) {
+  let entities = entities::borrow(res);
+  let mut nodes = nodes::borrow_mut(res);
+  let mut messages = messages::borrow_mut(res);
+
+  let mut state = resources::borrow_mut::<BuildState>(res);
 
   // Clear the sorted hierarchy which is about to change.
   nodes.hierarchy.sorted.clear();
@@ -56,7 +58,7 @@ pub fn build(res: &ecs::Resources) {
         resources: res,
         entities: &entities,
         parent: node.parent,
-        message_queue,
+        messages: &mut messages,
         should_rebuild: &mut node.should_rebuild,
       });
 
@@ -68,7 +70,7 @@ pub fn build(res: &ecs::Resources) {
             entities: &entities,
             entity,
             parent: node.parent,
-            message_queue,
+            messages: &mut messages,
             should_rebuild: &mut node.should_rebuild,
           },
         );
@@ -80,7 +82,7 @@ pub fn build(res: &ecs::Resources) {
             entities: &entities,
             entity,
             parent: node.parent,
-            message_queue,
+            messages: &mut messages,
             // Ignored because the element was just built.
             should_rebuild: &mut false,
           },
@@ -100,19 +102,19 @@ pub fn build(res: &ecs::Resources) {
     }
 
     if was_rebuilt {
-      apply(res, &mut state, &entities, &mut nodes, message_queue);
+      apply(res, &mut state, &entities, &mut nodes, &mut messages);
     }
   }
 
-  delete(res, &mut state, &entities, &mut nodes, message_queue);
+  delete(res, &mut state, &entities, &mut nodes, &mut messages);
 }
 
 fn apply(
-  res: &ecs::Resources,
+  res: &Resources,
   state: &mut BuildState,
-  entities: &ecs::Entities,
+  entities: &Entities,
   nodes: &mut WriteNodes,
-  message_queue: &mut MessageQueue,
+  messages: &mut MessageQueue,
 ) {
   while let Some((entity, spec, parent)) = state.apply_stack.pop() {
     let mut prototype = spec.into_element_prototype();
@@ -130,7 +132,7 @@ fn apply(
             entities,
             entity,
             parent: node.parent,
-            message_queue,
+            messages,
             should_rebuild: &mut node.should_rebuild,
           },
         );
@@ -143,7 +145,7 @@ fn apply(
             entities,
             entity,
             parent: node.parent,
-            message_queue,
+            messages,
             should_rebuild: &mut node.should_rebuild,
           });
 
@@ -154,7 +156,7 @@ fn apply(
               entities,
               entity,
               parent: node.parent,
-              message_queue,
+              messages,
               should_rebuild: &mut node.should_rebuild,
             },
           );
@@ -173,7 +175,7 @@ fn apply(
             entities,
             entity,
             parent,
-            message_queue,
+            messages,
             // Ignored because the node is new and will be built regardless.
             should_rebuild: &mut true,
           },
@@ -190,7 +192,7 @@ fn apply(
         entities,
         entity,
         parent: node.parent,
-        message_queue,
+        messages,
         should_rebuild: &mut node.should_rebuild,
       },
       child_specs,
@@ -200,11 +202,11 @@ fn apply(
 }
 
 fn delete(
-  res: &ecs::Resources,
+  res: &Resources,
   state: &mut BuildState,
-  entities: &ecs::Entities,
+  entities: &Entities,
   nodes: &mut WriteNodes,
-  message_queue: &mut MessageQueue,
+  messages: &mut MessageQueue,
 ) {
   while let Some(entity) = state.delete_stack.pop() {
     if let Some(node) = nodes.get_mut(entity) {
@@ -213,7 +215,7 @@ fn delete(
         entities,
         entity,
         parent: node.parent,
-        message_queue,
+        messages,
         should_rebuild: &mut node.should_rebuild,
       });
 

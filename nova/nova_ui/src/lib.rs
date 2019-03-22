@@ -25,12 +25,14 @@ pub use self::text::Text;
 pub use nova_graphics::Color4 as Color;
 
 use self::elements::ElementInstance;
-use nova_core::ecs;
 use nova_core::engine::Engine;
+use nova_core::entities::{self, Entity};
+use nova_core::resources::Resources;
 use nova_core::shred;
 
 pub fn setup(engine: &mut Engine) {
-  image::setup(engine);
+  image::setup(&mut engine.resources);
+
   layout::setup(engine);
   messages::setup(engine);
   nodes::setup(engine);
@@ -38,10 +40,10 @@ pub fn setup(engine: &mut Engine) {
   text::setup(engine);
 }
 
-pub fn add_to_root(res: &ecs::Resources, element: impl Element + 'static) -> ecs::Entity {
-  let entities = &ecs::entities::read(res);
-  let message_queue = &mut res.fetch_mut();
-  let mut nodes = nodes::write(res);
+pub fn add_to_root(resources: &Resources, element: impl Element + 'static) -> Entity {
+  let entities = entities::borrow(resources);
+  let mut nodes = nodes::borrow_mut(resources);
+  let mut messages = messages::borrow_mut(resources);
 
   let entity = entities.create();
 
@@ -50,11 +52,11 @@ pub fn add_to_root(res: &ecs::Resources, element: impl Element + 'static) -> ecs
     ElementInstance::new(
       element,
       NodeContext {
-        resources: res,
-        entities,
+        resources,
+        entities: &entities,
         entity,
         parent: None,
-        message_queue,
+        messages: &mut messages,
         // Ignored because the element is new.
         should_rebuild: &mut true,
       },

@@ -5,10 +5,10 @@
 mod runnable;
 
 pub use self::runnable::Runnable;
+pub use rayon::ThreadPool;
 
 use crate::collections::FnvHashSet;
-use crate::ecs::resources::{ResourceId, Resources};
-use crate::ThreadPool;
+use crate::resources::{ResourceId, Resources};
 use rayon::iter::{IntoParallelRefMutIterator as _, ParallelIterator as _};
 
 type ParRunnable = Box<dyn for<'a> Runnable<'a> + Send>;

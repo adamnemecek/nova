@@ -12,8 +12,9 @@ use crate::screen::ScreenRect;
 use crate::text::cache::GlyphCache;
 use crate::text::position::PositionedText;
 use crate::{Color, Screen};
-use nova_core::ecs;
+use nova_core::components;
 use nova_core::math::{Matrix4, Rect, Size};
+use nova_core::resources::Resources;
 use nova_renderer::images::DeviceImageFormat;
 use nova_renderer::{self as renderer, Render, Renderer, TextureId};
 
@@ -81,14 +82,14 @@ impl Painter {
     }
   }
 
-  pub fn draw(&mut self, render: &mut Render, res: &ecs::Resources) {
+  pub fn draw(&mut self, render: &mut Render, res: &Resources) {
     let screen = res.fetch::<Screen>();
-    let nodes = nodes::read(res);
+    let nodes = nodes::borrow(res);
     let mut glyph_cache = res.fetch_mut::<GlyphCache>();
 
-    let rects = ecs::components::read::<ScreenRect>(res);
-    let images = ecs::components::read::<Image>(res);
-    let texts = ecs::components::read::<PositionedText>(res);
+    let rects = components::borrow::<ScreenRect>(res);
+    let images = components::borrow::<Image>(res);
+    let texts = components::borrow::<PositionedText>(res);
 
     glyph_cache
       .cache_queued(|rect, bytes| {
@@ -122,12 +123,17 @@ impl Painter {
       },
       [0.0, 1.0, 0.0, 0.85].into(),
       self.glyph_cache_texture,
-      Rect::unit(),
+      Rect {
+        x1: 0.0,
+        y1: 0.0,
+        x2: 1.0,
+        y2: 1.0,
+      },
     );
 
     for entity in nodes.sorted() {
       if let (Some(rect), Some(image)) = (rects.get(entity), images.get(entity)) {
-        canvas.draw_image(rect.0, Color::WHITE, image.slice);
+        canvas.draw_image(rect.0, Color::WHITE, &image.slice);
       }
 
       if let Some(text) = texts.get(entity) {

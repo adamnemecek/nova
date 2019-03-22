@@ -821,7 +821,6 @@ dependencies = [
  "gfx-backend-dx12 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx-backend-metal 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx-backend-vulkan 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
  "nova_input 0.3.0",
@@ -829,13 +828,6 @@ dependencies = [
  "nova_ui 0.3.0",
  "nova_window 0.3.0",
  "spin_sleep 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nova_assets"
-version = "0.3.0"
-dependencies = [
- "nova_core 0.3.0",
 ]
 
 [[package]]
@@ -861,7 +853,6 @@ name = "nova_graphics"
 version = "0.3.0"
 dependencies = [
  "image 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "nova_assets 0.3.0",
  "nova_core 0.3.0",
 ]
 
@@ -898,7 +889,6 @@ version = "0.3.0"
 dependencies = [
  "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "glyph_brush_layout 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "nova_assets 0.3.0",
  "nova_core 0.3.0",
  "nova_graphics 0.3.0",
  "nova_renderer 0.3.0",

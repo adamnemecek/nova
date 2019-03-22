@@ -3,15 +3,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::specs::Spec;
-use nova_core::ecs;
+use nova_core::entities::Entity;
 use std::slice;
 
 pub struct ChildSpecs<'a> {
-  entities: slice::Iter<'a, ecs::Entity>,
+  entities: slice::Iter<'a, Entity>,
 }
 
 impl<'a> ChildSpecs<'a> {
-  pub(crate) fn new(entities: &'a [ecs::Entity]) -> Self {
+  pub(crate) fn new(entities: &'a [Entity]) -> Self {
     Self {
       entities: entities.iter(),
     }

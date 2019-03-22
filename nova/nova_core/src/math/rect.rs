@@ -40,13 +40,13 @@ impl<T: ScalarNum> Rect<T> {
   }
 }
 
-impl Rect<f32> {
-  pub const fn unit() -> Self {
-    Rect {
-      x1: 0.0,
-      y1: 0.0,
-      x2: 1.0,
-      y2: 1.0,
+impl<T: ScalarNum> From<Size<T>> for Rect<T> {
+  fn from(size: Size<T>) -> Self {
+    Self {
+      x1: T::zero(),
+      y1: T::zero(),
+      x2: size.width,
+      y2: size.height,
     }
   }
 }

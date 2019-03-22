@@ -4,9 +4,9 @@
 
 use super::{GamepadAxis, GamepadButton, WriteGamepad};
 use gilrs::Gilrs;
-use nova_core::ecs;
 use nova_core::engine::{Engine, EnginePhase};
 use nova_core::log;
+use nova_core::systems::System;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -59,7 +59,7 @@ impl UpdateGamepad {
   }
 }
 
-impl<'a> ecs::System<'a> for UpdateGamepad {
+impl<'a> System<'a> for UpdateGamepad {
   type Data = WriteGamepad<'a>;
 
   fn run(&mut self, mut gamepad: Self::Data) {

@@ -19,15 +19,17 @@ pub(crate) use self::child_nodes::ChildNodes;
 pub(crate) use self::hierarchy::NodeHierarchy;
 pub(crate) use self::write::WriteNodes;
 
-use nova_core::ecs;
+use nova_core::components;
 use nova_core::engine::Engine;
+use nova_core::resources::Resources;
+use nova_core::systems::SystemData;
 
-pub fn read(res: &ecs::Resources) -> ReadNodes {
-  ecs::SystemData::fetch(res)
+pub fn borrow(res: &Resources) -> ReadNodes {
+  SystemData::fetch(res)
 }
 
-pub(crate) fn write(res: &ecs::Resources) -> WriteNodes {
-  ecs::SystemData::fetch(res)
+pub(crate) fn borrow_mut(res: &Resources) -> WriteNodes {
+  SystemData::fetch(res)
 }
 
 pub(crate) fn setup(engine: &mut Engine) {
@@ -36,7 +38,7 @@ pub(crate) fn setup(engine: &mut Engine) {
     .entry()
     .or_insert_with(NodeHierarchy::default);
 
-  ecs::components::register::<Node>(&mut engine.resources);
+  components::register::<Node>(&mut engine.resources);
 
   build::setup(engine);
 }

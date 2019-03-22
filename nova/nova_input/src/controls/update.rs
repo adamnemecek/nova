@@ -6,9 +6,9 @@ use crate::controls::{ControlBinding, WriteControls};
 use crate::gamepad::{Gamepad, GamepadEvent, ReadGamepad};
 use crate::keyboard::{Keyboard, KeyboardEvent, ReadKeyboard};
 use crate::mouse::{Mouse, MouseEvent, ReadMouse};
-use nova_core::ecs;
 use nova_core::engine::{Engine, EnginePhase};
 use nova_core::events;
+use nova_core::systems::System;
 
 #[derive(Debug)]
 pub struct UpdateControls {
@@ -17,7 +17,7 @@ pub struct UpdateControls {
   gamepad_reader: events::ReaderId<GamepadEvent>,
 }
 
-impl<'a> ecs::System<'a> for UpdateControls {
+impl<'a> System<'a> for UpdateControls {
   type Data = (
     ReadKeyboard<'a>,
     ReadGamepad<'a>,
@@ -56,9 +56,17 @@ impl<'a> ecs::System<'a> for UpdateControls {
 }
 
 pub fn setup(engine: &mut Engine) {
-  let keyboard_reader = Keyboard::write(&engine.resources).events.register_reader();
-  let mouse_reader = Mouse::write(&engine.resources).events.register_reader();
-  let gamepad_reader = Gamepad::write(&engine.resources).events.register_reader();
+  let keyboard_reader = Keyboard::borrow_mut(&engine.resources)
+    .events
+    .register_reader();
+
+  let mouse_reader = Mouse::borrow_mut(&engine.resources)
+    .events
+    .register_reader();
+
+  let gamepad_reader = Gamepad::borrow_mut(&engine.resources)
+    .events
+    .register_reader();
 
   engine.schedule(
     EnginePhase::BeforeUpdate,

@@ -34,7 +34,6 @@ use self::framebuffer::Framebuffer;
 use self::images::DeviceImageFormat;
 use self::presenter::Presenter;
 use self::sync::FrameSync;
-use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::math::Size;
 use std::iter;
@@ -134,14 +133,13 @@ impl Renderer {
     }
   }
 
-  pub fn finish(&mut self, res: &ecs::Resources) {
+  pub fn finish(&mut self) {
     self.commands.finish_render_pass();
     self.commands.finish();
 
     self.transfer_commands.begin();
 
     self.textures.flush_changes(
-      res,
       self.gpu.device(),
       &mut self.allocator,
       &mut self.transfer_commands,

@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::collections::FnvHashSet;
-use crate::ecs::resources::{ResourceId, Resources};
-use crate::ecs::system::{System, SystemData};
-use crate::ThreadPool;
+use crate::resources::{ResourceId, Resources};
+use crate::scheduler::ThreadPool;
+use crate::systems::{System, SystemData};
 use std::fmt;
 
 /// Generic trait for an operation that can be run by a `Scheduler`.

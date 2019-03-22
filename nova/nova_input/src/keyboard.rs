@@ -5,17 +5,17 @@
 mod update;
 
 pub use self::update::UpdateKeyboard;
-pub use nova_window::KeyCode;
+pub use nova_window::events::KeyCode;
 
-use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::events;
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::mem;
 
 const KEY_CODE_COUNT: usize = KeyCode::Cut as usize;
 
-pub type ReadKeyboard<'a> = ecs::ReadResource<'a, Keyboard>;
-pub type WriteKeyboard<'a> = ecs::WriteResource<'a, Keyboard>;
+pub type ReadKeyboard<'a> = ReadResource<'a, Keyboard>;
+pub type WriteKeyboard<'a> = WriteResource<'a, Keyboard>;
 
 pub struct Keyboard {
   pub events: events::Channel<KeyboardEvent>,
@@ -36,12 +36,12 @@ impl Keyboard {
     Self::default()
   }
 
-  pub fn read(res: &ecs::Resources) -> ReadKeyboard {
-    ecs::SystemData::fetch(res)
+  pub fn borrow(res: &Resources) -> ReadKeyboard {
+    resources::borrow(res)
   }
 
-  pub fn write(res: &ecs::Resources) -> WriteKeyboard {
-    ecs::SystemData::fetch(res)
+  pub fn borrow_mut(res: &Resources) -> WriteKeyboard {
+    resources::borrow_mut(res)
   }
 
   pub fn get_key(&self, key: KeyCode) -> bool {

@@ -14,16 +14,16 @@ pub use self::map::ControlMap;
 pub use self::update::UpdateControls;
 
 use nova_core::collections::{FnvHashMap, FnvHashSet};
-use nova_core::ecs;
 use nova_core::engine::Engine;
 use nova_core::events;
 use nova_core::log::warn;
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use nova_core::SharedStr;
 use std::f32;
 use std::mem;
 
-pub type ReadControls<'a> = ecs::ReadResource<'a, Controls>;
-pub type WriteControls<'a> = ecs::WriteResource<'a, Controls>;
+pub type ReadControls<'a> = ReadResource<'a, Controls>;
+pub type WriteControls<'a> = WriteResource<'a, Controls>;
 
 #[derive(Default)]
 pub struct Controls {
@@ -178,10 +178,10 @@ pub fn setup(engine: &mut Engine) {
   update::setup(engine);
 }
 
-pub fn read(res: &ecs::Resources) -> ReadControls {
-  ecs::SystemData::fetch(res)
+pub fn borrow(res: &Resources) -> ReadControls {
+  resources::borrow(res)
 }
 
-pub fn write(res: &ecs::Resources) -> WriteControls {
-  ecs::SystemData::fetch(res)
+pub fn borrow_mut(res: &Resources) -> WriteControls {
+  resources::borrow_mut(res)
 }
