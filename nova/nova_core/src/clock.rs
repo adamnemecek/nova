@@ -21,12 +21,10 @@ pub struct Clock {
   pub delta_time: Duration,
 }
 
-impl Clock {
-  pub fn borrow(res: &Resources) -> ReadClock {
-    resources::borrow(res)
-  }
+pub fn borrow(res: &Resources) -> ReadClock {
+  resources::borrow(res)
+}
 
-  pub fn borrow_mut(res: &Resources) -> WriteClock {
-    resources::borrow_mut(res)
-  }
+pub fn borrow_mut(res: &Resources) -> WriteClock {
+  resources::borrow_mut(res)
 }
