@@ -6,8 +6,7 @@ use crate::clock::{Clock, UpdateClock};
 use crate::engine::{Engine, EnginePhase};
 use crate::renderer::Renderer;
 use crate::ui;
-use crate::window::events::WindowEvent;
-use crate::window::{self, Window};
+use crate::window::{self, Window, WindowEvent};
 use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
 
@@ -49,9 +48,7 @@ impl App {
     const MIN_FRAME_TIME: Duration = Duration::from_micros(16666); // Roughly 60 Hz.
 
     // Register an event reader for window events.
-    let mut event_reader = window::events::borrow_mut(&self.resources)
-      .channel_mut()
-      .register_reader();
+    let mut event_reader = window::borrow_mut(&self.resources).events.register_reader();
 
     loop {
       let began = Instant::now();
@@ -60,10 +57,10 @@ impl App {
 
       // Exit if the player tried to close the window.
       {
-        let events = window::events::borrow(&self.resources);
+        let window = window::borrow(&self.resources);
         let mut close_requested = false;
 
-        for event in events.channel().read(&mut event_reader) {
+        for event in window.events.read(&mut event_reader) {
           if let WindowEvent::CloseRequested = event {
             close_requested = true;
           }

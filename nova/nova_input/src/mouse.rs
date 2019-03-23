@@ -7,7 +7,7 @@ mod update;
 pub use self::update::UpdateMouse;
 
 use nova_core::engine::Engine;
-use nova_core::events;
+use nova_core::events::EventChannel;
 use nova_core::math::Point2;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ pub type WriteMouse<'a> = WriteResource<'a, Mouse>;
 
 #[derive(Default)]
 pub struct Mouse {
-  pub events: events::Channel<MouseEvent>,
+  pub events: EventChannel<MouseEvent>,
   buttons: Vec<bool>,
   position: Option<Point2<f32>>,
 }

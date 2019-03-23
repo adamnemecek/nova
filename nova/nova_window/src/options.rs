@@ -5,14 +5,14 @@
 use nova_core::math::Size;
 
 #[derive(Clone)]
-pub struct Options {
+pub struct WindowOptions {
   pub title: String,
   pub size: Size<u32>,
 }
 
-impl Options {
+impl WindowOptions {
   pub fn new() -> Self {
-    Options {
+    Self {
       title: String::new(),
       size: Size::new(2560, 1440),
     }
@@ -23,9 +23,9 @@ impl Options {
   }
 }
 
-impl Default for Options {
+impl Default for WindowOptions {
   fn default() -> Self {
-    let mut options = Options::new();
+    let mut options = Self::new();
 
     if let Ok(exe) = std::env::current_exe() {
       if let Some(stem) = exe.file_stem() {

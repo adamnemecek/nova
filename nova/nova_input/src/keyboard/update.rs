@@ -4,20 +4,20 @@
 
 use super::WriteKeyboard;
 use nova_core::engine::{Engine, EnginePhase};
-use nova_core::events;
+use nova_core::events::EventReaderId;
 use nova_core::systems::System;
-use nova_window::events::{ButtonState, ReadWindowEvents, WindowEvent};
+use nova_window::{ButtonState, ReadWindow, WindowEvent};
 
 #[derive(Debug)]
 pub struct UpdateKeyboard {
-  reader: events::ReaderId<WindowEvent>,
+  reader: EventReaderId<WindowEvent>,
 }
 
 impl<'a> System<'a> for UpdateKeyboard {
-  type Data = (ReadWindowEvents<'a>, WriteKeyboard<'a>);
+  type Data = (ReadWindow<'a>, WriteKeyboard<'a>);
 
-  fn run(&mut self, (window_events, mut keyboard): Self::Data) {
-    for event in window_events.channel().read(&mut self.reader) {
+  fn run(&mut self, (window, mut keyboard): Self::Data) {
+    for event in window.events.read(&mut self.reader) {
       let input = match event {
         WindowEvent::KeyboardInput { input, .. } => input,
         _ => continue,
@@ -36,8 +36,8 @@ impl<'a> System<'a> for UpdateKeyboard {
 }
 
 pub fn setup(engine: &mut Engine) {
-  let reader = nova_window::events::borrow_mut(&engine.resources)
-    .channel_mut()
+  let reader = nova_window::borrow_mut(&engine.resources)
+    .events
     .register_reader();
 
   engine.schedule(EnginePhase::BeforeUpdate, UpdateKeyboard { reader });

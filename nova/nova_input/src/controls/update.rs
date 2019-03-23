@@ -7,14 +7,14 @@ use crate::gamepad::{Gamepad, GamepadEvent, ReadGamepad};
 use crate::keyboard::{Keyboard, KeyboardEvent, ReadKeyboard};
 use crate::mouse::{Mouse, MouseEvent, ReadMouse};
 use nova_core::engine::{Engine, EnginePhase};
-use nova_core::events;
+use nova_core::events::EventReaderId;
 use nova_core::systems::System;
 
 #[derive(Debug)]
 pub struct UpdateControls {
-  keyboard_reader: events::ReaderId<KeyboardEvent>,
-  mouse_reader: events::ReaderId<MouseEvent>,
-  gamepad_reader: events::ReaderId<GamepadEvent>,
+  keyboard_reader: EventReaderId<KeyboardEvent>,
+  mouse_reader: EventReaderId<MouseEvent>,
+  gamepad_reader: EventReaderId<GamepadEvent>,
 }
 
 impl<'a> System<'a> for UpdateControls {

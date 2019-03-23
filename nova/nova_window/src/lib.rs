@@ -2,30 +2,33 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod events;
-
 mod options;
 mod update;
 
-pub use self::options::*;
-pub use self::update::*;
+pub use self::options::WindowOptions;
+pub use self::update::UpdateWindow;
+pub use winit::ElementState as ButtonState;
+pub use winit::VirtualKeyCode as KeyCode;
+pub use winit::{MouseButton, WindowEvent};
 
-use self::events::{EventsLoop, WindowEvents};
 use nova_core::engine::{Engine, EnginePhase};
+use nova_core::events::EventChannel;
 use nova_core::math::Size;
-use nova_core::resources::{ReadResource, WriteResource};
+use nova_core::resources::{self, ReadResource, Resources, WriteResource};
+use winit::EventsLoop;
 use winit::Window as RawWindow;
 
 pub type ReadWindow<'a> = ReadResource<'a, Window>;
 pub type WriteWindow<'a> = WriteResource<'a, Window>;
 
 pub struct Window {
+  pub events: EventChannel<WindowEvent>,
   raw: RawWindow,
   size: Size<u32>,
 }
 
 impl Window {
-  pub fn setup(engine: &mut Engine, options: Options) {
+  pub fn setup(engine: &mut Engine, options: WindowOptions) {
     if engine.resources.has_value::<Window>() {
       panic!("A window has already been set up.");
     }
@@ -43,12 +46,12 @@ impl Window {
       .expect("Could not create window");
 
     let window = Window {
+      events: EventChannel::new(),
       size: get_size_of(&raw),
       raw,
     };
 
     engine.resources.insert(window);
-    engine.resources.insert(WindowEvents::default());
 
     engine.schedule_seq(EnginePhase::BeforeUpdate, UpdateWindow { events_loop });
   }
@@ -60,6 +63,14 @@ impl Window {
   pub fn size(&self) -> Size<u32> {
     self.size
   }
+}
+
+pub fn borrow(res: &Resources) -> ReadWindow {
+  resources::borrow(res)
+}
+
+pub fn borrow_mut(res: &Resources) -> WriteWindow {
+  resources::borrow_mut(res)
 }
 
 fn get_size_of(window: &RawWindow) -> Size<u32> {

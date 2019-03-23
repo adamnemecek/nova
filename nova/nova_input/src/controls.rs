@@ -15,7 +15,7 @@ pub use self::update::UpdateControls;
 
 use nova_core::collections::{FnvHashMap, FnvHashSet};
 use nova_core::engine::Engine;
-use nova_core::events;
+use nova_core::events::EventChannel;
 use nova_core::log::warn;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use nova_core::SharedStr;
@@ -27,7 +27,7 @@ pub type WriteControls<'a> = WriteResource<'a, Controls>;
 
 #[derive(Default)]
 pub struct Controls {
-  pub events: events::Channel<ControlEvent>,
+  pub events: EventChannel<ControlEvent>,
   states: Vec<Control>,
   by_name: FnvHashMap<SharedStr, ControlId>,
   by_binding: FnvHashMap<ControlBinding, FnvHashSet<ControlId>>,

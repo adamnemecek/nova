@@ -12,7 +12,7 @@ pub use self::update::UpdateGamepad;
 
 use nova_core::collections::FnvHashMap;
 use nova_core::engine::Engine;
-use nova_core::events;
+use nova_core::events::EventChannel;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::f32;
 
@@ -21,7 +21,7 @@ pub type WriteGamepad<'a> = WriteResource<'a, Gamepad>;
 
 #[derive(Default)]
 pub struct Gamepad {
-  pub events: events::Channel<GamepadEvent>,
+  pub events: EventChannel<GamepadEvent>,
   buttons: FnvHashMap<GamepadButton, f32>,
   axes: FnvHashMap<GamepadAxis, f32>,
 }

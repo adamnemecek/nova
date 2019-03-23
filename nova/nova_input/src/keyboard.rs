@@ -5,10 +5,10 @@
 mod update;
 
 pub use self::update::UpdateKeyboard;
-pub use nova_window::events::KeyCode;
+pub use nova_window::KeyCode;
 
 use nova_core::engine::Engine;
-use nova_core::events;
+use nova_core::events::EventChannel;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::mem;
 
@@ -18,7 +18,7 @@ pub type ReadKeyboard<'a> = ReadResource<'a, Keyboard>;
 pub type WriteKeyboard<'a> = WriteResource<'a, Keyboard>;
 
 pub struct Keyboard {
-  pub events: events::Channel<KeyboardEvent>,
+  pub events: EventChannel<KeyboardEvent>,
   keys: [bool; KEY_CODE_COUNT],
 }
 
@@ -26,7 +26,7 @@ impl Default for Keyboard {
   fn default() -> Self {
     Self {
       keys: [false; KEY_CODE_COUNT],
-      events: events::Channel::new(),
+      events: EventChannel::new(),
     }
   }
 }

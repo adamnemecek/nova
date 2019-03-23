@@ -4,21 +4,21 @@
 
 use crate::mouse::WriteMouse;
 use nova_core::engine::{Engine, EnginePhase};
-use nova_core::events;
+use nova_core::events::EventReaderId;
 use nova_core::math::Point2;
 use nova_core::systems::System;
-use nova_window::events::{ButtonState, MouseButton, ReadWindowEvents, WindowEvent};
+use nova_window::{ButtonState, MouseButton, ReadWindow, WindowEvent};
 
 #[derive(Debug)]
 pub struct UpdateMouse {
-  reader: events::ReaderId<WindowEvent>,
+  reader: EventReaderId<WindowEvent>,
 }
 
 impl<'a> System<'a> for UpdateMouse {
-  type Data = (ReadWindowEvents<'a>, WriteMouse<'a>);
+  type Data = (ReadWindow<'a>, WriteMouse<'a>);
 
-  fn run(&mut self, (window_events, mut mouse): Self::Data) {
-    for event in window_events.channel().read(&mut self.reader) {
+  fn run(&mut self, (window, mut mouse): Self::Data) {
+    for event in window.events.read(&mut self.reader) {
       match event {
         WindowEvent::CursorMoved { position, .. } => {
           mouse.set_position(Some(Point2::new(position.x as f32, position.y as f32)));
@@ -47,8 +47,8 @@ impl<'a> System<'a> for UpdateMouse {
 }
 
 pub fn setup(engine: &mut Engine) {
-  let reader = nova_window::events::borrow_mut(&engine.resources)
-    .channel_mut()
+  let reader = nova_window::borrow_mut(&engine.resources)
+    .events
     .register_reader();
 
   engine.schedule(EnginePhase::BeforeUpdate, UpdateMouse { reader });
