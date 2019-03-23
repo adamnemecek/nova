@@ -4,14 +4,14 @@
 
 use crate::elements::{Element, MessageHandler};
 use crate::nodes::NodeContext;
-use nova_core::collections::FnvHashMap;
+use nova_core::collections::HashMap;
 use std::any::{Any, TypeId};
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 pub struct ElementContext<'a, E: Element> {
   pub state: &'a mut E::State,
-  pub(crate) message_handlers: &'a mut FnvHashMap<TypeId, MessageHandler<E>>,
+  pub(crate) message_handlers: &'a mut HashMap<TypeId, MessageHandler<E>>,
   pub(crate) node: NodeContext<'a>,
 }
 

@@ -4,7 +4,7 @@
 
 use crate::nodes::{self, NodeContext};
 use crossbeam::queue::SegQueue;
-use nova_core::collections::{FnvHashMap, FnvHashSet};
+use nova_core::collections::{HashMap, HashSet};
 use nova_core::engine::Engine;
 use nova_core::entities::{self, Entity};
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
@@ -24,7 +24,7 @@ pub struct Message {
 #[derive(Debug, Default)]
 pub struct MessageQueue {
   pub(crate) entries: SegQueue<Message>,
-  pub(crate) subscriptions: FnvHashMap<TypeId, FnvHashSet<Entity>>,
+  pub(crate) subscriptions: HashMap<TypeId, HashSet<Entity>>,
 }
 
 impl MessageQueue {

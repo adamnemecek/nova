@@ -6,7 +6,7 @@ use crate::elements::{Element, ElementContext, ElementState as _, MessageHandler
 use crate::messages::MessagePayload;
 use crate::nodes::NodeContext;
 use crate::specs::{ChildSpecs, Spec};
-use nova_core::collections::FnvHashMap;
+use nova_core::collections::HashMap;
 use std::any::{Any, TypeId};
 use std::fmt;
 use std::mem;
@@ -55,7 +55,7 @@ struct NodeElementImpl<T: Element> {
   element: T,
   state: T::State,
   awake: bool,
-  message_handlers: FnvHashMap<TypeId, MessageHandler<T>>,
+  message_handlers: HashMap<TypeId, MessageHandler<T>>,
 }
 
 impl<T: Element> NodeElementImpl<T> {
@@ -66,7 +66,7 @@ impl<T: Element> NodeElementImpl<T> {
       element,
       state,
       awake: false,
-      message_handlers: FnvHashMap::default(),
+      message_handlers: HashMap::default(),
     }
   }
 }

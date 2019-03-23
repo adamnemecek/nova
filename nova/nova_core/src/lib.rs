@@ -14,10 +14,6 @@ pub mod resources;
 pub mod scheduler;
 pub mod systems;
 
-mod shared_str;
-
-pub use self::shared_str::SharedStr;
-pub use crossbeam;
+pub use crossbeam::channel as channels;
 pub use quick_error::quick_error;
-pub use rayon::ThreadPool;
-pub use specs::{self, shred};
+pub use specs::shred;

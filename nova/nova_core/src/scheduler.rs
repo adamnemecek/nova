@@ -7,7 +7,7 @@ mod runnable;
 pub use self::runnable::Runnable;
 pub use rayon::ThreadPool;
 
-use crate::collections::FnvHashSet;
+use crate::collections::HashSet;
 use crate::resources::{ResourceId, Resources};
 use rayon::iter::{IntoParallelRefMutIterator as _, ParallelIterator as _};
 
@@ -33,8 +33,8 @@ impl Scheduler {
   /// operations it does not conflict with.
   pub fn add(&mut self, runnable: impl for<'a> Runnable<'a> + Send + 'static) {
     // Determine resource dependencies.
-    let mut reads = FnvHashSet::default();
-    let mut writes = FnvHashSet::default();
+    let mut reads = HashSet::default();
+    let mut writes = HashSet::default();
 
     runnable.reads(&mut reads);
     runnable.writes(&mut writes);
@@ -143,8 +143,8 @@ impl Scheduler {
 enum Stage {
   /// A stage where all runnables run in parallel.
   Par {
-    reads: FnvHashSet<ResourceId>,
-    writes: FnvHashSet<ResourceId>,
+    reads: HashSet<ResourceId>,
+    writes: HashSet<ResourceId>,
     runnables: Vec<ParRunnable>,
   },
 

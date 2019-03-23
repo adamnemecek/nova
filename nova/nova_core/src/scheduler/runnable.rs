@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::collections::FnvHashSet;
+use crate::collections::HashSet;
 use crate::resources::{ResourceId, Resources};
 use crate::scheduler::ThreadPool;
 use crate::systems::{System, SystemData};
@@ -13,10 +13,10 @@ pub trait Runnable<'a>: fmt::Debug {
   fn run(&mut self, resources: &'a Resources, thread_pool: &ThreadPool);
 
   /// Adds to the given set the resources this runnable needs to read.
-  fn reads(&self, set: &mut FnvHashSet<ResourceId>);
+  fn reads(&self, set: &mut HashSet<ResourceId>);
 
   /// Adds to the given set the resources this runnable needs to write.
-  fn writes(&self, set: &mut FnvHashSet<ResourceId>);
+  fn writes(&self, set: &mut HashSet<ResourceId>);
 }
 
 // Blanket implementation for `RunWithPool`, shred's equivalent trait.
@@ -28,13 +28,13 @@ where
     System::run(self, SystemData::fetch(resources));
   }
 
-  fn reads(&self, set: &mut FnvHashSet<ResourceId>) {
+  fn reads(&self, set: &mut HashSet<ResourceId>) {
     let buffer = T::Data::reads();
 
     set.extend(buffer.into_iter());
   }
 
-  fn writes(&self, set: &mut FnvHashSet<ResourceId>) {
+  fn writes(&self, set: &mut HashSet<ResourceId>) {
     let buffer = T::Data::writes();
 
     set.extend(buffer.into_iter());

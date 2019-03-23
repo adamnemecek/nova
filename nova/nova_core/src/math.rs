@@ -11,10 +11,10 @@ mod size;
 pub use self::rect::Rect;
 pub use self::size::Size;
 pub use nalgebra::Matrix4;
+pub use nalgebra::Scalar;
 pub use nalgebra::{Point2, Point3};
-pub use nalgebra::{Real, Scalar};
 pub use nalgebra::{Vector2, Vector3, Vector4};
-pub use num_traits::{Num, NumAssign, Zero};
+pub use num_traits::Num;
 
 /// Common trait for scalar numbers. Types with this trait can be used in math
 /// structures like [`Vector2`] or [`Rect`].

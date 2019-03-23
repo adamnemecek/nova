@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::controls::ControlBinding;
-use nova_core::collections::{FnvHashMap, FnvHashSet};
+use nova_core::collections::{HashMap, HashSet};
 use nova_core::quick_error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
@@ -14,7 +14,7 @@ use std::path::Path;
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ControlMap {
   #[serde(flatten)]
-  pub bindings: FnvHashMap<String, ControlBindingSet>,
+  pub bindings: HashMap<String, ControlBindingSet>,
 }
 
 impl ControlMap {
@@ -36,8 +36,8 @@ impl ControlMap {
 
 #[derive(Debug, Default)]
 pub struct ControlBindingSet {
-  pub positive: FnvHashSet<ControlBinding>,
-  pub negative: FnvHashSet<ControlBinding>,
+  pub positive: HashSet<ControlBinding>,
+  pub negative: HashSet<ControlBinding>,
 }
 
 impl Serialize for ControlBindingSet {
@@ -110,7 +110,7 @@ impl<'de> serde::de::Visitor<'de> for DeserializeVisitor {
   where
     A: serde::de::SeqAccess<'de>,
   {
-    let mut positive = FnvHashSet::default();
+    let mut positive = HashSet::default();
 
     while let Some(binding) = seq.next_element()? {
       positive.insert(binding);

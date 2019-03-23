@@ -11,11 +11,11 @@ use crate::layout::{HorizontalAlign, Layout, VerticalAlign};
 use crate::Color;
 use nova_core::components::{self, Component, HashMapStorage};
 use nova_core::engine::Engine;
-use nova_core::SharedStr;
+use std::borrow::Cow;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Text {
-  pub content: SharedStr,
+  pub content: Cow<'static, str>,
   pub h_align: HorizontalAlign,
   pub v_align: VerticalAlign,
   pub color: Color,
@@ -25,7 +25,7 @@ pub struct Text {
 impl Default for Text {
   fn default() -> Self {
     Text {
-      content: SharedStr::default(),
+      content: Default::default(),
       h_align: HorizontalAlign::Center,
       v_align: VerticalAlign::Center,
       color: Color::BLACK,

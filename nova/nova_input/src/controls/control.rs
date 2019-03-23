@@ -3,17 +3,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::controls::ControlBinding;
-use nova_core::collections::FnvHashSet;
-use nova_core::SharedStr;
+use nova_core::collections::HashSet;
 use std::f32;
 
 #[derive(Debug)]
 pub struct Control {
-  pub(crate) name: SharedStr,
+  pub(crate) name: String,
   pub(crate) value: f32,
   pub(crate) is_pressed: bool,
-  pub(crate) bindings: FnvHashSet<ControlBinding>,
-  pub(crate) negative_bindings: FnvHashSet<ControlBinding>,
+  pub(crate) bindings: HashSet<ControlBinding>,
+  pub(crate) negative_bindings: HashSet<ControlBinding>,
 }
 
 impl Control {

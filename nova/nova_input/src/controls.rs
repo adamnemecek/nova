@@ -13,12 +13,11 @@ pub use self::control::Control;
 pub use self::map::ControlMap;
 pub use self::update::UpdateControls;
 
-use nova_core::collections::{FnvHashMap, FnvHashSet};
+use nova_core::collections::{HashMap, HashSet};
 use nova_core::engine::Engine;
 use nova_core::events::EventChannel;
 use nova_core::log::warn;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
-use nova_core::SharedStr;
 use std::f32;
 use std::mem;
 
@@ -29,12 +28,12 @@ pub type WriteControls<'a> = WriteResource<'a, Controls>;
 pub struct Controls {
   pub events: EventChannel<ControlEvent>,
   states: Vec<Control>,
-  by_name: FnvHashMap<SharedStr, ControlId>,
-  by_binding: FnvHashMap<ControlBinding, FnvHashSet<ControlId>>,
+  by_name: HashMap<String, ControlId>,
+  by_binding: HashMap<ControlBinding, HashSet<ControlId>>,
 }
 
 impl Controls {
-  pub fn add(&mut self, name: impl Into<SharedStr>) -> ControlId {
+  pub fn add(&mut self, name: impl Into<String>) -> ControlId {
     let id = ControlId(self.states.len());
     let name = name.into();
 
@@ -57,8 +56,8 @@ impl Controls {
     self.by_name.get(name).cloned()
   }
 
-  pub fn lookup_or_add(&mut self, name: impl AsRef<str> + Into<SharedStr>) -> ControlId {
-    match self.lookup(name.as_ref()) {
+  pub fn lookup_or_add(&mut self, name: &str) -> ControlId {
+    match self.lookup(name) {
       Some(id) => id,
       None => self.add(name),
     }
