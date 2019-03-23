@@ -2,14 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod storages;
+
+pub use self::storages::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
+pub use self::storages::{ComponentEvent, FlaggedStorage};
 pub use specs::join::{Join, ParJoin};
-pub use specs::storage;
-pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
-pub use specs::storage::{ComponentEvent, FlaggedStorage};
 pub use specs::{BitSet, Component};
 pub use specs::{ReadStorage as ReadComponents, WriteStorage as WriteComponents};
 
-use self::storage::{AnyStorage, MaskedStorage};
+use self::storages::{AnyStorage, MaskedStorage};
 use crate::entities::Entity;
 use crate::resources::{ResourceMetaTable, Resources};
 use crate::systems::SystemData;
