@@ -5,5 +5,16 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+gfx-hal = "0.1"
+glsl-to-spirv = "0.1"
 image = "0.21"
 nova_core = { path = "../nova_core" }
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+gfx-backend-vulkan = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+gfx-backend-dx12 = "0.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+gfx-backend-metal = "0.1"

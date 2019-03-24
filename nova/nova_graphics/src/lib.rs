@@ -4,6 +4,17 @@
 
 pub mod images;
 
+mod backend;
 mod color;
+mod gpu;
 
 pub use self::color::Color4;
+pub use self::gpu::GpuSetupError;
+
+use nova_core::resources::Resources;
+
+pub fn setup(res: &mut Resources) -> Result<(), GpuSetupError> {
+  gpu::setup(res)?;
+
+  Ok(())
+}

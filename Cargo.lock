@@ -863,6 +863,11 @@ dependencies = [
 name = "nova_graphics"
 version = "0.3.0"
 dependencies = [
+ "gfx-backend-dx12 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gfx-backend-metal 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gfx-backend-vulkan 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gfx-hal 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glsl-to-spirv 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nova_core 0.3.0",
 ]
