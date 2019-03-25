@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod gpu;
 pub mod images;
 pub mod render;
 pub mod surfaces;
 pub mod sync;
-pub mod gpu;
 
 mod backend;
 mod color;
@@ -21,6 +21,13 @@ use nova_core::engine::Engine;
 
 pub fn set_up(engine: &mut Engine) -> Result<(), GpuSetupError> {
   gpu::set_up(&mut engine.resources)?;
+  images::set_up(&mut engine.resources);
 
   Ok(())
+}
+
+pub fn destroy(engine: &mut Engine) {
+  let gpu = gpu::borrow(&engine.resources);
+
+  images::borrow_mut(&engine.resources).destroy_all(&gpu);
 }

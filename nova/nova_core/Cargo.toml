@@ -18,3 +18,4 @@ rayon = "1.0"
 shrev = "1.0"
 shred-derive = "0.5"
 specs = { git = "https://gitlab.com/bfrydl/specs.git" }
+stash = "0.1"

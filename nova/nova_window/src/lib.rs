@@ -16,7 +16,7 @@ use nova_core::events::EventChannel;
 use nova_core::math::Size;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use nova_graphics::gpu::{self, Gpu};
-use nova_graphics::images::ImageFormat;
+use nova_graphics::images::{self, ImageFormat, Images};
 use nova_graphics::surfaces::{Surface, Swapchain};
 
 pub type ReadWindow<'a> = ReadResource<'a, Window>;
@@ -48,21 +48,21 @@ impl Window {
     }
   }
 
-  fn create_swapchain(&mut self, gpu: &Gpu) {
+  fn create_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
     if self.swapchain.is_some() {
       return;
     }
 
     if let Some(surface) = self.surface.as_mut() {
-      let swapchain = Swapchain::new(gpu, surface, ImageFormat::Bgra8Unorm, self.size);
+      let swapchain = Swapchain::new(gpu, surface, images, ImageFormat::Bgra8Unorm, self.size);
 
       self.swapchain = Some(swapchain);
     }
   }
 
-  fn destroy_swapchain(&mut self, gpu: &Gpu) {
+  fn destroy_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
     if let Some(swapchain) = self.swapchain.take() {
-      swapchain.destroy(&gpu);
+      swapchain.destroy(gpu, images);
     }
   }
 }
@@ -109,10 +109,11 @@ pub fn borrow_mut(res: &Resources) -> WriteWindow {
 }
 
 pub fn destroy(res: &Resources) {
-  let mut window = borrow_mut(res);
   let gpu = gpu::borrow(res);
+  let mut images = images::borrow_mut(res);
+  let mut window = borrow_mut(res);
 
-  window.destroy_swapchain(&gpu);
+  window.destroy_swapchain(&gpu, &mut images);
   window.surface.take();
   window.window.take();
 }
