@@ -10,8 +10,6 @@ pub use gfx_backend_metal::*;
 #[cfg(all(unix, not(target_os = "macos")))]
 pub use gfx_backend_vulkan::*;
 
-pub use gfx_hal::Instance as InstanceExt;
-
 #[cfg(windows)]
 pub const NAME: &str = "DirectX 12";
 #[cfg(target_os = "macos")]

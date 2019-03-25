@@ -4,6 +4,8 @@
 
 pub mod queues;
 
+pub(crate) use gfx_hal::Device as GpuDeviceExt;
+
 use self::queues::GpuQueues;
 use crate::backend::{self, Backend};
 use gfx_hal::adapter::DeviceType;
@@ -22,7 +24,7 @@ type Device = <Backend as gfx_hal::Backend>::Device;
 
 pub struct Gpu {
   // Field order matters.
-  device: Device,
+  pub(crate) device: Device,
   adapter: Adapter,
   backend: backend::Instance,
 }
@@ -88,7 +90,7 @@ pub fn setup(res: &mut Resources) -> Result<(), GpuSetupError> {
     })
     .collect::<Vec<_>>();
 
-  let gfx_hal::Gpu { device, mut queues } =
+  let gfx_hal::Gpu { device, queues } =
     unsafe { adapter.physical_device.open(&queue_requests[..])? };
 
   log.info("Opened device.");
