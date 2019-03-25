@@ -5,7 +5,7 @@
 use crate::gpu::{Gpu, GpuDeviceExt as _};
 use crate::Backend;
 
-type BackendSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
+pub type BackendSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
 type BackendFence = <Backend as gfx_hal::Backend>::Fence;
 
 #[derive(Debug)]
@@ -21,6 +21,10 @@ impl Semaphore {
       gpu.device.destroy_semaphore(self.0);
     }
   }
+
+  pub fn as_backend(&self) -> &BackendSemaphore {
+    &self.0
+  }
 }
 
 #[derive(Debug)]
@@ -33,8 +37,15 @@ impl Fence {
 
   pub fn wait_and_reset(&self, gpu: &Gpu) {
     unsafe {
-      gpu.device.wait_for_fence(&self.0, !0);
-      gpu.device.reset_fence(&self.0);
+      gpu
+        .device
+        .wait_for_fence(&self.0, !0)
+        .expect("Could not wait for fence");
+
+      gpu
+        .device
+        .reset_fence(&self.0)
+        .expect("Could not reset fence");
     }
   }
 

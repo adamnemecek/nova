@@ -4,15 +4,16 @@
 
 pub mod images;
 pub mod render;
+pub mod surfaces;
+pub mod sync;
 
 mod backend;
 mod color;
 mod commands;
 mod gpu;
 mod pipelines;
-mod sync;
 
-pub(crate) use self::backend::Backend;
+pub use self::backend::Backend;
 pub use self::color::Color4;
 pub use self::gpu::GpuSetupError;
 

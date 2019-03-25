@@ -4,8 +4,6 @@
 
 pub extern crate nova_graphics as graphics;
 pub extern crate nova_input as input;
-pub extern crate nova_renderer as renderer;
-pub extern crate nova_ui as ui;
 pub extern crate nova_window as window;
 
 pub mod app;
@@ -13,5 +11,3 @@ pub mod app;
 pub use nova_core::*;
 
 pub use self::app::App;
-pub use self::renderer::Renderer;
-pub use self::window::Window;

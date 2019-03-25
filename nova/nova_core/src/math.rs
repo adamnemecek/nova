@@ -16,6 +16,8 @@ pub use nalgebra::{Point2, Point3};
 pub use nalgebra::{Vector2, Vector3, Vector4};
 pub use num_traits::Num;
 
+use std::ops::Range;
+
 /// Common trait for scalar numbers. Types with this trait can be used in math
 /// structures like [`Vector2`] or [`Rect`].
 ///
@@ -24,3 +26,14 @@ pub use num_traits::Num;
 pub trait ScalarNum: Scalar + Num {}
 
 impl<T: Scalar + Num> ScalarNum for T {}
+
+#[inline]
+pub fn clamp<T: PartialOrd>(input: T, range: Range<T>) -> T {
+  if input < range.start {
+    range.start
+  } else if input > range.end {
+    range.end
+  } else {
+    input
+  }
+}

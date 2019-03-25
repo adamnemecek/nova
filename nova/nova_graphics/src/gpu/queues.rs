@@ -5,6 +5,7 @@
 pub use gfx_hal::queue::RawCommandQueue as GpuQueueExt;
 pub use gfx_hal::Submission as QueueSubmission;
 
+use crate::surfaces::{HalSurface, HalSurfaceExt};
 use crate::Backend;
 use gfx_hal::queue::{QueueFamily as QueueFamilyExt, QueueFamilyId};
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
@@ -48,6 +49,19 @@ impl GpuQueues {
   pub fn find_graphics_queue(&self) -> Option<QueueId> {
     for (index, family) in self.families.iter().enumerate() {
       if family.supports_graphics() {
+        return Some(QueueId {
+          index,
+          family_id: family.id(),
+        });
+      }
+    }
+
+    None
+  }
+
+  pub(crate) fn find_present_queue(&self, surface: &HalSurface) -> Option<QueueId> {
+    for (index, family) in self.families.iter().enumerate() {
+      if surface.supports_queue_family(family) {
         return Some(QueueId {
           index,
           family_id: family.id(),

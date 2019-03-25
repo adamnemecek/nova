@@ -4,15 +4,11 @@
 
 use crate::clock::{Clock, UpdateClock};
 use crate::engine::{Engine, EnginePhase};
-use crate::renderer::Renderer;
-use crate::ui;
-use crate::window::{self, Window, WindowEvent};
+use crate::window::{self, WindowEvent};
 use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
 
 pub struct App {
-  ui_painter: ui::Painter,
-  renderer: Renderer,
   pub engine: Engine,
 }
 
@@ -28,20 +24,13 @@ impl App {
 
     engine.resources.insert(Clock::default());
 
-    Window::setup(&mut engine, Default::default());
+    graphics::setup(&mut engine.resources).expect("Could not set up graphics");
+    window::set_up(&mut engine, Default::default());
     input::setup(&mut engine);
-    ui::setup(&mut engine);
 
-    engine.schedule(EnginePhase::BeforeUpdate, UpdateClock::default());
+    engine.schedule(EnginePhase::Update, UpdateClock::default());
 
-    let mut renderer = Renderer::new(&engine);
-    let ui_painter = ui::Painter::new(&mut renderer);
-
-    App {
-      ui_painter,
-      renderer,
-      engine,
-    }
+    App { engine }
   }
 
   pub fn run(mut self) {
@@ -71,36 +60,12 @@ impl App {
         }
       }
 
-      self.render();
-
       let duration = Instant::now() - began;
 
       if duration < MIN_FRAME_TIME {
         spin_sleep::sleep(MIN_FRAME_TIME - duration);
       }
     }
-
-    self.destroy();
-  }
-
-  pub fn tick(&mut self) {
-    self.engine.tick();
-
-    ui::messages::deliver(&self.resources);
-    ui::nodes::build(&self.resources);
-  }
-
-  pub fn render(&mut self) {
-    let mut render = self.renderer.begin();
-
-    self.ui_painter.draw(&mut render, &self.engine.resources);
-
-    self.renderer.finish();
-  }
-
-  pub fn destroy(self) {
-    self.ui_painter.destroy(self.renderer.device());
-    self.renderer.destroy();
   }
 }
 

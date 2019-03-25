@@ -2,11 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod data;
-mod slice;
+mod surface;
+mod swapchain;
 
-pub use self::data::ImageData;
-pub use self::slice::ImageSlice;
-pub use gfx_hal::format::Format as ImageFormat;
-
-pub type ImageId = usize;
+pub use self::surface::{CreateSurfaceError, Surface};
+pub(crate) use self::surface::{HalSurface, HalSurfaceExt};
+pub use self::swapchain::Swapchain;

@@ -1,14 +1,13 @@
-use nova::engine::Engine;
-use nova::graphics;
 use nova::log;
+use nova::App;
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
   // Set up log macros to use nova logging.
   log::set_as_default();
 
-  let mut engine = Engine::new();
+  let app = App::new();
 
-  graphics::setup(&mut engine.resources)?;
+  app.run();
 
   Ok(())
 }

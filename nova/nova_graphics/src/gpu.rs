@@ -25,13 +25,13 @@ type Device = <Backend as gfx_hal::Backend>::Device;
 pub struct Gpu {
   // Field order matters.
   pub(crate) device: Device,
-  adapter: Adapter,
-  backend: backend::Instance,
+  pub(crate) adapter: Adapter,
+  pub(crate) backend: backend::Instance,
 }
 
 pub fn setup(res: &mut Resources) -> Result<(), GpuSetupError> {
   if res.has_value::<Gpu>() {
-    return Err(GpuSetupError::AlreadySetUp);
+    return Ok(());
   }
 
   let log = Logger::new(module_path!());
@@ -127,10 +127,6 @@ pub fn borrow_mut(res: &Resources) -> WriteGpu {
 quick_error! {
   #[derive(Debug)]
   pub enum GpuSetupError {
-    AlreadySetUp {
-      display("the GPU has already been set up")
-    }
-
     NoDevice {
       display("there is no graphics device available")
     }
