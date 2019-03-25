@@ -51,8 +51,6 @@ pub fn set_up(engine: &mut Engine, options: WindowOptions) {
     return;
   }
 
-  nova_graphics::set_up(&mut engine.resources).expect("Could not set up graphics");
-
   let events_loop = winit::EventsLoop::new();
 
   let window = winit::WindowBuilder::new()

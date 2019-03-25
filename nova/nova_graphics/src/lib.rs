@@ -17,10 +17,10 @@ pub use self::backend::Backend;
 pub use self::color::Color4;
 pub use self::gpu::GpuSetupError;
 
-use nova_core::resources::Resources;
+use nova_core::engine::Engine;
 
-pub fn set_up(res: &mut Resources) -> Result<(), GpuSetupError> {
-  gpu::set_up(res)?;
+pub fn set_up(engine: &mut Engine) -> Result<(), GpuSetupError> {
+  gpu::set_up(&mut engine.resources)?;
 
   Ok(())
 }

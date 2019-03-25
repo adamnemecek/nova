@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::clock::{Clock, UpdateClock};
-use crate::engine::{Engine, EnginePhase};
+use crate::clock;
+use crate::engine::Engine;
 use crate::window::{self, WindowEvent};
 use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
@@ -22,13 +22,10 @@ impl App {
   pub fn new() -> Self {
     let mut engine = Engine::new();
 
-    engine.resources.insert(Clock::default());
-
-    graphics::set_up(&mut engine.resources).expect("Could not set up graphics");
+    clock::set_up(&mut engine);
+    graphics::set_up(&mut engine).expect("Could not set up graphics");
     window::set_up(&mut engine, Default::default());
     input::set_up(&mut engine);
-
-    engine.schedule(EnginePhase::Update, UpdateClock::default());
 
     App { engine }
   }

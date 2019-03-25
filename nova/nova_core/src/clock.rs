@@ -11,6 +11,7 @@ pub use self::duration::Duration;
 pub use self::instant::Instant;
 pub use self::update::UpdateClock;
 
+use crate::engine::{Engine, EnginePhase};
 use crate::resources::{self, ReadResource, Resources, WriteResource};
 
 pub type ReadClock<'a> = ReadResource<'a, Clock>;
@@ -19,6 +20,12 @@ pub type WriteClock<'a> = WriteResource<'a, Clock>;
 #[derive(Debug, Default)]
 pub struct Clock {
   pub delta_time: Duration,
+}
+
+pub fn set_up(engine: &mut Engine) {
+  engine.resources.entry().or_insert_with(Clock::default);
+
+  engine.schedule(EnginePhase::Update, UpdateClock::default());
 }
 
 pub fn borrow(res: &Resources) -> ReadClock {
