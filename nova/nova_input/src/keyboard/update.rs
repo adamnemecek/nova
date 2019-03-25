@@ -35,7 +35,7 @@ impl<'a> System<'a> for UpdateKeyboard {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   let reader = nova_window::borrow_mut(&engine.resources)
     .events
     .register_reader();

@@ -15,7 +15,7 @@ use crate::entities::Entity;
 use crate::resources::{ResourceMetaTable, Resources};
 use crate::systems::SystemData;
 
-pub fn setup(resources: &mut Resources) {
+pub fn set_up(resources: &mut Resources) {
   resources
     .entry()
     .or_insert_with(ResourceMetaTable::<AnyStorage>::default);

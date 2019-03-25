@@ -9,10 +9,10 @@ pub mod mouse;
 
 use nova_core::engine::Engine;
 
-pub fn setup(engine: &mut Engine) {
-  gamepad::setup(engine);
-  keyboard::setup(engine);
-  mouse::setup(engine);
+pub fn set_up(engine: &mut Engine) {
+  gamepad::set_up(engine);
+  keyboard::set_up(engine);
+  mouse::set_up(engine);
 
-  controls::setup(engine);
+  controls::set_up(engine);
 }

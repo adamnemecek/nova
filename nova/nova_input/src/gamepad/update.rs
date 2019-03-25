@@ -143,7 +143,7 @@ impl<'a> System<'a> for UpdateGamepad {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   let log = log::Logger::new(module_path!());
 
   // Initialize gilrs which manages gamepads.

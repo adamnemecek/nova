@@ -12,7 +12,7 @@ use crate::systems::SystemData;
 
 pub type Entities<'a> = ReadResource<'a, EntitiesResource>;
 
-pub fn setup(resources: &mut Resources) {
+pub fn set_up(resources: &mut Resources) {
   resources.entry().or_insert_with(EntitiesResource::default);
 }
 

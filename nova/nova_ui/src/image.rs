@@ -54,6 +54,6 @@ impl Element for Image {
   }
 }
 
-pub fn setup(res: &mut Resources) {
+pub fn set_up(res: &mut Resources) {
   components::register::<Image>(res);
 }

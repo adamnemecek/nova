@@ -61,7 +61,7 @@ impl<'a> System<'a> for LayoutElements {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   components::register::<Layout>(&mut engine.resources);
 
   engine.schedule(EnginePhase::AfterUpdate, LayoutElements);

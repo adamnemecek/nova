@@ -24,9 +24,9 @@ impl App {
 
     engine.resources.insert(Clock::default());
 
-    graphics::setup(&mut engine.resources).expect("Could not set up graphics");
+    graphics::set_up(&mut engine.resources).expect("Could not set up graphics");
     window::set_up(&mut engine, Default::default());
-    input::setup(&mut engine);
+    input::set_up(&mut engine);
 
     engine.schedule(EnginePhase::Update, UpdateClock::default());
 

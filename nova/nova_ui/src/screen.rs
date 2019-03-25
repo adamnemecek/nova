@@ -66,7 +66,7 @@ impl<'a> System<'a> for UpdateScreenInfo {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   components::register::<ScreenRect>(&mut engine.resources);
 
   engine.resources.entry().or_insert_with(Screen::new);

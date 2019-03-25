@@ -34,8 +34,8 @@ impl Engine {
       entity_buffer: Default::default(),
     };
 
-    entities::setup(&mut engine.resources);
-    components::setup(&mut engine.resources);
+    entities::set_up(&mut engine.resources);
+    components::set_up(&mut engine.resources);
 
     engine
   }

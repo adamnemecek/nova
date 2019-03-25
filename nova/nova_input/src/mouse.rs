@@ -74,8 +74,8 @@ pub enum MouseEvent {
   ButtonChanged { button: MouseButton, value: bool },
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.insert(Mouse::default());
 
-  update::setup(engine);
+  update::set_up(engine);
 }

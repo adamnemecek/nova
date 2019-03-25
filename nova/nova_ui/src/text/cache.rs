@@ -30,7 +30,7 @@ impl<'a> System<'a> for CacheGlyphs {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine
     .resources
     .entry()

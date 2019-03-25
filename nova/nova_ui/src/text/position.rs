@@ -82,7 +82,7 @@ impl<'a> System<'a> for PositionText {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   components::register::<PositionedText>(&mut engine.resources);
 
   engine.schedule(EnginePhase::AfterUpdate, PositionText);

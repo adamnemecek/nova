@@ -171,10 +171,10 @@ pub enum ControlEvent {
   Released { id: ControlId },
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.insert(Controls::default());
 
-  update::setup(engine);
+  update::set_up(engine);
 }
 
 pub fn borrow(res: &Resources) -> ReadControls {

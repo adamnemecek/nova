@@ -19,8 +19,8 @@ pub use self::gpu::GpuSetupError;
 
 use nova_core::resources::Resources;
 
-pub fn setup(res: &mut Resources) -> Result<(), GpuSetupError> {
-  gpu::setup(res)?;
+pub fn set_up(res: &mut Resources) -> Result<(), GpuSetupError> {
+  gpu::set_up(res)?;
 
   Ok(())
 }

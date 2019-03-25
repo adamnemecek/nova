@@ -24,7 +24,7 @@ struct BuildState {
   delete_stack: Vec<Entity>,
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.entry().or_insert_with(BuildState::default);
 }
 

@@ -29,7 +29,7 @@ pub struct Gpu {
   pub(crate) backend: backend::Instance,
 }
 
-pub fn setup(res: &mut Resources) -> Result<(), GpuSetupError> {
+pub fn set_up(res: &mut Resources) -> Result<(), GpuSetupError> {
   if res.has_value::<Gpu>() {
     return Ok(());
   }

@@ -55,7 +55,7 @@ impl<'a> System<'a> for UpdateControls {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   let keyboard_reader = Keyboard::borrow_mut(&engine.resources)
     .events
     .register_reader();

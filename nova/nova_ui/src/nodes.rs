@@ -32,7 +32,7 @@ pub(crate) fn borrow_mut(res: &Resources) -> WriteNodes {
   SystemData::fetch(res)
 }
 
-pub(crate) fn setup(engine: &mut Engine) {
+pub(crate) fn set_up(engine: &mut Engine) {
   engine
     .resources
     .entry()
@@ -40,5 +40,5 @@ pub(crate) fn setup(engine: &mut Engine) {
 
   components::register::<Node>(&mut engine.resources);
 
-  build::setup(engine);
+  build::set_up(engine);
 }

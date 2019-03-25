@@ -51,7 +51,7 @@ impl glyph_brush_layout::FontMap<'static> for Fonts {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.entry().or_insert_with(Fonts::default);
 }
 

@@ -30,14 +30,14 @@ use nova_core::entities::{self, Entity};
 use nova_core::resources::Resources;
 use nova_core::shred;
 
-pub fn setup(engine: &mut Engine) {
-  image::setup(&mut engine.resources);
+pub fn set_up(engine: &mut Engine) {
+  image::set_up(&mut engine.resources);
 
-  layout::setup(engine);
-  messages::setup(engine);
-  nodes::setup(engine);
-  screen::setup(engine);
-  text::setup(engine);
+  layout::set_up(engine);
+  messages::set_up(engine);
+  nodes::set_up(engine);
+  screen::set_up(engine);
+  text::set_up(engine);
 }
 
 pub fn add_to_root(resources: &Resources, element: impl Element + 'static) -> Entity {

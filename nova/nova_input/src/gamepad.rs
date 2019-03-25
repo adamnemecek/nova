@@ -77,8 +77,8 @@ pub enum GamepadEvent {
   AxisChanged { axis: GamepadAxis, value: f32 },
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.insert(Gamepad::default());
 
-  update::setup(engine);
+  update::set_up(engine);
 }

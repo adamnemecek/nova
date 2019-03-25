@@ -64,8 +64,8 @@ pub enum KeyboardEvent {
   KeyChanged { key: KeyCode, value: bool },
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   engine.resources.insert(Keyboard::default());
 
-  update::setup(engine);
+  update::set_up(engine);
 }

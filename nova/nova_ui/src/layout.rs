@@ -32,8 +32,8 @@ impl Default for Layout {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   components::register::<Layout>(&mut engine.resources);
 
-  system::setup(engine);
+  system::set_up(engine);
 }

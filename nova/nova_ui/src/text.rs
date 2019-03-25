@@ -57,10 +57,10 @@ impl Element for Text {
   }
 }
 
-pub fn setup(engine: &mut Engine) {
+pub fn set_up(engine: &mut Engine) {
   components::register::<Text>(&mut engine.resources);
 
-  cache::setup(engine);
-  fonts::setup(engine);
-  position::setup(engine);
+  cache::set_up(engine);
+  fonts::set_up(engine);
+  position::set_up(engine);
 }
