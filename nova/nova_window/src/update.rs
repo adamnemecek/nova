@@ -4,6 +4,7 @@
 
 use crate::{WindowEvent, WriteWindow};
 use nova_core::systems::System;
+use nova_graphics::gpu::ReadGpu;
 use winit::EventsLoop;
 
 #[derive(Debug)]
@@ -12,15 +13,23 @@ pub struct UpdateWindow {
 }
 
 impl<'a> System<'a> for UpdateWindow {
-  type Data = WriteWindow<'a>;
+  type Data = (ReadGpu<'a>, WriteWindow<'a>);
 
-  fn run(&mut self, mut window: Self::Data) {
+  fn run(&mut self, (gpu, mut window): Self::Data) {
     let mut resized = false;
 
     self.events_loop.poll_events(|event| {
       if let winit::Event::WindowEvent { event, .. } = event {
-        if let WindowEvent::Resized(_) = event {
-          resized = true;
+        match event {
+          WindowEvent::Resized(_) => {
+            resized = true;
+          }
+
+          WindowEvent::CloseRequested => {
+            window.close_requested = true;
+          }
+
+          _ => {}
         };
 
         window.events.single_write(event);
@@ -29,6 +38,9 @@ impl<'a> System<'a> for UpdateWindow {
 
     if resized {
       window.refresh_size();
+      window.destroy_swapchain(&gpu);
     }
+
+    window.create_swapchain(&gpu);
   }
 }

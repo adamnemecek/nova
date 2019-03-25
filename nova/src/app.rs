@@ -4,7 +4,7 @@
 
 use crate::clock;
 use crate::engine::Engine;
-use crate::window::{self, WindowEvent};
+use crate::window;
 use std::ops::{Deref, DerefMut};
 use std::time::{Duration, Instant};
 
@@ -33,29 +33,10 @@ impl App {
   pub fn run(mut self) {
     const MIN_FRAME_TIME: Duration = Duration::from_micros(16666); // Roughly 60 Hz.
 
-    // Register an event reader for window events.
-    let mut event_reader = window::borrow_mut(&self.resources).events.register_reader();
-
-    loop {
+    while !window::borrow(&self.resources).close_requested {
       let began = Instant::now();
 
       self.tick();
-
-      // Exit if the player tried to close the window.
-      {
-        let window = window::borrow(&self.resources);
-        let mut close_requested = false;
-
-        for event in window.events.read(&mut event_reader) {
-          if let WindowEvent::CloseRequested = event {
-            close_requested = true;
-          }
-        }
-
-        if close_requested {
-          break;
-        }
-      }
 
       let duration = Instant::now() - began;
 
@@ -63,6 +44,8 @@ impl App {
         spin_sleep::sleep(MIN_FRAME_TIME - duration);
       }
     }
+
+    window::destroy(&self.resources);
   }
 }
 

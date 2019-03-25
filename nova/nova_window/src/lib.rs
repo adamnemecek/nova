@@ -15,6 +15,8 @@ use nova_core::engine::{Engine, EnginePhase};
 use nova_core::events::EventChannel;
 use nova_core::math::Size;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
+use nova_graphics::gpu::{self, Gpu};
+use nova_graphics::images::ImageFormat;
 use nova_graphics::surfaces::{Surface, Swapchain};
 
 pub type ReadWindow<'a> = ReadResource<'a, Window>;
@@ -22,6 +24,7 @@ pub type WriteWindow<'a> = WriteResource<'a, Window>;
 
 pub struct Window {
   pub events: EventChannel<WindowEvent>,
+  pub close_requested: bool,
   window: Option<winit::Window>,
   size: Size<u32>,
   surface: Option<Surface>,
@@ -42,6 +45,24 @@ impl Window {
         .into();
 
       self.size = Size::new(width, height);
+    }
+  }
+
+  fn create_swapchain(&mut self, gpu: &Gpu) {
+    if self.swapchain.is_some() {
+      return;
+    }
+
+    if let Some(surface) = self.surface.as_mut() {
+      let swapchain = Swapchain::new(gpu, surface, ImageFormat::Bgra8Unorm, self.size);
+
+      self.swapchain = Some(swapchain);
+    }
+  }
+
+  fn destroy_swapchain(&mut self, gpu: &Gpu) {
+    if let Some(swapchain) = self.swapchain.take() {
+      swapchain.destroy(&gpu);
     }
   }
 }
@@ -67,6 +88,7 @@ pub fn set_up(engine: &mut Engine, options: WindowOptions) {
 
   let window = Window {
     events: EventChannel::new(),
+    close_requested: false,
     window: Some(window),
     size: Size::default(),
     surface: Some(surface),
@@ -84,4 +106,13 @@ pub fn borrow(res: &Resources) -> ReadWindow {
 
 pub fn borrow_mut(res: &Resources) -> WriteWindow {
   resources::borrow_mut(res)
+}
+
+pub fn destroy(res: &Resources) {
+  let mut window = borrow_mut(res);
+  let gpu = gpu::borrow(res);
+
+  window.destroy_swapchain(&gpu);
+  window.surface.take();
+  window.window.take();
 }

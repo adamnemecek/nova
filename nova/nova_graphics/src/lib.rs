@@ -6,11 +6,11 @@ pub mod images;
 pub mod render;
 pub mod surfaces;
 pub mod sync;
+pub mod gpu;
 
 mod backend;
 mod color;
 mod commands;
-mod gpu;
 mod pipelines;
 
 pub use self::backend::Backend;
