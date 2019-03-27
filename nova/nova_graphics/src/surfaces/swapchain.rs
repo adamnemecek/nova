@@ -2,17 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend::Backend;
 use crate::gpu::{Gpu, GpuDeviceExt};
-use crate::images::{Image, ImageFormat, ImageId, Images};
+use crate::images::{Image, ImageAccess, ImageFormat, ImageId, ImageLayout, Images};
+use crate::pipelines::PipelineStage;
 use crate::surfaces::Surface;
+use crate::sync::Semaphore;
+use crate::{Backend, Color4};
+use gfx_hal::Swapchain as _;
 use nova_core::math::{clamp, Size};
 use std::cmp;
 
-type BackendSwapchain = <Backend as gfx_hal::Backend>::Swapchain;
+type HalSwapchain = <Backend as gfx_hal::Backend>::Swapchain;
 
 pub struct Swapchain {
-  swapchain: BackendSwapchain,
+  swapchain: HalSwapchain,
   image_ids: Vec<ImageId>,
 }
 
@@ -68,6 +71,14 @@ impl Swapchain {
           let image = Image::new_view(&gpu, img, format, actual_size);
           let id = images.insert(image);
 
+          images.clear_image(
+            id,
+            Color4::new(1.0, 0.0, 0.0, 1.0),
+            PipelineStage::COLOR_ATTACHMENT_OUTPUT,
+            ImageAccess::empty()..ImageAccess::empty(),
+            ImageLayout::Undefined..ImageLayout::Present,
+          );
+
           image_ids.push(id);
         }
       }
@@ -82,6 +93,23 @@ impl Swapchain {
     }
   }
 
+  pub fn acquire_backbuffer(&mut self, signal_ready: &Semaphore) -> Option<Backbuffer> {
+    let result = unsafe {
+      self
+        .swapchain
+        .acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_ready.as_hal()))
+    };
+
+    match result {
+      Ok(index) => Some(Backbuffer {
+        index,
+        image_id: self.image_ids[index as usize],
+      }),
+
+      _ => None,
+    }
+  }
+
   pub fn destroy(self, gpu: &Gpu, images: &mut Images) {
     for image_id in self.image_ids {
       images.destroy_view(gpu, image_id);
@@ -91,4 +119,13 @@ impl Swapchain {
       gpu.device.destroy_swapchain(self.swapchain);
     }
   }
+
+  pub fn as_hal(&self) -> &HalSwapchain {
+    &self.swapchain
+  }
+}
+
+pub struct Backbuffer {
+  pub(crate) index: u32,
+  pub(crate) image_id: ImageId,
 }

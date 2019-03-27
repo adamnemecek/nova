@@ -6,7 +6,7 @@ pub(crate) use gfx_hal::Surface as HalSurfaceExt;
 pub(crate) use gfx_hal::SurfaceCapabilities;
 
 use crate::backend::Backend;
-use crate::gpu::queues::QueueId;
+use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{self, Gpu};
 use nova_core::quick_error;
 use nova_core::resources::Resources;
@@ -16,7 +16,7 @@ pub(crate) type HalSurface = <Backend as gfx_hal::Backend>::Surface;
 
 pub struct Surface {
   surface: HalSurface,
-  present_queue_id: QueueId,
+  present_queue_id: GpuQueueId,
 }
 
 impl Surface {
@@ -26,7 +26,7 @@ impl Surface {
     let surface = gpu.backend.create_surface(window);
 
     let present_queue_id = gpu::queues::borrow(res)
-      .find_present_queue(&surface)
+      .find(|q| surface.supports_queue_family(&q.family))
       .ok_or(CreateSurfaceError::PresentNotSupported)?;
 
     Ok(Self {
@@ -39,6 +39,10 @@ impl Surface {
     let (caps, _, _, _) = self.surface.compatibility(&gpu.adapter.physical_device);
 
     caps
+  }
+
+  pub fn present_queue_id(&self) -> GpuQueueId {
+    self.present_queue_id
   }
 
   pub(crate) fn as_hal_mut(&mut self) -> &mut HalSurface {

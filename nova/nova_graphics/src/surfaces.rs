@@ -7,4 +7,4 @@ mod swapchain;
 
 pub use self::surface::{CreateSurfaceError, Surface};
 pub(crate) use self::surface::{HalSurface, HalSurfaceExt};
-pub use self::swapchain::Swapchain;
+pub use self::swapchain::{Backbuffer, Swapchain};

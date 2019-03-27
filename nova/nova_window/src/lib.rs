@@ -16,8 +16,9 @@ use nova_core::events::EventChannel;
 use nova_core::math::Size;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use nova_graphics::gpu::{self, Gpu};
-use nova_graphics::images::{self, ImageFormat, Images};
-use nova_graphics::surfaces::{Surface, Swapchain};
+use nova_graphics::images::{self, ImageFormat, ImageId, Images};
+use nova_graphics::surfaces::{Backbuffer, Surface, Swapchain};
+use nova_graphics::sync::Semaphore;
 
 pub type ReadWindow<'a> = ReadResource<'a, Window>;
 pub type WriteWindow<'a> = WriteResource<'a, Window>;
@@ -29,6 +30,7 @@ pub struct Window {
   size: Size<u32>,
   surface: Option<Surface>,
   swapchain: Option<Swapchain>,
+  backbuffer: Option<Backbuffer>,
 }
 
 impl Window {
@@ -57,6 +59,14 @@ impl Window {
       let swapchain = Swapchain::new(gpu, surface, images, ImageFormat::Bgra8Unorm, self.size);
 
       self.swapchain = Some(swapchain);
+    }
+  }
+
+  pub fn acquire_backbuffer(&mut self, signal_ready: &Semaphore) -> Option<Backbuffer> {
+    if let Some(swapchain) = self.swapchain.as_mut() {
+      swapchain.acquire_backbuffer(signal_ready)
+    } else {
+      None
     }
   }
 
@@ -93,6 +103,7 @@ pub fn set_up(engine: &mut Engine, options: WindowOptions) {
     size: Size::default(),
     surface: Some(surface),
     swapchain: None,
+    backbuffer: None,
   };
 
   engine.resources.insert(window);

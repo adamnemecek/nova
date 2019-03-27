@@ -5,11 +5,11 @@
 use crate::gpu::{Gpu, GpuDeviceExt as _};
 use crate::Backend;
 
-pub type BackendSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
-type BackendFence = <Backend as gfx_hal::Backend>::Fence;
+pub type HalSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
+type HalFence = <Backend as gfx_hal::Backend>::Fence;
 
 #[derive(Debug)]
-pub struct Semaphore(pub(crate) BackendSemaphore);
+pub struct Semaphore(HalSemaphore);
 
 impl Semaphore {
   pub fn new(gpu: &Gpu) -> Self {
@@ -22,13 +22,13 @@ impl Semaphore {
     }
   }
 
-  pub fn as_backend(&self) -> &BackendSemaphore {
+  pub fn as_hal(&self) -> &HalSemaphore {
     &self.0
   }
 }
 
 #[derive(Debug)]
-pub struct Fence(pub(crate) BackendFence);
+pub struct Fence(HalFence);
 
 impl Fence {
   pub fn new(gpu: &Gpu) -> Self {
@@ -53,5 +53,9 @@ impl Fence {
     unsafe {
       gpu.device.destroy_fence(self.0);
     }
+  }
+
+  pub fn as_hal(&self) -> &HalFence {
+    &self.0
   }
 }

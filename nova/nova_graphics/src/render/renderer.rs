@@ -4,14 +4,17 @@
 
 use crate::commands::CommandBuffer;
 use crate::gpu;
-use crate::gpu::queues::{GpuQueueExt as _, QueueId, QueueSubmission};
+use crate::gpu::queues::{GpuQueueExt as _, GpuQueueId, GpuQueueKind, SubmitOptions};
+use crate::images;
+use crate::images::ImageId;
 use crate::pipelines::PipelineStage;
-use crate::render::RenderOptions;
 use crate::sync::{Fence, Semaphore};
 use nova_core::resources::Resources;
+use std::borrow::Borrow;
+use std::iter;
 
 pub struct Renderer {
-  queue_id: QueueId,
+  queue_id: GpuQueueId,
   frame_fence: Fence,
   commands: CommandBuffer,
   transfer_commands: CommandBuffer,
@@ -22,7 +25,7 @@ impl Renderer {
     let gpu = gpu::borrow(res);
 
     let queue_id = gpu::queues::borrow(res)
-      .find_graphics_queue()
+      .find_kind(GpuQueueKind::Graphics)
       .expect("Device does not support graphics commands.");
 
     let frame_fence = Fence::new(&gpu);
@@ -38,10 +41,12 @@ impl Renderer {
     }
   }
 
-  pub fn render<'a, W, S>(&'a mut self, res: &Resources, options: RenderOptions<W, S>)
+  pub fn render<'a, W, Wi, S, Si>(&'a mut self, res: &Resources, options: RenderOptions<W, S>)
   where
-    W: IntoIterator<Item = (&'a Semaphore, PipelineStage)>,
-    S: IntoIterator<Item = &'a Semaphore>,
+    W: IntoIterator<Item = (&'a Wi, PipelineStage)>,
+    Wi: 'a + Borrow<Semaphore>,
+    S: IntoIterator<Item = &'a Si>,
+    Si: 'a + Borrow<Semaphore>,
   {
     let gpu = gpu::borrow(res);
 
@@ -50,34 +55,29 @@ impl Renderer {
     self.commands.begin();
     self.commands.finish();
 
+    let mut images = images::borrow_mut(res);
+
     self.transfer_commands.begin();
+
+    images.flush_changes(&gpu, &mut self.transfer_commands);
+
     self.transfer_commands.finish();
 
-    self.submit(res, options);
-  }
-
-  pub fn submit<'a, W, S>(&'a mut self, res: &Resources, options: RenderOptions<W, S>)
-  where
-    W: IntoIterator<Item = (&'a Semaphore, PipelineStage)>,
-    S: IntoIterator<Item = &'a Semaphore>,
-  {
     let mut queues = gpu::queues::borrow_mut(res);
-    let queue = &mut queues[self.queue_id];
 
-    let wait_for = options.wait_for.into_iter().map(|(s, p)| (&s.0, p));
-    let signal = options.signal.into_iter().map(|s| &s.0);
-
-    unsafe {
-      queue.submit(
-        QueueSubmission {
-          command_buffers: [&self.transfer_commands, &self.commands]
-            .iter()
-            .map(|c| c.as_backend()),
-          wait_semaphores: wait_for,
-          signal_semaphores: signal,
-        },
-        Some(&self.frame_fence.0),
-      );
-    }
+    queues[self.queue_id].submit(
+      SubmitOptions {
+        command_buffers: iter::once(&self.transfer_commands).chain(iter::once(&self.commands)),
+        wait_semaphores: options.wait_semaphores,
+        signal_semaphores: options.signal_semaphores,
+      },
+      Some(&self.frame_fence),
+    );
   }
+}
+
+pub struct RenderOptions<W, S> {
+  pub target: ImageId,
+  pub wait_semaphores: W,
+  pub signal_semaphores: S,
 }

@@ -2,19 +2,27 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod changes;
 mod data;
 mod image;
 mod slice;
 
 pub use self::data::ImageData;
-pub(crate) use self::image::Image;
+pub(crate) use self::image::{HalImage, Image};
 pub use self::slice::ImageSlice;
 pub use gfx_hal::format::Format as ImageFormat;
+pub use gfx_hal::image::Access as ImageAccess;
+pub use gfx_hal::image::Layout as ImageLayout;
 
-use crate::gpu::{self, Gpu};
+use self::changes::ImageChange;
+use crate::commands::CommandBuffer;
+use crate::gpu::Gpu;
+use crate::pipelines::PipelineStage;
+use crate::Color4;
 use nova_core::collections::stash::{self, UniqueStash};
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::mem;
+use std::ops::Range;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ImageId(stash::Tag);
@@ -25,11 +33,35 @@ pub type WriteImages<'a> = WriteResource<'a, Images>;
 #[derive(Debug, Default)]
 pub struct Images {
   images: UniqueStash<Image>,
+  changes: Vec<ImageChange>,
 }
 
 impl Images {
+  pub fn clear_image(
+    &mut self,
+    id: ImageId,
+    color: Color4,
+    stage: PipelineStage,
+    access: Range<ImageAccess>,
+    layout: Range<ImageLayout>,
+  ) {
+    if let Some(image) = self.images.get(id.0) {
+      self
+        .changes
+        .push(ImageChange::new_clear(id, color, stage, access, layout))
+    }
+  }
+
   pub(crate) fn insert(&mut self, image: Image) -> ImageId {
     ImageId(self.images.put(image))
+  }
+
+  pub(crate) fn flush_changes(&mut self, gpu: &Gpu, cmd: &mut CommandBuffer) {
+    for change in self.changes.drain(..) {
+      if let Some(image) = self.images.get(change.image_id.0) {
+        change.record(image, cmd);
+      }
+    }
   }
 
   pub(crate) fn destroy_view(&mut self, gpu: &Gpu, id: ImageId) {

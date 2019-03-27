@@ -2,15 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::queues::QueueId;
+use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{Gpu, GpuDeviceExt};
-use crate::Backend;
+use crate::images::{Image, ImageLayout};
+use crate::pipelines::{MemoryBarrier, PipelineStage};
+use crate::{Backend, Color4};
 use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;
 use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool as _};
+use std::iter;
+use std::ops::Range;
 
-type BackendCommandPool = <Backend as gfx_hal::Backend>::CommandPool;
-type BackendCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+type HalCommandPool = <Backend as gfx_hal::Backend>::CommandPool;
+type HalCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 
 macro_rules! debug_assert_recording {
   ($e:expr) => {
@@ -22,13 +26,13 @@ macro_rules! debug_assert_recording {
 }
 
 pub struct CommandBuffer {
-  buffer: BackendCommandBuffer,
-  pool: BackendCommandPool,
+  buffer: HalCommandBuffer,
+  pool: HalCommandPool,
   state: State,
 }
 
 impl CommandBuffer {
-  pub fn new(gpu: &Gpu, queue_id: QueueId) -> Self {
+  pub fn new(gpu: &Gpu, queue_id: GpuQueueId) -> Self {
     let mut pool = unsafe {
       gpu
         .device
@@ -58,6 +62,45 @@ impl CommandBuffer {
     self.state = State::Recording;
   }
 
+  pub fn pipeline_barrier<'a>(
+    &'a mut self,
+    stages: Range<PipelineStage>,
+    memory_barriers: impl IntoIterator<Item = MemoryBarrier<'a, Backend>>,
+  ) {
+    debug_assert_recording!(self);
+
+    unsafe {
+      self.buffer.pipeline_barrier(
+        stages,
+        gfx_hal::memory::Dependencies::empty(),
+        memory_barriers,
+      );
+    }
+  }
+
+  pub(crate) fn clear_image(&mut self, image: &Image, color: Color4) {
+    debug_assert_recording!(self);
+
+    unsafe {
+      self.buffer.clear_image(
+        image.as_hal(),
+        ImageLayout::TransferDstOptimal,
+        gfx_hal::command::ClearColorRaw {
+          float32: [color.r, color.g, color.b, color.a],
+        },
+        gfx_hal::command::ClearDepthStencilRaw {
+          depth: 0.0,
+          stencil: 0,
+        },
+        iter::once(gfx_hal::image::SubresourceRange {
+          aspects: gfx_hal::format::Aspects::COLOR,
+          levels: 0..1,
+          layers: 0..1,
+        }),
+      );
+    }
+  }
+
   pub fn finish(&mut self) {
     debug_assert_recording!(self);
 
@@ -74,7 +117,7 @@ impl CommandBuffer {
     }
   }
 
-  pub(crate) fn as_backend(&self) -> &BackendCommandBuffer {
+  pub fn as_hal(&self) -> &HalCommandBuffer {
     &self.buffer
   }
 }

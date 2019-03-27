@@ -3,12 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::gpu::{Gpu, GpuDeviceExt};
-use crate::images::ImageFormat;
+use crate::images::{ImageAccess, ImageFormat, ImageLayout};
+use crate::pipelines::MemoryBarrier;
 use crate::Backend;
 use nova_core::math::Size;
 
-type HalImage = <Backend as gfx_hal::Backend>::Image;
-type HalImageView = <Backend as gfx_hal::Backend>::ImageView;
+pub(crate) type HalImage = <Backend as gfx_hal::Backend>::Image;
+pub(crate) type HalImageView = <Backend as gfx_hal::Backend>::ImageView;
 
 #[derive(Debug)]
 pub struct Image {
@@ -61,5 +62,9 @@ impl Image {
     unsafe {
       gpu.device.destroy_image_view(self.view);
     }
+  }
+
+  pub(crate) fn as_hal(&self) -> &HalImage {
+    &self.image
   }
 }

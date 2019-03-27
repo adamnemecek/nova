@@ -4,12 +4,4 @@
 
 mod renderer;
 
-pub use self::renderer::Renderer;
-
-use crate::images::ImageId;
-
-pub struct RenderOptions<W, S> {
-  pub target: ImageId,
-  pub wait_for: W,
-  pub signal: S,
-}
+pub use self::renderer::{RenderOptions, Renderer};
