@@ -15,10 +15,9 @@ use nova_core::engine::{Engine, EnginePhase};
 use nova_core::events::EventChannel;
 use nova_core::math::Size;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
-use nova_graphics::gpu::{self, Gpu};
-use nova_graphics::images::{self, ImageFormat, ImageId, Images};
-use nova_graphics::surfaces::{Backbuffer, Surface, Swapchain};
-use nova_graphics::sync::Semaphore;
+use nova_graphics::gpu::Gpu;
+use nova_graphics::images::Images;
+use nova_graphics::surface::Surface;
 
 pub type ReadWindow<'a> = ReadResource<'a, Window>;
 pub type WriteWindow<'a> = WriteResource<'a, Window>;
@@ -27,15 +26,29 @@ pub struct Window {
   pub events: EventChannel<WindowEvent>,
   pub close_requested: bool,
   window: Option<winit::Window>,
-  size: Size<u32>,
   surface: Option<Surface>,
-  swapchain: Option<Swapchain>,
-  backbuffer: Option<Backbuffer>,
+  size: Size<u32>,
 }
 
 impl Window {
   pub fn size(&self) -> Size<u32> {
     self.size
+  }
+
+  pub fn surface(&self) -> &Surface {
+    self.surface.as_ref().expect("Surface has been destroyed.")
+  }
+
+  pub fn surface_mut(&mut self) -> &mut Surface {
+    self.surface.as_mut().expect("Surface has been destroyed.")
+  }
+
+  pub fn destroy(&mut self, gpu: &Gpu, images: &mut Images) {
+    if let Some(surface) = self.surface.take() {
+      surface.destroy(gpu, images);
+    }
+
+    self.window.take();
   }
 
   fn refresh_size(&mut self) {
@@ -48,31 +61,9 @@ impl Window {
 
       self.size = Size::new(width, height);
     }
-  }
-
-  fn create_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
-    if self.swapchain.is_some() {
-      return;
-    }
 
     if let Some(surface) = self.surface.as_mut() {
-      let swapchain = Swapchain::new(gpu, surface, images, ImageFormat::Bgra8Unorm, self.size);
-
-      self.swapchain = Some(swapchain);
-    }
-  }
-
-  pub fn acquire_backbuffer(&mut self, signal_ready: &Semaphore) -> Option<Backbuffer> {
-    if let Some(swapchain) = self.swapchain.as_mut() {
-      swapchain.acquire_backbuffer(signal_ready)
-    } else {
-      None
-    }
-  }
-
-  fn destroy_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
-    if let Some(swapchain) = self.swapchain.take() {
-      swapchain.destroy(gpu, images);
+      surface.set_size(self.size);
     }
   }
 }
@@ -96,18 +87,17 @@ pub fn set_up(engine: &mut Engine, options: WindowOptions) {
 
   let surface = Surface::new(&engine.resources, &window).expect("Could not create window surface");
 
-  let window = Window {
+  let mut window = Window {
     events: EventChannel::new(),
     close_requested: false,
     window: Some(window),
-    size: Size::default(),
     surface: Some(surface),
-    swapchain: None,
-    backbuffer: None,
+    size: Size::default(),
   };
 
-  engine.resources.insert(window);
+  window.refresh_size();
 
+  engine.resources.insert(window);
   engine.schedule_seq(EnginePhase::BeforeUpdate, UpdateWindow { events_loop });
 }
 
@@ -117,14 +107,4 @@ pub fn borrow(res: &Resources) -> ReadWindow {
 
 pub fn borrow_mut(res: &Resources) -> WriteWindow {
   resources::borrow_mut(res)
-}
-
-pub fn destroy(res: &Resources) {
-  let gpu = gpu::borrow(res);
-  let mut images = images::borrow_mut(res);
-  let mut window = borrow_mut(res);
-
-  window.destroy_swapchain(&gpu, &mut images);
-  window.surface.take();
-  window.window.take();
 }

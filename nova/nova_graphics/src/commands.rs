@@ -111,7 +111,7 @@ impl CommandBuffer {
 
   pub fn destroy(mut self, gpu: &Gpu) {
     unsafe {
-      self.pool.free(Some(self.buffer));
+      self.pool.free(iter::once(self.buffer));
 
       gpu.device.destroy_command_pool(self.pool);
     }

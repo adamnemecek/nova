@@ -3,8 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::gpu::{Gpu, GpuDeviceExt};
-use crate::images::{ImageAccess, ImageFormat, ImageLayout};
-use crate::pipelines::MemoryBarrier;
+use crate::images::ImageFormat;
 use crate::Backend;
 use nova_core::math::Size;
 
@@ -53,14 +52,6 @@ impl Image {
       if self.is_owned {
         gpu.device.destroy_image(self.image);
       }
-    }
-  }
-
-  pub(crate) fn destroy_view(self, gpu: &Gpu) {
-    debug_assert!(!self.is_owned, "destroy_view called on a regular image");
-
-    unsafe {
-      gpu.device.destroy_image_view(self.view);
     }
   }
 

@@ -8,7 +8,7 @@ mod image;
 mod slice;
 
 pub use self::data::ImageData;
-pub(crate) use self::image::{HalImage, Image};
+pub(crate) use self::image::Image;
 pub use self::slice::ImageSlice;
 pub use gfx_hal::format::Format as ImageFormat;
 pub use gfx_hal::image::Access as ImageAccess;
@@ -37,6 +37,18 @@ pub struct Images {
 }
 
 impl Images {
+  pub fn transition_image(
+    &mut self,
+    id: ImageId,
+    stage: PipelineStage,
+    access: Range<ImageAccess>,
+    layout: Range<ImageLayout>,
+  ) {
+    self
+      .changes
+      .push(ImageChange::new_transition(id, stage, access, layout))
+  }
+
   pub fn clear_image(
     &mut self,
     id: ImageId,
@@ -45,18 +57,16 @@ impl Images {
     access: Range<ImageAccess>,
     layout: Range<ImageLayout>,
   ) {
-    if let Some(image) = self.images.get(id.0) {
-      self
-        .changes
-        .push(ImageChange::new_clear(id, color, stage, access, layout))
-    }
+    self
+      .changes
+      .push(ImageChange::new_clear(id, color, stage, access, layout))
   }
 
   pub(crate) fn insert(&mut self, image: Image) -> ImageId {
     ImageId(self.images.put(image))
   }
 
-  pub(crate) fn flush_changes(&mut self, gpu: &Gpu, cmd: &mut CommandBuffer) {
+  pub(crate) fn flush_changes(&mut self, cmd: &mut CommandBuffer) {
     for change in self.changes.drain(..) {
       if let Some(image) = self.images.get(change.image_id.0) {
         change.record(image, cmd);
@@ -64,9 +74,9 @@ impl Images {
     }
   }
 
-  pub(crate) fn destroy_view(&mut self, gpu: &Gpu, id: ImageId) {
+  pub(crate) fn destroy_image(&mut self, gpu: &Gpu, id: ImageId) {
     if let Some(image) = self.images.take(id.0) {
-      image.destroy_view(gpu);
+      image.destroy(gpu);
     }
   }
 

@@ -5,3 +5,4 @@
 mod renderer;
 
 pub use self::renderer::{RenderOptions, Renderer};
+pub use crate::pipelines::PipelineStage;

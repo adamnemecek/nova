@@ -5,7 +5,7 @@
 pub mod gpu;
 pub mod images;
 pub mod render;
-pub mod surfaces;
+pub mod surface;
 pub mod sync;
 
 mod backend;
@@ -29,5 +29,6 @@ pub fn set_up(engine: &mut Engine) -> Result<(), GpuSetupError> {
 pub fn destroy(engine: &mut Engine) {
   let gpu = gpu::borrow(&engine.resources);
 
+  gpu::queues::borrow_mut(&engine.resources).clear();
   images::borrow_mut(&engine.resources).destroy_all(&gpu);
 }

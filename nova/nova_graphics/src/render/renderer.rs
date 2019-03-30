@@ -3,8 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::commands::CommandBuffer;
-use crate::gpu;
-use crate::gpu::queues::{GpuQueueExt as _, GpuQueueId, GpuQueueKind, SubmitOptions};
+use crate::gpu::queues::{GpuQueueId, GpuQueueKind, SubmitOptions};
+use crate::gpu::{self, Gpu};
 use crate::images;
 use crate::images::ImageId;
 use crate::pipelines::PipelineStage;
@@ -59,7 +59,7 @@ impl Renderer {
 
     self.transfer_commands.begin();
 
-    images.flush_changes(&gpu, &mut self.transfer_commands);
+    images.flush_changes(&mut self.transfer_commands);
 
     self.transfer_commands.finish();
 
@@ -73,6 +73,14 @@ impl Renderer {
       },
       Some(&self.frame_fence),
     );
+  }
+
+  pub fn destroy(self, gpu: &Gpu) {
+    gpu.wait_idle();
+
+    self.transfer_commands.destroy(&gpu);
+    self.commands.destroy(&gpu);
+    self.frame_fence.destroy(&gpu);
   }
 }
 

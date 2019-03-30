@@ -8,7 +8,6 @@ use std::borrow::Borrow;
 
 use crate::commands::CommandBuffer;
 use crate::pipelines::PipelineStage;
-use crate::surfaces::{Backbuffer, Swapchain};
 use crate::sync::{Fence, Semaphore};
 use crate::Backend;
 use gfx_hal::queue::{QueueFamily as QueueFamilyExt, QueueFamilyId};
@@ -66,7 +65,13 @@ impl GpuQueues {
   }
 
   pub fn find_kind(&self, kind: GpuQueueKind) -> Option<GpuQueueId> {
-    self.find(|q| q.kind() == kind)
+    self
+      .find(|q| q.kind() == kind)
+      .or_else(|| self.find(|q| q.kind() == GpuQueueKind::General))
+  }
+
+  pub(crate) fn clear(&mut self) {
+    self.queues.clear();
   }
 }
 
@@ -144,30 +149,6 @@ impl GpuQueue {
           signal_semaphores,
         },
         signal_fence.map(Fence::as_hal),
-      );
-    }
-  }
-
-  pub fn present<'a, W, Wi>(
-    &mut self,
-    swapchain: &'a Swapchain,
-    backbuffer: Backbuffer,
-    wait_semaphores: W,
-  ) where
-    W: IntoIterator<Item = &'a Wi>,
-    Wi: 'a + Borrow<Semaphore>,
-  {
-    use std::iter;
-
-    let wait_semaphores = wait_semaphores
-      .into_iter()
-      .map(Borrow::borrow)
-      .map(Semaphore::as_hal);
-
-    unsafe {
-      self.queue.present(
-        iter::once((swapchain.as_hal(), backbuffer.index)),
-        wait_semaphores,
       );
     }
   }

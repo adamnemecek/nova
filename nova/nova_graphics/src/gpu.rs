@@ -29,6 +29,15 @@ pub struct Gpu {
   pub(crate) backend: backend::Instance,
 }
 
+impl Gpu {
+  pub fn wait_idle(&self) {
+    self
+      .device
+      .wait_idle()
+      .expect("Could not wait for GPU device to be idle");
+  }
+}
+
 pub fn set_up(res: &mut Resources) -> Result<(), GpuSetupError> {
   if res.has_value::<Gpu>() {
     return Ok(());
