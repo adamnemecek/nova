@@ -8,6 +8,7 @@ use crate::gpu::{self, Gpu};
 use crate::images;
 use crate::images::ImageId;
 use crate::pipelines::PipelineStage;
+use crate::render::{Framebuffer, RenderPass};
 use crate::sync::{Fence, Semaphore};
 use nova_core::resources::Resources;
 use std::borrow::Borrow;
@@ -15,6 +16,7 @@ use std::iter;
 
 pub struct Renderer {
   queue_id: GpuQueueId,
+  render_pass: RenderPass,
   frame_fence: Fence,
   commands: CommandBuffer,
   transfer_commands: CommandBuffer,
@@ -28,13 +30,14 @@ impl Renderer {
       .find_kind(GpuQueueKind::Graphics)
       .expect("Device does not support graphics commands.");
 
+    let render_pass = RenderPass::new(&gpu);
     let frame_fence = Fence::new(&gpu);
-
     let commands = CommandBuffer::new(&gpu, queue_id);
     let transfer_commands = CommandBuffer::new(&gpu, queue_id);
 
     Renderer {
       queue_id,
+      render_pass,
       frame_fence,
       commands,
       transfer_commands,
@@ -51,6 +54,14 @@ impl Renderer {
     let gpu = gpu::borrow(res);
 
     self.frame_fence.wait_and_reset(&gpu);
+
+    use gfx_hal::Device as _;
+
+    // let framebuffer = {
+    //   let image = images::borrow(res).get(options.target);
+
+    //   gpu.device.create_framebuffer();
+    // };
 
     self.commands.begin();
     self.commands.finish();
@@ -81,6 +92,7 @@ impl Renderer {
     self.transfer_commands.destroy(&gpu);
     self.commands.destroy(&gpu);
     self.frame_fence.destroy(&gpu);
+    self.render_pass.destroy(&gpu);
   }
 }
 

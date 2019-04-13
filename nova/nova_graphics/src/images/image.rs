@@ -45,7 +45,11 @@ impl Image {
     }
   }
 
-  pub fn destroy(self, gpu: &Gpu) {
+  pub fn size(&self) -> Size<u32> {
+    self.size
+  }
+
+  pub(crate) fn destroy(self, gpu: &Gpu) {
     unsafe {
       gpu.device.destroy_image_view(self.view);
 
