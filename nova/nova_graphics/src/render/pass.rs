@@ -58,4 +58,8 @@ impl RenderPass {
   pub fn destroy(self, gpu: &Gpu) {
     unsafe { gpu.device.destroy_render_pass(self.pass) };
   }
+
+  pub(crate) fn as_hal(&self) -> &HalRenderPass {
+    &self.pass
+  }
 }

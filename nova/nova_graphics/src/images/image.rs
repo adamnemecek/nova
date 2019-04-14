@@ -62,4 +62,8 @@ impl Image {
   pub(crate) fn as_hal(&self) -> &HalImage {
     &self.image
   }
+
+  pub(crate) fn as_hal_view(&self) -> &HalImageView {
+    &self.view
+  }
 }

@@ -37,6 +37,10 @@ pub struct Images {
 }
 
 impl Images {
+  pub fn get(&self, id: ImageId) -> Option<&Image> {
+    self.images.get(id.0)
+  }
+
   pub fn transition_image(
     &mut self,
     id: ImageId,

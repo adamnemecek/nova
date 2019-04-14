@@ -20,6 +20,7 @@ pub struct Renderer {
   frame_fence: Fence,
   commands: CommandBuffer,
   transfer_commands: CommandBuffer,
+  framebuffer: Option<Framebuffer>,
 }
 
 impl Renderer {
@@ -41,6 +42,7 @@ impl Renderer {
       frame_fence,
       commands,
       transfer_commands,
+      framebuffer: None,
     }
   }
 
@@ -55,24 +57,34 @@ impl Renderer {
 
     self.frame_fence.wait_and_reset(&gpu);
 
-    use gfx_hal::Device as _;
+    if let Some(framebuffer) = self.framebuffer.take() {
+      framebuffer.destroy(&gpu);
+    }
 
-    // let framebuffer = {
-    //   let image = images::borrow(res).get(options.target);
+    let framebuffer = {
+      let images = images::borrow(res);
 
-    //   gpu.device.create_framebuffer();
-    // };
+      let image = images
+        .get(options.target)
+        .expect("Target image does not exist.");
+
+      Framebuffer::new(&gpu, &self.render_pass, iter::once(image))
+    };
 
     self.commands.begin();
     self.commands.finish();
 
-    let mut images = images::borrow_mut(res);
+    self.framebuffer = Some(framebuffer);
 
-    self.transfer_commands.begin();
+    {
+      let mut images = images::borrow_mut(res);
 
-    images.flush_changes(&mut self.transfer_commands);
+      self.transfer_commands.begin();
 
-    self.transfer_commands.finish();
+      images.flush_changes(&mut self.transfer_commands);
+
+      self.transfer_commands.finish();
+    }
 
     let mut queues = gpu::queues::borrow_mut(res);
 
@@ -88,6 +100,10 @@ impl Renderer {
 
   pub fn destroy(self, gpu: &Gpu) {
     gpu.wait_idle();
+
+    if let Some(framebuffer) = self.framebuffer {
+      framebuffer.destroy(&gpu);
+    }
 
     self.transfer_commands.destroy(&gpu);
     self.commands.destroy(&gpu);
