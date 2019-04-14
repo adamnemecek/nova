@@ -8,12 +8,14 @@ use crate::render::RenderPass;
 use crate::Backend;
 use gfx_hal::Device as _;
 use nova_core::collections::SmallVec;
+use nova_core::math::Size;
 use std::cmp;
 
 type HalFramebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
 
 pub struct Framebuffer {
   framebuffer: HalFramebuffer,
+  size: Size<u32>,
 }
 
 impl Framebuffer {
@@ -45,10 +47,21 @@ impl Framebuffer {
         .expect("Could not create framebuffer")
     };
 
-    Self { framebuffer }
+    Self {
+      framebuffer,
+      size: Size::new(extent.width, extent.height),
+    }
+  }
+
+  pub fn size(&self) -> Size<u32> {
+    self.size
   }
 
   pub fn destroy(self, gpu: &Gpu) {
     unsafe { gpu.device.destroy_framebuffer(self.framebuffer) };
+  }
+
+  pub(crate) fn as_hal(&self) -> &HalFramebuffer {
+    &self.framebuffer
   }
 }

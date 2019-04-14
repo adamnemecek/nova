@@ -72,9 +72,15 @@ impl Renderer {
     };
 
     self.commands.begin();
-    self.commands.finish();
+
+    self
+      .commands
+      .begin_render_pass(&self.render_pass, &framebuffer);
 
     self.framebuffer = Some(framebuffer);
+
+    self.commands.finish_render_pass();
+    self.commands.finish();
 
     {
       let mut images = images::borrow_mut(res);

@@ -6,6 +6,7 @@ use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{Gpu, GpuDeviceExt};
 use crate::images::{Image, ImageLayout};
 use crate::pipelines::{MemoryBarrier, PipelineStage};
+use crate::render::{Framebuffer, RenderPass};
 use crate::{Backend, Color4};
 use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;
@@ -98,6 +99,47 @@ impl CommandBuffer {
           layers: 0..1,
         }),
       );
+    }
+  }
+
+  pub fn begin_render_pass(&mut self, render_pass: &RenderPass, framebuffer: &Framebuffer) {
+    // Create a viewport struct covering the entire framebuffer.
+    let size = framebuffer.size();
+
+    let viewport = gfx_hal::pso::Viewport {
+      rect: gfx_hal::pso::Rect {
+        x: 0,
+        y: 0,
+        w: size.width as i16,
+        h: size.height as i16,
+      },
+      depth: 0.0..1.0,
+    };
+
+    // Begin the render pass.
+    unsafe {
+      self.buffer.set_viewports(0, &[viewport.clone()]);
+      self.buffer.set_scissors(0, &[viewport.rect]);
+
+      self.buffer.begin_render_pass(
+        render_pass.as_hal(),
+        framebuffer.as_hal(),
+        viewport.rect,
+        &[
+          // Clear the framebuffer to eigengrau.
+          gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
+            0.086, 0.086, 0.114, 1.0,
+          ]))
+          .into(),
+        ],
+        gfx_hal::command::SubpassContents::Inline,
+      );
+    }
+  }
+
+  pub fn finish_render_pass(&mut self) {
+    unsafe {
+      self.buffer.end_render_pass();
     }
   }
 
