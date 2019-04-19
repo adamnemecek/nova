@@ -12,6 +12,7 @@ mod backend;
 mod color;
 mod commands;
 mod pipelines;
+mod shaders;
 
 pub use self::backend::Backend;
 pub use self::color::Color4;
