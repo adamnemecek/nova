@@ -9,6 +9,7 @@ pub mod surface;
 pub mod sync;
 
 mod backend;
+mod canvas;
 mod color;
 mod commands;
 mod pipelines;

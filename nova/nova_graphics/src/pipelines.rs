@@ -4,5 +4,6 @@
 
 mod pipeline;
 
+pub use self::pipeline::{Pipeline, PipelineOptions};
 pub use gfx_hal::memory::Barrier as MemoryBarrier;
 pub use gfx_hal::pso::PipelineStage;

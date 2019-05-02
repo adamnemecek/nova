@@ -19,7 +19,7 @@ type HalDescriptorSetLayout = <Backend as gfx_hal::Backend>::DescriptorSetLayout
 pub struct Pipeline {
   pipeline: HalPipeline,
   layout: HalPipelineLayout,
-  options: PipelineOptions,
+  size_of_push_constants: usize,
 }
 
 impl Pipeline {
@@ -46,10 +46,10 @@ impl Pipeline {
         .expect("Could not create pipeline layout")
     };
 
-    let desc = gfx_hal::pso::GraphicsPipelineDesc::new(
+    let mut desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       gfx_hal::pso::GraphicsShaderSet {
         vertex: options.vertex_shader.hal_entrypoint(),
-        fragment: Some(options.vertex_shader.hal_entrypoint()),
+        fragment: Some(options.fragment_shader.hal_entrypoint()),
         geometry: None,
         domain: None,
         hull: None,
@@ -63,6 +63,11 @@ impl Pipeline {
       },
     );
 
+    desc.blender.targets.push(gfx_hal::pso::ColorBlendDesc(
+      gfx_hal::pso::ColorMask::ALL,
+      gfx_hal::pso::BlendState::ALPHA,
+    ));
+
     let pipeline = unsafe {
       gpu
         .device
@@ -73,7 +78,7 @@ impl Pipeline {
     Self {
       pipeline,
       layout,
-      options,
+      size_of_push_constants: options.size_of_push_constants,
     }
   }
 
@@ -82,14 +87,15 @@ impl Pipeline {
       gpu.device.destroy_graphics_pipeline(self.pipeline);
       gpu.device.destroy_pipeline_layout(self.layout);
     }
+  }
 
-    self.options.vertex_shader.destroy(gpu);
-    self.options.fragment_shader.destroy(gpu);
+  pub(crate) fn as_hal(&self) -> &HalPipeline {
+    &self.pipeline
   }
 }
 
-pub struct PipelineOptions {
-  pub vertex_shader: Shader,
-  pub fragment_shader: Shader,
+pub struct PipelineOptions<'a> {
+  pub vertex_shader: &'a Shader,
+  pub fragment_shader: &'a Shader,
   pub size_of_push_constants: usize,
 }

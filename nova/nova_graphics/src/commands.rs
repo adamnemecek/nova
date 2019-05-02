@@ -5,7 +5,7 @@
 use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{Gpu, GpuDeviceExt};
 use crate::images::{Image, ImageLayout};
-use crate::pipelines::{MemoryBarrier, PipelineStage};
+use crate::pipelines::{MemoryBarrier, Pipeline, PipelineStage};
 use crate::render::{Framebuffer, RenderPass};
 use crate::{Backend, Color4};
 use gfx_hal::command::RawCommandBuffer as _;
@@ -103,6 +103,8 @@ impl CommandBuffer {
   }
 
   pub fn begin_render_pass(&mut self, render_pass: &RenderPass, framebuffer: &Framebuffer) {
+    debug_assert_recording!(self);
+
     // Create a viewport struct covering the entire framebuffer.
     let size = framebuffer.size();
 
@@ -137,10 +139,22 @@ impl CommandBuffer {
     }
   }
 
+  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
+    debug_assert_recording!(self);
+
+    unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_hal()) };
+  }
+
+  pub fn draw(&mut self, indices: Range<u32>) {
+    debug_assert_recording!(self);
+
+    unsafe { self.buffer.draw(indices, 0..1) };
+  }
+
   pub fn finish_render_pass(&mut self) {
-    unsafe {
-      self.buffer.end_render_pass();
-    }
+    debug_assert_recording!(self);
+
+    unsafe { self.buffer.end_render_pass() };
   }
 
   pub fn finish(&mut self) {
