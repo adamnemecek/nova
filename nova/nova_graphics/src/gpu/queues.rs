@@ -7,7 +7,7 @@ pub use gfx_hal::Submission as QueueSubmission;
 use std::borrow::Borrow;
 
 use crate::gpu::CommandBuffer;
-use crate::rendering::PipelineStage;
+use crate::renderer::PipelineStage;
 use crate::sync::{Fence, Semaphore};
 use crate::Backend;
 use gfx_hal::queue::{QueueFamily as QueueFamilyExt, QueueFamilyId};

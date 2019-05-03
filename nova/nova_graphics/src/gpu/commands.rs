@@ -5,7 +5,7 @@
 use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{Gpu, GpuDeviceExt};
 use crate::images::{Image, ImageLayout};
-use crate::rendering::{Framebuffer, MemoryBarrier, Pipeline, PipelineStage, RenderPass};
+use crate::renderer::{Framebuffer, MemoryBarrier, Pipeline, PipelineStage, RenderPass};
 use crate::{Backend, Color4};
 use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;

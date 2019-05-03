@@ -4,7 +4,7 @@
 
 pub mod gpu;
 pub mod images;
-pub mod rendering;
+pub mod renderer;
 pub mod surface;
 pub mod sync;
 

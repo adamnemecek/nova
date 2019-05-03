@@ -6,7 +6,7 @@ use crate::clock;
 use crate::engine::Engine;
 use crate::graphics::gpu;
 use crate::graphics::images;
-use crate::graphics::rendering::{PipelineStage, RenderOptions, Renderer};
+use crate::graphics::renderer::{PipelineStage, RenderOptions, Renderer};
 use crate::graphics::sync::Semaphore;
 use crate::window;
 use std::iter;

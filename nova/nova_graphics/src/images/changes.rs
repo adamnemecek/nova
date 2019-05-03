@@ -4,7 +4,7 @@
 
 use crate::gpu::CommandBuffer;
 use crate::images::{Image, ImageAccess, ImageId, ImageLayout};
-use crate::rendering::{MemoryBarrier, PipelineStage};
+use crate::renderer::{MemoryBarrier, PipelineStage};
 use crate::{Backend, Color4};
 use std::ops::Range;
 

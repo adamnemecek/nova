@@ -5,7 +5,7 @@
 pub use gfx_hal::pso::PipelineStage;
 
 use crate::gpu::Gpu;
-use crate::rendering::{RenderPass, Shader};
+use crate::renderer::{RenderPass, Shader};
 use crate::Backend;
 use gfx_hal::Device as _;
 use std::iter;

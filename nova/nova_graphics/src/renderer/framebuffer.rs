@@ -4,7 +4,7 @@
 
 use crate::gpu::Gpu;
 use crate::images::Image;
-use crate::rendering::RenderPass;
+use crate::renderer::RenderPass;
 use crate::Backend;
 use gfx_hal::Device as _;
 use nova_core::collections::SmallVec;

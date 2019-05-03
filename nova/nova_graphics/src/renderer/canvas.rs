@@ -3,9 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::gpu::{CommandBuffer, Gpu};
-use crate::rendering::pipeline::{Pipeline, PipelineOptions};
-use crate::rendering::shader::{Shader, ShaderCode, ShaderKind};
-use crate::rendering::{Framebuffer, RenderPass};
+use crate::renderer::pipeline::{Pipeline, PipelineOptions};
+use crate::renderer::shader::{Shader, ShaderCode, ShaderKind};
+use crate::renderer::{Framebuffer, RenderPass};
 
 pub struct Canvas {
   render_pass: RenderPass,
