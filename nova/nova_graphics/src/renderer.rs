@@ -17,7 +17,7 @@ pub(crate) use self::pipeline::Pipeline;
 pub(crate) use self::render_pass::RenderPass;
 
 use self::shader::Shader;
-use crate::gpu::queues::{QueueFamily, SubmitOptions};
+use crate::gpu::queues::{QueueFamily, Submission};
 use crate::gpu::sync::{Fence, Semaphore};
 use crate::gpu::{self, CommandBuffer, Gpu};
 use crate::images::{self, ImageId};
@@ -102,12 +102,12 @@ impl Renderer {
 
     queues.submit(
       self.transfer_commands.queue_family(),
-      SubmitOptions {
+      Submission {
         command_buffers: vec![&self.transfer_commands, self.canvas.commands()],
         wait_semaphores: options.wait_semaphores,
         signal_semaphores: options.signal_semaphores,
+        fence: Some(&self.frame_fence),
       },
-      Some(&self.frame_fence),
     );
   }
 

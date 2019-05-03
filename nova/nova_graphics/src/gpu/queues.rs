@@ -21,26 +21,6 @@ type HalQueue = <Backend as gfx_hal::Backend>::CommandQueue;
 type HalQueues = gfx_hal::queue::Queues<Backend>;
 type HalQueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
 
-#[derive(Debug, Clone)]
-pub struct QueueFamily {
-  family: Arc<HalQueueFamily>,
-  index: usize,
-}
-
-impl QueueFamily {
-  pub(crate) fn id(&self) -> QueueFamilyId {
-    self.family.id()
-  }
-
-  pub(crate) fn as_hal(&self) -> &HalQueueFamily {
-    &self.family
-  }
-
-  pub fn supports_graphics(&self) -> bool {
-    self.family.supports_graphics()
-  }
-}
-
 pub struct CommandQueues {
   queues: Vec<HalQueue>,
   handles: Vec<QueueFamily>,
@@ -77,8 +57,7 @@ impl CommandQueues {
   pub fn submit<'a, C, Ci, W, Wi, S, Si>(
     &mut self,
     family: &QueueFamily,
-    options: SubmitOptions<C, W, S>,
-    signal_fence: Option<&Fence>,
+    options: Submission<'a, C, W, S>,
   ) where
     C: IntoIterator<Item = &'a Ci>,
     Ci: 'a + Borrow<CommandBuffer>,
@@ -111,7 +90,7 @@ impl CommandQueues {
           wait_semaphores,
           signal_semaphores,
         },
-        signal_fence.map(Fence::as_hal),
+        options.fence.map(Fence::as_hal),
       );
     }
   }
@@ -125,10 +104,31 @@ impl CommandQueues {
   }
 }
 
-pub struct SubmitOptions<C, W, S> {
+#[derive(Debug, Clone)]
+pub struct QueueFamily {
+  family: Arc<HalQueueFamily>,
+  index: usize,
+}
+
+impl QueueFamily {
+  pub(crate) fn id(&self) -> QueueFamilyId {
+    self.family.id()
+  }
+
+  pub(crate) fn as_hal(&self) -> &HalQueueFamily {
+    &self.family
+  }
+
+  pub fn supports_graphics(&self) -> bool {
+    self.family.supports_graphics()
+  }
+}
+
+pub struct Submission<'a, C, W, S> {
   pub command_buffers: C,
   pub wait_semaphores: W,
   pub signal_semaphores: S,
+  pub fence: Option<&'a Fence>,
 }
 
 pub fn borrow(res: &Resources) -> ReadCommandQueues {
