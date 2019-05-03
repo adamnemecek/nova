@@ -17,17 +17,16 @@ pub(crate) use self::pipeline::Pipeline;
 pub(crate) use self::render_pass::RenderPass;
 
 use self::shader::Shader;
-use crate::gpu::queues::{GpuQueueId, GpuQueueKind, SubmitOptions};
+use crate::gpu::queues::{QueueFamily, SubmitOptions};
+use crate::gpu::sync::{Fence, Semaphore};
 use crate::gpu::{self, CommandBuffer, Gpu};
 use crate::images::{self, ImageId};
-use crate::sync::{Fence, Semaphore};
 use crate::Color;
 use nova_core::resources::Resources;
 use std::borrow::Borrow;
 use std::iter;
 
 pub struct Renderer {
-  queue_id: GpuQueueId,
   render_pass: RenderPass,
   frame_fence: Fence,
   framebuffer: Option<Framebuffer>,
@@ -39,17 +38,16 @@ impl Renderer {
   pub fn new(res: &Resources) -> Self {
     let gpu = gpu::borrow(res);
 
-    let queue_id = gpu::queues::borrow(res)
-      .find_kind(GpuQueueKind::Graphics)
+    let queue_family = gpu::queues::borrow(res)
+      .find(QueueFamily::supports_graphics)
       .expect("Device does not support graphics commands.");
 
     let render_pass = RenderPass::new(&gpu);
     let frame_fence = Fence::new(&gpu);
-    let transfer_commands = CommandBuffer::new(&gpu, queue_id);
-    let canvas = Canvas::new(&gpu, CommandBuffer::new(&gpu, queue_id));
+    let transfer_commands = CommandBuffer::new(&gpu, &queue_family);
+    let canvas = Canvas::new(&gpu, CommandBuffer::new(&gpu, &queue_family));
 
     Renderer {
-      queue_id,
       render_pass,
       frame_fence,
       framebuffer: None,
@@ -102,10 +100,10 @@ impl Renderer {
 
     let mut queues = gpu::queues::borrow_mut(res);
 
-    queues[self.queue_id].submit(
+    queues.submit(
+      self.transfer_commands.queue_family(),
       SubmitOptions {
-        command_buffers: iter::once(&self.transfer_commands)
-          .chain(iter::once(self.canvas.commands())),
+        command_buffers: vec![&self.transfer_commands, self.canvas.commands()],
         wait_semaphores: options.wait_semaphores,
         signal_semaphores: options.signal_semaphores,
       },

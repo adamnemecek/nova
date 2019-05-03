@@ -2,118 +2,81 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use gfx_hal::queue::{QueueType as GpuQueueKind, RawCommandQueue as GpuQueueExt};
+pub use gfx_hal::queue::RawCommandQueue as GpuQueueExt;
 pub use gfx_hal::Submission as QueueSubmission;
 use std::borrow::Borrow;
 
-use crate::gpu::CommandBuffer;
+use crate::gpu::commands::CommandBuffer;
+use crate::gpu::sync::{Fence, Semaphore};
 use crate::renderer::PipelineStage;
-use crate::sync::{Fence, Semaphore};
 use crate::Backend;
 use gfx_hal::queue::{QueueFamily as QueueFamilyExt, QueueFamilyId};
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
-use std::ops::{Deref, Index, IndexMut};
+use std::sync::Arc;
 
-pub type ReadGpuQueues<'a> = ReadResource<'a, GpuQueues>;
-pub type WriteGpuQueues<'a> = WriteResource<'a, GpuQueues>;
+pub type ReadCommandQueues<'a> = ReadResource<'a, CommandQueues>;
+pub type WriteCommandQueues<'a> = WriteResource<'a, CommandQueues>;
 
 type HalQueue = <Backend as gfx_hal::Backend>::CommandQueue;
 type HalQueues = gfx_hal::queue::Queues<Backend>;
 type HalQueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct GpuQueueId {
+#[derive(Debug, Clone)]
+pub struct QueueFamily {
+  family: Arc<HalQueueFamily>,
   index: usize,
-  pub(crate) family_id: QueueFamilyId,
 }
 
-pub struct GpuQueues {
-  queues: Vec<GpuQueue>,
-}
-
-impl GpuQueues {
-  pub(crate) fn new(families: Vec<HalQueueFamily>, mut queues: HalQueues) -> Self {
-    let queues = families
-      .into_iter()
-      .enumerate()
-      .map(|(index, family)| {
-        let family_id = family.id();
-
-        let queue = queues
-          .take_raw(family.id())
-          .expect("Adapter did not open all requested queue groups.")
-          .into_iter()
-          .next()
-          .expect("Adapter did not open a queue for one or more requested queue groups.");
-
-        GpuQueue {
-          queue,
-          family,
-          id: GpuQueueId { index, family_id },
-        }
-      })
-      .collect::<Vec<_>>();
-
-    GpuQueues { queues }
+impl QueueFamily {
+  pub(crate) fn id(&self) -> QueueFamilyId {
+    self.family.id()
   }
 
-  pub fn find<P>(&self, predicate: P) -> Option<GpuQueueId>
-  where
-    P: FnMut(&&GpuQueue) -> bool,
-  {
-    self.queues.iter().find(predicate).map(GpuQueue::id)
+  pub(crate) fn as_hal(&self) -> &HalQueueFamily {
+    &self.family
   }
 
-  pub fn find_kind(&self, kind: GpuQueueKind) -> Option<GpuQueueId> {
-    self
-      .find(|q| q.kind() == kind)
-      .or_else(|| self.find(|q| q.kind() == GpuQueueKind::General))
-  }
-
-  pub(crate) fn clear(&mut self) {
-    self.queues.clear();
+  pub fn supports_graphics(&self) -> bool {
+    self.family.supports_graphics()
   }
 }
 
-impl Deref for GpuQueues {
-  type Target = [GpuQueue];
-
-  fn deref(&self) -> &Self::Target {
-    &self.queues
-  }
+pub struct CommandQueues {
+  queues: Vec<HalQueue>,
+  handles: Vec<QueueFamily>,
 }
 
-impl Index<GpuQueueId> for GpuQueues {
-  type Output = GpuQueue;
+impl CommandQueues {
+  pub(crate) fn new(families: Vec<HalQueueFamily>, mut hal_queues: HalQueues) -> Self {
+    let mut queues = Vec::new();
+    let mut handles = Vec::new();
 
-  fn index(&self, id: GpuQueueId) -> &GpuQueue {
-    &self.queues[id.index]
+    for (index, family) in families.into_iter().enumerate() {
+      let queue = hal_queues
+        .take_raw(family.id())
+        .expect("Adapter did not open all requested queue groups.")
+        .into_iter()
+        .next()
+        .expect("Adapter did not open a queue for one or more requested queue groups.");
+
+      queues.push(queue);
+
+      handles.push(QueueFamily {
+        index,
+        family: family.into(),
+      });
+    }
+
+    Self { queues, handles }
   }
-}
 
-impl IndexMut<GpuQueueId> for GpuQueues {
-  fn index_mut(&mut self, id: GpuQueueId) -> &mut GpuQueue {
-    &mut self.queues[id.index]
-  }
-}
-
-pub struct GpuQueue {
-  pub(crate) queue: HalQueue,
-  pub(crate) family: HalQueueFamily,
-  pub(crate) id: GpuQueueId,
-}
-
-impl GpuQueue {
-  pub fn id(&self) -> GpuQueueId {
-    self.id
-  }
-
-  pub fn kind(&self) -> GpuQueueKind {
-    self.family.queue_type()
+  pub fn find(&self, predicate: impl Fn(&QueueFamily) -> bool) -> Option<QueueFamily> {
+    self.handles.iter().find(|f| predicate(f)).cloned()
   }
 
   pub fn submit<'a, C, Ci, W, Wi, S, Si>(
     &mut self,
+    family: &QueueFamily,
     options: SubmitOptions<C, W, S>,
     signal_fence: Option<&Fence>,
   ) where
@@ -142,7 +105,7 @@ impl GpuQueue {
       .map(Semaphore::as_hal);
 
     unsafe {
-      self.queue.submit(
+      self.queues[family.index].submit(
         QueueSubmission {
           command_buffers,
           wait_semaphores,
@@ -153,12 +116,12 @@ impl GpuQueue {
     }
   }
 
-  pub fn as_hal(&self) -> &HalQueue {
-    &self.queue
+  pub(crate) fn get_mut(&mut self, family: &QueueFamily) -> &mut HalQueue {
+    &mut self.queues[family.index]
   }
 
-  pub fn as_hal_mut(&mut self) -> &mut HalQueue {
-    &mut self.queue
+  pub(crate) fn clear(&mut self) {
+    self.queues.clear();
   }
 }
 
@@ -168,10 +131,10 @@ pub struct SubmitOptions<C, W, S> {
   pub signal_semaphores: S,
 }
 
-pub fn borrow(res: &Resources) -> ReadGpuQueues {
+pub fn borrow(res: &Resources) -> ReadCommandQueues {
   resources::borrow(res)
 }
 
-pub fn borrow_mut(res: &Resources) -> WriteGpuQueues {
+pub fn borrow_mut(res: &Resources) -> WriteCommandQueues {
   resources::borrow_mut(res)
 }

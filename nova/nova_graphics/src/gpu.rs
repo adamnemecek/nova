@@ -3,13 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod queues;
+pub mod sync;
 
 mod commands;
 
 pub(crate) use self::commands::CommandBuffer;
 pub(crate) use gfx_hal::Device as GpuDeviceExt;
 
-use self::queues::GpuQueues;
+use self::queues::CommandQueues;
 use crate::backend::{self, Backend};
 use gfx_hal::adapter::DeviceType;
 use gfx_hal::error::DeviceCreationError;
@@ -114,7 +115,7 @@ pub fn set_up(res: &mut Resources) -> Result<(), GpuSetupError> {
     device,
   };
 
-  let queues = GpuQueues::new(queue_families, queues);
+  let queues = CommandQueues::new(queue_families, queues);
 
   res.insert(gpu);
   res.insert(queues);

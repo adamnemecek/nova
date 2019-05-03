@@ -2,16 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod backend;
 pub mod gpu;
 pub mod images;
 pub mod renderer;
 pub mod surface;
-pub mod sync;
 
-mod backend;
 mod color;
 
-pub use self::backend::Backend;
+pub use self::backend::{Backend, Instance as BackendInstance};
 pub use self::color::Color;
 pub use self::gpu::GpuSetupError;
 

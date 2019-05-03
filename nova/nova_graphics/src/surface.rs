@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::queues::{GpuQueueId, GpuQueues};
+use crate::gpu::queues::{CommandQueues, QueueFamily};
+use crate::gpu::sync::Semaphore;
 use crate::gpu::{self, Gpu};
 use crate::images::{Image, ImageAccess, ImageFormat, ImageId, ImageLayout, Images};
 use crate::renderer::PipelineStage;
-use crate::sync::Semaphore;
 use crate::Backend;
 use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::{Device as _, Surface as _, Swapchain as _};
@@ -26,7 +26,7 @@ pub struct Surface {
   surface: HalSurface,
   swapchain: Option<HalSwapchain>,
   swapchain_image_ids: Vec<ImageId>,
-  present_queue_id: GpuQueueId,
+  queue_family: QueueFamily,
   size: Size<u32>,
   resized: bool,
 }
@@ -37,8 +37,8 @@ impl Surface {
 
     let surface = gpu.backend.create_surface(window);
 
-    let present_queue_id = gpu::queues::borrow(res)
-      .find(|q| surface.supports_queue_family(&q.family))
+    let queue_family = gpu::queues::borrow(res)
+      .find(|f| surface.supports_queue_family(f.as_hal()))
       .ok_or(CreateSurfaceError::PresentNotSupported)?;
 
     let (width, height): (u32, u32) = window
@@ -51,7 +51,7 @@ impl Surface {
       surface,
       swapchain: None,
       swapchain_image_ids: Vec::with_capacity(3),
-      present_queue_id,
+      queue_family,
       size: Size { width, height },
       resized: false,
     })
@@ -99,7 +99,7 @@ impl Surface {
 
   pub fn present_backbuffer<'a, W, Wi>(
     &'a mut self,
-    queues: &mut GpuQueues,
+    queues: &mut CommandQueues,
     backbuffer: Backbuffer,
     wait_semaphores: W,
   ) where
@@ -119,8 +119,8 @@ impl Surface {
       .map(Semaphore::as_hal);
 
     let result = unsafe {
-      queues[self.present_queue_id]
-        .as_hal_mut()
+      queues
+        .get_mut(&self.queue_family)
         .present(iter::once((swapchain, backbuffer.index)), wait_semaphores)
     };
 

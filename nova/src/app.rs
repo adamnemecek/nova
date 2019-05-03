@@ -5,9 +5,9 @@
 use crate::clock;
 use crate::engine::Engine;
 use crate::graphics::gpu;
+use crate::graphics::gpu::sync::Semaphore;
 use crate::graphics::images;
 use crate::graphics::renderer::{PipelineStage, RenderOptions, Renderer};
-use crate::graphics::sync::Semaphore;
 use crate::window;
 use std::iter;
 use std::ops::{Deref, DerefMut};

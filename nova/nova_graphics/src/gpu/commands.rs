@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::queues::GpuQueueId;
+use crate::gpu::queues::QueueFamily;
 use crate::gpu::{Gpu, GpuDeviceExt};
 use crate::images::{Image, ImageLayout};
 use crate::renderer::{Framebuffer, MemoryBarrier, Pipeline, PipelineStage, RenderPass};
@@ -30,15 +30,16 @@ macro_rules! debug_assert_recording {
 pub struct CommandBuffer {
   buffer: HalCommandBuffer,
   pool: HalCommandPool,
+  family: QueueFamily,
   state: State,
 }
 
 impl CommandBuffer {
-  pub fn new(gpu: &Gpu, queue_id: GpuQueueId) -> Self {
+  pub fn new(gpu: &Gpu, family: &QueueFamily) -> Self {
     let mut pool = unsafe {
       gpu
         .device
-        .create_command_pool(queue_id.family_id, CommandPoolCreateFlags::RESET_INDIVIDUAL)
+        .create_command_pool(family.id(), CommandPoolCreateFlags::RESET_INDIVIDUAL)
         .unwrap()
     };
 
@@ -48,7 +49,12 @@ impl CommandBuffer {
       pool,
       buffer,
       state: State::Initial,
+      family: family.clone(),
     }
+  }
+
+  pub fn queue_family(&self) -> &QueueFamily {
+    &self.family
   }
 
   pub fn begin(&mut self) {
