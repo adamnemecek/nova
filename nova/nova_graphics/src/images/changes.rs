@@ -5,7 +5,7 @@
 use crate::gpu::CommandBuffer;
 use crate::images::{Image, ImageAccess, ImageId, ImageLayout};
 use crate::renderer::{MemoryBarrier, PipelineStage};
-use crate::{Backend, Color4};
+use crate::{Backend, Color};
 use std::ops::Range;
 
 #[derive(Debug)]
@@ -35,7 +35,7 @@ impl ImageChange {
 
   pub fn new_clear(
     image_id: ImageId,
-    color: Color4,
+    color: Color,
     stage: PipelineStage,
     access: Range<ImageAccess>,
     layout: Range<ImageLayout>,
@@ -86,7 +86,7 @@ impl ImageChange {
 #[derive(Debug)]
 enum Op {
   Transition,
-  Clear(Color4),
+  Clear(Color),
 }
 
 fn memory_barrier(

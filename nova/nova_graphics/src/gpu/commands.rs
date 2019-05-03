@@ -6,7 +6,7 @@ use crate::gpu::queues::GpuQueueId;
 use crate::gpu::{Gpu, GpuDeviceExt};
 use crate::images::{Image, ImageLayout};
 use crate::renderer::{Framebuffer, MemoryBarrier, Pipeline, PipelineStage, RenderPass};
-use crate::{Backend, Color4};
+use crate::{Backend, Color};
 use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;
 use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool as _};
@@ -78,7 +78,7 @@ impl CommandBuffer {
     }
   }
 
-  pub(crate) fn clear_image(&mut self, image: &Image, color: Color4) {
+  pub(crate) fn clear_image(&mut self, image: &Image, color: Color) {
     debug_assert_recording!(self);
 
     unsafe {

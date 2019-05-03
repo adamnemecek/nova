@@ -4,32 +4,32 @@
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Color4 {
+pub struct Color {
   pub r: f32,
   pub g: f32,
   pub b: f32,
   pub a: f32,
 }
 
-impl Color4 {
-  pub const TRANSPARENT: Self = Color4::new(0.0, 0.0, 0.0, 0.0);
-  pub const WHITE: Self = Color4::new(1.0, 1.0, 1.0, 1.0);
-  pub const BLACK: Self = Color4::new(0.0, 0.0, 0.0, 1.0);
+impl Color {
+  pub const TRANSPARENT: Self = Color::new(0.0, 0.0, 0.0, 0.0);
+  pub const WHITE: Self = Color::new(1.0, 1.0, 1.0, 1.0);
+  pub const BLACK: Self = Color::new(0.0, 0.0, 0.0, 1.0);
 
   /// Creates a new color with the given component values.
   pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
-    Color4 { r, g, b, a }
+    Color { r, g, b, a }
   }
 }
 
-impl From<[f32; 4]> for Color4 {
+impl From<[f32; 4]> for Color {
   fn from(values: [f32; 4]) -> Self {
-    Color4::new(values[0], values[1], values[2], values[3])
+    Color::new(values[0], values[1], values[2], values[3])
   }
 }
 
-impl From<Color4> for [f32; 4] {
-  fn from(color: Color4) -> Self {
+impl From<Color> for [f32; 4] {
+  fn from(color: Color) -> Self {
     [color.r, color.g, color.b, color.a]
   }
 }

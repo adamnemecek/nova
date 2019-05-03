@@ -12,7 +12,7 @@ mod backend;
 mod color;
 
 pub use self::backend::Backend;
-pub use self::color::Color4;
+pub use self::color::Color;
 pub use self::gpu::GpuSetupError;
 
 use nova_core::engine::Engine;

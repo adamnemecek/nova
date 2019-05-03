@@ -17,7 +17,7 @@ pub use gfx_hal::image::Layout as ImageLayout;
 use self::changes::ImageChange;
 use crate::gpu::{CommandBuffer, Gpu};
 use crate::renderer::PipelineStage;
-use crate::Color4;
+use crate::Color;
 use nova_core::collections::stash::{self, UniqueStash};
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};
 use std::mem;
@@ -55,7 +55,7 @@ impl Images {
   pub fn clear_image(
     &mut self,
     id: ImageId,
-    color: Color4,
+    color: Color,
     stage: PipelineStage,
     access: Range<ImageAccess>,
     layout: Range<ImageLayout>,
