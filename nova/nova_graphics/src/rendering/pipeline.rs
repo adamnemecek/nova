@@ -2,14 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub use gfx_hal::pso::PipelineStage;
+
 use crate::gpu::Gpu;
-use crate::images::Image;
-use crate::render::RenderPass;
-use crate::shaders::Shader;
+use crate::rendering::{RenderPass, Shader};
 use crate::Backend;
 use gfx_hal::Device as _;
-use nova_core::collections::SmallVec;
-use nova_core::math::Size;
 use std::iter;
 
 type HalPipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
@@ -80,6 +78,10 @@ impl Pipeline {
       layout,
       size_of_push_constants: options.size_of_push_constants,
     }
+  }
+
+  pub fn size_of_push_constants(&self) -> usize {
+    self.size_of_push_constants
   }
 
   pub fn destroy(self, gpu: &Gpu) {

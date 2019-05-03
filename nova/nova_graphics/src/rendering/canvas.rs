@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::commands::CommandBuffer;
-use crate::gpu::Gpu;
-use crate::pipelines::{Pipeline, PipelineOptions};
-use crate::render::{Framebuffer, RenderPass};
-use crate::shaders::{Shader, ShaderCode, ShaderKind};
+use crate::gpu::{CommandBuffer, Gpu};
+use crate::rendering::pipeline::{Pipeline, PipelineOptions};
+use crate::rendering::shader::{Shader, ShaderCode, ShaderKind};
+use crate::rendering::{Framebuffer, RenderPass};
 
 pub struct Canvas {
   render_pass: RenderPass,
@@ -21,18 +20,15 @@ impl Canvas {
     let render_pass = RenderPass::new(gpu);
 
     let vertex_shader = {
-      let code = ShaderCode::compile(ShaderKind::Vertex, include_str!("shaders/hlsl/quad.vert"))
+      let code = ShaderCode::compile(ShaderKind::Vertex, include_str!("shaders/quad.vert"))
         .expect("Could not compile vertex shader");
 
       Shader::new(gpu, &code)
     };
 
     let fragment_shader = {
-      let code = ShaderCode::compile(
-        ShaderKind::Fragment,
-        include_str!("shaders/hlsl/color.frag"),
-      )
-      .expect("Could not compile fragment shader");
+      let code = ShaderCode::compile(ShaderKind::Fragment, include_str!("shaders/color.frag"))
+        .expect("Could not compile fragment shader");
 
       Shader::new(gpu, &code)
     };

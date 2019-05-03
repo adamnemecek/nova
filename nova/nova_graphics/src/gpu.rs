@@ -4,6 +4,9 @@
 
 pub mod queues;
 
+mod commands;
+
+pub(crate) use self::commands::CommandBuffer;
 pub(crate) use gfx_hal::Device as GpuDeviceExt;
 
 use self::queues::GpuQueues;

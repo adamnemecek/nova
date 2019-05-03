@@ -4,16 +4,12 @@
 
 pub mod gpu;
 pub mod images;
-pub mod render;
+pub mod rendering;
 pub mod surface;
 pub mod sync;
 
 mod backend;
-mod canvas;
 mod color;
-mod commands;
-mod pipelines;
-mod shaders;
 
 pub use self::backend::Backend;
 pub use self::color::Color4;

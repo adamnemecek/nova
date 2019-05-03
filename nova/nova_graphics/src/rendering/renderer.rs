@@ -2,14 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::canvas::Canvas;
-use crate::commands::CommandBuffer;
 use crate::gpu::queues::{GpuQueueId, GpuQueueKind, SubmitOptions};
-use crate::gpu::{self, Gpu};
+use crate::gpu::{self, CommandBuffer, Gpu};
 use crate::images;
 use crate::images::ImageId;
-use crate::pipelines::PipelineStage;
-use crate::render::{Framebuffer, RenderPass};
+use crate::rendering::pipeline::PipelineStage;
+use crate::rendering::{Canvas, Framebuffer, RenderPass};
 use crate::sync::{Fence, Semaphore};
 use nova_core::resources::Resources;
 use std::borrow::Borrow;

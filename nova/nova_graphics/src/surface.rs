@@ -5,7 +5,7 @@
 use crate::gpu::queues::{GpuQueueId, GpuQueues};
 use crate::gpu::{self, Gpu};
 use crate::images::{Image, ImageAccess, ImageFormat, ImageId, ImageLayout, Images};
-use crate::pipelines::PipelineStage;
+use crate::rendering::PipelineStage;
 use crate::sync::Semaphore;
 use crate::Backend;
 use gfx_hal::queue::RawCommandQueue as _;

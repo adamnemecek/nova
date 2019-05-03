@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::commands::CommandBuffer;
+use crate::gpu::CommandBuffer;
 use crate::images::{Image, ImageAccess, ImageId, ImageLayout};
-use crate::pipelines::{MemoryBarrier, PipelineStage};
+use crate::rendering::{MemoryBarrier, PipelineStage};
 use crate::{Backend, Color4};
 use std::ops::Range;
 
