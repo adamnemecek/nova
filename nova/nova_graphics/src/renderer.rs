@@ -19,9 +19,9 @@ pub(crate) use self::render_pass::RenderPass;
 use self::shader::Shader;
 use crate::gpu::queues::{GpuQueueId, GpuQueueKind, SubmitOptions};
 use crate::gpu::{self, CommandBuffer, Gpu};
-use crate::images;
-use crate::images::ImageId;
+use crate::images::{self, ImageId};
 use crate::sync::{Fence, Semaphore};
+use crate::Color;
 use nova_core::resources::Resources;
 use std::borrow::Borrow;
 use std::iter;
@@ -86,7 +86,7 @@ impl Renderer {
     self.canvas.begin(&framebuffer);
     self.framebuffer = Some(framebuffer);
 
-    self.canvas.draw_quad();
+    self.canvas.draw_quad(Color::new(1.0, 1.0, 0.0, 1.0));
 
     self.canvas.finish();
 

@@ -17,7 +17,7 @@ type HalDescriptorSetLayout = <Backend as gfx_hal::Backend>::DescriptorSetLayout
 pub struct Pipeline {
   pipeline: HalPipeline,
   layout: HalPipelineLayout,
-  size_of_push_constants: usize,
+  push_constant_count: usize,
 }
 
 impl Pipeline {
@@ -76,12 +76,12 @@ impl Pipeline {
     Self {
       pipeline,
       layout,
-      size_of_push_constants: options.size_of_push_constants,
+      push_constant_count: options.size_of_push_constants / 4,
     }
   }
 
-  pub fn size_of_push_constants(&self) -> usize {
-    self.size_of_push_constants
+  pub fn push_constant_count(&self) -> usize {
+    self.push_constant_count
   }
 
   pub fn destroy(self, gpu: &Gpu) {
@@ -93,6 +93,10 @@ impl Pipeline {
 
   pub(crate) fn as_hal(&self) -> &HalPipeline {
     &self.pipeline
+  }
+
+  pub(crate) fn hal_layout(&self) -> &HalPipelineLayout {
+    &self.layout
   }
 }
 

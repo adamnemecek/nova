@@ -6,6 +6,8 @@ use crate::gpu::{CommandBuffer, Gpu};
 use crate::renderer::pipeline::{Pipeline, PipelineOptions};
 use crate::renderer::shader::{Shader, ShaderCode, ShaderKind};
 use crate::renderer::{Framebuffer, RenderPass};
+use crate::Color;
+use std::mem;
 
 pub struct Canvas {
   render_pass: RenderPass,
@@ -39,7 +41,7 @@ impl Canvas {
       PipelineOptions {
         vertex_shader: &vertex_shader,
         fragment_shader: &fragment_shader,
-        size_of_push_constants: 0,
+        size_of_push_constants: mem::size_of::<PushConstants>(),
       },
     );
 
@@ -66,7 +68,11 @@ impl Canvas {
     self.commands.bind_pipeline(&self.pipeline);
   }
 
-  pub fn draw_quad(&mut self) {
+  pub fn draw_quad(&mut self, tint: Color) {
+    self
+      .commands
+      .push_constants(&self.pipeline, PushConstants { tint });
+
     self.commands.draw(0..4);
   }
 
@@ -82,4 +88,9 @@ impl Canvas {
     self.vertex_shader.destroy(gpu);
     self.fragment_shader.destroy(gpu);
   }
+}
+
+#[repr(C)]
+struct PushConstants {
+  tint: Color,
 }

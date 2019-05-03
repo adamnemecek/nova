@@ -11,7 +11,9 @@ use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;
 use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool as _};
 use std::iter;
+use std::mem;
 use std::ops::Range;
+use std::slice;
 
 type HalCommandPool = <Backend as gfx_hal::Backend>::CommandPool;
 type HalCommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
@@ -142,6 +144,23 @@ impl CommandBuffer {
     debug_assert_recording!(self);
 
     unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_hal()) };
+  }
+
+  pub fn push_constants<T>(&mut self, pipeline: &Pipeline, constants: T) {
+    debug_assert_recording!(self);
+
+    let count = pipeline.push_constant_count();
+
+    debug_assert_eq!(count * 4, mem::size_of::<T>(), "The push constants type must be the same size as the pipeline's size_of_push_constants option.");
+
+    unsafe {
+      self.buffer.push_graphics_constants(
+        pipeline.hal_layout(),
+        gfx_hal::pso::ShaderStageFlags::ALL,
+        0,
+        slice::from_raw_parts(&constants as *const T as *const u32, count),
+      );
+    }
   }
 
   pub fn draw(&mut self, indices: Range<u32>) {
