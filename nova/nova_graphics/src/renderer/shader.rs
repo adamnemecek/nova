@@ -4,8 +4,9 @@
 
 pub use glsl_to_spirv::ShaderType as ShaderKind;
 
-use crate::gpu::{Gpu, GpuDeviceExt as _};
+use crate::gpu::Gpu;
 use crate::Backend;
+use gfx_hal::Device as _;
 use std::ops::Deref;
 
 pub type HalEntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;

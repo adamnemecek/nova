@@ -3,13 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::gpu::queues::QueueFamily;
-use crate::gpu::{Gpu, GpuDeviceExt};
+use crate::gpu::Gpu;
 use crate::images::{Image, ImageLayout};
 use crate::renderer::{Framebuffer, MemoryBarrier, Pipeline, PipelineStage, RenderPass};
 use crate::{Backend, Color};
 use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::command::RawLevel as CommandLevel;
 use gfx_hal::pool::{CommandPoolCreateFlags, RawCommandPool as _};
+use gfx_hal::Device as _;
 use std::iter;
 use std::mem;
 use std::ops::Range;

@@ -2,19 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod alloc;
+pub mod buffer;
+pub mod commands;
 pub mod queues;
 pub mod sync;
-
-mod commands;
-
-pub(crate) use self::commands::CommandBuffer;
-pub(crate) use gfx_hal::Device as GpuDeviceExt;
 
 use self::queues::CommandQueues;
 use crate::backend::{self, Backend};
 use gfx_hal::adapter::DeviceType;
 use gfx_hal::error::DeviceCreationError;
-use gfx_hal::{Instance as _, PhysicalDevice as _, QueueFamily as _};
+use gfx_hal::{Device as _, Instance as _, PhysicalDevice as _, QueueFamily as _};
 use nova_core::log::Logger;
 use nova_core::quick_error;
 use nova_core::resources::{self, ReadResource, Resources, WriteResource};

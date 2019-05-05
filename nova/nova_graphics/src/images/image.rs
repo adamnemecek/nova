@@ -2,9 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::{Gpu, GpuDeviceExt};
+use crate::gpu::Gpu;
 use crate::images::ImageFormat;
 use crate::Backend;
+use gfx_hal::Device as _;
 use nova_core::math::Size;
 
 pub(crate) type HalImage = <Backend as gfx_hal::Backend>::Image;

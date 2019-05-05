@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::{Gpu, GpuDeviceExt as _};
+use crate::gpu::Gpu;
 use crate::Backend;
+use gfx_hal::Device as _;
 
 pub type HalSemaphore = <Backend as gfx_hal::Backend>::Semaphore;
 type HalFence = <Backend as gfx_hal::Backend>::Fence;

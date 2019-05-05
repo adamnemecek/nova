@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::{CommandBuffer, Gpu};
+use crate::gpu::commands::CommandBuffer;
+use crate::gpu::Gpu;
 use crate::renderer::pipeline::{Pipeline, PipelineOptions};
 use crate::renderer::shader::{Shader, ShaderCode, ShaderKind};
 use crate::renderer::{Framebuffer, RenderPass};

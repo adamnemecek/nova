@@ -15,7 +15,8 @@ pub use gfx_hal::image::Access as ImageAccess;
 pub use gfx_hal::image::Layout as ImageLayout;
 
 use self::changes::ImageChange;
-use crate::gpu::{CommandBuffer, Gpu};
+use crate::gpu::commands::CommandBuffer;
+use crate::gpu::Gpu;
 use crate::renderer::PipelineStage;
 use crate::Color;
 use nova_core::collections::stash::{self, UniqueStash};

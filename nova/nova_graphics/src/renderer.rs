@@ -17,9 +17,10 @@ pub(crate) use self::pipeline::Pipeline;
 pub(crate) use self::render_pass::RenderPass;
 
 use self::shader::Shader;
+use crate::gpu::commands::CommandBuffer;
 use crate::gpu::queues::{QueueFamily, Submission};
 use crate::gpu::sync::{Fence, Semaphore};
-use crate::gpu::{self, CommandBuffer, Gpu};
+use crate::gpu::{self, Gpu};
 use crate::images::{self, ImageId};
 use crate::Color;
 use nova_core::resources::Resources;
