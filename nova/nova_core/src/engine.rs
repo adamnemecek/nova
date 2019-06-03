@@ -6,7 +6,47 @@ use crate::components;
 use crate::entities::{self, Entity};
 use crate::resources::Resources;
 use crate::scheduler::{Runnable, Scheduler, ThreadPool};
+use crossbeam::channel;
 use std::fmt;
+use std::sync::{Arc, Mutex, MutexGuard};
+
+pub struct EngineHandle {
+  mutex: Arc<Mutex<Engine>>,
+  channel: channel::Sender<EngineMessage>,
+}
+
+impl EngineHandle {
+  pub fn lock(&mut self) -> MutexGuard<Engine> {
+    self.mutex.lock().expect("failed to lock engine mutex")
+  }
+
+  pub fn execute(&mut self, func: impl FnOnce(&mut Engine) + 'static) {
+    self
+      .channel
+      .send(EngineMessage::ExecuteFunction(Box::new(func)))
+      .expect("failed to send function on engine channel")
+  }
+
+  pub fn query<F, R>(&mut self, func: F) -> R
+  where
+    F: FnOnce(&mut Engine) -> R + Send + 'static,
+    R: Send + 'static,
+  {
+    let (sender, receiver) = channel::bounded(0);
+
+    self.execute(move |engine| {
+      sender
+        .send(func(engine))
+        .expect("failed to send result of query")
+    });
+
+    receiver.recv().expect("failed to receive result of query")
+  }
+}
+
+enum EngineMessage {
+  ExecuteFunction(Box<dyn FnOnce(&mut Engine)>),
+}
 
 pub struct Engine {
   pub resources: Resources,
