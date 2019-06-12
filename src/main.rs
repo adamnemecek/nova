@@ -1,45 +1,24 @@
-mod engine;
-mod systems;
-
-use self::engine::Engine;
-use nova::specs::ReadExpect;
+use nova::component::{self, Join};
+use nova::time;
 use std::error::Error;
 
-
 pub fn main() -> Result<(), Box<dyn Error>> {
-  let engine = Engine::new();
+  let mut instance = nova::Instance::new();
 
-  engine.execute(|engine| {
-    engine.put_resource(TestRes {
-      message: String::from("world"),
-    });
+  instance.register_component::<Test>();
 
-    engine.add_system(TestSystem);
-  });
+  let entity = instance.entities().create();
 
-  engine.dispatch(TestMessage {
-    content: String::from("Hello"),
-  });
+  instance.components_mut().insert(entity, Test);
 
-  std::thread::sleep(std::time::Duration::from_secs(1));
+  instance.commit_entities();
 
   Ok(())
 }
 
-struct TestSystem;
+#[derive(Default)]
+struct Test;
 
-impl<'a> systems::System<'a, TestMessage> for TestSystem {
-  type Data = ReadExpect<'a, TestRes>;
-
-  fn run(&mut self, msg: &TestMessage, data: Self::Data) {
-    println!("{} {}", &msg.content, &data.message);
-  }
-}
-
-struct TestMessage {
-  content: String,
-}
-
-struct TestRes {
-  message: String,
+impl nova::Component for Test {
+  type Storage = component::NullStorage<Self>;
 }
