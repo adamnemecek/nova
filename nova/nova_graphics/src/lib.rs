@@ -2,30 +2,37 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod backend;
-pub mod gpu;
-pub mod images;
-pub mod renderer;
-pub mod surface;
-
 mod color;
 
-pub use self::backend::{Backend, Instance as BackendInstance};
 pub use self::color::Color;
-pub use self::gpu::GpuSetupError;
 
-use nova_core::engine::Engine;
+use nova_core::component::{Component, HashMapStorage};
+use nova_core::math::{Matrix4, Point3, Rect};
+use std::sync::Arc;
 
-pub fn set_up(engine: &mut Engine) -> Result<(), GpuSetupError> {
-  gpu::set_up(&mut engine.resources)?;
-  images::set_up(&mut engine.resources);
+pub struct Image {}
 
-  Ok(())
+pub struct Sprite {
+  pub color: Color,
+  pub image: Arc<Image>,
+  pub rect: Rect<f32>,
 }
 
-pub fn destroy(engine: &mut Engine) {
-  let gpu = gpu::borrow(&engine.resources);
+pub struct Renderable {
+  pub transform: Matrix4<f32>,
+}
 
-  gpu::queues::borrow_mut(&engine.resources).clear();
-  images::borrow_mut(&engine.resources).destroy_all(&gpu);
+impl Component for Renderable {
+  type Storage = HashMapStorage<Self>;
+}
+
+impl Renderable {
+  pub fn position(&self) -> Point3<f32> {
+    self.transform.transform_point(&Point3::origin())
+  }
+}
+
+pub struct ScreenSpace {
+  pub layer: i64,
+  pub order: i64,
 }

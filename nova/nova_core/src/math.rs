@@ -14,6 +14,7 @@ pub use nalgebra::Matrix4;
 pub use nalgebra::Scalar;
 pub use nalgebra::{Point2, Point3};
 pub use nalgebra::{Vector2, Vector3, Vector4};
+pub use nalgebra::{Transform2, Transform3};
 pub use num_traits::Num;
 
 use std::ops::Range;

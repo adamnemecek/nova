@@ -12,3 +12,4 @@ lto = true
 
 [dependencies]
 nova_core = { path = "./nova_core" }
+nova_graphics = { path = "./nova_graphics" }
