@@ -9,6 +9,7 @@ pub mod time;
 
 pub use self::component::{Component, Components, ComponentsMut};
 pub use self::entity::{Entities, Entity};
+pub use crossbeam::channel;
 pub use shred::{ReadExpect as Resource, Resource as ResourceLike, WriteExpect as ResourceMut};
 
 /// Stores related state in resources, entities, and components.

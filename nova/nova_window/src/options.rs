@@ -7,6 +7,7 @@ use nova_core::math::Size;
 #[derive(Clone)]
 pub struct WindowOptions {
   pub title: String,
+  pub resizable: bool,
   pub size: Size<u32>,
 }
 
@@ -14,7 +15,8 @@ impl WindowOptions {
   pub fn new() -> Self {
     Self {
       title: String::new(),
-      size: Size::new(2560, 1440),
+      resizable: true,
+      size: Size::new(1280, 720),
     }
   }
 

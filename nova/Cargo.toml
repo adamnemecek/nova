@@ -1,5 +1,5 @@
 [workspace]
-exclude = ["nova_input", "nova_window", "nova_renderer", "nova_ui"]
+exclude = ["nova_input", "nova_renderer", "nova_ui"]
 
 [package]
 name = "nova"
@@ -13,3 +13,4 @@ lto = true
 [dependencies]
 nova_core = { path = "./nova_core" }
 nova_graphics = { path = "./nova_graphics" }
+nova_window = { path = "./nova_window" }
