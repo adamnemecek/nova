@@ -8,7 +8,8 @@ edition = "2018"
 gfx-hal = "0.2"
 glsl-to-spirv = "0.1"
 image = "0.21"
-nova_core = { path = "../nova_core" }
+nova_ecs = { path = "../nova_ecs" }
+nova_math = { path = "../nova_math" }
 winit = "0.18"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]

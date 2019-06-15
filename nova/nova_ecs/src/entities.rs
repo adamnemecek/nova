@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use specs::world::Entity;
-
-use crate::component::Join;
+use crate::{Join, Entity};
 use hibitset::{AtomicBitSet, BitSet, BitSetOr};
 use shred_derive::*;
 

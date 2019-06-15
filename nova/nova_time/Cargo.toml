@@ -1,0 +1,8 @@
+[package]
+name = "nova_time"
+version = "0.4.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
+
+[dependencies]
+spin_sleep = "0.3"

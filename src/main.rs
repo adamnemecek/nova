@@ -1,30 +1,22 @@
-use nova::component::{Component, NullStorage};
 use nova::math::Size;
 use nova::time;
-use nova::window::{Window, WindowEvent, WindowOptions};
+use nova::window;
 use std::error::Error;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
-  let window = Window::new(WindowOptions {
-    title: "tvb".into(),
+  let window = window::open(window::Options {
     size: Size::new(2560, 1440),
     resizable: false,
+    ..Default::default()
   });
 
-  time::loop_at_frequency(60.0, |ctx| {
+  time::loop_at_frequency(60.0, |loop_ctx| {
     while let Some(event) = window.next_event() {
-      if let WindowEvent::CloseRequested = event {
-        ctx.stop();
+      if let window::Event::CloseRequested = event {
+        loop_ctx.stop();
       }
     }
   });
 
   Ok(())
-}
-
-#[derive(Default)]
-struct Test;
-
-impl Component for Test {
-  type Storage = NullStorage<Self>;
 }

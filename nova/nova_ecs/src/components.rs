@@ -2,13 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use specs::join::{Join, ParJoin};
-pub use specs::storage;
-pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
-pub use specs::storage::{ComponentEvent, FlaggedStorage};
-pub use specs::{BitSet, Component};
-
-use crate::Entity;
+use crate::{Entity, Component, Join};
+use hibitset::BitSet;
 use shred_derive::*;
 use specs::storage::UnprotectedStorage;
 

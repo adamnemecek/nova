@@ -1,15 +1,11 @@
 [package]
-name = "nova_core"
-version = "0.3.0"
+name = "nova_ecs"
+version = "0.4.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
-crossbeam = "0.7"
 hibitset = "0.5"
-nalgebra = "0.18"
-num-traits = "0.2"
 specs = "0.14"
-spin_sleep = "0.3"
 shred = "0.7"
 shred-derive = "0.5"

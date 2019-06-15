@@ -1,9 +1,9 @@
-use crate::time;
+use crate::{Instant, Duration};
 
 #[derive(Default)]
 pub struct LoopContext {
-  min_time: time::Duration,
-  delta_time: time::Duration,
+  min_time: Duration,
+  delta_time: Duration,
   stop: bool,
 }
 
@@ -12,15 +12,15 @@ impl LoopContext {
     Self::default()
   }
 
-  pub fn min_time(&self) -> time::Duration {
+  pub fn min_time(&self) -> Duration {
     self.min_time
   }
 
   pub fn set_frequency(&mut self, value: f64) {
-    self.min_time = time::Duration::from_secs(1.0 / value);
+    self.min_time = Duration::from_secs(1.0 / value);
   }
 
-  pub fn set_min_time(&mut self, value: time::Duration) {
+  pub fn set_min_time(&mut self, value: Duration) {
     self.min_time = value;
   }
 
@@ -32,15 +32,15 @@ impl LoopContext {
     self.stop
   }
 
-  pub fn delta_time(&self) -> time::Duration {
+  pub fn delta_time(&self) -> Duration {
     self.delta_time
   }
 
   pub fn run(&mut self, closure: impl Fn(&mut LoopContext)) {
-    self.delta_time = time::Duration::default();
+    self.delta_time = Duration::default();
 
     while !self.stop {
-      let began = time::Instant::now();
+      let began = Instant::now();
 
       closure(self);
 

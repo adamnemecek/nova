@@ -2,16 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use nova_core::math::Size;
+use nova_math::Size;
 
 #[derive(Clone)]
-pub struct WindowOptions {
+pub struct Options {
   pub title: String,
   pub resizable: bool,
   pub size: Size<u32>,
 }
 
-impl WindowOptions {
+impl Options {
   pub fn new() -> Self {
     Self {
       title: String::new(),
@@ -25,7 +25,7 @@ impl WindowOptions {
   }
 }
 
-impl Default for WindowOptions {
+impl Default for Options {
   fn default() -> Self {
     let mut options = Self::new();
 

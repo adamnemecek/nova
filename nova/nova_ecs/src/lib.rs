@@ -2,20 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub mod component;
-pub mod entity;
-pub mod math;
-pub mod time;
+mod components;
+mod entities;
 
-pub use self::component::{Component, Components, ComponentsMut};
-pub use self::entity::{Entities, Entity};
-pub use crossbeam::channel;
+pub use self::components::{Components, ComponentsMut};
+pub use self::entities::Entities;
 pub use shred::{ReadExpect as Resource, Resource as ResourceLike, WriteExpect as ResourceMut};
+pub use specs::join::{Join, ParJoin};
+pub use specs::storage;
+pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
+pub use specs::storage::{ComponentEvent, FlaggedStorage};
+pub use specs::world::Entity;
+pub use specs::{BitSet, Component};
 
-/// Stores related state in resources, entities, and components.
-///
-/// Each instance can be thought of as a separate database for storing
-/// application data and state.
+/// Container for entities, components, and shared resources.
 #[derive(Default)]
 pub struct Instance {
   world: specs::World,

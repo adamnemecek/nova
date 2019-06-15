@@ -32,38 +32,6 @@ impl<T: ScalarNum> Size<T> {
   }
 }
 
-impl Size<f32> {
-  pub fn ratio(self) -> f32 {
-    if self.height == 0.0 {
-      0.0
-    } else {
-      self.width / self.height
-    }
-  }
-}
-
-impl From<Size<u32>> for Size<f32> {
-  fn from(input: Size<u32>) -> Self {
-    Size::new(input.width as f32, input.height as f32)
-  }
-}
-
-impl<T: ScalarNum> Mul<T> for Size<T> {
-  type Output = Self;
-
-  fn mul(self, operand: T) -> Self {
-    Size::new(self.width * operand, self.height * operand)
-  }
-}
-
-impl<T: ScalarNum> Div<T> for Size<T> {
-  type Output = Self;
-
-  fn div(self, divisor: T) -> Self {
-    Size::new(self.width / divisor, self.height / divisor)
-  }
-}
-
 impl<T: ScalarNum> fmt::Debug for Size<T> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "({:?}, {:?})", &self.width, &self.height)

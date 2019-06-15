@@ -6,8 +6,8 @@ mod color;
 
 pub use self::color::Color;
 
-use nova_core::component::{Component, HashMapStorage};
-use nova_core::math::{Matrix4, Point3, Rect};
+use nova_ecs as ecs;
+use nova_math::{Matrix4, Point3, Rect};
 use std::sync::Arc;
 
 pub struct Image {}
@@ -22,8 +22,8 @@ pub struct Renderable {
   pub transform: Matrix4<f32>,
 }
 
-impl Component for Renderable {
-  type Storage = HashMapStorage<Self>;
+impl ecs::Component for Renderable {
+  type Storage = ecs::HashMapStorage<Self>;
 }
 
 impl Renderable {

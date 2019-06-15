@@ -11,6 +11,8 @@ edition = "2018"
 lto = true
 
 [dependencies]
-nova_core = { path = "./nova_core" }
+nova_ecs = { path = "./nova_ecs" }
+nova_math = { path = "./nova_math" }
+nova_time = { path = "./nova_time" }
 nova_graphics = { path = "./nova_graphics" }
 nova_window = { path = "./nova_window" }
