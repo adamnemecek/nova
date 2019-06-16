@@ -158,6 +158,12 @@ impl Surface {
   }
 }
 
+impl Drop for Surface {
+  fn drop(&mut self) {
+    self.destroy_swapchain();
+  }
+}
+
 pub struct Backbuffer<'a> {
   surface: &'a mut Surface,
   index: u32,

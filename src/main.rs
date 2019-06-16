@@ -41,5 +41,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
   });
 
+  renderer.shut_down();
+
   Ok(())
 }

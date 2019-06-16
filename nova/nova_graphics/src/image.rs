@@ -5,9 +5,10 @@
 use crate::backend;
 use crate::Context;
 use gfx_hal::Device as _;
+use nova_log as log;
 use nova_math::Size;
-use std::sync::Arc;
 use std::cmp;
+use std::sync::Arc;
 
 /// An image on the graphics device.
 #[derive(Clone)]
@@ -69,10 +70,12 @@ impl Drop for ImageInner {
         .device
         .destroy_image_view(self.view.take().unwrap());
 
+      /*
       self
         .context
         .device
         .destroy_image(self.image.take().unwrap());
+        */
     }
   }
 }

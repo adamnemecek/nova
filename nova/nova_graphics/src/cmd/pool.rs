@@ -7,6 +7,7 @@ use crate::{Context, OutOfMemoryError, QueueId};
 use crossbeam_queue::SegQueue;
 use gfx_hal::pool::RawCommandPool as _;
 use gfx_hal::Device as _;
+use nova_log as log;
 use std::iter;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -45,11 +46,13 @@ impl Pool {
   }
 
   pub(crate) fn allocate(&self) -> backend::CommandBuffer {
-    self
+    let buffer = self
       .0
       .recycled_buffers
       .pop()
-      .unwrap_or_else(|_| self.as_backend().allocate_one(self.0.level))
+      .unwrap_or_else(|_| self.as_backend().allocate_one(self.0.level));
+
+    buffer
   }
 
   pub(crate) fn recycle(&self, buffer: backend::CommandBuffer) {
@@ -67,6 +70,7 @@ impl Pool {
 
 impl Drop for PoolInner {
   fn drop(&mut self) {
+    let context = &self.context;
     let mut pool = self.pool.take().unwrap().into_inner().unwrap();
 
     while let Ok(buffer) = self.recycled_buffers.pop() {
@@ -76,7 +80,7 @@ impl Drop for PoolInner {
     }
 
     unsafe {
-      self.context.device.destroy_command_pool(pool);
+      context.device.destroy_command_pool(pool);
     }
   }
 }

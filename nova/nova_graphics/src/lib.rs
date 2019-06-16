@@ -20,12 +20,12 @@ mod sync;
 pub use self::color::Color;
 pub use self::image::Image;
 pub use self::queues::{QueueId, Queues};
+pub use self::submission::Submission;
 pub use self::surface::{Backbuffer, Surface};
 pub use self::sync::{Fence, Semaphore};
-pub use self::submission::Submission;
 pub use gfx_hal::error::DeviceCreationError;
 
-use gfx_hal::Instance as _;
+use gfx_hal::{Instance as _, Device as _};
 use nova_log as log;
 use std::fmt;
 use std::ops;
@@ -43,6 +43,7 @@ pub struct ContextContent {
   device: backend::Device,
   adapter: backend::Adapter,
   backend: backend::Instance,
+  logger: log::Logger,
 }
 
 impl Context {
@@ -126,6 +127,7 @@ impl Context {
       adapter,
       device,
       queues,
+      logger: logger.clone(),
     })))
   }
 
@@ -133,6 +135,17 @@ impl Context {
   /// transfer command queues on the device.
   pub fn queues(&self) -> &Queues {
     &self.0.queues
+  }
+
+  /// Gets a reference to the `log::Logger` of the graphics context.
+  pub fn logger(&self) -> &log::Logger {
+    &self.0.logger
+  }
+
+  /// Waits for the graphics device to be idle, meaning no command buffers are
+  /// being executed.
+  pub fn wait_idle(&self) {
+    self.0.device.wait_idle();
   }
 }
 
