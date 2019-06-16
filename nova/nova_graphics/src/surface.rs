@@ -6,6 +6,7 @@ use crate::backend;
 use crate::{Context, Image, QueueId, Semaphore};
 use gfx_hal::{Device as _, Surface as _, Swapchain as _};
 use nova_math::{self as math, Size};
+use nova_log as log;
 use nova_window as window;
 use std::cmp;
 use std::fmt;
@@ -138,6 +139,13 @@ impl Surface {
     let size = Size::new(extent.width, extent.height);
 
     self.size = Size::new(f64::from(size.width), f64::from(size.height));
+
+    log::debug!(self.context.logger(),
+      "created swapchain";
+      "image_count" => image_count,
+      "format" => log::Debug(Self::FORMAT),
+      "size" => log::Debug(size),
+    );
 
     for image in backbuffers {
       self.swapchain_images.push(Image::from_swapchain_image(
