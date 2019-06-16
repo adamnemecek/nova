@@ -2,20 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::fmt;
-use std::ops::Sub;
-use std::time::{Duration as StdDuration, Instant as StdInstant};
-use std::u64;
 use crate::Duration;
+use std::ops::Sub;
+use std::time::Instant as StdInstant;
 
+/// Opaquely represents a specific instant in time.
+///
+/// Like the standard library `Instant`, this structure can be used to calculate
+/// `Duration` values using the `elapsed()` method for example.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Instant(StdInstant);
 
 impl Instant {
+  /// Returns a value representing the current instant in time.
   pub fn now() -> Self {
     StdInstant::now().into()
   }
 
+  /// Returns a value representing the duration of time elapsed since this
+  /// instant in time.
   pub fn elapsed(&self) -> Duration {
     self.0.elapsed().into()
   }

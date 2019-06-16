@@ -4,11 +4,23 @@
 
 use nova_math::Size;
 
+/// Options for opening a new window.
 #[derive(Clone)]
 pub struct Options {
+  /// Sets the title of the window.
+  ///
+  /// Defaults to the name of the executable.
   pub title: String,
+
+  /// Sets whether the window is resizable.
+  ///
+  /// Defaults to `false`.
   pub resizable: bool,
-  pub size: Size<u32>,
+
+  /// Sets the window size in pixels.
+  ///
+  /// Defaults to `(1280, 720)`.
+  pub size: Size<f64>,
 }
 
 impl Options {
@@ -16,7 +28,7 @@ impl Options {
     Self {
       title: String::new(),
       resizable: true,
-      size: Size::new(1280, 720),
+      size: Size::new(1280.0, 720.0),
     }
   }
 

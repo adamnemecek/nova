@@ -16,3 +16,10 @@ pub const NAME: &str = "DirectX 12";
 pub const NAME: &str = "Metal";
 #[cfg(all(unix, not(target_os = "macos")))]
 pub const NAME: &str = "Vulkan";
+
+pub type Adapter = gfx_hal::Adapter<Backend>;
+pub type Device = <Backend as gfx_hal::Backend>::Device;
+
+pub type Queue = <Backend as gfx_hal::Backend>::CommandQueue;
+pub type Queues = gfx_hal::queue::Queues<Backend>;
+pub type QueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;

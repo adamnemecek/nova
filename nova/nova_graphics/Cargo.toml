@@ -9,6 +9,7 @@ gfx-hal = "0.2"
 glsl-to-spirv = "0.1"
 image = "0.21"
 nova_ecs = { path = "../nova_ecs" }
+nova_log = { path = "../nova_log" }
 nova_math = { path = "../nova_math" }
 winit = "0.18"
 

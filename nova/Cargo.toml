@@ -3,7 +3,7 @@ exclude = ["nova_input", "nova_renderer", "nova_ui"]
 
 [package]
 name = "nova"
-version = "0.2.0"
+version = "0.4.0"
 authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
@@ -12,7 +12,8 @@ lto = true
 
 [dependencies]
 nova_ecs = { path = "./nova_ecs" }
+nova_graphics = { path = "./nova_graphics" }
+nova_log = { path = "./nova_log" }
 nova_math = { path = "./nova_math" }
 nova_time = { path = "./nova_time" }
-nova_graphics = { path = "./nova_graphics" }
 nova_window = { path = "./nova_window" }

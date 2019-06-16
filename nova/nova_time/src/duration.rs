@@ -7,10 +7,20 @@ use std::ops::Sub;
 use std::time::{Duration as StdDuration, Instant as StdInstant};
 use std::u64;
 
+/// Represents a span of time.
+///
+/// The standard library `Duration` stores time as a discrete, integer number of
+/// seconds and nanoseconds. This structure instead stores time as a 64-bit
+/// floating point number of seconds for easier use in time-dependent
+/// calculations.
 #[derive(Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Duration(f64);
 
 impl Duration {
+  /// Creates a `Duration` from a given number of seconds.
+  ///
+  /// This function will panic if the given value is not finite, is less than
+  /// zero, or is too large to be represented by a standard libary `Duration`.
   pub fn from_secs(value: f64) -> Self {
     const MAX_SECS: f64 = u64::MAX as f64 + 1.0;
 
@@ -29,6 +39,10 @@ impl Duration {
     Duration(value)
   }
 
+  /// Converts the duration to a fractional number of seconds.
+  ///
+  /// Because this is how the duration is represented internally, this function
+  /// does not actually need to perform any conversion.
   pub fn as_secs(self) -> f64 {
     self.0
   }
