@@ -10,9 +10,9 @@ mod sync;
 
 pub use self::color::Color;
 pub use self::queues::{QueueId, Queues};
-pub use self::surface::{Surface, Backbuffer};
-pub use gfx_hal::error::DeviceCreationError;
+pub use self::surface::{Backbuffer, Surface};
 pub use self::sync::{Fence, Semaphore};
+pub use gfx_hal::error::DeviceCreationError;
 
 use gfx_hal::Instance as _;
 use nova_log as log;
@@ -48,7 +48,7 @@ impl Context {
     for adapter in &adapters {
       log::debug!(logger,
         "found graphics adapter";
-        "type" => format!("{:?}", adapter.info.device_type),
+        "type" => log::Debug(&adapter.info.device_type),
         "type_id" => adapter.info.device,
         "vendor_id" => adapter.info.vendor,
         "name" => &adapter.info.name,
@@ -71,7 +71,7 @@ impl Context {
 
     log::debug!(logger,
       "selected graphics adapter";
-      "type" => format!("{:?}", adapter.info.device_type),
+      "type" => log::Debug(&adapter.info.device_type),
       "type_id" => adapter.info.device,
       "vendor_id" => adapter.info.vendor,
       "name" => &adapter.info.name,
@@ -89,7 +89,7 @@ impl Context {
         log::debug!(logger,
           "found graphics queue family";
           "max_queues" => family.max_queues(),
-          "type" => format!("{:?}", family.queue_type()),
+          "type" => log::Debug(family.queue_type()),
           "id" => family.id().0,
         );
 

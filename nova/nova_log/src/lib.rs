@@ -5,6 +5,7 @@
 pub use slog::*;
 pub use slog_scope::GlobalLoggerGuard;
 
+use std::fmt;
 use std::sync::Mutex;
 
 lazy_static::lazy_static! {
@@ -14,6 +15,24 @@ lazy_static::lazy_static! {
   /// Static storage for slog_scope's global logger guard so that
   /// `set_global_logger` lasts until called again.
   static ref GLOBAL_GUARD: Mutex<Option<GlobalLoggerGuard>> = Mutex::new(None);
+}
+
+/// A struct wrapper for log values that formats the value with `fmt::Debug`.
+pub struct Debug<T>(pub T);
+
+impl<T: fmt::Debug> Value for Debug<T> {
+  fn serialize(&self, _: &Record, key: Key, serializer: &mut Serializer) -> Result<()> {
+    serializer.emit_arguments(key, &format_args!("{:?}", self.0))
+  }
+}
+
+/// A struct wrapper for log values that formats the value with `fmt::Display`.
+pub struct Display<T>(pub T);
+
+impl<T: fmt::Display> Value for Display<T> {
+  fn serialize(&self, _: &Record, key: Key, serializer: &mut Serializer) -> Result<()> {
+    serializer.emit_arguments(key, &format_args!("{}", self.0))
+  }
 }
 
 /// Sets the given logger as the default global logger for the `log` and `slog`

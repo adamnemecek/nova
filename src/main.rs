@@ -21,7 +21,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   // Start the renderer on a separate thread.
-  start_renderer(&graphics, &window, &logger);
+  //start_renderer(&graphics, &window, &logger);
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |loop_ctx| {
@@ -58,7 +58,7 @@ fn start_renderer(graphics: &graphics::Context, window: &window::Handle, logger:
         Err(err) => {
           log::error!(logger,
             "failed to acquire surface backbuffer";
-            "cause" => format!("{}", err),
+            "cause" => log::Display(err),
           );
 
           return loop_ctx.stop();
@@ -71,7 +71,7 @@ fn start_renderer(graphics: &graphics::Context, window: &window::Handle, logger:
       if let Err(err) = backbuffer.present(&[&acquire_semaphore]) {
         log::error!(logger,
           "failed to present surface backbuffer";
-          "cause" => format!("{}", err),
+          "cause" => log::Display(err),
         );
 
         return loop_ctx.stop();
