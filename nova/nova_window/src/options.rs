@@ -27,7 +27,7 @@ impl Options {
   pub fn new() -> Self {
     Self {
       title: String::new(),
-      resizable: true,
+      resizable: false,
       size: Size::new(1280.0, 720.0),
     }
   }

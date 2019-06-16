@@ -11,10 +11,9 @@ use nova_math::Size;
 use std::sync::Arc;
 use std::thread;
 
-/// Cloneable handle to a platform-specific window.
+/// Handle to a platform-specific window.
 ///
-/// The window is closed when all handles are dropped.
-#[derive(Clone)]
+/// When this structure is dropped, the window is closed.
 pub struct Handle {
   window: Arc<winit::Window>,
   events: channel::Receiver<winit::WindowEvent>,
@@ -65,7 +64,7 @@ pub enum Event {
   Resized,
 }
 
-/// Opens a new window and returns a cloneable `Handle` to it.
+/// Opens a new window with the given options.
 pub fn open(options: Options) -> Handle {
   // Create channels to communicate with the window's event loop thread.
   let (event_sender, events) = channel::unbounded();
@@ -107,7 +106,7 @@ pub fn open(options: Options) -> Handle {
     });
   });
 
-  // Receive the window from the background thread and return a handle to it.
+  // Receive the window from the background thread and wrap it.
   let window = window.recv().expect("Could not create window").into();
 
   Handle { window, events }

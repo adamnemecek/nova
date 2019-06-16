@@ -14,10 +14,9 @@ use gfx_hal::Instance as _;
 use nova_log as log;
 use std::fmt;
 
-/// A self-contained instance of the graphics library.
-///
-/// There should only be one instance per application.
-pub struct Instance {
+/// A cloneable graphics context which can be used to create graphics resources
+/// and submit commands to a device.
+pub struct Context {
   // Fields must be in this order so that they are dropped in this order.
   queues: Queues,
   _device: backend::Device,
@@ -25,9 +24,9 @@ pub struct Instance {
   _backend: backend::Instance,
 }
 
-impl Instance {
-  /// Creates a new instance of the graphics library.
-  pub fn new(logger: &log::Logger) -> Result<Self, NewInstanceError> {
+impl Context {
+  /// Creates a new context using the best available graphics device.
+  pub fn new(logger: &log::Logger) -> Result<Self, NewContextError> {
     // Instantiate the backend.
     let backend = backend::Instance::create("nova", 1);
 
@@ -58,7 +57,7 @@ impl Instance {
     let adapter = adapters
       .into_iter()
       .next()
-      .ok_or(NewInstanceError::NoDevice)?;
+      .ok_or(NewContextError::NoDevice)?;
 
     log::debug!(logger,
       "selected graphics adapter";
@@ -101,7 +100,7 @@ impl Instance {
     // Extract backend queues into a `Queues` struct.
     let queues = Queues::new(queue_families, queues);
 
-    Ok(Instance {
+    Ok(Context {
       queues,
       _device: device,
       _backend: backend,
@@ -116,28 +115,28 @@ impl Instance {
   }
 }
 
-/// An error occurring during new instance creation.
+/// Error occurring during the creation of a new graphics context.
 #[derive(Debug)]
-pub enum NewInstanceError {
+pub enum NewContextError {
   /// There is no suitable graphics device.
   NoDevice,
   /// An error occurred during device creation.
   DeviceCreation(DeviceCreationError),
 }
 
-impl std::error::Error for NewInstanceError {}
+impl std::error::Error for NewContextError {}
 
-impl From<DeviceCreationError> for NewInstanceError {
+impl From<DeviceCreationError> for NewContextError {
   fn from(cause: DeviceCreationError) -> Self {
-    NewInstanceError::DeviceCreation(cause)
+    NewContextError::DeviceCreation(cause)
   }
 }
 
-impl fmt::Display for NewInstanceError {
+impl fmt::Display for NewContextError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      NewInstanceError::NoDevice => write!(f, "no suitable graphics device"),
-      NewInstanceError::DeviceCreation(cause) => {
+      NewContextError::NoDevice => write!(f, "no suitable graphics device"),
+      NewContextError::DeviceCreation(cause) => {
         write!(f, "failed to create graphics device: {}", cause)
       }
     }

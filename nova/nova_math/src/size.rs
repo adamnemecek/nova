@@ -29,6 +29,12 @@ impl<T: ScalarNum> Default for Size<T> {
   }
 }
 
+impl<T: ScalarNum> From<(T, T)> for Size<T> {
+  fn from(tuple: (T, T)) -> Self {
+    Size::new(tuple.0, tuple.1)
+  }
+}
+
 impl<T: ScalarNum> fmt::Debug for Size<T> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "({:?}, {:?})", &self.width, &self.height)

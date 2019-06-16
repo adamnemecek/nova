@@ -15,42 +15,40 @@ pub use specs::storage::{ComponentEvent, FlaggedStorage};
 pub use specs::world::Entity;
 pub use specs::{BitSet, Component};
 
-/// Container for entities, components, and shared resources.
+/// A standalone ECS context containing resources, entities, and components.
 #[derive(Default)]
-pub struct Instance {
+pub struct Context {
   world: specs::World,
 }
 
-impl Instance {
-  /// Create a new, empty instance.
+impl Context {
+  /// Create a new, empty ECS context.
   pub fn new() -> Self {
     Self::default()
   }
 
-  /// Gets an immutable reference to the resource of the type `R` in the
-  /// instance.
+  /// Gets an immutable reference to the resource of the type `R`.
   ///
   /// Panics if no such resource exists.
   pub fn resource<R: ResourceLike>(&self) -> Resource<R> {
     self.world.system_data()
   }
 
-  /// Gets a mutable reference to the resource of the type `R` in the instance.
+  /// Gets a mutable reference to the resource of the type `R`.
   ///
   /// Panics if no such resource exists.
   pub fn resource_mut<R: ResourceLike>(&self) -> ResourceMut<R> {
     self.world.system_data()
   }
 
-  /// Adds a resource of type `R` to the instance.
+  /// Sets the available resource of type `R`.
   ///
-  /// If a resource of type `R` already exists, it is dropped.
+  /// If a resource of type `R` already exists, the old value dropped.
   pub fn put_resource<R: ResourceLike>(&mut self, value: R) {
     self.world.add_resource(value);
   }
 
-  /// Returns an `Entities` struct for creating, deleting, and reading the
-  /// entities in the instance.
+  /// Returns an `Entities` struct for creating, deleting, and listing entities.
   pub fn entities(&self) -> Entities {
     self.world.system_data()
   }
@@ -63,7 +61,7 @@ impl Instance {
     self.world.maintain();
   }
 
-  /// Registers a possible component type with the instance.
+  /// Registers a possible component type.
   pub fn register_component<C: Component>(&mut self)
   where
     C::Storage: Default,
@@ -72,13 +70,13 @@ impl Instance {
   }
 
   /// Returns a `Components<C>` struct for reading the components of type `C`
-  /// for all entities in the instance.
+  /// for all entities.
   pub fn components<C: Component>(&self) -> Components<C> {
     self.world.system_data()
   }
 
   /// Returns a `ComponentsMut<C>` struct for reading and writing the components
-  /// of type `C` for all entities in the instance.
+  /// of type `C` for all entities.
   pub fn components_mut<C: Component>(&self) -> ComponentsMut<C> {
     self.world.system_data()
   }
