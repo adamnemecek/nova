@@ -2,23 +2,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::Gpu;
-use crate::images::ImageFormat;
-use crate::Backend;
+use crate::backend;
+use crate::Context;
 use gfx_hal::Device as _;
+use std::sync::Arc;
+use std::cmp;
 
-type HalRenderPass = <Backend as gfx_hal::Backend>::RenderPass;
+#[derive(Clone)]
+pub struct RenderPass(Arc<Inner>);
 
-pub struct RenderPass {
-  pass: HalRenderPass,
+struct Inner {
+  context: Context,
+  pass: Option<backend::RenderPass>,
 }
 
 impl RenderPass {
-  pub fn new(gpu: &Gpu) -> RenderPass {
-    const FORMAT: ImageFormat = ImageFormat::Bgra8Unorm;
+  pub(crate) const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
 
+  pub fn new(context: &Context) -> Self {
     let color_attachment = gfx_hal::pass::Attachment {
-      format: Some(FORMAT),
+      format: Some(Self::FORMAT),
       samples: 1,
       ops: gfx_hal::pass::AttachmentOps::new(
         gfx_hal::pass::AttachmentLoadOp::Clear,
@@ -46,20 +49,41 @@ impl RenderPass {
     };
 
     let pass = unsafe {
-      gpu
+      context
         .device
         .create_render_pass(&[color_attachment], &[subpass], &[dependency])
-        .expect("Could not create render pass")
+        .expect("failed to create render pass")
+        .into()
     };
 
-    RenderPass { pass }
+    RenderPass(Arc::new(Inner {
+      pass,
+      context: context.clone(),
+    }))
   }
 
-  pub fn destroy(self, gpu: &Gpu) {
-    unsafe { gpu.device.destroy_render_pass(self.pass) };
+  pub(crate) fn context(&self) -> &Context {
+    &self.0.context
   }
 
-  pub(crate) fn as_hal(&self) -> &HalRenderPass {
-    &self.pass
+  pub(crate) fn as_backend(&self) -> &backend::RenderPass {
+    self.0.pass.as_ref().unwrap()
+  }
+}
+
+impl Drop for Inner {
+  fn drop(&mut self) {
+    unsafe {
+      self
+        .context
+        .device
+        .destroy_render_pass(self.pass.take().unwrap());
+    }
+  }
+}
+
+impl cmp::PartialEq for RenderPass {
+  fn eq(&self, other: &RenderPass) -> bool {
+    Arc::ptr_eq(&self.0, &other.0)
   }
 }

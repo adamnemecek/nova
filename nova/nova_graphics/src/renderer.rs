@@ -2,6 +2,122 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+mod framebuffer;
+mod render_pass;
+
+pub(crate) use self::framebuffer::Framebuffer;
+pub(crate) use self::render_pass::RenderPass;
+
+use crate::cmd;
+use crate::{Context, Fence, Semaphore, Surface};
+use crossbeam_channel as channel;
+use nova_log as log;
+use nova_math::Size;
+use nova_time as time;
+use nova_window as window;
+use std::iter;
+use std::thread;
+
+#[derive(Clone)]
+pub struct Handle {
+  messages: channel::Sender<Message>,
+}
+
+impl Handle {
+  pub fn resize_surface(&self, size: Size<f64>) {
+    let _ = self.messages.send(Message::Resize(size));
+  }
+}
+
+enum Message {
+  Resize(Size<f64>),
+}
+
+pub fn start(context: &Context, window: &window::Handle, logger: &log::Logger) -> Handle {
+  let logger = logger.clone();
+  let (send_messages, recv_messages) = channel::unbounded();
+
+  let mut surface = Surface::new(&context, &window);
+
+  let render_pass = RenderPass::new(&context);
+  let frame_fence = Fence::new(&context);
+  let acquire_semaphore = Semaphore::new(&context);
+
+  let graphics_queue_id = context.queues().find_graphics_queue();
+
+  let command_pool =
+    cmd::Pool::new(&context, graphics_queue_id).expect("failed to create command pool");
+
+  let mut framebuffer = Framebuffer::new(&context);
+
+  framebuffer.set_render_pass(&render_pass);
+
+  thread::spawn(move || {
+    time::loop_at_frequency(60.0, |render_loop| {
+      // Process incoming messages.
+      loop {
+        let message = match recv_messages.try_recv() {
+          Ok(message) => message,
+          Err(channel::TryRecvError::Empty) => break,
+
+          // If the channel is disconnected, all handles have been dropped so
+          // shut down the renderer.
+          Err(channel::TryRecvError::Disconnected) => return render_loop.stop(),
+        };
+
+        match message {
+          Message::Resize(size) => surface.set_size(size),
+        }
+      }
+
+      // Wait for the previous frame to finish.
+      frame_fence.wait_and_reset();
+
+      // Acquire a backbuffer from the surface.
+      let backbuffer = match surface.acquire(&acquire_semaphore) {
+        Ok(backbuffer) => backbuffer,
+
+        Err(err) => {
+          log::error!(logger,
+            "failed to acquire surface backbuffer";
+            "cause" => log::Display(err),
+          );
+
+          return render_loop.stop();
+        }
+      };
+
+      // Attach the backbuffer to the framebuffer.
+      framebuffer.set_attachment(backbuffer.image());
+
+      // Record rendering commands.
+      let mut command_buffer = cmd::Buffer::new(&command_pool);
+      let mut cmd = command_buffer.record();
+
+      cmd.begin_render_pass(&framebuffer);
+
+      cmd.finish();
+
+      // Submit rendering commands.
+
+      // Present the backbuffer.
+      if let Err(err) = backbuffer.present(&[&acquire_semaphore]) {
+        log::error!(logger,
+          "failed to present surface backbuffer";
+          "cause" => log::Display(err),
+        );
+
+        return render_loop.stop();
+      }
+    });
+  });
+
+  Handle {
+    messages: send_messages,
+  }
+}
+
+/*
 mod canvas;
 mod framebuffer;
 mod pipeline;
@@ -131,3 +247,4 @@ pub struct RenderOptions<W, S> {
   pub wait_semaphores: W,
   pub signal_semaphores: S,
 }
+*/

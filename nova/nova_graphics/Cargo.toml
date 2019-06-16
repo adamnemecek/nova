@@ -5,12 +5,15 @@ authors = ["Brennan Frydl <me@bfrydl.com>"]
 edition = "2018"
 
 [dependencies]
+crossbeam-channel = "0.3"
+crossbeam-queue = "0.1"
 gfx-hal = "0.2"
 glsl-to-spirv = "0.1"
 image = "0.21"
 nova_ecs = { path = "../nova_ecs" }
 nova_log = { path = "../nova_log" }
 nova_math = { path = "../nova_math" }
+nova_time = { path = "../nova_time" }
 nova_window = { path = "../nova_window" }
 winit = "0.18"
 

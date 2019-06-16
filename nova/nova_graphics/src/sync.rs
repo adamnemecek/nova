@@ -15,7 +15,7 @@ impl Semaphore {
   pub fn new(context: &Context) -> Self {
     Self {
       semaphore: context
-        ._device
+        .device
         .create_semaphore()
         .expect("failed to create semaphore")
         .into(),
@@ -33,7 +33,7 @@ impl Drop for Semaphore {
     unsafe {
       self
         .context
-        ._device
+        .device
         .destroy_semaphore(self.semaphore.take().unwrap())
     };
   }
@@ -48,8 +48,8 @@ impl Fence {
   pub fn new(context: &Context) -> Self {
     Self {
       fence: context
-        ._device
-        .create_fence(false)
+        .device
+        .create_fence(true)
         .expect("failed to create fence")
         .into(),
       context: context.clone(),
@@ -60,13 +60,13 @@ impl Fence {
     unsafe {
       self
         .context
-        ._device
+        .device
         .wait_for_fence(self.as_backend(), !0)
         .expect("failed to wait for fence");
 
       self
         .context
-        ._device
+        .device
         .reset_fence(self.as_backend())
         .expect("failed to reset fence");
     }
@@ -82,7 +82,7 @@ impl Drop for Fence {
     unsafe {
       self
         .context
-        ._device
+        .device
         .destroy_fence(self.fence.take().unwrap())
     };
   }

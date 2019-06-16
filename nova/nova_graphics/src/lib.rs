@@ -2,17 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod renderer;
+
 mod backend;
+mod cmd;
 mod color;
 mod queues;
 mod surface;
 mod sync;
+mod image;
 
 pub use self::color::Color;
 pub use self::queues::{QueueId, Queues};
 pub use self::surface::{Backbuffer, Surface};
 pub use self::sync::{Fence, Semaphore};
 pub use gfx_hal::error::DeviceCreationError;
+pub use self::image::Image;
 
 use gfx_hal::Instance as _;
 use nova_log as log;
@@ -29,8 +34,8 @@ pub struct Context(Arc<ContextContent>);
 pub struct ContextContent {
   // Fields must be in this order so that they are dropped in this order.
   queues: Queues,
-  _device: backend::Device,
-  _adapter: backend::Adapter,
+  device: backend::Device,
+  adapter: backend::Adapter,
   backend: backend::Instance,
 }
 
@@ -112,8 +117,8 @@ impl Context {
 
     Ok(Self(Arc::new(ContextContent {
       backend,
-      _adapter: adapter,
-      _device: device,
+      adapter,
+      device,
       queues,
     })))
   }
@@ -158,5 +163,14 @@ impl fmt::Display for NewContextError {
         write!(f, "failed to create graphics device: {}", cause)
       }
     }
+  }
+}
+
+#[derive(Debug)]
+pub struct OutOfMemoryError;
+
+impl fmt::Display for OutOfMemoryError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "out of memory")
   }
 }

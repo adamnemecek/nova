@@ -81,6 +81,7 @@ impl Queues {
     // Otherwise just use the same queue as graphics commands.
     self.find_graphics_queue()
   }
+
   pub(crate) fn find_present_queue(&self, surface: &backend::Surface) -> QueueId {
     // Return the first queue that supports presentation for this surface.
     for (index, queue) in self.queues.iter().enumerate() {

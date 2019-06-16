@@ -32,3 +32,10 @@ pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
 
 pub type Fence = <Backend as gfx_hal::Backend>::Fence;
 pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
+
+pub type RenderPass = <Backend as gfx_hal::Backend>::RenderPass;
+
+pub type Framebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
+
+pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
+pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;

@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::backend;
-use crate::{Context, QueueId, Semaphore};
+use crate::{Context, Image, QueueId, Semaphore};
 use gfx_hal::{Device as _, Surface as _, Swapchain as _};
 use nova_math::{self as math, Size};
 use nova_window as window;
@@ -17,12 +17,14 @@ pub struct Surface {
   resized: bool,
 
   swapchain: Option<backend::Swapchain>,
-  swapchain_images: Vec<(backend::Image, backend::ImageView)>,
+  swapchain_images: Vec<Image>,
 
   context: Context,
 }
 
 impl Surface {
+  pub(crate) const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
+
   pub fn new(context: &Context, window: &window::Handle) -> Self {
     let size = window.size();
     let surface = context.backend.create_surface(window.as_ref());
@@ -95,7 +97,7 @@ impl Surface {
   fn create_swapchain(&mut self) {
     let (capabilities, _, _) = self
       .surface
-      .compatibility(&self.context._adapter.physical_device);
+      .compatibility(&self.context.adapter.physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: math::clamp(
@@ -115,7 +117,7 @@ impl Surface {
 
     let config = gfx_hal::SwapchainConfig {
       present_mode: gfx_hal::window::PresentMode::Fifo,
-      format: gfx_hal::format::Format::Bgra8Unorm,
+      format: Self::FORMAT,
       extent,
       image_count,
       image_layers: 1,
@@ -126,44 +128,32 @@ impl Surface {
     let (swapchain, backbuffers) = unsafe {
       self
         .context
-        ._device
+        .device
         .create_swapchain(&mut self.surface, config, None)
         .expect("Could not create swapchain")
     };
 
     self.swapchain = Some(swapchain);
-    self.size = Size::new(f64::from(extent.width), f64::from(extent.height));
+
+    let size = Size::new(extent.width, extent.height);
+
+    self.size = Size::new(f64::from(size.width), f64::from(size.height));
 
     for image in backbuffers {
-      let view = unsafe {
-        self
-          .context
-          ._device
-          .create_image_view(
-            &image,
-            gfx_hal::image::ViewKind::D2,
-            gfx_hal::format::Format::Bgra8Unorm,
-            gfx_hal::format::Swizzle::NO,
-            gfx_hal::image::SubresourceRange {
-              aspects: gfx_hal::format::Aspects::COLOR,
-              levels: 0..1,
-              layers: 0..1,
-            },
-          )
-          .expect("Could not create image view")
-      };
-
-      self.swapchain_images.push((image, view));
+      self.swapchain_images.push(Image::from_swapchain_image(
+        &self.context,
+        image,
+        size,
+        Self::FORMAT,
+      ));
     }
   }
 
   fn destroy_swapchain(&mut self) {
-    for (_image, view) in self.swapchain_images.drain(..) {
-      unsafe { self.context._device.destroy_image_view(view) };
-    }
+    self.swapchain_images.clear();
 
     if let Some(swapchain) = self.swapchain.take() {
-      unsafe { self.context._device.destroy_swapchain(swapchain) };
+      unsafe { self.context.device.destroy_swapchain(swapchain) };
     }
   }
 }
@@ -175,6 +165,14 @@ pub struct Backbuffer<'a> {
 }
 
 impl<'a> Backbuffer<'a> {
+  pub fn index(&self) -> usize {
+    self.index as usize
+  }
+
+  pub fn image(&self) -> &Image {
+    &self.surface.swapchain_images[self.index as usize]
+  }
+
   pub fn present(mut self, wait_semaphores: &[&Semaphore]) -> Result<(), SurfacePresentError> {
     debug_assert!(!self.presented, "already presented");
 
