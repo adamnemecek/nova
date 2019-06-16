@@ -5,37 +5,42 @@
 use crate::backend;
 use crate::Context;
 use gfx_hal::Device as _;
+use std::sync::Arc;
 
-pub struct Semaphore {
+#[derive(Clone)]
+pub struct Semaphore(Arc<SemaphoreInner>);
+
+struct SemaphoreInner {
   context: Context,
   semaphore: Option<backend::Semaphore>,
 }
 
 impl Semaphore {
   pub fn new(context: &Context) -> Self {
-    Self {
-      semaphore: context
-        .device
-        .create_semaphore()
-        .expect("failed to create semaphore")
-        .into(),
+    let semaphore = context
+      .device
+      .create_semaphore()
+      .expect("failed to create semaphore");
+
+    Self(Arc::new(SemaphoreInner {
+      semaphore: Some(semaphore),
       context: context.clone(),
-    }
+    }))
   }
 
   pub(crate) fn as_backend(&self) -> &backend::Semaphore {
-    self.semaphore.as_ref().unwrap()
+    self.0.semaphore.as_ref().unwrap()
   }
 }
 
-impl Drop for Semaphore {
+impl Drop for SemaphoreInner {
   fn drop(&mut self) {
     unsafe {
       self
         .context
         .device
-        .destroy_semaphore(self.semaphore.take().unwrap())
-    };
+        .destroy_semaphore(self.semaphore.take().unwrap());
+    }
   }
 }
 

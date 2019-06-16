@@ -9,7 +9,8 @@ pub(crate) use self::framebuffer::Framebuffer;
 pub(crate) use self::render_pass::RenderPass;
 
 use crate::cmd;
-use crate::{Context, Fence, Semaphore, Surface};
+use crate::pipeline;
+use crate::{Context, Fence, OutOfMemoryError, Semaphore, Submission, Surface};
 use crossbeam_channel as channel;
 use nova_log as log;
 use nova_math::Size;
@@ -33,24 +34,31 @@ enum Message {
   Resize(Size<f64>),
 }
 
-pub fn start(context: &Context, window: &window::Handle, logger: &log::Logger) -> Handle {
+pub fn start(
+  context: &Context,
+  window: &window::Handle,
+  logger: &log::Logger,
+) -> Result<Handle, OutOfMemoryError> {
+  let context = context.clone();
   let logger = logger.clone();
-  let (send_messages, recv_messages) = channel::unbounded();
-
-  let mut surface = Surface::new(&context, &window);
-
-  let render_pass = RenderPass::new(&context);
-  let frame_fence = Fence::new(&context);
-  let acquire_semaphore = Semaphore::new(&context);
 
   let graphics_queue_id = context.queues().find_graphics_queue();
-
-  let command_pool =
-    cmd::Pool::new(&context, graphics_queue_id).expect("failed to create command pool");
-
+  let command_pool = cmd::Pool::new(&context, graphics_queue_id)?;
+  let render_pass = RenderPass::new(&context);
+  let mut surface = Surface::new(&context, &window);
   let mut framebuffer = Framebuffer::new(&context);
 
   framebuffer.set_render_pass(&render_pass);
+
+  let frame_fence = Fence::new(&context);
+  let acquire_semaphore = Semaphore::new(&context);
+  let render_semaphore = Semaphore::new(&context);
+  let mut submission = Submission::new(graphics_queue_id);
+
+  submission.signal(&render_semaphore);
+  submission.wait_for(&acquire_semaphore, pipeline::Stage::COLOR_ATTACHMENT_OUTPUT);
+
+  let (send_messages, recv_messages) = channel::unbounded();
 
   thread::spawn(move || {
     time::loop_at_frequency(60.0, |render_loop| {
@@ -73,6 +81,9 @@ pub fn start(context: &Context, window: &window::Handle, logger: &log::Logger) -
       // Wait for the previous frame to finish.
       frame_fence.wait_and_reset();
 
+      // Clear resources used by the previous frame.
+      submission.command_buffers.clear();
+
       // Acquire a backbuffer from the surface.
       let backbuffer = match surface.acquire(&acquire_semaphore) {
         Ok(backbuffer) => backbuffer,
@@ -94,14 +105,17 @@ pub fn start(context: &Context, window: &window::Handle, logger: &log::Logger) -
       let mut command_buffer = cmd::Buffer::new(&command_pool);
       let mut cmd = command_buffer.record();
 
-      cmd.begin_render_pass(&framebuffer);
+      cmd.begin_render_pass(&mut framebuffer);
 
       cmd.finish();
 
       // Submit rendering commands.
+      submission.command_buffers.push(command_buffer);
+
+      context.queues().submit(&submission, &frame_fence);
 
       // Present the backbuffer.
-      if let Err(err) = backbuffer.present(&[&acquire_semaphore]) {
+      if let Err(err) = backbuffer.present(&[&render_semaphore]) {
         log::error!(logger,
           "failed to present surface backbuffer";
           "cause" => log::Display(err),
@@ -112,9 +126,9 @@ pub fn start(context: &Context, window: &window::Handle, logger: &log::Logger) -
     });
   });
 
-  Handle {
+  Ok(Handle {
     messages: send_messages,
-  }
+  })
 }
 
 /*

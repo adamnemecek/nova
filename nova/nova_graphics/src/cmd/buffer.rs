@@ -24,6 +24,10 @@ impl Buffer {
   pub fn record(&mut self) -> Recorder {
     Recorder::new(&self.pool, self.buffer.as_mut().unwrap())
   }
+
+  pub(crate) fn as_backend(&self) -> &backend::CommandBuffer {
+    self.buffer.as_ref().unwrap()
+  }
 }
 
 impl Drop for Buffer {
@@ -35,6 +39,7 @@ impl Drop for Buffer {
 pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
+  in_render_pass: bool,
 }
 
 impl<'a> Recorder<'a> {
@@ -50,13 +55,17 @@ impl<'a> Recorder<'a> {
       );
     }
 
-    Self { pool, buffer }
+    Self {
+      pool,
+      buffer,
+      in_render_pass: false,
+    }
   }
 
-  pub fn begin_render_pass(&mut self, framebuffer: &renderer::Framebuffer) {
-    let render_pass = framebuffer
-      .render_pass()
-      .expect("framebuffer has no render pass");
+  pub fn begin_render_pass(&mut self, framebuffer: &mut renderer::Framebuffer) {
+    framebuffer.ensure_created();
+
+    let render_pass = framebuffer.render_pass().unwrap();
     let size = framebuffer.size();
 
     let viewport = gfx_hal::pso::Viewport {
@@ -88,6 +97,16 @@ impl<'a> Recorder<'a> {
         gfx_hal::command::SubpassContents::Inline,
       );
     }
+
+    self.in_render_pass = true;
+  }
+
+  pub fn end_render_pass(&mut self) {
+    unsafe {
+      self.buffer.end_render_pass();
+    }
+
+    self.in_render_pass = false;
   }
 
   pub fn finish(self) {}
@@ -97,6 +116,10 @@ impl<'a> Recorder<'a> {
 
 impl<'a> Drop for Recorder<'a> {
   fn drop(&mut self) {
+    if self.in_render_pass {
+      self.end_render_pass();
+    }
+
     unsafe {
       self.buffer.finish();
     }

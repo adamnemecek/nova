@@ -21,7 +21,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   // Start the renderer.
-  let renderer = renderer::start(&graphics, &window, &logger);
+  let renderer = renderer::start(&graphics, &window, &logger)?;
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |main_loop| {

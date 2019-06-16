@@ -3,7 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::backend;
-use crate::Semaphore;
+use crate::cmd;
+use crate::{Fence, Semaphore, Submission};
+use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::QueueFamily as _;
 use std::iter;
 use std::sync::Mutex;
@@ -80,6 +82,30 @@ impl Queues {
 
     // Otherwise just use the same queue as graphics commands.
     self.find_graphics_queue()
+  }
+
+  pub fn submit<'a>(&'a self, submission: &'a Submission, fence: impl Into<Option<&'a Fence>>) {
+    let mut queue = self.queues[submission.queue_id.index].queue.lock().unwrap();
+
+    unsafe {
+      queue.submit(
+        gfx_hal::Submission {
+          command_buffers: submission
+            .command_buffers
+            .iter()
+            .map(cmd::Buffer::as_backend),
+          wait_semaphores: submission
+            .wait_semaphores
+            .iter()
+            .map(|(sem, stage)| (sem.as_backend(), *stage)),
+          signal_semaphores: submission
+            .signal_semaphores
+            .iter()
+            .map(Semaphore::as_backend),
+        },
+        fence.into().map(Fence::as_backend),
+      );
+    }
   }
 
   pub(crate) fn find_present_queue(&self, surface: &backend::Surface) -> QueueId {

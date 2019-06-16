@@ -56,8 +56,13 @@ impl Framebuffer {
     }
   }
 
-  fn create(&mut self) {
+  pub(crate) fn ensure_created(&mut self) {
+    if self.framebuffer.is_some() {
+      return;
+    }
+
     let image = self.image.as_ref().expect("an image is required");
+
     let render_pass = self
       .render_pass
       .as_ref()
@@ -86,6 +91,13 @@ impl Framebuffer {
     self.framebuffer = Some(framebuffer);
   }
 
+  pub(crate) fn as_backend(&self) -> &backend::Framebuffer {
+    self
+      .framebuffer
+      .as_ref()
+      .expect("framebuffer has not been created")
+  }
+
   fn destroy(&mut self) {
     if let Some(framebuffer) = self.framebuffer.take() {
       unsafe {
@@ -98,10 +110,6 @@ impl Framebuffer {
           .destroy_framebuffer(framebuffer);
       }
     }
-  }
-
-  pub(crate) fn as_backend(&self) -> &backend::Framebuffer {
-    self.framebuffer.as_ref().expect("framebuffer has not been created")
   }
 }
 

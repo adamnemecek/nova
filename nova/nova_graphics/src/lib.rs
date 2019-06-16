@@ -4,20 +4,26 @@
 
 pub mod renderer;
 
+pub mod pipeline {
+  pub use gfx_hal::pso::PipelineStage as Stage;
+}
+
 mod backend;
 mod cmd;
 mod color;
+mod image;
 mod queues;
+mod submission;
 mod surface;
 mod sync;
-mod image;
 
 pub use self::color::Color;
+pub use self::image::Image;
 pub use self::queues::{QueueId, Queues};
 pub use self::surface::{Backbuffer, Surface};
 pub use self::sync::{Fence, Semaphore};
+pub use self::submission::Submission;
 pub use gfx_hal::error::DeviceCreationError;
-pub use self::image::Image;
 
 use gfx_hal::Instance as _;
 use nova_log as log;
@@ -168,6 +174,8 @@ impl fmt::Display for NewContextError {
 
 #[derive(Debug)]
 pub struct OutOfMemoryError;
+
+impl std::error::Error for OutOfMemoryError {}
 
 impl fmt::Display for OutOfMemoryError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
