@@ -41,7 +41,7 @@ impl Renderer {
 
     let queue_family = gpu::queues::borrow(res)
       .find(QueueFamily::supports_graphics)
-      .expect("Device does not support graphics commands.");
+      .expect("device does not support graphics commands");
 
     let render_pass = RenderPass::new(&gpu);
     let frame_fence = Fence::new(&gpu);

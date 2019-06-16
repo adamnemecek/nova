@@ -3,15 +3,21 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::backend;
-use crate::{Context, QueueId};
-use nova_math::Size;
+use crate::{Context, QueueId, Semaphore};
+use gfx_hal::{Device as _, Surface as _, Swapchain as _};
+use nova_math::{self as math, Size};
 use nova_window as window;
+use std::cmp;
+use std::fmt;
 
 pub struct Surface {
   size: Size<f64>,
   surface: backend::Surface,
   present_queue_id: QueueId,
   resized: bool,
+
+  swapchain: Option<backend::Swapchain>,
+  swapchain_images: Vec<(backend::Image, backend::ImageView)>,
 
   context: Context,
 }
@@ -28,6 +34,9 @@ impl Surface {
       present_queue_id,
       resized: false,
 
+      swapchain: None,
+      swapchain_images: Vec::new(),
+
       context: context.clone(),
     }
   }
@@ -38,84 +47,63 @@ impl Surface {
       self.resized = true;
     }
   }
-}
 
-/*
-  pub fn acquire_backbuffer(
-    &mut self,
-    gpu: &Gpu,
-    images: &mut Images,
-    signal_ready: &Semaphore,
-  ) -> Option<Backbuffer> {
+  pub fn acquire<'a>(
+    &'a mut self,
+    signal: impl Into<Option<&'a Semaphore>>,
+  ) -> Result<Backbuffer, SurfaceAcquireError> {
     if self.resized {
       self.resized = false;
-      self.destroy_swapchain(gpu, images);
+      self.destroy_swapchain();
     }
 
     if self.swapchain.is_none() {
-      self.create_swapchain(gpu, images);
+      self.create_swapchain();
     }
 
-    let swapchain = match self.swapchain.as_mut() {
-      Some(s) => s,
-      None => return None,
+    let signal = signal.into().map(Semaphore::as_backend);
+
+    let index = loop {
+      let image = unsafe {
+        self
+          .swapchain
+          .as_mut()
+          .unwrap()
+          .acquire_image(!0, signal, None)
+      };
+
+      match image {
+        Ok((index, None)) => {
+          break index;
+        }
+
+        Err(err) if err != gfx_hal::AcquireError::OutOfDate => {
+          return Err(err.into());
+        }
+
+        _ => {}
+      }
     };
 
-    let result =
-      unsafe { swapchain.acquire_image(!0, gfx_hal::FrameSync::Semaphore(signal_ready.as_hal())) };
-
-    match result {
-      Ok(index) => Some(Backbuffer {
-        index,
-        image_id: self.swapchain_image_ids[index as usize],
-      }),
-
-      _ => None,
-    }
+    Ok(Backbuffer {
+      surface: self,
+      index,
+      presented: false,
+    })
   }
 
-  pub fn present_backbuffer<'a, W, Wi>(
-    &'a mut self,
-    queues: &mut CommandQueues,
-    backbuffer: Backbuffer,
-    wait_semaphores: W,
-  ) where
-    W: IntoIterator<Item = &'a Wi>,
-    Wi: 'a + Borrow<Semaphore>,
-  {
-    let swapchain = match self.swapchain.as_ref() {
-      Some(s) => s,
-      None => return,
-    };
-
-    use std::iter;
-
-    let wait_semaphores = wait_semaphores
-      .into_iter()
-      .map(Borrow::borrow)
-      .map(Semaphore::as_hal);
-
-    let result = unsafe {
-      queues
-        .get_mut(&self.queue_family)
-        .present(iter::once((swapchain, backbuffer.index)), wait_semaphores)
-    };
-
-    if result.is_err() {
-      self.resized = true;
-    }
-  }
-
-  fn create_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
-    let (capabilities, _, _, _) = self.surface.compatibility(&gpu.adapter.physical_device);
+  fn create_swapchain(&mut self) {
+    let (capabilities, _, _) = self
+      .surface
+      .compatibility(&self.context._adapter.physical_device);
 
     let extent = gfx_hal::window::Extent2D {
-      width: clamp(
-        self.size.width,
+      width: math::clamp(
+        self.size.width.round() as u32,
         capabilities.extents.start.width..capabilities.extents.end.width,
       ),
-      height: clamp(
-        self.size.height,
+      height: math::clamp(
+        self.size.height.round() as u32,
         capabilities.extents.start.height..capabilities.extents.end.height,
       ),
     };
@@ -127,79 +115,177 @@ impl Surface {
 
     let config = gfx_hal::SwapchainConfig {
       present_mode: gfx_hal::window::PresentMode::Fifo,
-      format: FORMAT,
+      format: gfx_hal::format::Format::Bgra8Unorm,
       extent,
       image_count,
       image_layers: 1,
       image_usage: gfx_hal::image::Usage::COLOR_ATTACHMENT,
-      composite_alpha: gfx_hal::window::CompositeAlpha::Opaque,
+      composite_alpha: gfx_hal::window::CompositeAlpha::OPAQUE,
     };
 
     let (swapchain, backbuffers) = unsafe {
-      gpu
-        .device
+      self
+        .context
+        ._device
         .create_swapchain(&mut self.surface, config, None)
         .expect("Could not create swapchain")
     };
 
     self.swapchain = Some(swapchain);
-    self.size = Size::new(extent.width, extent.height);
+    self.size = Size::new(f64::from(extent.width), f64::from(extent.height));
 
-    match backbuffers {
-      gfx_hal::Backbuffer::Images(imgs) => {
-        for img in imgs {
-          let image = Image::new_view(&gpu, img, FORMAT, self.size);
-          let id = images.insert(image);
+    for image in backbuffers {
+      let view = unsafe {
+        self
+          .context
+          ._device
+          .create_image_view(
+            &image,
+            gfx_hal::image::ViewKind::D2,
+            gfx_hal::format::Format::Bgra8Unorm,
+            gfx_hal::format::Swizzle::NO,
+            gfx_hal::image::SubresourceRange {
+              aspects: gfx_hal::format::Aspects::COLOR,
+              levels: 0..1,
+              layers: 0..1,
+            },
+          )
+          .expect("Could not create image view")
+      };
 
-          images.transition_image(
-            id,
-            PipelineStage::COLOR_ATTACHMENT_OUTPUT,
-            ImageAccess::empty()..ImageAccess::empty(),
-            ImageLayout::Undefined..ImageLayout::Present,
-          );
-
-          self.swapchain_image_ids.push(id);
-        }
-      }
-
-      // I think this only happens with OpenGL, which isn't supported.
-      _ => panic!("Device created framebuffer objects."),
-    };
+      self.swapchain_images.push((image, view));
+    }
   }
 
-  pub fn destroy(mut self, gpu: &Gpu, images: &mut Images) {
-    self.destroy_swapchain(gpu, images);
-  }
-
-  fn destroy_swapchain(&mut self, gpu: &Gpu, images: &mut Images) {
-    for image_id in self.swapchain_image_ids.drain(..) {
-      images.destroy_image(gpu, image_id);
+  fn destroy_swapchain(&mut self) {
+    for (_image, view) in self.swapchain_images.drain(..) {
+      unsafe { self.context._device.destroy_image_view(view) };
     }
 
     if let Some(swapchain) = self.swapchain.take() {
-      unsafe { gpu.device.destroy_swapchain(swapchain) };
+      unsafe { self.context._device.destroy_swapchain(swapchain) };
     }
   }
 }
 
-pub struct Backbuffer {
+pub struct Backbuffer<'a> {
+  surface: &'a mut Surface,
   index: u32,
-  image_id: ImageId,
+  presented: bool,
 }
 
-impl Backbuffer {
-  pub fn image_id(&self) -> ImageId {
-    self.image_id
+impl<'a> Backbuffer<'a> {
+  pub fn present(mut self, wait_semaphores: &[&Semaphore]) -> Result<(), SurfacePresentError> {
+    debug_assert!(!self.presented, "already presented");
+
+    self.presented = true;
+    self.present_impl(wait_semaphores)
   }
-}
 
-quick_error! {
-  #[derive(Debug)]
-  pub enum CreateSurfaceError {
-    PresentNotSupported {
-      display("the graphics device does not support presentation to this window")
+  fn present_impl(&mut self, wait_semaphores: &[&Semaphore]) -> Result<(), SurfacePresentError> {
+    let swapchain = self.surface.swapchain.as_ref().unwrap();
+
+    let result = self.surface.context.queues.present(
+      self.surface.present_queue_id,
+      swapchain,
+      self.index,
+      wait_semaphores,
+    );
+
+    match result {
+      Ok(()) => Ok(()),
+
+      Err(gfx_hal::window::PresentError::OutOfDate) => {
+        self.surface.destroy_swapchain();
+
+        Ok(())
+      }
+
+      Err(err) => Err(err.into()),
     }
   }
 }
 
-*/
+impl<'a> Drop for Backbuffer<'a> {
+  fn drop(&mut self) {
+    // Try to present automatically if it has not yet been done but ignore
+    // errors.
+    if !self.presented {
+      let _ = self.present_impl(&[]);
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum SurfaceAcquireError {
+  OutOfMemory,
+  SurfaceLost,
+  DeviceLost,
+}
+
+impl fmt::Display for SurfaceAcquireError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(
+      f,
+      "{}",
+      match self {
+        SurfaceAcquireError::OutOfMemory => "out of memory",
+        SurfaceAcquireError::SurfaceLost => "surface lost",
+        SurfaceAcquireError::DeviceLost => "device lost",
+      }
+    )
+  }
+}
+
+impl From<gfx_hal::AcquireError> for SurfaceAcquireError {
+  fn from(value: gfx_hal::AcquireError) -> Self {
+    match value {
+      gfx_hal::AcquireError::OutOfMemory(_) => SurfaceAcquireError::OutOfMemory,
+      gfx_hal::AcquireError::SurfaceLost(_) => SurfaceAcquireError::SurfaceLost,
+      gfx_hal::AcquireError::DeviceLost(_) => SurfaceAcquireError::DeviceLost,
+
+      gfx_hal::AcquireError::NotReady => {
+        panic!("surface acquire timeout expired but should be infinite");
+      }
+
+      gfx_hal::AcquireError::OutOfDate => {
+        panic!("out of date surface should be handled automatically");
+      }
+    }
+  }
+}
+
+#[derive(Debug)]
+pub enum SurfacePresentError {
+  OutOfMemory,
+  SurfaceLost,
+  DeviceLost,
+}
+
+impl fmt::Display for SurfacePresentError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(
+      f,
+      "{}",
+      match self {
+        SurfacePresentError::OutOfMemory => "out of memory",
+        SurfacePresentError::SurfaceLost => "surface lost",
+        SurfacePresentError::DeviceLost => "device lost",
+      }
+    )
+  }
+}
+
+impl From<gfx_hal::window::PresentError> for SurfacePresentError {
+  fn from(value: gfx_hal::window::PresentError) -> Self {
+    match value {
+      gfx_hal::window::PresentError::OutOfMemory(_) => SurfacePresentError::OutOfMemory,
+      gfx_hal::window::PresentError::SurfaceLost(_) => SurfacePresentError::SurfaceLost,
+      gfx_hal::window::PresentError::DeviceLost(_) => SurfacePresentError::DeviceLost,
+
+      gfx_hal::window::PresentError::OutOfDate => {
+        panic!("out of date surface should be handled automatically");
+      }
+    }
+  }
+}

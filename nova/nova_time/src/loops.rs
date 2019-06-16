@@ -36,7 +36,7 @@ impl LoopContext {
     self.delta_time
   }
 
-  pub fn run(&mut self, closure: impl Fn(&mut LoopContext)) {
+  pub fn run(&mut self, mut closure: impl FnMut(&mut LoopContext)) {
     self.delta_time = Duration::default();
 
     while !self.stop {
@@ -55,7 +55,7 @@ impl LoopContext {
   }
 }
 
-pub fn loop_at_frequency(hz: f64, closure: impl Fn(&mut LoopContext)) {
+pub fn loop_at_frequency(hz: f64, closure: impl FnMut(&mut LoopContext)) {
   let mut ctx = LoopContext::default();
 
   ctx.set_frequency(hz);

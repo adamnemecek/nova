@@ -3,6 +3,7 @@ use nova::log;
 use nova::time;
 use nova::window;
 use std::error::Error;
+use std::thread;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
   // Create a terminal logger and set it as the global default.
@@ -19,8 +20,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     ..Default::default()
   });
 
-  // Create a surface from the window for rendering.
-  let _surface = graphics::Surface::new(&graphics, &window);
+  // Start the renderer on a separate thread.
+  start_renderer(&graphics, &window, &logger);
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |loop_ctx| {
@@ -35,4 +36,46 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   Ok(())
+}
+
+/// Starts a renderer loop on a background thread.
+///
+/// TODO: This should maybe be contained in a `Renderer` type.
+fn start_renderer(graphics: &graphics::Context, window: &window::Handle, logger: &log::Logger) {
+  let logger = logger.clone();
+
+  // Create resources needed for rendering.
+  let mut surface = graphics::Surface::new(&graphics, &window);
+  let acquire_semaphore = graphics::Semaphore::new(&graphics);
+
+  // Run the renderer 60 times per second on a background thread.
+  thread::spawn(move || {
+    time::loop_at_frequency(60.0, |loop_ctx| {
+      // Acquire a backbuffer from the surface to render to.
+      let backbuffer = match surface.acquire(&acquire_semaphore) {
+        Ok(backbuffer) => backbuffer,
+
+        Err(err) => {
+          log::error!(logger,
+            "failed to acquire surface backbuffer";
+            "cause" => format!("{}", err),
+          );
+
+          return loop_ctx.stop();
+        }
+      };
+
+      // TODO: Render
+
+      // Present the rendered backbuffer.
+      if let Err(err) = backbuffer.present(&[&acquire_semaphore]) {
+        log::error!(logger,
+          "failed to present surface backbuffer";
+          "cause" => format!("{}", err),
+        );
+
+        return loop_ctx.stop();
+      }
+    });
+  });
 }

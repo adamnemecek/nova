@@ -6,11 +6,13 @@ mod backend;
 mod color;
 mod queues;
 mod surface;
+mod sync;
 
 pub use self::color::Color;
 pub use self::queues::{QueueId, Queues};
+pub use self::surface::{Surface, Backbuffer};
 pub use gfx_hal::error::DeviceCreationError;
-pub use self::surface::Surface;
+pub use self::sync::{Fence, Semaphore};
 
 use gfx_hal::Instance as _;
 use nova_log as log;

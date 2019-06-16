@@ -14,6 +14,7 @@ use std::thread;
 /// Handle to a platform-specific window.
 ///
 /// When this structure is dropped, the window is closed.
+#[derive(Clone)]
 pub struct Handle {
   window: Arc<winit::Window>,
   events: channel::Receiver<winit::WindowEvent>,

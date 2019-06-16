@@ -3,10 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::backend;
+use crate::Semaphore;
 use gfx_hal::QueueFamily as _;
+use std::iter;
+use std::sync::Mutex;
 
 /// Identifies a single device queue.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct QueueId {
   index: usize,
 
@@ -22,8 +25,7 @@ pub struct Queues {
 
 struct Queue {
   family: backend::QueueFamily,
-  #[allow(dead_code)]
-  queue: backend::Queue,
+  queue: Mutex<backend::Queue>,
 }
 
 impl Queues {
@@ -40,7 +42,8 @@ impl Queues {
         .expect("adapter did not open all requested queue groups")
         .into_iter()
         .next()
-        .expect("adapter did not open a queue for one or more requested queue groups");
+        .expect("adapter did not open a queue for one or more requested queue groups")
+        .into();
 
       queues.push(Queue { queue, family });
     }
@@ -78,11 +81,10 @@ impl Queues {
     // Otherwise just use the same queue as graphics commands.
     self.find_graphics_queue()
   }
-  
   pub(crate) fn find_present_queue(&self, surface: &backend::Surface) -> QueueId {
     // Return the first queue that supports presentation for this surface.
     for (index, queue) in self.queues.iter().enumerate() {
-    use gfx_hal::Surface as _;
+      use gfx_hal::Surface as _;
 
       if surface.supports_queue_family(&queue.family) {
         return QueueId {
@@ -92,6 +94,33 @@ impl Queues {
       }
     }
 
-    panic!("device cannot present to window"); 
+    panic!("device cannot present to window");
+  }
+
+  pub(crate) fn present(
+    &self,
+    queue_id: QueueId,
+    swapchain: &backend::Swapchain,
+    image_index: u32,
+    wait_for: &[&Semaphore],
+  ) -> Result<(), gfx_hal::window::PresentError> {
+    use gfx_hal::queue::RawCommandQueue as _;
+
+    let result = unsafe {
+      self.queues[queue_id.index]
+        .queue
+        .lock()
+        .expect("failed to lock queue")
+        .present(
+          iter::once((swapchain, image_index)),
+          wait_for.iter().map(|s| s.as_backend()),
+        )
+    };
+
+    match result {
+      Ok(None) => Ok(()),
+      Ok(Some(_)) => Err(gfx_hal::window::PresentError::OutOfDate),
+      Err(err) => Err(err),
+    }
   }
 }

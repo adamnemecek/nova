@@ -26,3 +26,9 @@ pub type QueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
 
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
 pub type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;
+
+pub type Image = <Backend as gfx_hal::Backend>::Image;
+pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
+
+pub type Fence = <Backend as gfx_hal::Backend>::Fence;
+pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
