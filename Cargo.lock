@@ -854,6 +854,7 @@ dependencies = [
  "nova_ecs 0.4.0",
  "nova_log 0.1.0",
  "nova_math 0.4.0",
+ "nova_window 0.3.0",
  "winit 0.18.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

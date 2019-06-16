@@ -2,68 +2,45 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::gpu::queues::{CommandQueues, QueueFamily};
-use crate::gpu::sync::Semaphore;
-use crate::gpu::{self, Gpu};
-use crate::images::{Image, ImageAccess, ImageFormat, ImageId, ImageLayout, Images};
-use crate::renderer::PipelineStage;
-use crate::Backend;
-use gfx_hal::queue::RawCommandQueue as _;
-use gfx_hal::{Device as _, Surface as _, Swapchain as _};
-use nova_core::math::{clamp, Size};
-use nova_core::quick_error;
-use nova_core::resources::Resources;
-use std::borrow::Borrow;
-use std::cmp;
-use winit::Window;
-
-pub(crate) type HalSurface = <Backend as gfx_hal::Backend>::Surface;
-type HalSwapchain = <Backend as gfx_hal::Backend>::Swapchain;
-
-const FORMAT: ImageFormat = ImageFormat::Bgra8Unorm;
+use crate::backend;
+use crate::{Context, QueueId};
+use nova_math::Size;
+use nova_window as window;
 
 pub struct Surface {
-  surface: HalSurface,
-  swapchain: Option<HalSwapchain>,
-  swapchain_image_ids: Vec<ImageId>,
-  queue_family: QueueFamily,
-  size: Size<u32>,
+  size: Size<f64>,
+  surface: backend::Surface,
+  present_queue_id: QueueId,
   resized: bool,
+
+  context: Context,
 }
 
 impl Surface {
-  pub fn new(res: &Resources, window: &Window) -> Result<Self, CreateSurfaceError> {
-    let gpu = gpu::borrow(res);
+  pub fn new(context: &Context, window: &window::Handle) -> Self {
+    let size = window.size();
+    let surface = context.backend.create_surface(window.as_ref());
+    let present_queue_id = context.queues.find_present_queue(&surface);
 
-    let surface = gpu.backend.create_surface(window);
-
-    let queue_family = gpu::queues::borrow(res)
-      .find(|f| surface.supports_queue_family(f.as_hal()))
-      .ok_or(CreateSurfaceError::PresentNotSupported)?;
-
-    let (width, height): (u32, u32) = window
-      .get_inner_size()
-      .expect("Could not get window size")
-      .to_physical(window.get_hidpi_factor())
-      .into();
-
-    Ok(Self {
+    Self {
+      size,
       surface,
-      swapchain: None,
-      swapchain_image_ids: Vec::with_capacity(3),
-      queue_family,
-      size: Size { width, height },
+      present_queue_id,
       resized: false,
-    })
+
+      context: context.clone(),
+    }
   }
 
-  pub fn set_size(&mut self, size: Size<u32>) {
+  pub fn set_size(&mut self, size: Size<f64>) {
     if size != self.size {
       self.size = size;
       self.resized = true;
     }
   }
+}
 
+/*
   pub fn acquire_backbuffer(
     &mut self,
     gpu: &Gpu,
@@ -224,3 +201,5 @@ quick_error! {
     }
   }
 }
+
+*/

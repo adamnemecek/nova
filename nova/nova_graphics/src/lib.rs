@@ -5,23 +5,31 @@
 mod backend;
 mod color;
 mod queues;
+mod surface;
 
 pub use self::color::Color;
 pub use self::queues::{QueueId, Queues};
 pub use gfx_hal::error::DeviceCreationError;
+pub use self::surface::Surface;
 
 use gfx_hal::Instance as _;
 use nova_log as log;
 use std::fmt;
+use std::ops;
+use std::sync::Arc;
 
 /// A cloneable graphics context which can be used to create graphics resources
 /// and submit commands to a device.
-pub struct Context {
+#[derive(Clone)]
+pub struct Context(Arc<ContextContent>);
+
+/// Shared content of a cloneable `Context`.
+pub struct ContextContent {
   // Fields must be in this order so that they are dropped in this order.
   queues: Queues,
   _device: backend::Device,
   _adapter: backend::Adapter,
-  _backend: backend::Instance,
+  backend: backend::Instance,
 }
 
 impl Context {
@@ -100,18 +108,26 @@ impl Context {
     // Extract backend queues into a `Queues` struct.
     let queues = Queues::new(queue_families, queues);
 
-    Ok(Context {
-      queues,
-      _device: device,
-      _backend: backend,
+    Ok(Self(Arc::new(ContextContent {
+      backend,
       _adapter: adapter,
-    })
+      _device: device,
+      queues,
+    })))
   }
 
   /// Gets a `Queues` structure for accessing the graphics, compute, and
   /// transfer command queues on the device.
   pub fn queues(&self) -> &Queues {
-    &self.queues
+    &self.0.queues
+  }
+}
+
+impl ops::Deref for Context {
+  type Target = ContextContent;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
   }
 }
 

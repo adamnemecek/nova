@@ -111,3 +111,9 @@ pub fn open(options: Options) -> Handle {
 
   Handle { window, events }
 }
+
+impl AsRef<winit::Window> for Handle {
+  fn as_ref(&self) -> &winit::Window {
+    &self.window
+  }
+}

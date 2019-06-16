@@ -78,4 +78,20 @@ impl Queues {
     // Otherwise just use the same queue as graphics commands.
     self.find_graphics_queue()
   }
+  
+  pub(crate) fn find_present_queue(&self, surface: &backend::Surface) -> QueueId {
+    // Return the first queue that supports presentation for this surface.
+    for (index, queue) in self.queues.iter().enumerate() {
+    use gfx_hal::Surface as _;
+
+      if surface.supports_queue_family(&queue.family) {
+        return QueueId {
+          index,
+          family_id: queue.family.id(),
+        };
+      }
+    }
+
+    panic!("device cannot present to window"); 
+  }
 }

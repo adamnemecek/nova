@@ -23,3 +23,6 @@ pub type Device = <Backend as gfx_hal::Backend>::Device;
 pub type Queue = <Backend as gfx_hal::Backend>::CommandQueue;
 pub type Queues = gfx_hal::queue::Queues<Backend>;
 pub type QueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
+
+pub type Surface = <Backend as gfx_hal::Backend>::Surface;
+pub type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;
