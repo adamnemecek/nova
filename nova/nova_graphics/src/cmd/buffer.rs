@@ -6,7 +6,7 @@ use crate::cmd::Pool;
 use crate::{backend, pipeline, renderer};
 use gfx_hal::command::RawCommandBuffer as _;
 use std::sync::atomic;
-use std::{mem, slice, ops};
+use std::{mem, ops, slice};
 
 /// Buffer for recording commands to submit to a device queue.
 pub struct Buffer {
@@ -100,8 +100,7 @@ impl<'a> Recorder<'a> {
         &[
           // Clear the framebuffer to eigengrau.
           gfx_hal::command::ClearValue::Color(gfx_hal::command::ClearColor::Float([
-            //0.086, 0.086, 0.114, 1.0,
-            1.0, 0.0, 0.0, 1.0,
+            0.086, 0.086, 0.114, 1.0,
           ]))
           .into(),
         ],
@@ -118,7 +117,6 @@ impl<'a> Recorder<'a> {
 
     self.graphics_pipeline = Some(pipeline.clone());
   }
-
 
   /// Set the push constants to the given value.
   ///

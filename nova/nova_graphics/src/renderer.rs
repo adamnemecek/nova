@@ -8,15 +8,16 @@ mod render_pass;
 pub(crate) use self::framebuffer::Framebuffer;
 pub(crate) use self::render_pass::RenderPass;
 
-use crate::cmd;
-use crate::pipeline;
-use crate::{Context, Fence, OutOfMemoryError, Semaphore, Submission, Surface};
+use crate::{
+  cmd, pipeline, shader, Color, Context, Fence, OutOfMemoryError, Semaphore, Submission, Surface,
+};
+
 use nova_log as log;
 use nova_math::Size;
 use nova_sync::channel;
 use nova_time as time;
 use nova_window as window;
-use std::thread;
+use std::{mem, thread};
 
 /// Renders graphics onto a window on a background thread.
 pub struct Renderer {
@@ -67,6 +68,31 @@ pub fn start(
   let frame_fence = Fence::new(&context)?;
   let acquire_semaphore = Semaphore::new(&context)?;
   let render_semaphore = Semaphore::new(&context)?;
+
+  let vertex_shader = shader::compile_hlsl(
+    &context,
+    shader::Stage::Vertex,
+    include_str!("./renderer/shaders/quad.vert"),
+  );
+
+  let fragment_shader = shader::compile_hlsl(
+    &context,
+    shader::Stage::Fragment,
+    include_str!("./renderer/shaders/color.frag"),
+  );
+
+  let pipeline = pipeline::Graphics::new(
+    &context,
+    &render_pass,
+    pipeline::Options {
+      size_of_push_constants: mem::size_of::<Color>(),
+      shaders: pipeline::ShaderSet {
+        vertex: vertex_shader.expect("failed to create vertex shader"),
+        fragment: fragment_shader.expect("failed to create fragment shader"),
+      },
+    },
+  )
+  .expect("failed to create graphics pipeline");
 
   // Set up a submission that waits for the acquire semaphore and signals the
   // render semaphore when complete.
@@ -133,6 +159,10 @@ pub fn start(
       let mut cmd = command_buffer.record();
 
       cmd.begin_render_pass(&mut framebuffer);
+
+      cmd.bind_graphics_pipeline(&pipeline);
+      cmd.push_graphics_constants(&Color::new(0.0, 1.0, 0.0, 1.0));
+      cmd.draw(0..4);
 
       cmd.finish();
 
