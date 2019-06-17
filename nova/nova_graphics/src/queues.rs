@@ -7,8 +7,8 @@ use crate::cmd;
 use crate::{Fence, Semaphore, Submission};
 use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::QueueFamily as _;
+use nova_sync::Mutex;
 use std::iter;
-use std::sync::Mutex;
 
 /// Identifies a single device queue.
 #[derive(Debug, Clone, Copy)]
@@ -85,7 +85,7 @@ impl Queues {
   }
 
   pub fn submit<'a>(&'a self, submission: &'a Submission, fence: impl Into<Option<&'a Fence>>) {
-    let mut queue = self.queues[submission.queue_id.index].queue.lock().unwrap();
+    let mut queue = self.queues[submission.queue_id.index].queue.lock();
 
     unsafe {
       queue.submit(
@@ -134,7 +134,7 @@ impl Queues {
     use gfx_hal::queue::RawCommandQueue as _;
 
     let result = unsafe {
-      self.queues[queue_id.index].queue.lock().unwrap().present(
+      self.queues[queue_id.index].queue.lock().present(
         iter::once((swapchain, image_index)),
         wait_for.iter().map(|s| s.as_backend()),
       )

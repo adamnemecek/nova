@@ -6,8 +6,8 @@ mod options;
 
 pub use self::options::Options;
 
-use crossbeam_channel as channel;
 use nova_math::Size;
+use nova_sync::channel;
 use std::sync::Arc;
 use std::thread;
 

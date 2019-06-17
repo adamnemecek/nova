@@ -4,12 +4,13 @@
 
 use crate::backend;
 use crate::{Context, OutOfMemoryError, QueueId};
-use crossbeam_queue::SegQueue;
 use gfx_hal::pool::RawCommandPool as _;
 use gfx_hal::Device as _;
+use nova_sync::queue::SegQueue;
+use nova_sync::{Mutex, MutexGuard};
 use std::iter;
 use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::Arc;
 
 /// Pool of reusable command buffers.
 ///
@@ -71,14 +72,14 @@ impl Pool {
 
   /// Returns a locked reference to the underlying backend command pool.
   pub(crate) fn as_backend(&self) -> MutexGuard<backend::CommandPool> {
-    self.0.pool.as_ref().unwrap().lock().unwrap()
+    self.0.pool.as_ref().unwrap().lock()
   }
 }
 
 impl Drop for PoolInner {
   fn drop(&mut self) {
     let context = &self.context;
-    let mut pool = self.pool.take().unwrap().into_inner().unwrap();
+    let mut pool = self.pool.take().unwrap().into_inner();
 
     // Free all allocated command buffers before destroying the pool.
     while let Ok(buffer) = self.recycled_buffers.pop() {

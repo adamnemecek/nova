@@ -5,8 +5,8 @@
 pub use slog::*;
 pub use slog_scope::GlobalLoggerGuard;
 
+use nova_sync::Mutex;
 use std::fmt;
-use std::sync::Mutex;
 
 lazy_static::lazy_static! {
   /// Shared default `Logger` which logs using the standard `log` crate.
@@ -44,9 +44,7 @@ pub fn set_global_logger(logger: &Logger) {
   let logger = Logger::root(logger.clone().filter_level(Level::Warning).fuse(), o!());
 
   // Lock the global logger guard and drop the current one if it exists.
-  let mut guard = GLOBAL_GUARD
-    .lock()
-    .unwrap();
+  let mut guard = GLOBAL_GUARD.lock();
 
   guard.take();
 
