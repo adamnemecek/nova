@@ -25,7 +25,7 @@ pub use self::surface::{Backbuffer, Surface};
 pub use self::sync::{Fence, Semaphore};
 pub use gfx_hal::error::DeviceCreationError;
 
-use gfx_hal::{Instance as _, Device as _};
+use gfx_hal::{Device as _, Instance as _};
 use nova_log as log;
 use std::fmt;
 use std::ops;
@@ -34,10 +34,10 @@ use std::sync::Arc;
 /// A cloneable graphics context which can be used to create graphics resources
 /// and submit commands to a device.
 #[derive(Clone)]
-pub struct Context(Arc<ContextContent>);
+pub struct Context(Arc<ContextInner>);
 
 /// Shared content of a cloneable `Context`.
-pub struct ContextContent {
+pub struct ContextInner {
   // Fields must be in this order so that they are dropped in this order.
   queues: Queues,
   device: backend::Device,
@@ -122,7 +122,7 @@ impl Context {
     // Extract backend queues into a `Queues` struct.
     let queues = Queues::new(queue_families, queues);
 
-    Ok(Self(Arc::new(ContextContent {
+    Ok(Self(Arc::new(ContextInner {
       backend,
       adapter,
       device,
@@ -145,12 +145,12 @@ impl Context {
   /// Waits for the graphics device to be idle, meaning no command buffers are
   /// being executed.
   pub fn wait_idle(&self) {
-    self.0.device.wait_idle();
+    let _ = self.0.device.wait_idle();
   }
 }
 
 impl ops::Deref for Context {
-  type Target = ContextContent;
+  type Target = ContextInner;
 
   fn deref(&self) -> &Self::Target {
     &self.0
@@ -185,6 +185,7 @@ impl fmt::Display for NewContextError {
   }
 }
 
+/// An error returned when the graphics device is out of usable memory.
 #[derive(Debug)]
 pub struct OutOfMemoryError;
 
@@ -193,5 +194,11 @@ impl std::error::Error for OutOfMemoryError {}
 impl fmt::Display for OutOfMemoryError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "out of memory")
+  }
+}
+
+impl From<gfx_hal::device::OutOfMemory> for OutOfMemoryError {
+  fn from(_: gfx_hal::device::OutOfMemory) -> Self {
+    OutOfMemoryError
   }
 }

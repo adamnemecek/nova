@@ -5,13 +5,17 @@
 use crate::backend;
 use crate::Context;
 use gfx_hal::Device as _;
-use std::sync::Arc;
 use std::cmp;
+use std::sync::Arc;
 
+/// Describes a single pass of the renderer.
+///
+/// This structure is cloneable and all clones refer to the same render pass.
+/// When all clones are dropped, the underyling backend resources are destroyed.
 #[derive(Clone)]
-pub struct RenderPass(Arc<Inner>);
+pub struct RenderPass(Arc<RenderPassInner>);
 
-struct Inner {
+struct RenderPassInner {
   context: Context,
   pass: Option<backend::RenderPass>,
 }
@@ -19,6 +23,7 @@ struct Inner {
 impl RenderPass {
   pub(crate) const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
 
+  /// Creates a new default render pass.
   pub fn new(context: &Context) -> Self {
     let color_attachment = gfx_hal::pass::Attachment {
       format: Some(Self::FORMAT),
@@ -56,22 +61,24 @@ impl RenderPass {
         .into()
     };
 
-    RenderPass(Arc::new(Inner {
+    RenderPass(Arc::new(RenderPassInner {
       pass,
       context: context.clone(),
     }))
   }
 
+  /// Returns a reference to the context the render pass was created in.
   pub(crate) fn context(&self) -> &Context {
     &self.0.context
   }
 
+  /// Returns a reference to the underlying backend render pass.
   pub(crate) fn as_backend(&self) -> &backend::RenderPass {
     self.0.pass.as_ref().unwrap()
   }
 }
 
-impl Drop for Inner {
+impl Drop for RenderPassInner {
   fn drop(&mut self) {
     unsafe {
       self

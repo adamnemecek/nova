@@ -8,12 +8,14 @@ use crate::renderer;
 use gfx_hal::command::RawCommandBuffer as _;
 use std::sync::atomic;
 
+/// Buffer for recording commands to submit to a device queue.
 pub struct Buffer {
   pool: Pool,
   buffer: Option<backend::CommandBuffer>,
 }
 
 impl Buffer {
+  /// Creates a new command buffer using the given pool.
   pub fn new(pool: &Pool) -> Self {
     Self {
       buffer: Some(pool.allocate()),
@@ -21,10 +23,16 @@ impl Buffer {
     }
   }
 
+  /// Begins recording commands.
+  ///
+  /// This function returns a `Recorder` structure for recording the actual
+  /// commands. Recording is finished when the structure is dropped or when
+  /// the `Recorder::finish` function is called.
   pub fn record(&mut self) -> Recorder {
     Recorder::new(&self.pool, self.buffer.as_mut().unwrap())
   }
 
+  /// Returns a reference to the underlying backend command buffer.
   pub(crate) fn as_backend(&self) -> &backend::CommandBuffer {
     self.buffer.as_ref().unwrap()
   }
@@ -36,6 +44,7 @@ impl Drop for Buffer {
   }
 }
 
+/// Structure for recording commands into a `Buffer`.
 pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
@@ -43,6 +52,7 @@ pub struct Recorder<'a> {
 }
 
 impl<'a> Recorder<'a> {
+  /// Creates a new recorder for the given buffer and begins recording.
   pub(crate) fn new(pool: &'a Pool, buffer: &'a mut backend::CommandBuffer) -> Self {
     if pool.is_recording().swap(true, atomic::Ordering::Acquire) {
       panic!("can only record commands using one command buffer at a time per pool");
@@ -62,9 +72,8 @@ impl<'a> Recorder<'a> {
     }
   }
 
+  /// Begins a render pass using the given framebuffer.
   pub fn begin_render_pass(&mut self, framebuffer: &mut renderer::Framebuffer) {
-    framebuffer.ensure_created();
-
     let render_pass = framebuffer.render_pass().unwrap();
     let size = framebuffer.size();
 
@@ -101,6 +110,7 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = true;
   }
 
+  /// Ends the current render pass.
   pub fn end_render_pass(&mut self) {
     unsafe {
       self.buffer.end_render_pass();
@@ -109,9 +119,8 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = false;
   }
 
+  /// Finishes recording commands, dropping the `Recorder`.
   pub fn finish(self) {}
-
-  fn _finish(&mut self) {}
 }
 
 impl<'a> Drop for Recorder<'a> {

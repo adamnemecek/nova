@@ -16,31 +16,37 @@ use nova_log as log;
 use nova_math::Size;
 use nova_time as time;
 use nova_window as window;
-use std::iter;
-use std::sync::Arc;
 use std::thread;
 
+/// Renders graphics onto a window on a background thread.
 pub struct Renderer {
   messages: channel::Sender<Message>,
   thread: thread::JoinHandle<()>,
 }
 
+/// Control message for a renderer background thread.
 enum Message {
-  Resize(Size<f64>),
   ShutDown,
+  ResizeSurface(Size<f64>),
 }
 
 impl Renderer {
+  /// Resizes the render surface.
+  ///
+  /// Call this function each time the window resizes.
   pub fn resize_surface(&self, size: Size<f64>) {
-    let _ = self.messages.send(Message::Resize(size));
+    let _ = self.messages.send(Message::ResizeSurface(size));
   }
 
+  /// Shuts down the renderer, blocking until the background thread completes.
   pub fn shut_down(self) {
     let _ = self.messages.send(Message::ShutDown);
     let _ = self.thread.join();
   }
 }
 
+/// Starts a renderer on a background thread, returning a `Renderer` to
+/// represent it.
 pub fn start(
   context: &Context,
   window: &window::Handle,
@@ -49,6 +55,7 @@ pub fn start(
   let context = context.clone();
   let logger = logger.clone();
 
+  // Create resources needed for rendering.
   let graphics_queue_id = context.queues().find_graphics_queue();
   let command_pool = cmd::Pool::new(&context, graphics_queue_id)?;
   let render_pass = RenderPass::new(&context);
@@ -57,32 +64,35 @@ pub fn start(
 
   framebuffer.set_render_pass(&render_pass);
 
-  let frame_fence = Fence::new(&context);
-  let acquire_semaphore = Semaphore::new(&context);
-  let render_semaphore = Semaphore::new(&context);
+  let frame_fence = Fence::new(&context)?;
+  let acquire_semaphore = Semaphore::new(&context)?;
+  let render_semaphore = Semaphore::new(&context)?;
+
+  // Set up a submission that waits for the acquire semaphore and signals the
+  // render semaphore when complete.
   let mut submission = Submission::new(graphics_queue_id);
 
-  submission.signal(&render_semaphore);
   submission.wait_for(&acquire_semaphore, pipeline::Stage::COLOR_ATTACHMENT_OUTPUT);
+  submission.signal(&render_semaphore);
 
+  // Create a channel to send and receive control messages.
   let (send_messages, recv_messages) = channel::unbounded();
 
+  // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
+    // Try to render at 60 fps maximum.
     time::loop_at_frequency(60.0, |render_loop| {
       // Process incoming messages.
       loop {
         let message = match recv_messages.try_recv() {
           Ok(message) => message,
-          Err(channel::TryRecvError::Empty) => break,
-
-          // If the channel is disconnected, all handles have been dropped so
-          // shut down the renderer.
           Err(channel::TryRecvError::Disconnected) => return render_loop.stop(),
+          Err(channel::TryRecvError::Empty) => break,
         };
 
         match message {
           Message::ShutDown => return render_loop.stop(),
-          Message::Resize(size) => surface.set_size(size),
+          Message::ResizeSurface(size) => surface.resize(size),
         }
       }
 
@@ -108,6 +118,15 @@ pub fn start(
 
       // Attach the backbuffer to the framebuffer.
       framebuffer.set_attachment(backbuffer.image());
+
+      if let Err(err) = framebuffer.ensure_created() {
+        log::error!(logger,
+          "failed to create framebuffer";
+          "cause" => log::Display(err),
+        );
+
+        return render_loop.stop();
+      }
 
       // Record rendering commands.
       let mut command_buffer = cmd::Buffer::new(&command_pool);

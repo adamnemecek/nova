@@ -5,7 +5,6 @@
 use crate::backend;
 use crate::Context;
 use gfx_hal::Device as _;
-use nova_log as log;
 use nova_math::Size;
 use std::cmp;
 use std::sync::Arc;
@@ -16,7 +15,7 @@ pub struct Image(Arc<ImageInner>);
 
 struct ImageInner {
   context: Context,
-  image: Option<backend::Image>,
+  _image: Option<backend::Image>,
   view: Option<backend::ImageView>,
   size: Size<u32>,
 }
@@ -47,7 +46,7 @@ impl Image {
 
     Self(Arc::new(ImageInner {
       context: context.clone(),
-      image: Some(image),
+      _image: Some(image),
       view: Some(view),
       size,
     }))

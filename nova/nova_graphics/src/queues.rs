@@ -134,14 +134,10 @@ impl Queues {
     use gfx_hal::queue::RawCommandQueue as _;
 
     let result = unsafe {
-      self.queues[queue_id.index]
-        .queue
-        .lock()
-        .expect("failed to lock queue")
-        .present(
-          iter::once((swapchain, image_index)),
-          wait_for.iter().map(|s| s.as_backend()),
-        )
+      self.queues[queue_id.index].queue.lock().unwrap().present(
+        iter::once((swapchain, image_index)),
+        wait_for.iter().map(|s| s.as_backend()),
+      )
     };
 
     match result {

@@ -27,14 +27,15 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |main_loop| {
     while let Some(event) = window.next_event() {
-      // When the user requests the window to close, exit the main game loop.
       match event {
+        // When the user tries to close the window, exit the game loop.
         window::Event::CloseRequested => {
           log::info!(logger, "close requested");
 
           return main_loop.stop();
         }
 
+        // When the window is resized, resize the render surface as well.
         window::Event::Resized => {
           renderer.resize_surface(window.size());
         }
@@ -42,6 +43,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
   });
 
+  // Shut down the renderer before exiting to clean up resources.
   renderer.shut_down();
 
   Ok(())

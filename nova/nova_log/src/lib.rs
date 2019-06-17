@@ -46,7 +46,7 @@ pub fn set_global_logger(logger: &Logger) {
   // Lock the global logger guard and drop the current one if it exists.
   let mut guard = GLOBAL_GUARD
     .lock()
-    .expect("failed to lock global logger guard");
+    .unwrap();
 
   guard.take();
 

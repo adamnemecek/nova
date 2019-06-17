@@ -5,12 +5,13 @@
 use crate::backend;
 use crate::{Context, Image, QueueId, Semaphore};
 use gfx_hal::{Device as _, Surface as _, Swapchain as _};
-use nova_math::{self as math, Size};
 use nova_log as log;
+use nova_math::{self as math, Size};
 use nova_window as window;
 use std::cmp;
 use std::fmt;
 
+// Rendering surface created from a window.
 pub struct Surface {
   size: Size<f64>,
   surface: backend::Surface,
@@ -24,8 +25,10 @@ pub struct Surface {
 }
 
 impl Surface {
+  /// Format of all surfaces.
   pub(crate) const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
 
+  /// Creates a new render surface using the given window.
   pub fn new(context: &Context, window: &window::Handle) -> Self {
     let size = window.size();
     let surface = context.backend.create_surface(window.as_ref());
@@ -44,13 +47,20 @@ impl Surface {
     }
   }
 
-  pub fn set_size(&mut self, size: Size<f64>) {
+  /// Sets the size of the render surface.
+  ///
+  /// Call this function if the window size changes.
+  pub fn resize(&mut self, size: Size<f64>) {
     if size != self.size {
       self.size = size;
       self.resized = true;
     }
   }
 
+  /// Acquire a backbuffer from the render surface.
+  ///
+  /// If the given `signal` semaphore is provided, it will be signaled when the
+  /// backbuffer is ready for use.
   pub fn acquire<'a>(
     &'a mut self,
     signal: impl Into<Option<&'a Semaphore>>,
@@ -95,6 +105,7 @@ impl Surface {
     })
   }
 
+  /// Creates the underlying swapchain.
   fn create_swapchain(&mut self) {
     let (capabilities, _, _) = self
       .surface
@@ -157,6 +168,7 @@ impl Surface {
     }
   }
 
+  /// Destroys the underlying swapchain.
   fn destroy_swapchain(&mut self) {
     self.swapchain_images.clear();
 
@@ -172,6 +184,7 @@ impl Drop for Surface {
   }
 }
 
+/// An image acquired from a `Surface` for rendering.
 pub struct Backbuffer<'a> {
   surface: &'a mut Surface,
   index: u32,
@@ -179,22 +192,24 @@ pub struct Backbuffer<'a> {
 }
 
 impl<'a> Backbuffer<'a> {
+  /// Returns the unique index of the backbuffer in the surface's backbuffer
+  /// queue.
   pub fn index(&self) -> usize {
     self.index as usize
   }
 
+  /// Returns a reference to the `Image` representing the backbuffer.
   pub fn image(&self) -> &Image {
     &self.surface.swapchain_images[self.index as usize]
   }
 
+  /// Presents the backbuffer to the render surface.
+  ///
+  /// Presentation will wait until all of the given semaphores, if any, are
+  /// signaled.
   pub fn present(mut self, wait_semaphores: &[&Semaphore]) -> Result<(), SurfacePresentError> {
     debug_assert!(!self.presented, "already presented");
 
-    self.presented = true;
-    self.present_impl(wait_semaphores)
-  }
-
-  fn present_impl(&mut self, wait_semaphores: &[&Semaphore]) -> Result<(), SurfacePresentError> {
     let swapchain = self.surface.swapchain.as_ref().unwrap();
 
     let result = self.surface.context.queues.present(
@@ -203,6 +218,8 @@ impl<'a> Backbuffer<'a> {
       self.index,
       wait_semaphores,
     );
+
+    self.presented = true;
 
     match result {
       Ok(()) => Ok(()),
@@ -220,18 +237,23 @@ impl<'a> Backbuffer<'a> {
 
 impl<'a> Drop for Backbuffer<'a> {
   fn drop(&mut self) {
-    // Try to present automatically if it has not yet been done but ignore
-    // errors.
     if !self.presented {
-      let _ = self.present_impl(&[]);
+      log::error!(
+        self.surface.context.logger(),
+        "backbuffer was not presented"
+      );
     }
   }
 }
 
+/// An error that occurred while acquiring a backbuffer from a render surface.
 #[derive(Debug)]
 pub enum SurfaceAcquireError {
+  /// The device is out of memory.
   OutOfMemory,
+  /// The surface is no longer usable.
   SurfaceLost,
+  /// The device is no longer usable.
   DeviceLost,
 }
 
@@ -267,10 +289,14 @@ impl From<gfx_hal::AcquireError> for SurfaceAcquireError {
   }
 }
 
+/// An error that occurred while presenting a backbuffer from a render surface.
 #[derive(Debug)]
 pub enum SurfacePresentError {
+  /// The device is out of memory.
   OutOfMemory,
+  /// The surface is no longer usable.
   SurfaceLost,
+  /// The device is no longer usable.
   DeviceLost,
 }
 

@@ -3,10 +3,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use crate::backend;
-use crate::Context;
+use crate::{Context, OutOfMemoryError};
 use gfx_hal::Device as _;
 use std::sync::Arc;
 
+/// Synchronization primitive used to control order of execution between command
+/// buffers.
+///
+/// This structure is cloneable and all clones refer to the same semaphore. When
+/// all clones are dropped, the underlying backend resource is destroyed.
 #[derive(Clone)]
 pub struct Semaphore(Arc<SemaphoreInner>);
 
@@ -16,18 +21,17 @@ struct SemaphoreInner {
 }
 
 impl Semaphore {
-  pub fn new(context: &Context) -> Self {
-    let semaphore = context
-      .device
-      .create_semaphore()
-      .expect("failed to create semaphore");
+  /// Creates a new semaphore in the given context.
+  pub fn new(context: &Context) -> Result<Self, OutOfMemoryError> {
+    let semaphore = context.device.create_semaphore()?;
 
-    Self(Arc::new(SemaphoreInner {
+    Ok(Self(Arc::new(SemaphoreInner {
       semaphore: Some(semaphore),
       context: context.clone(),
-    }))
+    })))
   }
 
+  /// Returns a reference to the underlying backend semaphore.
   pub(crate) fn as_backend(&self) -> &backend::Semaphore {
     self.0.semaphore.as_ref().unwrap()
   }
@@ -44,23 +48,28 @@ impl Drop for SemaphoreInner {
   }
 }
 
+/// Synchronization primitive used to synchronize execution between the CPU and
+/// the graphics device.
 pub struct Fence {
   context: Context,
   fence: Option<backend::Fence>,
 }
 
 impl Fence {
-  pub fn new(context: &Context) -> Self {
-    Self {
-      fence: context
-        .device
-        .create_fence(true)
-        .expect("failed to create fence")
-        .into(),
+  /// Creates a new fence in the given context.
+  ///
+  /// The fence is initially signaled.
+  pub fn new(context: &Context) -> Result<Self, OutOfMemoryError> {
+    let fence = context.device.create_fence(true)?;
+
+    Ok(Self {
+      fence: Some(fence),
       context: context.clone(),
-    }
+    })
   }
 
+  /// Waits for the fence to be signaled, then resets it to unsignaled
+  /// immediately.
   pub fn wait_and_reset(&self) {
     unsafe {
       self
@@ -77,6 +86,7 @@ impl Fence {
     }
   }
 
+  /// Returns a reference to the underlying backend fence.
   pub(crate) fn as_backend(&self) -> &backend::Fence {
     self.fence.as_ref().unwrap()
   }

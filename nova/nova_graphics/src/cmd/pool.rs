@@ -7,11 +7,14 @@ use crate::{Context, OutOfMemoryError, QueueId};
 use crossbeam_queue::SegQueue;
 use gfx_hal::pool::RawCommandPool as _;
 use gfx_hal::Device as _;
-use nova_log as log;
 use std::iter;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+/// Pool of reusable command buffers.
+///
+/// This structure is cloneable and all clones refer to the same semaphore. When
+/// all clones are dropped, the underlying backend resources are destroyed.
 #[derive(Clone)]
 pub struct Pool(Arc<PoolInner>);
 
@@ -24,6 +27,7 @@ struct PoolInner {
 }
 
 impl Pool {
+  /// Creates a new command pool for the given queue ID.
   pub fn new(context: &Context, queue_id: QueueId) -> Result<Self, OutOfMemoryError> {
     let pool = unsafe {
       context.device.create_command_pool(
@@ -45,24 +49,27 @@ impl Pool {
     }
   }
 
+  /// Allocates a new backend command buffer.
   pub(crate) fn allocate(&self) -> backend::CommandBuffer {
-    let buffer = self
+    self
       .0
       .recycled_buffers
       .pop()
-      .unwrap_or_else(|_| self.as_backend().allocate_one(self.0.level));
-
-    buffer
+      .unwrap_or_else(|_| self.as_backend().allocate_one(self.0.level))
   }
 
+  /// Registers a backend command buffer for reuse.
   pub(crate) fn recycle(&self, buffer: backend::CommandBuffer) {
     self.0.recycled_buffers.push(buffer);
   }
 
+  /// Returns a reference to an atomic boolean value indicating whether or not
+  /// any command buffers allocated from this pool are currently recording.
   pub(crate) fn is_recording(&self) -> &AtomicBool {
     &self.0.recording
   }
 
+  /// Returns a locked reference to the underlying backend command pool.
   pub(crate) fn as_backend(&self) -> MutexGuard<backend::CommandPool> {
     self.0.pool.as_ref().unwrap().lock().unwrap()
   }
@@ -73,6 +80,7 @@ impl Drop for PoolInner {
     let context = &self.context;
     let mut pool = self.pool.take().unwrap().into_inner().unwrap();
 
+    // Free all allocated command buffers before destroying the pool.
     while let Ok(buffer) = self.recycled_buffers.pop() {
       unsafe {
         pool.free(iter::once(buffer));
