@@ -42,3 +42,10 @@ pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
 
 pub type Memory = <Backend as gfx_hal::Backend>::Memory;
 pub type Buffer = <Backend as gfx_hal::Backend>::Buffer;
+
+pub type Pipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
+pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
+pub type Shader = <Backend as gfx_hal::Backend>::ShaderModule;
+pub type EntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
+
+pub type DescriptorLayout<'a> = <Backend as gfx_hal::Backend>::DescriptorSetLayout;

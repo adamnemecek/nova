@@ -3,10 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod renderer;
-
-mod pipeline {
-  pub use gfx_hal::pso::PipelineStage as Stage;
-}
+pub mod shader;
 
 mod alloc;
 mod backend;
@@ -14,6 +11,7 @@ mod buffer;
 mod cmd;
 mod color;
 mod image;
+mod pipeline;
 mod queues;
 mod submission;
 mod surface;

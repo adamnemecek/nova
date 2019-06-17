@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
 use crate::cmd::Pool;
-use crate::renderer;
+use crate::{backend, pipeline, renderer};
 use gfx_hal::command::RawCommandBuffer as _;
 use std::sync::atomic;
+use std::{mem, slice, ops};
 
 /// Buffer for recording commands to submit to a device queue.
 pub struct Buffer {
@@ -49,6 +49,7 @@ pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
   in_render_pass: bool,
+  graphics_pipeline: Option<pipeline::Graphics>,
 }
 
 impl<'a> Recorder<'a> {
@@ -69,6 +70,7 @@ impl<'a> Recorder<'a> {
       pool,
       buffer,
       in_render_pass: false,
+      graphics_pipeline: None,
     }
   }
 
@@ -108,6 +110,43 @@ impl<'a> Recorder<'a> {
     }
 
     self.in_render_pass = true;
+  }
+
+  /// Binds the given graphics pipeline for future commands in the render pass.
+  pub fn bind_graphics_pipeline(&mut self, pipeline: &pipeline::Graphics) {
+    unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_backend()) };
+
+    self.graphics_pipeline = Some(pipeline.clone());
+  }
+
+
+  /// Set the push constants to the given value.
+  ///
+  /// The size of type `T` must match the `size_of_push_constants` option of
+  /// the graphics pipeline.
+  pub fn push_graphics_constants<T: Sized>(&mut self, constants: &T) {
+    let pipeline = self
+      .graphics_pipeline
+      .as_ref()
+      .expect("no graphics pipeline bound");
+
+    let count = pipeline.push_constant_count();
+
+    debug_assert_eq!(count * 4, mem::size_of::<T>(), "The push constants type must be the same size as the pipeline's size_of_push_constants option.");
+
+    unsafe {
+      self.buffer.push_graphics_constants(
+        pipeline.backend_layout(),
+        gfx_hal::pso::ShaderStageFlags::ALL,
+        0,
+        slice::from_raw_parts(constants as *const T as *const u32, count),
+      );
+    }
+  }
+
+  /// Binds the given graphics pipeline for future commands in the render pass.
+  pub fn draw(&mut self, vertices: ops::Range<u32>) {
+    unsafe { self.buffer.draw(vertices, 0..1) };
   }
 
   /// Ends the current render pass.
