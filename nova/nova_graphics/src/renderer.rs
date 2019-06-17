@@ -20,12 +20,12 @@ use std::thread;
 
 /// Renders graphics onto a window on a background thread.
 pub struct Renderer {
-  messages: channel::Sender<Message>,
+  messages: channel::Sender<RendererMsg>,
   thread: thread::JoinHandle<()>,
 }
 
 /// Control message for a renderer background thread.
-enum Message {
+enum RendererMsg {
   ShutDown,
   ResizeSurface(Size<f64>),
 }
@@ -35,12 +35,12 @@ impl Renderer {
   ///
   /// Call this function each time the window resizes.
   pub fn resize_surface(&self, size: Size<f64>) {
-    let _ = self.messages.send(Message::ResizeSurface(size));
+    let _ = self.messages.send(RendererMsg::ResizeSurface(size));
   }
 
   /// Shuts down the renderer, blocking until the background thread completes.
   pub fn shut_down(self) {
-    let _ = self.messages.send(Message::ShutDown);
+    let _ = self.messages.send(RendererMsg::ShutDown);
     let _ = self.thread.join();
   }
 }
@@ -91,8 +91,8 @@ pub fn start(
         };
 
         match message {
-          Message::ShutDown => return render_loop.stop(),
-          Message::ResizeSurface(size) => surface.resize(size),
+          RendererMsg::ShutDown => return render_loop.stop(),
+          RendererMsg::ResizeSurface(size) => surface.resize(size),
         }
       }
 

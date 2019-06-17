@@ -4,11 +4,13 @@
 
 pub mod renderer;
 
-pub mod pipeline {
+mod pipeline {
   pub use gfx_hal::pso::PipelineStage as Stage;
 }
 
+mod alloc;
 mod backend;
+mod buffer;
 mod cmd;
 mod color;
 mod image;
@@ -17,28 +19,34 @@ mod submission;
 mod surface;
 mod sync;
 
-pub use self::color::Color;
-pub use self::image::Image;
-pub use self::queues::{QueueId, Queues};
-pub use self::submission::Submission;
-pub use self::surface::{Backbuffer, Surface};
-pub use self::sync::{Fence, Semaphore};
 pub use gfx_hal::error::DeviceCreationError;
 
-use gfx_hal::{Device as _, Instance as _};
+use self::alloc::*;
+use self::buffer::*;
+use self::color::*;
+use self::image::*;
+use self::queues::*;
+use self::submission::*;
+use self::surface::*;
+use self::sync::*;
+use gfx_hal::{Device as _, Instance as _, PhysicalDevice as _};
 use nova_log as log;
 use std::fmt;
 use std::ops;
 use std::sync::Arc;
 
-/// A cloneable graphics context which can be used to create graphics resources
-/// and submit commands to a device.
+/// Central state of the graphics library.
+///
+/// There should be only one context per device in an application.
+///
+/// This structure is cloneable and all clones refer to the same context. When
+/// all clones are dropped, the allocated device resources will be destroyed.
 #[derive(Clone)]
 pub struct Context(Arc<ContextInner>);
 
-/// Shared content of a cloneable `Context`.
 pub struct ContextInner {
   // Fields must be in this order so that they are dropped in this order.
+  memory: Memory,
   queues: Queues,
   device: backend::Device,
   adapter: backend::Adapter,
@@ -122,11 +130,15 @@ impl Context {
     // Extract backend queues into a `Queues` struct.
     let queues = Queues::new(queue_families, queues);
 
+    // Encapsulate memory state based on the memory properties of the adapter.
+    let memory = Memory::new(adapter.physical_device.memory_properties());
+
     Ok(Self(Arc::new(ContextInner {
       backend,
       adapter,
       device,
       queues,
+      memory,
       logger: logger.clone(),
     })))
   }
@@ -146,6 +158,11 @@ impl Context {
   /// being executed.
   pub fn wait_idle(&self) {
     let _ = self.0.device.wait_idle();
+  }
+
+  /// Returns an `Allocator` structure for allocating and freeing memory.
+  pub fn allocator(&self) -> Allocator {
+    Allocator::new(self)
   }
 }
 

@@ -39,3 +39,6 @@ pub type Framebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
 
 pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
 pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+
+pub type Memory = <Backend as gfx_hal::Backend>::Memory;
+pub type Buffer = <Backend as gfx_hal::Backend>::Buffer;
