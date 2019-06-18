@@ -3,19 +3,21 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub mod renderer;
-pub mod shader;
 
 mod alloc;
 mod backend;
 mod buffer;
 mod cmd;
 mod color;
+mod descriptor;
 mod image;
 mod pipeline;
 mod queues;
+mod shader;
 mod submission;
 mod surface;
 mod sync;
+mod vertex;
 
 pub use gfx_hal::error::DeviceCreationError;
 

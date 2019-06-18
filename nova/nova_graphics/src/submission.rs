@@ -12,7 +12,7 @@ pub struct Submission {
   pub queue_id: QueueId,
 
   /// Command buffers to submit to the queue.
-  pub command_buffers: Vec<cmd::Buffer>,
+  pub command_buffers: Vec<cmd::List>,
 
   /// Semaphores to wait on before executing the commands in the submission.
   pub wait_semaphores: Vec<(Semaphore, pipeline::Stage)>,

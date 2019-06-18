@@ -58,9 +58,9 @@ pub struct Fence {
 impl Fence {
   /// Creates a new fence in the given context.
   ///
-  /// The fence is initially signaled.
-  pub fn new(context: &Context) -> Result<Self, OutOfMemoryError> {
-    let fence = context.device.create_fence(true)?;
+  /// The `signaled` parameter sets the initial state of the fence.
+  pub fn new(context: &Context, signaled: bool) -> Result<Self, OutOfMemoryError> {
+    let fence = context.device.create_fence(signaled)?;
 
     Ok(Self {
       fence: Some(fence),

@@ -30,16 +30,16 @@ pub struct Buffer<T> {
   _memory: MemoryBlock,
   buffer: Option<backend::Buffer>,
   mapped: Option<*mut T>,
-  len: usize,
-  byte_len: usize,
+  len: u64,
+  byte_len: u64,
 }
 
 #[allow(clippy::len_without_is_empty)]
 impl<T: Copy> Buffer<T> {
   /// Allocates a new buffer of the given length.
-  pub fn new(context: &Context, kind: BufferKind, len: usize) -> Result<Self, BufferCreationError> {
+  pub fn new(context: &Context, kind: BufferKind, len: u64) -> Result<Self, BufferCreationError> {
     let byte_len = len
-      .checked_mul(mem::size_of::<T>())
+      .checked_mul(mem::size_of::<T>() as u64)
       .expect("requested buffer size is too large");
 
     let memory_kind = match kind {
@@ -48,12 +48,12 @@ impl<T: Copy> Buffer<T> {
     };
 
     let usage = match kind {
-      BufferKind::Vertex => gfx_hal::buffer::Usage::VERTEX,
-      BufferKind::Index => gfx_hal::buffer::Usage::INDEX,
+      BufferKind::Vertex => gfx_hal::buffer::Usage::VERTEX | gfx_hal::buffer::Usage::TRANSFER_DST,
+      BufferKind::Index => gfx_hal::buffer::Usage::INDEX | gfx_hal::buffer::Usage::TRANSFER_DST,
       BufferKind::Staging => gfx_hal::buffer::Usage::TRANSFER_SRC,
     };
 
-    let mut buffer = unsafe { context.device.create_buffer(byte_len as u64, usage)? };
+    let mut buffer = unsafe { context.device.create_buffer(byte_len, usage)? };
     let requirements = unsafe { context.device.get_buffer_requirements(&buffer) };
     let memory = context.allocator().alloc(memory_kind, requirements)?;
 
@@ -82,17 +82,24 @@ impl<T: Copy> Buffer<T> {
       byte_len,
     })
   }
+}
 
+impl<T> Buffer<T> {
   /// Returns the length of the buffer.
   ///
   /// This is the number of `T` values that fit in the buffer.
-  pub fn len(&self) -> usize {
+  pub fn len(&self) -> u64 {
     self.len
   }
 
   /// Returns the length of the buffer in bytes.
-  pub fn byte_len(&self) -> usize {
+  pub fn byte_len(&self) -> u64 {
     self.byte_len
+  }
+
+  /// Returns a reference to the underlying backend buffer.
+  pub(crate) fn as_backend(&self) -> &backend::Buffer {
+    self.buffer.as_ref().unwrap()
   }
 }
 
@@ -112,7 +119,7 @@ impl<T, I: SliceIndex<[T]>> ops::Index<I> for Buffer<T> {
 
   fn index(&self, index: I) -> &Self::Output {
     let mapped = self.mapped.expect("cannot index a non-staging buffer");
-    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.len) };
+    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.byte_len as usize) };
 
     &slice[index]
   }
@@ -122,7 +129,7 @@ impl<T, I: SliceIndex<[T]>> ops::IndexMut<I> for Buffer<T> {
   fn index_mut(&mut self, index: I) -> &mut I::Output {
     let mapped = self.mapped.expect("cannot index a non-staging buffer");
 
-    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.len) };
+    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.byte_len as usize) };
 
     &mut slice[index]
   }

@@ -192,12 +192,6 @@ pub struct Backbuffer<'a> {
 }
 
 impl<'a> Backbuffer<'a> {
-  /// Returns the unique index of the backbuffer in the surface's backbuffer
-  /// queue.
-  pub fn index(&self) -> usize {
-    self.index as usize
-  }
-
   /// Returns a reference to the `Image` representing the backbuffer.
   pub fn image(&self) -> &Image {
     &self.surface.swapchain_images[self.index as usize]

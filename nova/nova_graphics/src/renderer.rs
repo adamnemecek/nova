@@ -9,7 +9,8 @@ pub(crate) use self::framebuffer::Framebuffer;
 pub(crate) use self::render_pass::RenderPass;
 
 use crate::{
-  cmd, pipeline, shader, Color, Context, Fence, OutOfMemoryError, Semaphore, Submission, Surface,
+  cmd, pipeline, shader, vertex, Buffer, BufferKind, Color, Context, Fence, OutOfMemoryError,
+  Semaphore, Submission, Surface,
 };
 
 use nova_log as log;
@@ -17,7 +18,7 @@ use nova_math::Size;
 use nova_sync::channel;
 use nova_time as time;
 use nova_window as window;
-use std::{mem, thread};
+use std::thread;
 
 /// Renders graphics onto a window on a background thread.
 pub struct Renderer {
@@ -56,6 +57,9 @@ pub fn start(
   let context = context.clone();
   let logger = logger.clone();
 
+  // Create a channel to send and receive control messages.
+  let (send_messages, recv_messages) = channel::unbounded();
+
   // Create resources needed for rendering.
   let graphics_queue_id = context.queues().find_graphics_queue();
   let command_pool = cmd::Pool::new(&context, graphics_queue_id)?;
@@ -65,7 +69,7 @@ pub fn start(
 
   framebuffer.set_render_pass(&render_pass);
 
-  let frame_fence = Fence::new(&context)?;
+  let frame_fence = Fence::new(&context, false)?;
   let acquire_semaphore = Semaphore::new(&context)?;
   let render_semaphore = Semaphore::new(&context)?;
 
@@ -81,31 +85,61 @@ pub fn start(
     include_str!("./renderer/shaders/color.frag"),
   );
 
-  let pipeline = pipeline::Graphics::new(
-    &context,
-    &render_pass,
-    pipeline::Options {
-      size_of_push_constants: mem::size_of::<Color>(),
-      shaders: pipeline::ShaderSet {
-        vertex: vertex_shader.expect("failed to create vertex shader"),
-        fragment: fragment_shader.expect("failed to create fragment shader"),
-      },
-    },
-  )
-  .expect("failed to create graphics pipeline");
+  let pipeline = pipeline::Builder::new()
+    .set_render_pass(&render_pass)
+    .set_vertex_shader(&vertex_shader.expect("failed to create vertex shader"))
+    .set_fragment_shader(&fragment_shader.expect("failed to create fragment shader"))
+    .set_push_constants::<Color>()
+    .add_vertex_buffer::<Vertex>()
+    .into_graphics(&context)
+    .expect("failed to create graphics pipeline");
 
-  // Set up a submission that waits for the acquire semaphore and signals the
-  // render semaphore when complete.
   let mut submission = Submission::new(graphics_queue_id);
-
-  submission.wait_for(&acquire_semaphore, pipeline::Stage::COLOR_ATTACHMENT_OUTPUT);
-  submission.signal(&render_semaphore);
-
-  // Create a channel to send and receive control messages.
-  let (send_messages, recv_messages) = channel::unbounded();
 
   // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
+    let mut staging_buffer =
+      Buffer::new(&context, BufferKind::Staging, 4).expect("failed to create staging buffer");
+
+    staging_buffer[0] = Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0));
+    staging_buffer[1] = Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0));
+    staging_buffer[2] = Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0));
+    staging_buffer[3] = Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0));
+
+    let vertex_buffer =
+      Buffer::new(&context, BufferKind::Vertex, 4).expect("failed to create vertex buffer");
+
+    {
+      let mut cmd_list = cmd::List::new(&command_pool);
+      let mut cmd = cmd_list.record();
+
+      cmd.pipeline_barrier(
+        pipeline::Stage::VERTEX_INPUT..pipeline::Stage::TRANSFER,
+        &[cmd::buffer_barrier(
+          &vertex_buffer,
+          ..,
+          cmd::BufferAccess::VERTEX_BUFFER_READ..cmd::BufferAccess::TRANSFER_WRITE,
+        )],
+      );
+
+      cmd.copy_buffer(&staging_buffer, 0..staging_buffer.len(), &vertex_buffer, 0);
+
+      cmd.pipeline_barrier(
+        pipeline::Stage::TRANSFER..pipeline::Stage::VERTEX_INPUT,
+        &[cmd::buffer_barrier(
+          &vertex_buffer,
+          ..,
+          cmd::BufferAccess::TRANSFER_WRITE..cmd::BufferAccess::VERTEX_BUFFER_READ,
+        )],
+      );
+
+      cmd.finish();
+
+      submission.command_buffers.push(cmd_list);
+
+      context.queues().submit(&submission, &frame_fence);
+    }
+
     // Try to render at 60 fps maximum.
     time::loop_at_frequency(60.0, |render_loop| {
       // Process incoming messages.
@@ -126,7 +160,7 @@ pub fn start(
       frame_fence.wait_and_reset();
 
       // Clear resources used by the previous frame.
-      submission.command_buffers.clear();
+      submission.clear();
 
       // Acquire a backbuffer from the surface.
       let backbuffer = match surface.acquire(&acquire_semaphore) {
@@ -142,6 +176,8 @@ pub fn start(
         }
       };
 
+      submission.wait_for(&acquire_semaphore, pipeline::Stage::COLOR_ATTACHMENT_OUTPUT);
+
       // Attach the backbuffer to the framebuffer.
       framebuffer.set_attachment(backbuffer.image());
 
@@ -155,19 +191,22 @@ pub fn start(
       }
 
       // Record rendering commands.
-      let mut command_buffer = cmd::Buffer::new(&command_pool);
+      let mut command_buffer = cmd::List::new(&command_pool);
       let mut cmd = command_buffer.record();
 
       cmd.begin_render_pass(&mut framebuffer);
 
       cmd.bind_graphics_pipeline(&pipeline);
-      cmd.push_graphics_constants(&Color::new(0.0, 1.0, 0.0, 1.0));
+      cmd.push_graphics_constants(&Color::new(1.0, 1.0, 1.0, 1.0));
+      cmd.bind_vertex_buffer(0, &vertex_buffer);
+
       cmd.draw(0..4);
 
       cmd.finish();
 
       // Submit rendering commands.
       submission.command_buffers.push(command_buffer);
+      submission.signal(&render_semaphore);
 
       context.queues().submit(&submission, &frame_fence);
 
@@ -190,4 +229,13 @@ pub fn start(
     messages: send_messages,
     thread,
   })
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct Vertex((f32, f32), Color);
+
+impl vertex::Data for Vertex {
+  const ATTRIBUTES: &'static [vertex::Attribute] =
+    &[vertex::Attribute::Vector2f32, vertex::Attribute::Vector4f32];
 }

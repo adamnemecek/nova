@@ -4,10 +4,10 @@
 
 pub use gfx_hal::pso::PipelineStage as Stage;
 
-use crate::{backend, renderer, shader, Context};
+use crate::{backend, renderer, shader, vertex, Context};
 use gfx_hal::Device as _;
-use std::{fmt, iter};
 use std::sync::Arc;
+use std::{fmt, iter, mem};
 
 #[derive(Clone)]
 pub struct Graphics(Arc<GraphicsInner>);
@@ -21,22 +21,23 @@ struct GraphicsInner {
 }
 
 impl Graphics {
-  pub fn new(
-    context: &Context,
-    render_pass: &renderer::RenderPass,
-    options: Options,
-  ) -> Result<Self, CreationError> {
+  pub fn new(context: &Context, builder: Builder) -> Result<Self, CreationError> {
     debug_assert!(
-      options.size_of_push_constants % 4 == 0,
+      builder.size_of_push_constants % 4 == 0,
       "size_of_push_constants must be a multiple of 4"
     );
 
-    let push_constant_count = options.size_of_push_constants / 4;
+    let push_constant_count = builder.size_of_push_constants / 4;
+
+    let render_pass = builder
+      .render_pass
+      .as_ref()
+      .ok_or(CreationError::NoRenderPass)?;
 
     let layout = unsafe {
       context.device.create_pipeline_layout(
         iter::empty::<backend::DescriptorLayout>(),
-        if options.size_of_push_constants > 0 {
+        if builder.size_of_push_constants > 0 {
           Some((
             gfx_hal::pso::ShaderStageFlags::ALL,
             0..push_constant_count as u32,
@@ -49,8 +50,19 @@ impl Graphics {
 
     let mut desc = gfx_hal::pso::GraphicsPipelineDesc::new(
       gfx_hal::pso::GraphicsShaderSet {
-        vertex: options.shaders.vertex.backend_entrypoint(),
-        fragment: Some(options.shaders.fragment.backend_entrypoint()),
+        vertex: builder
+          .shaders
+          .vertex
+          .as_ref()
+          .ok_or(CreationError::NoVertexShader)?
+          .backend_entrypoint(),
+
+        fragment: builder
+          .shaders
+          .fragment
+          .as_ref()
+          .map(shader::Module::backend_entrypoint),
+
         geometry: None,
         domain: None,
         hull: None,
@@ -69,14 +81,17 @@ impl Graphics {
       gfx_hal::pso::BlendState::ALPHA,
     ));
 
+    desc.vertex_buffers.extend(builder.vertex_buffers);
+    desc.attributes.extend(builder.vertex_attributes);
+
     let pipeline = unsafe { context.device.create_graphics_pipeline(&desc, None)? };
 
-    Ok(Self (Arc::new(GraphicsInner{
+    Ok(Self(Arc::new(GraphicsInner {
       context: context.clone(),
       pipeline: Some(pipeline),
       layout: Some(layout),
       push_constant_count,
-      _shaders: options.shaders.clone(),
+      _shaders: builder.shaders,
     })))
   }
 
@@ -109,20 +124,85 @@ impl Drop for GraphicsInner {
   }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ShaderSet {
-  pub vertex: shader::Module,
-  pub fragment: shader::Module,
+  pub vertex: Option<shader::Module>,
+  pub fragment: Option<shader::Module>,
 }
 
-pub struct Options {
-  pub shaders: ShaderSet,
-  pub size_of_push_constants: usize,
+#[derive(Default)]
+pub struct Builder {
+  shaders: ShaderSet,
+  size_of_push_constants: usize,
+  render_pass: Option<renderer::RenderPass>,
+  vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
+  vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
+}
+
+impl Builder {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  pub fn set_render_pass(mut self, render_pass: &renderer::RenderPass) -> Self {
+    self.render_pass = Some(render_pass.clone());
+    self
+  }
+
+  pub fn set_vertex_shader<'a>(mut self, module: impl Into<Option<&'a shader::Module>>) -> Self {
+    self.shaders.vertex = module.into().cloned();
+    self
+  }
+
+  pub fn set_fragment_shader<'a>(mut self, module: impl Into<Option<&'a shader::Module>>) -> Self {
+    self.shaders.fragment = module.into().cloned();
+    self
+  }
+
+  pub fn set_push_constants<T: Sized>(mut self) -> Self {
+    self.size_of_push_constants = mem::size_of::<T>();
+    self
+  }
+
+  pub fn add_vertex_buffer<T: vertex::Data>(mut self) -> Self {
+    let binding = self.vertex_buffers.len() as u32;
+
+    self.vertex_buffers.push(gfx_hal::pso::VertexBufferDesc {
+      binding,
+      stride: T::stride(),
+      rate: gfx_hal::pso::VertexInputRate::Vertex,
+    });
+
+    let mut offset = 0;
+
+    for attribute in T::ATTRIBUTES {
+      self.vertex_attributes.push(gfx_hal::pso::AttributeDesc {
+        binding,
+        location: self.vertex_attributes.len() as u32,
+        element: gfx_hal::pso::Element {
+          format: attribute.backend_format(),
+          offset,
+        },
+      });
+
+      offset += attribute.size();
+    }
+
+    self
+  }
+
+  pub fn into_graphics(self, context: &Context) -> Result<Graphics, CreationError> {
+    Graphics::new(context, self)
+  }
 }
 
 #[derive(Debug)]
 pub enum CreationError {
-  /// The specified shader stage is not supported.y
+  /// No render pass was provided.
+  NoRenderPass,
+  /// No vertex shader was provided.
+  NoVertexShader,
+  /// The specified shader stage is not supported.
   UnsupportedShaderStage(shader::Stage),
   /// A shader had an incorrect interface, such as the wrong number of push
   /// constants.
@@ -166,6 +246,8 @@ impl From<gfx_hal::device::OutOfMemory> for CreationError {
 impl fmt::Display for CreationError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
+      CreationError::NoRenderPass => write!(f, "no render pass"),
+      CreationError::NoVertexShader => write!(f, "no vertex shader provided"),
       CreationError::UnsupportedShaderStage(stage) => {
         write!(f, "shader stage {:?} is not supported", stage)
       }

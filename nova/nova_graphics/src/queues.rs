@@ -93,7 +93,7 @@ impl Queues {
           command_buffers: submission
             .command_buffers
             .iter()
-            .map(cmd::Buffer::as_backend),
+            .map(cmd::List::as_backend),
           wait_semaphores: submission
             .wait_semaphores
             .iter()

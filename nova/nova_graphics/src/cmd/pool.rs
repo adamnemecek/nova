@@ -4,6 +4,7 @@
 
 use crate::backend;
 use crate::{Context, OutOfMemoryError, QueueId};
+use gfx_hal::command::RawCommandBuffer as _;
 use gfx_hal::pool::RawCommandPool as _;
 use gfx_hal::Device as _;
 use nova_sync::queue::SegQueue;
@@ -60,7 +61,11 @@ impl Pool {
   }
 
   /// Registers a backend command buffer for reuse.
-  pub(crate) fn recycle(&self, buffer: backend::CommandBuffer) {
+  pub(crate) fn recycle(&self, mut buffer: backend::CommandBuffer) {
+    unsafe {
+      buffer.reset(true);
+    }
+
     self.0.recycled_buffers.push(buffer);
   }
 
