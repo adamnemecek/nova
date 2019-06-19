@@ -27,7 +27,7 @@ impl Pool {
   pub fn new(context: &Context, queue_id: QueueId) -> Result<Self, OutOfMemoryError> {
     let pool = unsafe {
       context.device.create_command_pool(
-        queue_id.family_id,
+        queue_id.as_backend(),
         gfx_hal::pool::CommandPoolCreateFlags::RESET_INDIVIDUAL,
       )
     };

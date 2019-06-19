@@ -6,14 +6,17 @@ pub use gfx_hal::buffer::Access as BufferAccess;
 
 use super::*;
 
+/// Describes a synchronization barrier in the command list.
 pub struct Barrier<'a>(backend::Barrier<'a>);
 
 impl<'a> Barrier<'a> {
+  /// Returns a reference to the backend barrier description.
   pub(crate) fn as_backend(&self) -> &backend::Barrier<'a> {
     &self.0
   }
 }
 
+/// Returns a barrier description for a buffer or a subset of a buffer.
 pub fn buffer_barrier<T>(
   buffer: &Buffer<T>,
   range: impl ops::RangeBounds<u64>,

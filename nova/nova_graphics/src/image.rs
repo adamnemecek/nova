@@ -4,7 +4,7 @@
 
 use super::*;
 
-/// An image on the graphics device.
+/// Image data on the graphics device.
 #[derive(Clone)]
 pub struct Image(Arc<ImageInner>);
 

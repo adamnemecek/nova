@@ -4,14 +4,15 @@
 
 use super::*;
 
-/// Reusable list of commands recorded for submission to the device.
+/// List of commands that can be submitted to a command queue of a graphics
+/// device.
 pub struct List {
   pool: Pool,
   buffer: Option<backend::CommandBuffer>,
 }
 
 impl List {
-  /// Creates a new command buffer using the given pool.
+  /// Creates a new command list using the given pool.
   pub fn new(pool: &Pool) -> Self {
     List {
       buffer: Some(pool.allocate()),
@@ -19,12 +20,9 @@ impl List {
     }
   }
 
-  /// Begins recording commands.
-  ///
-  /// This function returns a `Recorder` structure for recording the actual
-  /// commands. Recording is finished when the structure is dropped or when
-  /// the `Recorder::finish` function is called.
-  pub fn record(&mut self) -> Recorder {
+  /// Begins recording commands, returning a `Recorder` struct with methods for
+  /// adding commands to the list.
+  pub fn begin(&mut self) -> Recorder {
     Recorder::new(&self.pool, self.buffer.as_mut().unwrap())
   }
 

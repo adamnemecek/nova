@@ -9,7 +9,7 @@ use gfx_hal::{Surface as _, Swapchain as _};
 pub struct Surface {
   size: Size<f64>,
   surface: backend::Surface,
-  present_queue_id: QueueId,
+  present_queue_id: cmd::QueueId,
   resized: bool,
 
   swapchain: Option<backend::Swapchain>,

@@ -2,9 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-pub use gfx_hal::pso::PipelineStage as Stage;
-
 use super::*;
+pub use gfx_hal::pso::PipelineStage as Stage;
 
 #[derive(Clone)]
 pub struct Graphics(Arc<GraphicsInner>);

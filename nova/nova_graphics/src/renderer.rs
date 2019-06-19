@@ -84,7 +84,7 @@ pub fn start(
     .into_graphics(&context)
     .expect("failed to create graphics pipeline");
 
-  let mut submission = Submission::new(graphics_queue_id);
+  let mut submission = cmd::Submission::new(graphics_queue_id);
 
   // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
@@ -101,7 +101,7 @@ pub fn start(
 
     {
       let mut cmd_list = cmd::List::new(&command_pool);
-      let mut cmd = cmd_list.record();
+      let mut cmd = cmd_list.begin();
 
       cmd.pipeline_barrier(
         pipeline::Stage::VERTEX_INPUT..pipeline::Stage::TRANSFER,
@@ -181,13 +181,13 @@ pub fn start(
       }
 
       // Record rendering commands.
-      let mut command_buffer = cmd::List::new(&command_pool);
-      let mut cmd = command_buffer.record();
+      let mut cmd_list = cmd::List::new(&command_pool);
+      let mut cmd = cmd_list.begin();
 
       cmd.begin_render_pass(&mut framebuffer);
 
-      cmd.bind_graphics_pipeline(&pipeline);
-      cmd.push_graphics_constants(&Color::new(1.0, 1.0, 1.0, 1.0));
+      cmd.bind_pipeline(&pipeline);
+      cmd.push_constants(&Color::new(1.0, 1.0, 1.0, 1.0));
       cmd.bind_vertex_buffer(0, &vertex_buffer);
 
       cmd.draw(0..4);
@@ -195,7 +195,7 @@ pub fn start(
       cmd.finish();
 
       // Submit rendering commands.
-      submission.command_buffers.push(command_buffer);
+      submission.command_buffers.push(cmd_list);
       submission.signal(&render_semaphore);
 
       context.queues().submit(&submission, &frame_fence);

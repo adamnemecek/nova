@@ -5,12 +5,15 @@
 use super::*;
 use std::sync::atomic;
 
-/// Str ucture for recording commands into a `Buffer`.
+/// Records commands into a command list.
+///
+/// Recording finishes when this structure is dropped or when the `finish()`
+/// method is called.
 pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
   in_render_pass: bool,
-  graphics_pipeline: Option<pipeline::Graphics>,
+  bound_pipeline: Option<pipeline::Graphics>,
 }
 
 impl<'a> Recorder<'a> {
@@ -31,7 +34,7 @@ impl<'a> Recorder<'a> {
       pool,
       buffer,
       in_render_pass: false,
-      graphics_pipeline: None,
+      bound_pipeline: None,
     }
   }
 
@@ -73,10 +76,10 @@ impl<'a> Recorder<'a> {
   }
 
   /// Binds the given graphics pipeline for future commands in the render pass.
-  pub fn bind_graphics_pipeline(&mut self, pipeline: &pipeline::Graphics) {
+  pub fn bind_pipeline(&mut self, pipeline: &pipeline::Graphics) {
     unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_backend()) };
 
-    self.graphics_pipeline = Some(pipeline.clone());
+    self.bound_pipeline = Some(pipeline.clone());
   }
 
   pub fn bind_vertex_buffer<T>(&mut self, index: u32, buffer: &Buffer<T>) {
@@ -87,13 +90,13 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Set the push constants to the given value.
+  /// Set the graphics pipeline push constants to the given value.
   ///
   /// The size of type `T` must match the `size_of_push_constants` option of
   /// the graphics pipeline.
-  pub fn push_graphics_constants<T: Sized>(&mut self, constants: &T) {
+  pub fn push_constants<T: Sized>(&mut self, constants: &T) {
     let pipeline = self
-      .graphics_pipeline
+      .bound_pipeline
       .as_ref()
       .expect("no graphics pipeline bound");
 
@@ -111,7 +114,7 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Binds the given graphics pipeline for future commands in the render pass.
+  /// Draws the given vertex range.
   pub fn draw(&mut self, vertices: ops::Range<u32>) {
     unsafe { self.buffer.draw(vertices, 0..1) };
   }
@@ -125,6 +128,8 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = false;
   }
 
+  /// Inserts a pipeline barrier between the given stages with one or more
+  /// memory barriers based on the given descriptions.
   pub fn pipeline_barrier(
     &mut self,
     stages: ops::Range<pipeline::Stage>,
@@ -139,6 +144,7 @@ impl<'a> Recorder<'a> {
     }
   }
 
+  /// Copies data from a source buffer to a destination buffer.
   pub fn copy_buffer<T>(
     &mut self,
     source: &Buffer<T>,
@@ -156,6 +162,8 @@ impl<'a> Recorder<'a> {
     );
   }
 
+  /// Copies multiple regions of data from a source buffer into a destination
+  /// buffer.
   pub fn copy_buffer_regions<T>(
     &mut self,
     source: &Buffer<T>,

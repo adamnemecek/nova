@@ -6,13 +6,18 @@ use super::*;
 use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::QueueFamily as _;
 
-/// Identifies a single device queue.
+/// Uniquely identifies a single command queue of a graphics device.
 #[derive(Debug, Clone, Copy)]
 pub struct QueueId {
   index: usize,
+  family_id: gfx_hal::queue::QueueFamilyId,
+}
 
-  /// The backend queue family ID.
-  pub(crate) family_id: gfx_hal::queue::QueueFamilyId,
+impl QueueId {
+  /// Returns the underlying backend queue family ID.
+  pub fn as_backend(&self) -> gfx_hal::queue::QueueFamilyId {
+    self.family_id
+  }
 }
 
 /// Structure for accessing the graphics, compute, and transfer queues of a

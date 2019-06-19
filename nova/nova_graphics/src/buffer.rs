@@ -5,28 +5,14 @@
 use super::*;
 use std::slice::SliceIndex;
 
-/// One of the possible kinds of `Buffer`.
-#[derive(Debug, Clone, Copy)]
-pub enum BufferKind {
-  /// Host-mapped memory for use as a transfer source.
-  Staging,
-  /// Contains vertex data.
-  Vertex,
-  /// Contains index data.
-  Index,
-}
-
-/// Device-local buffer of data.
-///
-/// If the buffer has `BufferKind::Staging`, then its data can be directly
-/// read from and written to with the index operator.
+/// Buffer of data on the graphics device.
 pub struct Buffer<T> {
   context: Context,
-  _memory: MemoryBlock,
   buffer: Option<backend::Buffer>,
   mapped: Option<*mut T>,
   len: u64,
   byte_len: u64,
+  _memory: MemoryBlock,
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -70,11 +56,11 @@ impl<T: Copy> Buffer<T> {
 
     Ok(Self {
       context: context.clone(),
-      _memory: memory,
       buffer: Some(buffer),
       mapped,
       len,
       byte_len,
+      _memory: memory,
     })
   }
 }
@@ -128,6 +114,18 @@ impl<T, I: SliceIndex<[T]>> ops::IndexMut<I> for Buffer<T> {
 
     &mut slice[index]
   }
+}
+
+/// One of the possible kinds of `Buffer`.
+#[derive(Debug, Clone, Copy)]
+pub enum BufferKind {
+  /// Contains temporary data for transferring to images and buffers of other
+  /// kinds. Staging buffers are mapped into host memory for direct access.
+  Staging,
+  /// Contains vertex data.
+  Vertex,
+  /// Contains index data.
+  Index,
 }
 
 // An error that occurred during the creation of a new `Buffer`.

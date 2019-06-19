@@ -4,13 +4,14 @@
 
 use super::*;
 
-/// Reusable container for device queue submission information.
+/// Describes a submission of one or more command buffers to a command queue on
+/// the graphics device.
 pub struct Submission {
-  /// ID of the queue to submit to.
+  /// ID of the command queue to submit to.
   pub queue_id: QueueId,
 
-  /// Command buffers to submit to the queue.
-  pub command_buffers: Vec<cmd::List>,
+  /// Command lists to submit to the queue.
+  pub command_buffers: Vec<List>,
 
   /// Semaphores to wait on before executing the commands in the submission.
   pub wait_semaphores: Vec<(Semaphore, pipeline::Stage)>,
