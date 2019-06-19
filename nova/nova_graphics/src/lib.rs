@@ -14,9 +14,13 @@ mod pipeline;
 pub mod renderer;
 mod semaphore;
 mod shader;
+mod render_pass;
+mod framebuffer;
 mod surface;
 mod vertex;
 
+use self::render_pass::*;
+use self::framebuffer::*;
 use self::alloc::*;
 use self::buffer::*;
 use self::color::*;

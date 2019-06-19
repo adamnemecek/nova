@@ -2,12 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod framebuffer;
-mod render_pass;
-
-pub(crate) use self::framebuffer::Framebuffer;
-pub(crate) use self::render_pass::RenderPass;
-
 use super::*;
 
 /// Renders graphics onto a window on a background thread.

@@ -130,7 +130,7 @@ struct ShaderSet {
 pub struct PipelineBuilder {
   shaders: ShaderSet,
   size_of_push_constants: usize,
-  render_pass: Option<renderer::RenderPass>,
+  render_pass: Option<RenderPass>,
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
 }
@@ -140,7 +140,7 @@ impl PipelineBuilder {
     Self::default()
   }
 
-  pub fn set_render_pass(mut self, render_pass: &renderer::RenderPass) -> Self {
+  pub fn set_render_pass(mut self, render_pass: &RenderPass) -> Self {
     self.render_pass = Some(render_pass.clone());
     self
   }

@@ -39,7 +39,7 @@ impl<'a> Recorder<'a> {
   }
 
   /// Begins a render pass using the given framebuffer.
-  pub fn begin_render_pass(&mut self, framebuffer: &mut renderer::Framebuffer) {
+  pub fn begin_render_pass(&mut self, framebuffer: &mut Framebuffer) {
     let render_pass = framebuffer.render_pass().unwrap();
     let size = framebuffer.size();
 
