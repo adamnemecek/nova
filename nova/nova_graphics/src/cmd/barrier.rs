@@ -4,8 +4,7 @@
 
 pub use gfx_hal::buffer::Access as BufferAccess;
 
-use crate::{backend, Buffer};
-use std::{ops, mem};
+use super::*;
 
 pub struct Barrier<'a>(backend::Barrier<'a>);
 

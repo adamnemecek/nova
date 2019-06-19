@@ -2,14 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
-use crate::{Context, Image, QueueId, Semaphore};
-use gfx_hal::{Device as _, Surface as _, Swapchain as _};
-use nova_log as log;
-use nova_math::{self as math, Size};
-use nova_window as window;
-use std::cmp;
-use std::fmt;
+use super::*;
+use gfx_hal::{Surface as _, Swapchain as _};
 
 // Rendering surface created from a window.
 pub struct Surface {

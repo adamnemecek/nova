@@ -4,11 +4,8 @@
 
 pub use gfx_hal::pso::Stage;
 
-use crate::{backend, Context};
-use gfx_hal::Device as _;
-use std::fmt;
+use super::*;
 use std::io::Read as _;
-use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Module(Arc<ModuleInner>);

@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
-use crate::{AllocationError, Context, MemoryBlock, MemoryKind};
-use gfx_hal::Device as _;
-use std::fmt;
-use std::mem;
-use std::ops;
+use super::*;
 use std::slice::SliceIndex;
 
 /// One of the possible kinds of `Buffer`.
@@ -43,8 +38,8 @@ impl<T: Copy> Buffer<T> {
       .expect("requested buffer size is too large");
 
     let memory_kind = match kind {
-      BufferKind::Staging => MemoryKind::Cpu,
-      _ => MemoryKind::Gpu,
+      BufferKind::Staging => MemoryKind::HostMapped,
+      _ => MemoryKind::DeviceLocal,
     };
 
     let usage = match kind {

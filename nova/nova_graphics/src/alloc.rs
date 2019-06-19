@@ -7,10 +7,13 @@ use crate::Context;
 use gfx_hal::Device as _;
 use std::fmt;
 
+/// One of the possible kinds of memory.
 #[derive(Debug)]
 pub enum MemoryKind {
-  Cpu,
-  Gpu,
+  /// Memory accessible by both the graphics device and the host.
+  HostMapped,
+  /// Memory local to and only accessible by the graphics device.
+  DeviceLocal,
 }
 
 pub struct Memory {
@@ -60,11 +63,11 @@ impl<'a> Allocator<'a> {
     requirements: gfx_hal::memory::Requirements,
   ) -> Result<MemoryBlock, AllocationError> {
     let properties = match kind {
-      MemoryKind::Cpu => {
+      MemoryKind::HostMapped => {
         gfx_hal::memory::Properties::CPU_VISIBLE | gfx_hal::memory::Properties::COHERENT
       }
 
-      MemoryKind::Gpu => gfx_hal::memory::Properties::DEVICE_LOCAL,
+      MemoryKind::DeviceLocal => gfx_hal::memory::Properties::DEVICE_LOCAL,
     };
 
     let type_id = self

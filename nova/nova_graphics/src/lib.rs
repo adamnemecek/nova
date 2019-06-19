@@ -9,7 +9,6 @@ mod backend;
 mod buffer;
 mod cmd;
 mod color;
-mod descriptor;
 mod image;
 mod pipeline;
 mod queues;
@@ -31,9 +30,12 @@ use self::surface::*;
 use self::sync::*;
 use gfx_hal::{Device as _, Instance as _, PhysicalDevice as _};
 use nova_log as log;
-use std::fmt;
-use std::ops;
+use nova_math::{self as math, Size, Point2};
+use nova_sync::{channel, Mutex, MutexGuard};
+use nova_time as time;
+use nova_window as window;
 use std::sync::Arc;
+use std::{cmp, fmt, iter, mem, ops, slice, thread};
 
 /// Central state of the graphics library.
 ///

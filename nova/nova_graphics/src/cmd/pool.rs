@@ -2,16 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
-use crate::{Context, OutOfMemoryError, QueueId};
-use gfx_hal::command::RawCommandBuffer as _;
+use super::*;
 use gfx_hal::pool::RawCommandPool as _;
-use gfx_hal::Device as _;
 use nova_sync::queue::SegQueue;
-use nova_sync::{Mutex, MutexGuard};
-use std::iter;
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 
 /// Pool of reusable command buffers.
 ///

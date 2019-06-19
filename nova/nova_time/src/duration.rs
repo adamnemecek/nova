@@ -4,7 +4,7 @@
 
 use std::fmt;
 use std::ops::Sub;
-use std::time::{Duration as StdDuration, Instant as StdInstant};
+use std::time::Duration as StdDuration;
 use std::u64;
 
 /// Represents a span of time.

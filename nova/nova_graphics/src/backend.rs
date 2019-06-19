@@ -4,11 +4,11 @@
 
 // Use DirectX 12 on Windows, Metal on MacOS, and Vulkan on Linux.
 #[cfg(windows)]
-pub use gfx_backend_dx12::*;
+pub use gfx_backend_dx12::{Backend, Instance};
 #[cfg(target_os = "macos")]
-pub use gfx_backend_metal::*;
+pub use gfx_backend_metal::{Backend, Instance};
 #[cfg(all(unix, not(target_os = "macos")))]
-pub use gfx_backend_vulkan::*;
+pub use gfx_backend_vulkan::{Backend, Instance};
 
 #[cfg(windows)]
 pub const NAME: &str = "DirectX 12";
@@ -17,36 +17,30 @@ pub const NAME: &str = "Metal";
 #[cfg(all(unix, not(target_os = "macos")))]
 pub const NAME: &str = "Vulkan";
 
+// Expose actual raw backend types and specific gfx_hal types as type
+// definitions with simpler names and signatures. I don't think this is the
+// correct way to use gfx_hal, but it does work and seems clearer than messing
+// around with generics everywhere.
 pub type Adapter = gfx_hal::Adapter<Backend>;
+pub type Barrier<'a> = gfx_hal::memory::Barrier<'a, Backend>;
+pub type Buffer = <Backend as gfx_hal::Backend>::Buffer;
+pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
+pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
+pub type DescriptorLayout<'a> = <Backend as gfx_hal::Backend>::DescriptorSetLayout;
 pub type Device = <Backend as gfx_hal::Backend>::Device;
-
+pub type EntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
+pub type Fence = <Backend as gfx_hal::Backend>::Fence;
+pub type Framebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
+pub type Image = <Backend as gfx_hal::Backend>::Image;
+pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
+pub type Memory = <Backend as gfx_hal::Backend>::Memory;
+pub type Pipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
+pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 pub type Queue = <Backend as gfx_hal::Backend>::CommandQueue;
 pub type Queues = gfx_hal::queue::Queues<Backend>;
 pub type QueueFamily = <Backend as gfx_hal::Backend>::QueueFamily;
-
+pub type RenderPass = <Backend as gfx_hal::Backend>::RenderPass;
+pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
+pub type Shader = <Backend as gfx_hal::Backend>::ShaderModule;
 pub type Surface = <Backend as gfx_hal::Backend>::Surface;
 pub type Swapchain = <Backend as gfx_hal::Backend>::Swapchain;
-
-pub type Image = <Backend as gfx_hal::Backend>::Image;
-pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
-
-pub type Fence = <Backend as gfx_hal::Backend>::Fence;
-pub type Semaphore = <Backend as gfx_hal::Backend>::Semaphore;
-
-pub type RenderPass = <Backend as gfx_hal::Backend>::RenderPass;
-
-pub type Framebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
-
-pub type CommandPool = <Backend as gfx_hal::Backend>::CommandPool;
-pub type CommandBuffer = <Backend as gfx_hal::Backend>::CommandBuffer;
-pub type Barrier<'a> = gfx_hal::memory::Barrier<'a, Backend>;
-
-pub type Memory = <Backend as gfx_hal::Backend>::Memory;
-pub type Buffer = <Backend as gfx_hal::Backend>::Buffer;
-
-pub type Pipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
-pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
-pub type Shader = <Backend as gfx_hal::Backend>::ShaderModule;
-pub type EntryPoint<'a> = gfx_hal::pso::EntryPoint<'a, Backend>;
-
-pub type DescriptorLayout<'a> = <Backend as gfx_hal::Backend>::DescriptorSetLayout;

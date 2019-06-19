@@ -2,13 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
-use crate::cmd;
-use crate::{Fence, Semaphore, Submission};
+use super::*;
 use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::QueueFamily as _;
-use nova_sync::Mutex;
-use std::iter;
 
 /// Identifies a single device queue.
 #[derive(Debug, Clone, Copy)]
@@ -90,10 +86,7 @@ impl Queues {
     unsafe {
       queue.submit(
         gfx_hal::Submission {
-          command_buffers: submission
-            .command_buffers
-            .iter()
-            .map(cmd::List::as_backend),
+          command_buffers: submission.command_buffers.iter().map(cmd::List::as_backend),
           wait_semaphores: submission
             .wait_semaphores
             .iter()

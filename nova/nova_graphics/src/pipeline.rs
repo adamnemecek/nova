@@ -4,10 +4,7 @@
 
 pub use gfx_hal::pso::PipelineStage as Stage;
 
-use crate::{backend, renderer, shader, vertex, Context};
-use gfx_hal::Device as _;
-use std::sync::Arc;
-use std::{fmt, iter, mem};
+use super::*;
 
 #[derive(Clone)]
 pub struct Graphics(Arc<GraphicsInner>);

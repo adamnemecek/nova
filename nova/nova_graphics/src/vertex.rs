@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::Color;
-use nova_math::Point2;
-use std::mem;
+use super::*;
 
 /// A trait for types that can be used for vertex buffers.
 pub trait Data: Sized {
@@ -38,7 +36,7 @@ impl Attribute {
   }
 
   /// Returns the equivalent backend format.
-  pub (crate) fn backend_format(self) -> gfx_hal::format::Format {
+  pub(crate) fn backend_format(self) -> gfx_hal::format::Format {
     match self {
       Attribute::Vector2f32 => gfx_hal::format::Format::Rg32Sfloat,
       Attribute::Vector4f32 => gfx_hal::format::Format::Rgba32Sfloat,

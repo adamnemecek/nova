@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::backend;
-use crate::renderer::RenderPass;
-use crate::{Context, Image, OutOfMemoryError};
-use gfx_hal::Device as _;
-use nova_math::Size;
-use std::iter;
+use super::*;
 
 /// Container for the resources needed to render a single frame.
 ///
