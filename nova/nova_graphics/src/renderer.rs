@@ -75,7 +75,7 @@ pub fn start(
     include_str!("./renderer/shaders/color.frag"),
   );
 
-  let pipeline = pipeline::Builder::new()
+  let pipeline = PipelineBuilder::new()
     .set_render_pass(&render_pass)
     .set_vertex_shader(&vertex_shader.expect("failed to create vertex shader"))
     .set_fragment_shader(&fragment_shader.expect("failed to create fragment shader"))
@@ -104,7 +104,7 @@ pub fn start(
       let mut cmd = cmd_list.begin();
 
       cmd.pipeline_barrier(
-        pipeline::Stage::VERTEX_INPUT..pipeline::Stage::TRANSFER,
+        PipelineStage::VERTEX_INPUT..PipelineStage::TRANSFER,
         &[cmd::buffer_barrier(
           &vertex_buffer,
           ..,
@@ -115,7 +115,7 @@ pub fn start(
       cmd.copy_buffer(&staging_buffer, 0..staging_buffer.len(), &vertex_buffer, 0);
 
       cmd.pipeline_barrier(
-        pipeline::Stage::TRANSFER..pipeline::Stage::VERTEX_INPUT,
+        PipelineStage::TRANSFER..PipelineStage::VERTEX_INPUT,
         &[cmd::buffer_barrier(
           &vertex_buffer,
           ..,
@@ -166,7 +166,7 @@ pub fn start(
         }
       };
 
-      submission.wait_for(&acquire_semaphore, pipeline::Stage::COLOR_ATTACHMENT_OUTPUT);
+      submission.wait_for(&acquire_semaphore, PipelineStage::COLOR_ATTACHMENT_OUTPUT);
 
       // Attach the backbuffer to the framebuffer.
       framebuffer.set_attachment(backbuffer.image());

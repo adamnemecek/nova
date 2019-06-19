@@ -13,7 +13,7 @@ pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
   in_render_pass: bool,
-  bound_pipeline: Option<pipeline::Graphics>,
+  bound_pipeline: Option<Pipeline>,
 }
 
 impl<'a> Recorder<'a> {
@@ -76,7 +76,7 @@ impl<'a> Recorder<'a> {
   }
 
   /// Binds the given graphics pipeline for future commands in the render pass.
-  pub fn bind_pipeline(&mut self, pipeline: &pipeline::Graphics) {
+  pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
     unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_backend()) };
 
     self.bound_pipeline = Some(pipeline.clone());
@@ -130,11 +130,7 @@ impl<'a> Recorder<'a> {
 
   /// Inserts a pipeline barrier between the given stages with one or more
   /// memory barriers based on the given descriptions.
-  pub fn pipeline_barrier(
-    &mut self,
-    stages: ops::Range<pipeline::Stage>,
-    barriers: &[Barrier<'_>],
-  ) {
+  pub fn pipeline_barrier(&mut self, stages: ops::Range<PipelineStage>, barriers: &[Barrier<'_>]) {
     unsafe {
       self.buffer.pipeline_barrier(
         stages,

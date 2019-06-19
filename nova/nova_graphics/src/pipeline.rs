@@ -3,12 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-pub use gfx_hal::pso::PipelineStage as Stage;
+pub use gfx_hal::pso::PipelineStage;
 
 #[derive(Clone)]
-pub struct Graphics(Arc<GraphicsInner>);
+pub struct Pipeline(Arc<PipelineInner>);
 
-struct GraphicsInner {
+struct PipelineInner {
   context: Context,
   pipeline: Option<backend::Pipeline>,
   layout: Option<backend::PipelineLayout>,
@@ -16,8 +16,8 @@ struct GraphicsInner {
   _shaders: ShaderSet,
 }
 
-impl Graphics {
-  pub fn new(context: &Context, builder: Builder) -> Result<Self, CreationError> {
+impl Pipeline {
+  pub fn new(context: &Context, builder: PipelineBuilder) -> Result<Self, PipelineCreationError> {
     debug_assert!(
       builder.size_of_push_constants % 4 == 0,
       "size_of_push_constants must be a multiple of 4"
@@ -28,7 +28,7 @@ impl Graphics {
     let render_pass = builder
       .render_pass
       .as_ref()
-      .ok_or(CreationError::NoRenderPass)?;
+      .ok_or(PipelineCreationError::NoRenderPass)?;
 
     let layout = unsafe {
       context.device.create_pipeline_layout(
@@ -50,7 +50,7 @@ impl Graphics {
           .shaders
           .vertex
           .as_ref()
-          .ok_or(CreationError::NoVertexShader)?
+          .ok_or(PipelineCreationError::NoVertexShader)?
           .backend_entrypoint(),
 
         fragment: builder
@@ -82,7 +82,7 @@ impl Graphics {
 
     let pipeline = unsafe { context.device.create_graphics_pipeline(&desc, None)? };
 
-    Ok(Self(Arc::new(GraphicsInner {
+    Ok(Self(Arc::new(PipelineInner {
       context: context.clone(),
       pipeline: Some(pipeline),
       layout: Some(layout),
@@ -104,7 +104,7 @@ impl Graphics {
   }
 }
 
-impl Drop for GraphicsInner {
+impl Drop for PipelineInner {
   fn drop(&mut self) {
     unsafe {
       self
@@ -121,13 +121,13 @@ impl Drop for GraphicsInner {
 }
 
 #[derive(Clone, Default)]
-pub struct ShaderSet {
+struct ShaderSet {
   pub vertex: Option<shader::Module>,
   pub fragment: Option<shader::Module>,
 }
 
 #[derive(Default)]
-pub struct Builder {
+pub struct PipelineBuilder {
   shaders: ShaderSet,
   size_of_push_constants: usize,
   render_pass: Option<renderer::RenderPass>,
@@ -135,7 +135,7 @@ pub struct Builder {
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
 }
 
-impl Builder {
+impl PipelineBuilder {
   pub fn new() -> Self {
     Self::default()
   }
@@ -187,13 +187,13 @@ impl Builder {
     self
   }
 
-  pub fn into_graphics(self, context: &Context) -> Result<Graphics, CreationError> {
-    Graphics::new(context, self)
+  pub fn into_graphics(self, context: &Context) -> Result<Pipeline, PipelineCreationError> {
+    Pipeline::new(context, self)
   }
 }
 
 #[derive(Debug)]
-pub enum CreationError {
+pub enum PipelineCreationError {
   /// No render pass was provided.
   NoRenderPass,
   /// No vertex shader was provided.
@@ -211,20 +211,20 @@ pub enum CreationError {
   OutOfMemory,
 }
 
-impl From<gfx_hal::pso::CreationError> for CreationError {
+impl From<gfx_hal::pso::CreationError> for PipelineCreationError {
   fn from(err: gfx_hal::pso::CreationError) -> Self {
     match err {
-      gfx_hal::pso::CreationError::InvalidSubpass(id) => CreationError::InvalidSubpass(id),
-      gfx_hal::pso::CreationError::OutOfMemory(_) => CreationError::OutOfMemory,
+      gfx_hal::pso::CreationError::InvalidSubpass(id) => PipelineCreationError::InvalidSubpass(id),
+      gfx_hal::pso::CreationError::OutOfMemory(_) => PipelineCreationError::OutOfMemory,
       gfx_hal::pso::CreationError::Shader(err) => match err {
         gfx_hal::device::ShaderError::UnsupportedStage(stage) => {
-          CreationError::UnsupportedShaderStage(stage)
+          PipelineCreationError::UnsupportedShaderStage(stage)
         }
         gfx_hal::device::ShaderError::InterfaceMismatch(reason) => {
-          CreationError::ShaderInterfaceMismatch(reason)
+          PipelineCreationError::ShaderInterfaceMismatch(reason)
         }
         gfx_hal::device::ShaderError::MissingEntryPoint(reason) => {
-          CreationError::ShaderMissingEntryPoint(reason)
+          PipelineCreationError::ShaderMissingEntryPoint(reason)
         }
         err => panic!("failed to create pipeline: {}", err),
       },
@@ -233,28 +233,28 @@ impl From<gfx_hal::pso::CreationError> for CreationError {
   }
 }
 
-impl From<gfx_hal::device::OutOfMemory> for CreationError {
+impl From<gfx_hal::device::OutOfMemory> for PipelineCreationError {
   fn from(_: gfx_hal::device::OutOfMemory) -> Self {
-    CreationError::OutOfMemory
+    PipelineCreationError::OutOfMemory
   }
 }
 
-impl fmt::Display for CreationError {
+impl fmt::Display for PipelineCreationError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      CreationError::NoRenderPass => write!(f, "no render pass"),
-      CreationError::NoVertexShader => write!(f, "no vertex shader provided"),
-      CreationError::UnsupportedShaderStage(stage) => {
+      PipelineCreationError::NoRenderPass => write!(f, "no render pass"),
+      PipelineCreationError::NoVertexShader => write!(f, "no vertex shader provided"),
+      PipelineCreationError::UnsupportedShaderStage(stage) => {
         write!(f, "shader stage {:?} is not supported", stage)
       }
-      CreationError::ShaderInterfaceMismatch(err) => {
+      PipelineCreationError::ShaderInterfaceMismatch(err) => {
         write!(f, "shader interface mismatch: {}", err)
       }
-      CreationError::ShaderMissingEntryPoint(err) => {
+      PipelineCreationError::ShaderMissingEntryPoint(err) => {
         write!(f, "shader missing entry point: {}", err)
       }
-      CreationError::InvalidSubpass(id) => write!(f, "invalid subpass: {}", id),
-      CreationError::OutOfMemory => write!(f, "out of memory"),
+      PipelineCreationError::InvalidSubpass(id) => write!(f, "invalid subpass: {}", id),
+      PipelineCreationError::OutOfMemory => write!(f, "out of memory"),
     }
   }
 }

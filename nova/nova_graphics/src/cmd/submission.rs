@@ -14,7 +14,7 @@ pub struct Submission {
   pub command_buffers: Vec<List>,
 
   /// Semaphores to wait on before executing the commands in the submission.
-  pub wait_semaphores: Vec<(Semaphore, pipeline::Stage)>,
+  pub wait_semaphores: Vec<(Semaphore, PipelineStage)>,
 
   /// Semaphores to signal when the commands in the submission have finished
   /// executing.
@@ -44,7 +44,7 @@ impl Submission {
   ///
   /// The given `stage` indicates which pipeline stage will wait for the
   /// semaphore.
-  pub fn wait_for(&mut self, semaphore: &Semaphore, stage: pipeline::Stage) {
+  pub fn wait_for(&mut self, semaphore: &Semaphore, stage: PipelineStage) {
     self.wait_semaphores.push((semaphore.clone(), stage));
   }
 

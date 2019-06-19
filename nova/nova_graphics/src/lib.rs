@@ -22,6 +22,7 @@ use self::color::*;
 pub use self::context::*;
 use self::image::*;
 use self::surface::*;
+use self::pipeline::*;
 use self::sync::*;
 use gfx_hal::Device as _;
 use nova_log as log;
