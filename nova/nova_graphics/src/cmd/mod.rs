@@ -23,6 +23,6 @@ use gfx_hal::command::RawCommandBuffer as _;
 pub struct BufferCopy {
   /// Range of data to copy from the source buffer.
   pub src_range: ops::Range<u64>,
-  /// Offset at which to copy the data into the destination buffer.
-  pub dst_offset: u64,
+  /// Index at which to copy the data into the destination buffer.
+  pub dest_index: u64,
 }

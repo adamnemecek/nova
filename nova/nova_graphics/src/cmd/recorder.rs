@@ -143,17 +143,17 @@ impl<'a> Recorder<'a> {
   /// Copies data from a source buffer to a destination buffer.
   pub fn copy_buffer(
     &mut self,
-    source: &Buffer,
+    src: &Buffer,
     src_range: ops::Range<u64>,
-    destination: &Buffer,
-    dst_offset: u64,
+    dest: &Buffer,
+    dest_index: u64,
   ) {
     self.copy_buffer_regions(
-      source,
-      destination,
+      src,
+      dest,
       iter::once(BufferCopy {
         src_range,
-        dst_offset,
+        dest_index,
       }),
     );
   }
@@ -162,19 +162,19 @@ impl<'a> Recorder<'a> {
   /// buffer.
   pub fn copy_buffer_regions(
     &mut self,
-    source: &Buffer,
-    destination: &Buffer,
+    src: &Buffer,
+    dest: &Buffer,
     regions: impl IntoIterator<Item = BufferCopy>,
   ) {
     unsafe {
       self.buffer.copy_buffer(
-        source.as_backend(),
-        destination.as_backend(),
+        src.as_backend(),
+        dest.as_backend(),
         regions
           .into_iter()
           .map(|copy| gfx_hal::command::BufferCopy {
             src: copy.src_range.start,
-            dst: copy.dst_offset,
+            dst: copy.dest_index,
             size: copy.src_range.end - copy.src_range.start,
           }),
       );

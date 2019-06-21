@@ -13,6 +13,9 @@ pub struct Buffer {
   _memory: MemoryBlock,
 }
 
+// TODO: Is there a better way to avoid that `*mut u8` is not `Send`?
+unsafe impl Send for Buffer {}
+
 #[allow(clippy::len_without_is_empty)]
 impl Buffer {
   /// Allocates a new buffer of the given length.

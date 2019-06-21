@@ -11,8 +11,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   log::set_global_logger(&logger);
 
-  // Create a graphics context.
+  // Create a graphics context and background loader.
   let graphics = graphics::Context::new(&logger)?;
+  let loader = graphics::Loader::new(&graphics);
 
   // Open a window.
   let window = window::open(window::Options {
@@ -22,7 +23,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   // Start the renderer.
-  let renderer = renderer::start(&graphics, &window, &logger)?;
+  let renderer = renderer::start(&graphics, &window, &loader, &logger)?;
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |main_loop| {

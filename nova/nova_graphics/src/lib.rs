@@ -20,6 +20,7 @@ mod shader;
 mod surface;
 mod vertex;
 
+pub use self::loader::*;
 use self::alloc::*;
 use self::buffer::*;
 use self::color::*;

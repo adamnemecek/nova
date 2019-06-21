@@ -36,9 +36,11 @@ impl Renderer {
 pub fn start(
   context: &Context,
   window: &window::Handle,
+  loader: &Loader,
   logger: &log::Logger,
 ) -> Result<Renderer, OutOfMemoryError> {
   let context = context.clone();
+  let loader = loader.clone();
   let logger = logger.clone();
 
   // Create a channel to send and receive control messages.
@@ -53,7 +55,7 @@ pub fn start(
 
   framebuffer.set_render_pass(&render_pass);
 
-  let frame_fence = Fence::new(&context, false)?;
+  let frame_fence = Fence::new(&context, true)?;
   let acquire_semaphore = Semaphore::new(&context)?;
   let render_semaphore = Semaphore::new(&context)?;
 
@@ -82,51 +84,12 @@ pub fn start(
 
   // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
-    let mut staging_buffer =
-      Buffer::new(&context, BufferKind::Staging, 256).expect("failed to create staging buffer");
-
-    {
-      let vertices: &mut [Vertex] = staging_buffer.as_mut();
-
-      vertices[0] = Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0));
-      vertices[1] = Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0));
-      vertices[2] = Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0));
-      vertices[3] = Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0));
-    }
-
-    let vertex_buffer =
-      Buffer::new(&context, BufferKind::Vertex, 4).expect("failed to create vertex buffer");
-
-    {
-      let mut cmd_list = cmd::List::new(&command_pool);
-      let mut cmd = cmd_list.begin();
-
-      cmd.pipeline_barrier(
-        PipelineStage::VERTEX_INPUT..PipelineStage::TRANSFER,
-        &[cmd::buffer_barrier(
-          &vertex_buffer,
-          ..,
-          cmd::BufferAccess::VERTEX_BUFFER_READ..cmd::BufferAccess::TRANSFER_WRITE,
-        )],
-      );
-
-      cmd.copy_buffer(&staging_buffer, 0..staging_buffer.len(), &vertex_buffer, 0);
-
-      cmd.pipeline_barrier(
-        PipelineStage::TRANSFER..PipelineStage::VERTEX_INPUT,
-        &[cmd::buffer_barrier(
-          &vertex_buffer,
-          ..,
-          cmd::BufferAccess::TRANSFER_WRITE..cmd::BufferAccess::VERTEX_BUFFER_READ,
-        )],
-      );
-
-      cmd.finish();
-
-      submission.command_buffers.push(cmd_list);
-
-      context.queues().submit(&submission, &frame_fence);
-    }
+    let vertex_buffer = loader.load_buffer(BufferKind::Vertex, vec![
+      Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0)),
+      Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0)),
+      Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0)),
+      Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0)),
+    ]).recv().expect("failed to load buffer").expect("failed to load buffer");
 
     // Try to render at 60 fps maximum.
     time::loop_at_frequency(60.0, |render_loop| {
