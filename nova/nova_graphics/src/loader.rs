@@ -197,8 +197,6 @@ impl fmt::Display for LoaderCreationError {
 /// thread.
 #[derive(Debug)]
 pub enum LoadBufferError {
-  /// Out of either host or device memory.
-  OutOfMemory,
   /// The `Loader` background thread has been shut down.
   LoaderShutDown,
   /// An error occurred during the creation of the buffer.
@@ -222,7 +220,6 @@ impl From<channel::RecvError> for LoadBufferError {
 impl fmt::Display for LoadBufferError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      LoadBufferError::OutOfMemory => write!(f, "out of memory"),
       LoadBufferError::LoaderShutDown => write!(f, "background loader has shut down"),
       LoadBufferError::CreationFailed(err) => write!(f, "failed to create buffer: {}", err),
     }
