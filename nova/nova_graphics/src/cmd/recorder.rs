@@ -82,7 +82,7 @@ impl<'a> Recorder<'a> {
     self.bound_pipeline = Some(pipeline.clone());
   }
 
-  pub fn bind_vertex_buffer<T>(&mut self, index: u32, buffer: &Buffer<T>) {
+  pub fn bind_vertex_buffer(&mut self, index: u32, buffer: &Buffer) {
     unsafe {
       self
         .buffer
@@ -141,11 +141,11 @@ impl<'a> Recorder<'a> {
   }
 
   /// Copies data from a source buffer to a destination buffer.
-  pub fn copy_buffer<T>(
+  pub fn copy_buffer(
     &mut self,
-    source: &Buffer<T>,
+    source: &Buffer,
     src_range: ops::Range<u64>,
-    destination: &Buffer<T>,
+    destination: &Buffer,
     dst_offset: u64,
   ) {
     self.copy_buffer_regions(
@@ -160,25 +160,23 @@ impl<'a> Recorder<'a> {
 
   /// Copies multiple regions of data from a source buffer into a destination
   /// buffer.
-  pub fn copy_buffer_regions<T>(
+  pub fn copy_buffer_regions(
     &mut self,
-    source: &Buffer<T>,
-    destination: &Buffer<T>,
+    source: &Buffer,
+    destination: &Buffer,
     regions: impl IntoIterator<Item = BufferCopy>,
   ) {
-    let size_of = mem::size_of::<T>() as u64;
-
     unsafe {
       self.buffer.copy_buffer(
         source.as_backend(),
         destination.as_backend(),
-        regions.into_iter().map(|copy| {
-          let src = copy.src_range.start * size_of;
-          let dst = copy.dst_offset * size_of;
-          let size = copy.src_range.end * size_of - src;
-
-          gfx_hal::command::BufferCopy { src, dst, size }
-        }),
+        regions
+          .into_iter()
+          .map(|copy| gfx_hal::command::BufferCopy {
+            src: copy.src_range.start,
+            dst: copy.dst_offset,
+            size: copy.src_range.end - copy.src_range.start,
+          }),
       );
     }
   }

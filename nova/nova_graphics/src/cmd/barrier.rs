@@ -17,23 +17,21 @@ impl<'a> Barrier<'a> {
 }
 
 /// Returns a barrier description for a buffer or a subset of a buffer.
-pub fn buffer_barrier<T>(
-  buffer: &Buffer<T>,
+pub fn buffer_barrier(
+  buffer: &Buffer,
   range: impl ops::RangeBounds<u64>,
   access: ops::Range<BufferAccess>,
 ) -> Barrier {
-  let size_of = mem::size_of::<T>() as u64;
-
   let start = match range.start_bound() {
     ops::Bound::Unbounded => None,
-    ops::Bound::Included(i) => Some(*i * size_of),
-    ops::Bound::Excluded(i) => Some((*i + 1) * size_of),
+    ops::Bound::Included(i) => Some(*i),
+    ops::Bound::Excluded(i) => Some(*i + 1),
   };
 
   let end = match range.start_bound() {
     ops::Bound::Unbounded => None,
-    ops::Bound::Included(i) => Some(*i * size_of),
-    ops::Bound::Excluded(i) => Some((*i - 1) * size_of),
+    ops::Bound::Included(i) => Some(*i),
+    ops::Bound::Excluded(i) => Some(*i - 1),
   };
 
   Barrier(gfx_hal::memory::Barrier::Buffer {

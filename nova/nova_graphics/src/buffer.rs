@@ -3,26 +3,20 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use std::slice::SliceIndex;
 
 /// Buffer of data on the graphics device.
-pub struct Buffer<T> {
+pub struct Buffer {
   context: Context,
   buffer: Option<backend::Buffer>,
-  mapped: Option<*mut T>,
+  mapped: Option<*mut u8>,
   len: u64,
-  byte_len: u64,
   _memory: MemoryBlock,
 }
 
 #[allow(clippy::len_without_is_empty)]
-impl<T: Copy> Buffer<T> {
+impl Buffer {
   /// Allocates a new buffer of the given length.
   pub fn new(context: &Context, kind: BufferKind, len: u64) -> Result<Self, BufferCreationError> {
-    let byte_len = len
-      .checked_mul(mem::size_of::<T>() as u64)
-      .expect("requested buffer size is too large");
-
     let memory_kind = match kind {
       BufferKind::Staging => MemoryKind::HostMapped,
       _ => MemoryKind::DeviceLocal,
@@ -34,7 +28,7 @@ impl<T: Copy> Buffer<T> {
       BufferKind::Staging => gfx_hal::buffer::Usage::TRANSFER_SRC,
     };
 
-    let mut buffer = unsafe { context.device.create_buffer(byte_len, usage)? };
+    let mut buffer = unsafe { context.device.create_buffer(len, usage)? };
     let requirements = unsafe { context.device.get_buffer_requirements(&buffer) };
     let memory = context.allocator().alloc(memory_kind, requirements)?;
 
@@ -45,11 +39,9 @@ impl<T: Copy> Buffer<T> {
     }
 
     let mapped = match kind {
-      BufferKind::Staging => Some(unsafe {
-        context
-          .device
-          .map_memory(memory.as_backend(), 0..byte_len as u64)? as *mut T
-      }),
+      BufferKind::Staging => {
+        Some(unsafe { context.device.map_memory(memory.as_backend(), 0..len)? })
+      }
 
       _ => None,
     };
@@ -59,23 +51,55 @@ impl<T: Copy> Buffer<T> {
       buffer: Some(buffer),
       mapped,
       len,
-      byte_len,
       _memory: memory,
     })
   }
 }
 
-impl<T> Buffer<T> {
-  /// Returns the length of the buffer.
-  ///
-  /// This is the number of `T` values that fit in the buffer.
+impl Buffer {
+  /// Returns the length of the buffer bytes.
   pub fn len(&self) -> u64 {
     self.len
   }
 
-  /// Returns the length of the buffer in bytes.
-  pub fn byte_len(&self) -> u64 {
-    self.byte_len
+  pub fn slice_as_ref<T: Copy>(&self, bounds: impl ops::RangeBounds<u64>) -> &[T] {
+    let mapped = unsafe {
+      slice::from_raw_parts(
+        self
+          .mapped
+          .expect("cannot get a direct reference to a non-staging buffer"),
+        self.len as usize,
+      )
+    };
+
+    let slice = &mapped[clamp_buffer_range_usize(&self, bounds)];
+
+    unsafe {
+      slice::from_raw_parts(
+        &slice[0] as *const u8 as *const T,
+        slice.len() / mem::size_of::<T>(),
+      )
+    }
+  }
+
+  pub fn slice_as_mut<T: Copy>(&mut self, bounds: impl ops::RangeBounds<u64>) -> &mut [T] {
+    let mapped = unsafe {
+      slice::from_raw_parts_mut(
+        self
+          .mapped
+          .expect("cannot get a direct reference to a non-staging buffer"),
+        self.len as usize,
+      )
+    };
+
+    let slice = &mut mapped[clamp_buffer_range_usize(&self, bounds)];
+
+    unsafe {
+      slice::from_raw_parts_mut(
+        &mut slice[0] as *mut u8 as *mut T,
+        slice.len() / mem::size_of::<T>(),
+      )
+    }
   }
 
   /// Returns a reference to the underlying backend buffer.
@@ -84,7 +108,7 @@ impl<T> Buffer<T> {
   }
 }
 
-impl<T> Drop for Buffer<T> {
+impl Drop for Buffer {
   fn drop(&mut self) {
     unsafe {
       self
@@ -95,24 +119,15 @@ impl<T> Drop for Buffer<T> {
   }
 }
 
-impl<T, I: SliceIndex<[T]>> ops::Index<I> for Buffer<T> {
-  type Output = I::Output;
-
-  fn index(&self, index: I) -> &Self::Output {
-    let mapped = self.mapped.expect("cannot index a non-staging buffer");
-    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.byte_len as usize) };
-
-    &slice[index]
+impl<T: Copy> AsRef<[T]> for Buffer {
+  fn as_ref(&self) -> &[T] {
+    self.slice_as_ref(..)
   }
 }
 
-impl<T, I: SliceIndex<[T]>> ops::IndexMut<I> for Buffer<T> {
-  fn index_mut(&mut self, index: I) -> &mut I::Output {
-    let mapped = self.mapped.expect("cannot index a non-staging buffer");
-
-    let slice = unsafe { std::slice::from_raw_parts_mut(mapped, self.byte_len as usize) };
-
-    &mut slice[index]
+impl<T: Copy> AsMut<[T]> for Buffer {
+  fn as_mut(&mut self) -> &mut [T] {
+    self.slice_as_mut(..)
   }
 }
 
@@ -186,4 +201,29 @@ impl fmt::Display for BufferCreationError {
       }
     }
   }
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct BufferRange {
+  pub start: u64,
+  pub len: u64,
+}
+
+pub(crate) fn clamp_buffer_range_usize(
+  buffer: &Buffer,
+  bounds: impl ops::RangeBounds<u64>,
+) -> ops::Range<usize> {
+  let start = match bounds.start_bound() {
+    ops::Bound::Unbounded => 0,
+    ops::Bound::Included(i) => *i,
+    ops::Bound::Excluded(i) => *i + 1,
+  };
+
+  let end = match bounds.start_bound() {
+    ops::Bound::Unbounded => buffer.len(),
+    ops::Bound::Included(i) => *i,
+    ops::Bound::Excluded(i) => *i - 1,
+  };
+
+  (start as usize)..(end as usize)
 }

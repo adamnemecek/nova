@@ -83,12 +83,16 @@ pub fn start(
   // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
     let mut staging_buffer =
-      Buffer::new(&context, BufferKind::Staging, 4).expect("failed to create staging buffer");
+      Buffer::new(&context, BufferKind::Staging, 256).expect("failed to create staging buffer");
 
-    staging_buffer[0] = Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0));
-    staging_buffer[1] = Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0));
-    staging_buffer[2] = Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0));
-    staging_buffer[3] = Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0));
+    {
+      let vertices: &mut [Vertex] = staging_buffer.as_mut();
+
+      vertices[0] = Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0));
+      vertices[1] = Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0));
+      vertices[2] = Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0));
+      vertices[3] = Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0));
+    }
 
     let vertex_buffer =
       Buffer::new(&context, BufferKind::Vertex, 4).expect("failed to create vertex buffer");
