@@ -42,7 +42,7 @@ impl Loader {
       while let Ok(message) = recv_messages.recv() {
         match message {
           Message::LoadBuffer { src, kind, result } => {
-            let src = src.as_bytes();
+            let src = (*src).as_ref();
 
             // Create the buffer to load data into.
             let dest = match Buffer::new(&context, kind, src.len() as u64) {
@@ -99,13 +99,15 @@ impl Loader {
     src: impl Into<Vec<T>>,
   ) -> LoaderResult<Buffer, LoadBufferError> {
     let (result, result_recv) = channel::bounded(0);
-    let src = Box::new(DynamicSrc(src.into()));
+    let src = DynamicSrc(src.into());
 
-    debug_assert!(src.as_bytes().len() < Self::STAGING_BUFFER_LEN);
+    debug_assert!(src.as_ref().len() < Self::STAGING_BUFFER_LEN);
 
-    let _ = self
-      .messages
-      .send(Message::LoadBuffer { src, kind, result });
+    let _ = self.messages.send(Message::LoadBuffer {
+      src: Box::new(src),
+      kind,
+      result,
+    });
 
     LoaderResult {
       receiver: result_recv,
@@ -140,7 +142,7 @@ impl<T, E: From<channel::TryRecvError>> LoaderResult<T, E> {
 /// Control message sent to a `Loader` background thread.
 enum Message {
   LoadBuffer {
-    src: Box<AsBytes + Send>,
+    src: Box<AsRef<[u8]> + Send>,
     kind: BufferKind,
     result: channel::Sender<Result<Buffer, LoadBufferError>>,
   },
@@ -149,13 +151,8 @@ enum Message {
 /// Wrapper around a generic `Vec<T>` for implementing `AsBytes`.
 struct DynamicSrc<T>(Vec<T>);
 
-/// A trait for values that can be directly referenced as a byte slice.
-trait AsBytes {
-  fn as_bytes(&self) -> &[u8];
-}
-
-impl<T: Copy + Send> AsBytes for DynamicSrc<T> {
-  fn as_bytes(&self) -> &[u8] {
+impl<T: Copy + Send> AsRef<[u8]> for DynamicSrc<T> {
+  fn as_ref(&self) -> &[u8] {
     unsafe {
       slice::from_raw_parts(
         &self.0[0] as *const T as *const u8,
