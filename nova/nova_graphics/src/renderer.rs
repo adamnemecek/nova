@@ -89,7 +89,7 @@ pub fn start(
       Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0)),
       Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0)),
       Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0)),
-    ]).recv().expect("failed to load buffer").expect("failed to load buffer");
+    ]).recv().expect("failed to load buffer");
 
     // Try to render at 60 fps maximum.
     time::loop_at_frequency(60.0, |render_loop| {

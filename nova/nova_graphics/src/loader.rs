@@ -4,6 +4,8 @@
 
 use super::*;
 
+/// Cloneable handle to a background thread for loading the data for large
+/// buffers and images onto the graphics device.
 #[derive(Clone)]
 pub struct Loader {
   messages: channel::Sender<Message>,
@@ -12,38 +14,48 @@ pub struct Loader {
 impl Loader {
   const STAGING_BUFFER_LEN: usize = 64 * 1024 * 1024;
 
-  pub fn new(context: &Context) -> Loader {
+  /// Starts a background thread to load the data for large buffers and images
+  /// onto the device, returning a cloneable control handle.
+  pub fn new(context: &Context) -> Result<Loader, LoaderCreationError> {
     let context = context.clone();
-    let (messages_send, messages) = channel::unbounded();
 
+    // Create resources needed for submitting transfer commands.
     let queue_id = context.queues().find_transfer_queue();
-    let command_pool = cmd::Pool::new(&context, queue_id).expect("failed to create command pool");
+    let command_pool = cmd::Pool::new(&context, queue_id)?;
     let mut submission = cmd::Submission::new(queue_id);
-    let fence = Fence::new(&context, false).expect("failed to create fence");
+    let fence = Fence::new(&context, false)?;
 
+    // Create a staging buffer, accessible to host and device, for storing data
+    // to copy into device-local resources.
     let mut staging_buffer = Buffer::new(
       &context,
       BufferKind::Staging,
       Self::STAGING_BUFFER_LEN as u64,
     )
-    .expect("failed to create staging buffer");
+    .map_err(LoaderCreationError::StagingBufferCreationFailed)?;
+
+    // Create a channel for control messages and then start the background
+    // thread to consume them.
+    let (send_messages, recv_messages) = channel::unbounded();
 
     thread::spawn(move || {
-      while let Ok(message) = messages.recv() {
+      while let Ok(message) = recv_messages.recv() {
         match message {
           Message::LoadBuffer { src, kind, result } => {
             let src = src.as_bytes();
 
+            // Create the buffer to load data into.
             let dest = match Buffer::new(&context, kind, src.len() as u64) {
               Ok(b) => b,
 
-              err => {
-                let _ = result.send(err);
+              Err(err) => {
+                let _ = result.send(Err(err.into()));
 
                 continue;
               }
             };
 
+            // Copy the src data into the staging buffer.
             unsafe {
               std::ptr::copy_nonoverlapping(
                 &src[0] as *const u8,
@@ -52,12 +64,15 @@ impl Loader {
               );
             }
 
+            // Record a command list to copy data from the staging buffer into
+            // the destination buffer.
             let mut cmd_list = cmd::List::new(&command_pool);
             let mut cmd = cmd_list.begin();
 
             cmd.copy_buffer(&staging_buffer, 0..dest.len(), &dest, 0);
             cmd.finish();
 
+            // Submit the transfer commands and wait for them to complete.
             submission.command_buffers.push(cmd_list);
 
             context.queues().submit(&submission, &fence);
@@ -65,24 +80,26 @@ impl Loader {
 
             submission.clear();
 
+            // Send the filled buffer as a result.
             let _ = result.send(Ok(dest));
           }
         }
       }
     });
 
-    Loader {
-      messages: messages_send,
-    }
+    Ok(Loader {
+      messages: send_messages,
+    })
   }
 
+  /// Asynchronously loads a buffer from the given source data.
   pub fn load_buffer<T: Copy + Send + 'static>(
     &self,
     kind: BufferKind,
-    data: impl Into<Vec<T>>,
-  ) -> channel::Receiver<Result<Buffer, BufferCreationError>> {
+    src: impl Into<Vec<T>>,
+  ) -> LoaderResult<Buffer, LoadBufferError> {
     let (result, result_recv) = channel::bounded(0);
-    let src = Box::new(DynamicSrc(data.into()));
+    let src = Box::new(DynamicSrc(src.into()));
 
     debug_assert!(src.as_bytes().len() < Self::STAGING_BUFFER_LEN);
 
@@ -90,23 +107,52 @@ impl Loader {
       .messages
       .send(Message::LoadBuffer { src, kind, result });
 
-    result_recv
+    LoaderResult {
+      receiver: result_recv,
+    }
   }
 }
 
+/// Receiver for the result of an asynchrounous load by a `Loader` background
+/// thread.
+pub struct LoaderResult<T, E> {
+  receiver: channel::Receiver<Result<T, E>>,
+}
+
+impl<T, E: From<channel::RecvError>> LoaderResult<T, E> {
+  /// Returns the result, blocking until it is available.
+  pub fn recv(&self) -> Result<T, E> {
+    self.receiver.recv().map_err(E::from).and_then(|res| res)
+  }
+}
+
+impl<T, E: From<channel::TryRecvError>> LoaderResult<T, E> {
+  /// Attempts to receive the result without blocking.
+  pub fn try_recv(&self) -> Result<T, E> {
+    self
+      .receiver
+      .try_recv()
+      .map_err(E::from)
+      .and_then(|res| res)
+  }
+}
+
+/// Control message sent to a `Loader` background thread.
 enum Message {
   LoadBuffer {
     src: Box<AsBytes + Send>,
     kind: BufferKind,
-    result: channel::Sender<Result<Buffer, BufferCreationError>>,
+    result: channel::Sender<Result<Buffer, LoadBufferError>>,
   },
 }
 
+/// Wrapper around a generic `Vec<T>` for implementing `AsBytes`.
+struct DynamicSrc<T>(Vec<T>);
+
+/// A trait for values that can be directly referenced as a byte slice.
 trait AsBytes {
   fn as_bytes(&self) -> &[u8];
 }
-
-struct DynamicSrc<T>(Vec<T>);
 
 impl<T: Copy + Send> AsBytes for DynamicSrc<T> {
   fn as_bytes(&self) -> &[u8] {
@@ -115,6 +161,70 @@ impl<T: Copy + Send> AsBytes for DynamicSrc<T> {
         &self.0[0] as *const T as *const u8,
         self.0.len() * mem::size_of::<T>(),
       )
+    }
+  }
+}
+
+/// An error that occurred during the creation of a `Loader`.
+#[derive(Debug)]
+pub enum LoaderCreationError {
+  /// Out of either host or device memory.
+  OutOfMemory,
+  /// An error occurred during the creation of a staging buffer.
+  StagingBufferCreationFailed(BufferCreationError),
+}
+
+impl std::error::Error for LoaderCreationError {}
+
+impl From<OutOfMemoryError> for LoaderCreationError {
+  fn from(_: OutOfMemoryError) -> Self {
+    LoaderCreationError::OutOfMemory
+  }
+}
+
+impl fmt::Display for LoaderCreationError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      LoaderCreationError::OutOfMemory => write!(f, "out of memory"),
+      LoaderCreationError::StagingBufferCreationFailed(err) => {
+        write!(f, "failed to create staging buffer: {}", err)
+      }
+    }
+  }
+}
+
+/// An error that occurred while loading a buffer on a `Loader` background
+/// thread.
+#[derive(Debug)]
+pub enum LoadBufferError {
+  /// Out of either host or device memory.
+  OutOfMemory,
+  /// The `Loader` background thread has been shut down.
+  LoaderShutDown,
+  /// An error occurred during the creation of the buffer.
+  CreationFailed(BufferCreationError),
+}
+
+impl std::error::Error for LoadBufferError {}
+
+impl From<BufferCreationError> for LoadBufferError {
+  fn from(err: BufferCreationError) -> Self {
+    LoadBufferError::CreationFailed(err)
+  }
+}
+
+impl From<channel::RecvError> for LoadBufferError {
+  fn from(_: channel::RecvError) -> Self {
+    LoadBufferError::LoaderShutDown
+  }
+}
+
+impl fmt::Display for LoadBufferError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      LoadBufferError::OutOfMemory => write!(f, "out of memory"),
+      LoadBufferError::LoaderShutDown => write!(f, "background loader has shut down"),
+      LoadBufferError::CreationFailed(err) => write!(f, "failed to create buffer: {}", err),
     }
   }
 }

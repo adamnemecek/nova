@@ -13,7 +13,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   // Create a graphics context and background loader.
   let graphics = graphics::Context::new(&logger)?;
-  let loader = graphics::Loader::new(&graphics);
+  let loader = graphics::Loader::new(&graphics)?;
 
   // Open a window.
   let window = window::open(window::Options {
