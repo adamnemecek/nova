@@ -17,6 +17,7 @@ pub use self::recorder::*;
 pub use self::submission::*;
 use super::*;
 use gfx_hal::command::RawCommandBuffer as _;
+pub use gfx_hal::image::Layout as ImageLayout;
 
 /// Description of a copy operation from a source buffer to a destination
 /// buffer.

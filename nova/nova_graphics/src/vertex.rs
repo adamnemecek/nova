@@ -22,6 +22,8 @@ pub trait Data: Sized {
 pub enum Attribute {
   /// Two 32-bit floating point values.
   Vector2f32,
+  /// Three 32-bit floating point values.
+  Vector3f32,
   /// Four 32-bit floating point values.
   Vector4f32,
 }
@@ -31,6 +33,7 @@ impl Attribute {
   pub fn size(self) -> u32 {
     match self {
       Attribute::Vector2f32 => 8,
+      Attribute::Vector3f32 => 12,
       Attribute::Vector4f32 => 16,
     }
   }
@@ -39,6 +42,7 @@ impl Attribute {
   pub(crate) fn backend_format(self) -> gfx_hal::format::Format {
     match self {
       Attribute::Vector2f32 => gfx_hal::format::Format::Rg32Sfloat,
+      Attribute::Vector3f32 => gfx_hal::format::Format::Rgb32Sfloat,
       Attribute::Vector4f32 => gfx_hal::format::Format::Rgba32Sfloat,
     }
   }

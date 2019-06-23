@@ -214,6 +214,44 @@ impl<'a> Recorder<'a> {
     }
   }
 
+  /// Records a command to copy the data in a [`Buffer`] into an ['Image`].
+  pub fn copy_buffer_to_image(
+    &mut self,
+    src: &Buffer,
+    src_offset: u64,
+    dest: &Image,
+    dest_layout: ImageLayout,
+    dest_rect: Rect<u32>,
+  ) {
+    unsafe {
+      self.buffer.copy_buffer_to_image(
+        src.as_backend(),
+        dest.as_backend(),
+        dest_layout,
+        &[gfx_hal::command::BufferImageCopy {
+          buffer_offset: src_offset,
+          buffer_width: 0,
+          buffer_height: 0,
+          image_layers: gfx_hal::image::SubresourceLayers {
+            aspects: gfx_hal::format::Aspects::COLOR,
+            level: 0,
+            layers: 0..1,
+          },
+          image_offset: gfx_hal::image::Offset {
+            x: dest_rect.start.x as i32,
+            y: dest_rect.start.y as i32,
+            z: 0,
+          },
+          image_extent: gfx_hal::image::Extent {
+            width: dest_rect.width(),
+            height: dest_rect.height(),
+            depth: 1,
+          },
+        }],
+      );
+    }
+  }
+
   /// Finishes recording commands, dropping the `Recorder`.
   pub fn finish(self) {}
 }

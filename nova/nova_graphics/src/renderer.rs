@@ -79,7 +79,7 @@ pub fn start(
     .add_vertex_buffer::<Vertex>()
     .add_descriptor_set(&DescriptorLayout::new(
       &context,
-      vec![DescriptorKind::UniformBuffer],
+      vec![DescriptorKind::UniformBuffer, DescriptorKind::SampledImage],
     )?)
     .build(&context)
     .expect("failed to create graphics pipeline");
@@ -95,10 +95,10 @@ pub fn start(
       .load_buffer(
         BufferKind::Vertex,
         vec![
-          Vertex((-640.0, -360.0), Color::new(1.0, 0.0, 0.0, 1.0)),
-          Vertex((-640.0, 360.0), Color::new(0.0, 1.0, 0.0, 1.0)),
-          Vertex((640.0, -360.0), Color::new(0.0, 0.0, 1.0, 1.0)),
-          Vertex((640.0, 360.0), Color::new(0.0, 0.0, 0.0, 0.0)),
+          Vertex((-640.0, -360.0, 0.0), (0.0, 0.0), Color::WHITE),
+          Vertex((-640.0, 360.0, 0.0), (0.0, 1.0), Color::WHITE),
+          Vertex((640.0, -360.0, 0.0), (1.0, 0.0), Color::WHITE),
+          Vertex((640.0, 360.0, 0.0), (1.0, 1.0), Color::WHITE),
         ],
       )
       .recv()
@@ -119,9 +119,21 @@ pub fn start(
       .recv()
       .expect("failed to load uniform buffer");
 
+    let image_data = ImageData::load_file("assets/do_it.jpg").expect("failed to load image data");
+
+    let image = loader
+      .load_image(image_data.size(), image_data)
+      .recv()
+      .expect("failed to load image");
+
+    let sampler = Sampler::new(&context, SamplerFilter::Nearest).expect("failed to create sampler");
+
     let descriptor_set = DescriptorSet::new(
       &descriptor_pool,
-      vec![Descriptor::UniformBuffer(uniform_buffer)],
+      vec![
+        Descriptor::UniformBuffer(uniform_buffer),
+        Descriptor::SampledImage(image, sampler),
+      ],
     )
     .expect("failed to create descriptor set");
 
@@ -219,9 +231,12 @@ pub fn start(
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-struct Vertex((f32, f32), Color);
+struct Vertex((f32, f32, f32), (f32, f32), Color);
 
 impl vertex::Data for Vertex {
-  const ATTRIBUTES: &'static [vertex::Attribute] =
-    &[vertex::Attribute::Vector2f32, vertex::Attribute::Vector4f32];
+  const ATTRIBUTES: &'static [vertex::Attribute] = &[
+    vertex::Attribute::Vector3f32,
+    vertex::Attribute::Vector2f32,
+    vertex::Attribute::Vector4f32,
+  ];
 }

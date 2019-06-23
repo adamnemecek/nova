@@ -83,6 +83,74 @@ impl Loader {
             // Send the filled buffer as a result.
             let _ = result.send(Ok(dest));
           }
+
+          Message::LoadImage { src, size, result } => {
+            let src = (*src).as_ref();
+
+            // Create the image to load data into.
+            let dest = Image::new(&context, size);
+
+            // Copy the src data into the staging buffer.
+            unsafe {
+              std::ptr::copy_nonoverlapping(
+                &src[0] as *const u8,
+                &mut staging_buffer.as_mut()[0] as *mut u8,
+                src.len(),
+              );
+            }
+
+            // Record a command list to copy data from the staging buffer into
+            // the image.
+            let mut cmd_list = cmd::List::new(&command_pool);
+            let mut cmd = cmd_list.begin();
+
+            // Record a command to change the layout of the image for optimal
+            // transfer.
+            cmd.pipeline_barrier(
+              PipelineStage::BOTTOM_OF_PIPE..PipelineStage::TRANSFER,
+              &[cmd::image_barrier(
+                &dest,
+                cmd::ImageAccess::empty()..cmd::ImageAccess::TRANSFER_WRITE,
+                cmd::ImageLayout::Undefined..cmd::ImageLayout::TransferDstOptimal,
+              )],
+            );
+
+            // Record the copy command.
+            cmd.copy_buffer_to_image(
+              &staging_buffer,
+              0,
+              &dest,
+              cmd::ImageLayout::TransferDstOptimal,
+              Rect {
+                start: Point2::origin(),
+                end: Point2::new(size.width, size.height),
+              },
+            );
+
+            // Record a command to change the layout of the image for optimal
+            // shader reads.
+            cmd.pipeline_barrier(
+              PipelineStage::TRANSFER..PipelineStage::TOP_OF_PIPE,
+              &[cmd::image_barrier(
+                &dest,
+                cmd::ImageAccess::TRANSFER_WRITE..cmd::ImageAccess::empty(),
+                cmd::ImageLayout::TransferDstOptimal..cmd::ImageLayout::ShaderReadOnlyOptimal,
+              )],
+            );
+
+            cmd.finish();
+
+            // Submit the transfer commands and wait for them to complete.
+            submission.command_buffers.push(cmd_list);
+
+            context.queues().submit(&submission, &fence);
+            fence.wait_and_reset();
+
+            submission.clear();
+
+            // Send the filled buffer as a result.
+            let _ = result.send(Ok(dest));
+          }
         }
       }
     });
@@ -106,6 +174,28 @@ impl Loader {
     let _ = self.messages.send(Message::LoadBuffer {
       src: Box::new(src),
       kind,
+      result,
+    });
+
+    LoaderResult {
+      receiver: result_recv,
+    }
+  }
+
+  /// Asynchronously loads an image from the given source data.
+  pub fn load_image(
+    &self,
+    size: Size<u32>,
+    src: impl Into<Vec<u8>>,
+  ) -> LoaderResult<Image, LoadImageError> {
+    let (result, result_recv) = channel::bounded(0);
+    let src = src.into();
+
+    debug_assert!(src.len() < Self::STAGING_BUFFER_LEN);
+
+    let _ = self.messages.send(Message::LoadImage {
+      src: Box::new(src),
+      size,
       result,
     });
 
@@ -145,6 +235,11 @@ enum Message {
     src: Box<AsRef<[u8]> + Send>,
     kind: BufferKind,
     result: channel::Sender<Result<Buffer, LoadBufferError>>,
+  },
+  LoadImage {
+    src: Box<AsRef<[u8]> + Send>,
+    size: Size<u32>,
+    result: channel::Sender<Result<Image, LoadImageError>>,
   },
 }
 
@@ -202,6 +297,15 @@ pub enum LoadBufferError {
 
 impl std::error::Error for LoadBufferError {}
 
+impl fmt::Display for LoadBufferError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      LoadBufferError::LoaderShutDown => write!(f, "background loader has shut down"),
+      LoadBufferError::CreationFailed(err) => write!(f, "failed to create buffer: {}", err),
+    }
+  }
+}
+
 impl From<BufferCreationError> for LoadBufferError {
   fn from(err: BufferCreationError) -> Self {
     LoadBufferError::CreationFailed(err)
@@ -214,11 +318,26 @@ impl From<channel::RecvError> for LoadBufferError {
   }
 }
 
-impl fmt::Display for LoadBufferError {
+/// An error that occurred while loading an [`Image`] on a [`Loader`] background
+/// thread.
+#[derive(Debug)]
+pub enum LoadImageError {
+  /// The `Loader` background thread has been shut down.
+  LoaderShutDown,
+}
+
+impl std::error::Error for LoadImageError {}
+
+impl fmt::Display for LoadImageError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      LoadBufferError::LoaderShutDown => write!(f, "background loader has shut down"),
-      LoadBufferError::CreationFailed(err) => write!(f, "failed to create buffer: {}", err),
+      LoadImageError::LoaderShutDown => write!(f, "background loader has shut down"),
     }
+  }
+}
+
+impl From<channel::RecvError> for LoadImageError {
+  fn from(_: channel::RecvError) -> Self {
+    LoadImageError::LoaderShutDown
   }
 }
