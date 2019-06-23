@@ -77,11 +77,11 @@ pub fn start(
     .set_fragment_shader(&fragment_shader.expect("failed to create fragment shader"))
     .set_push_constants::<Color>()
     .add_vertex_buffer::<Vertex>()
-    .add_descriptor_layout(&DescriptorLayout::new(
+    .add_descriptor_set(&DescriptorLayout::new(
       &context,
       vec![DescriptorKind::UniformBuffer],
     )?)
-    .into_graphics(&context)
+    .build(&context)
     .expect("failed to create graphics pipeline");
 
   let mut submission = cmd::Submission::new(graphics_queue_id);

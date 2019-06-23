@@ -5,6 +5,7 @@
 use super::*;
 pub use gfx_hal::pso::PipelineStage;
 
+/// Represents a graphics pipeline object on the device.
 #[derive(Clone)]
 pub struct Pipeline(Arc<PipelineInner>);
 
@@ -18,6 +19,7 @@ struct PipelineInner {
 }
 
 impl Pipeline {
+  /// Creates a new graphics pipeline object from the given `PipelineBuilder`.
   pub fn new(context: &Context, builder: PipelineBuilder) -> Result<Self, PipelineCreationError> {
     debug_assert!(
       builder.size_of_push_constants % 4 == 0,
@@ -99,18 +101,22 @@ impl Pipeline {
     })))
   }
 
-  pub fn push_constant_count(&self) -> usize {
-    self.0.push_constant_count
-  }
-
+  /// Returns a reference to the descriptor layouts defined in the pipeline.
   pub fn descriptor_layouts(&self) -> &[DescriptorLayout] {
     &self.0.descriptor_layouts
   }
 
+  /// Returns the number of push constants defined in the pipeline.
+  pub(crate) fn push_constant_count(&self) -> usize {
+    self.0.push_constant_count
+  }
+
+  /// Returns a reference to the underlying backend pipeline.
   pub(crate) fn as_backend(&self) -> &backend::Pipeline {
     self.0.pipeline.as_ref().unwrap()
   }
 
+  /// Returns a reference to the underlying backend pipeline layout.
   pub(crate) fn as_backend_layout(&self) -> &backend::PipelineLayout {
     self.0.layout.as_ref().unwrap()
   }
@@ -132,12 +138,14 @@ impl Drop for PipelineInner {
   }
 }
 
+/// Container for all of the possible shaders in a pipeline.
 #[derive(Clone, Default)]
 struct ShaderSet {
   pub vertex: Option<shader::Module>,
   pub fragment: Option<shader::Module>,
 }
 
+/// A declarative builder for creating a `Pipeline`.
 #[derive(Default)]
 pub struct PipelineBuilder {
   shaders: ShaderSet,
@@ -149,30 +157,36 @@ pub struct PipelineBuilder {
 }
 
 impl PipelineBuilder {
+  /// Creates a new builder.
   pub fn new() -> Self {
     Self::default()
   }
 
+  /// Sets the render pass of the pipeline.
   pub fn set_render_pass(mut self, render_pass: &RenderPass) -> Self {
     self.render_pass = Some(render_pass.clone());
     self
   }
 
-  pub fn set_vertex_shader<'a>(mut self, module: impl Into<Option<&'a shader::Module>>) -> Self {
-    self.shaders.vertex = module.into().cloned();
+  /// Sets the vertex shader of the pipeline.
+  pub fn set_vertex_shader(mut self, module: &shader::Module) -> Self {
+    self.shaders.vertex = Some(module.clone());
     self
   }
 
-  pub fn set_fragment_shader<'a>(mut self, module: impl Into<Option<&'a shader::Module>>) -> Self {
-    self.shaders.fragment = module.into().cloned();
+  /// Sets the fragment shader of the pipeline.
+  pub fn set_fragment_shader(mut self, module: &shader::Module) -> Self {
+    self.shaders.fragment = Some(module.clone());
     self
   }
 
+  /// Sets the push constants type of the pipeline to `T`.
   pub fn set_push_constants<T: Sized>(mut self) -> Self {
     self.size_of_push_constants = mem::size_of::<T>();
     self
   }
 
+  /// Adds a vertex buffer of type `T` to the pipeline.
   pub fn add_vertex_buffer<T: vertex::Data>(mut self) -> Self {
     let binding = self.vertex_buffers.len() as u32;
 
@@ -200,12 +214,14 @@ impl PipelineBuilder {
     self
   }
 
-  pub fn add_descriptor_layout(mut self, layout: &DescriptorLayout) -> Self {
+  /// Adds a [`DescriptorSet`] to the pipeline with the given `layout`.
+  pub fn add_descriptor_set(mut self, layout: &DescriptorLayout) -> Self {
     self.desriptor_layouts.push(layout.clone());
     self
   }
 
-  pub fn into_graphics(self, context: &Context) -> Result<Pipeline, PipelineCreationError> {
+  /// Builds the [`Pipeline`].
+  pub fn build(self, context: &Context) -> Result<Pipeline, PipelineCreationError> {
     Pipeline::new(context, self)
   }
 }

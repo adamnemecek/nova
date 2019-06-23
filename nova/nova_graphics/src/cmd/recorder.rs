@@ -38,8 +38,10 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Begins a render pass using the given framebuffer.
+  /// Records a command to begin a render pass.
   pub fn begin_render_pass(&mut self, framebuffer: &mut Framebuffer) {
+    debug_assert!(!self.in_render_pass, "already began a render pass");
+
     let render_pass = framebuffer.render_pass().unwrap();
     let size = framebuffer.size();
 
@@ -75,14 +77,15 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = true;
   }
 
-  /// Binds the given graphics pipeline for future commands in the render pass.
+  /// Records a command to bind a pipeline to use for draw commands.
   pub fn bind_pipeline(&mut self, pipeline: &Pipeline) {
     unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_backend()) };
 
     self.bound_pipeline = Some(pipeline.clone());
   }
 
-  /// Records a command to bind one or more descriptor sets.
+  /// Records a command to bind one or more descriptor sets to the current
+  /// pipeline.
   pub fn bind_descriptor_sets<'b>(
     &mut self,
     first_index: usize,
@@ -103,7 +106,8 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Records a command to bind a buffer to the given vertex buffer index.
+  /// Records a command to bind a buffer to the given vertex buffer index in
+  /// the current pipeline.
   pub fn bind_vertex_buffer(&mut self, index: u32, buffer: &Buffer) {
     unsafe {
       self
@@ -112,10 +116,10 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Set the graphics pipeline push constants to the given value.
+  /// Records a command to set the push constants for the current pipeline.
   ///
-  /// The size of type `T` must match the `size_of_push_constants` option of
-  /// the graphics pipeline.
+  /// `T` must be the same type as specified during pipeline creation or another
+  /// type of equal size.
   pub fn push_constants<T: Sized>(&mut self, constants: &T) {
     let pipeline = self
       .bound_pipeline
@@ -124,7 +128,11 @@ impl<'a> Recorder<'a> {
 
     let count = pipeline.push_constant_count();
 
-    debug_assert_eq!(count * 4, mem::size_of::<T>(), "The push constants type must be the same size as the pipeline's size_of_push_constants option.");
+    debug_assert_eq!(
+      count * 4,
+      mem::size_of::<T>(),
+      "push constants size must be the same as specified by the pipeline"
+    );
 
     unsafe {
       self.buffer.push_graphics_constants(
@@ -136,13 +144,16 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Draws the given vertex range.
+  /// Records a command to draw the given vertex range with the current
+  /// pipeline.
   pub fn draw(&mut self, vertices: ops::Range<u32>) {
     unsafe { self.buffer.draw(vertices, 0..1) };
   }
 
-  /// Ends the current render pass.
+  /// Records a command to end the current render pass.
   pub fn end_render_pass(&mut self) {
+    debug_assert!(self.in_render_pass, "must have begun render pass");
+
     unsafe {
       self.buffer.end_render_pass();
     }
@@ -150,8 +161,8 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = false;
   }
 
-  /// Inserts a pipeline barrier between the given stages with one or more
-  /// memory barriers based on the given descriptions.
+  /// Inserts a pipeline barrier to synchronize resource usage between commands
+  /// recorded before and after.
   pub fn pipeline_barrier(&mut self, stages: ops::Range<PipelineStage>, barriers: &[Barrier<'_>]) {
     unsafe {
       self.buffer.pipeline_barrier(
@@ -162,7 +173,7 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Copies data from a source buffer to a destination buffer.
+  /// Records a command to copy data from a source to a destination buffer.
   pub fn copy_buffer(
     &mut self,
     src: &Buffer,
@@ -180,8 +191,8 @@ impl<'a> Recorder<'a> {
     );
   }
 
-  /// Copies multiple regions of data from a source buffer into a destination
-  /// buffer.
+  /// Records a command to copy multiple regions of a source buffer to a
+  /// destination buffer.
   pub fn copy_buffer_regions(
     &mut self,
     src: &Buffer,

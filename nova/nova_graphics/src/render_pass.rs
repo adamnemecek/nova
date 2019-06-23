@@ -4,7 +4,8 @@
 
 use super::*;
 
-/// Describes a single pass of the renderer.
+/// A description of a render pass, including the required attachments,
+/// subpasses, and subpass dependencies.
 ///
 /// This structure is cloneable and all clones refer to the same render pass.
 /// When all clones are dropped, the underyling backend resources are destroyed.
