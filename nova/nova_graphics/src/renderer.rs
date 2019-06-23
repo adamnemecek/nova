@@ -77,19 +77,53 @@ pub fn start(
     .set_fragment_shader(&fragment_shader.expect("failed to create fragment shader"))
     .set_push_constants::<Color>()
     .add_vertex_buffer::<Vertex>()
+    .add_descriptor_layout(&DescriptorLayout::new(
+      &context,
+      vec![DescriptorKind::UniformBuffer],
+    )?)
     .into_graphics(&context)
     .expect("failed to create graphics pipeline");
 
   let mut submission = cmd::Submission::new(graphics_queue_id);
 
+  let descriptor_pool = DescriptorPool::new(&pipeline.descriptor_layouts()[0], 1)?;
+  let surface_size = surface.size();
+
   // Spawn the renderer on a background thread.
   let thread = thread::spawn(move || {
-    let vertex_buffer = loader.load_buffer(BufferKind::Vertex, vec![
-      Vertex((-0.5, -0.5), Color::new(1.0, 0.0, 0.0, 1.0)),
-      Vertex((-0.5, 0.5), Color::new(0.0, 1.0, 0.0, 1.0)),
-      Vertex((0.5, -0.5), Color::new(0.0, 0.0, 1.0, 1.0)),
-      Vertex((0.5, 0.5), Color::new(0.0, 0.0, 0.0, 0.0)),
-    ]).recv().expect("failed to load buffer");
+    let vertex_buffer = loader
+      .load_buffer(
+        BufferKind::Vertex,
+        vec![
+          Vertex((-640.0, -360.0), Color::new(1.0, 0.0, 0.0, 1.0)),
+          Vertex((-640.0, 360.0), Color::new(0.0, 1.0, 0.0, 1.0)),
+          Vertex((640.0, -360.0), Color::new(0.0, 0.0, 1.0, 1.0)),
+          Vertex((640.0, 360.0), Color::new(0.0, 0.0, 0.0, 0.0)),
+        ],
+      )
+      .recv()
+      .expect("failed to load buffer");
+
+    let uniform_buffer = loader
+      .load_buffer(
+        BufferKind::Uniform,
+        vec![Matrix4::new_orthographic(
+          -surface_size.width as f32 / 2.0,
+          surface_size.width as f32 / 2.0,
+          -surface_size.height as f32 / 2.0,
+          surface_size.height as f32 / 2.0,
+          -1.0,
+          1.0,
+        )],
+      )
+      .recv()
+      .expect("failed to load uniform buffer");
+
+    let descriptor_set = DescriptorSet::new(
+      &descriptor_pool,
+      vec![Descriptor::UniformBuffer(uniform_buffer)],
+    )
+    .expect("failed to create descriptor set");
 
     // Try to render at 60 fps maximum.
     time::loop_at_frequency(60.0, |render_loop| {
@@ -149,6 +183,7 @@ pub fn start(
 
       cmd.bind_pipeline(&pipeline);
       cmd.push_constants(&Color::new(1.0, 1.0, 1.0, 1.0));
+      cmd.bind_descriptor_sets(0, iter::once(&descriptor_set));
       cmd.bind_vertex_buffer(0, &vertex_buffer);
 
       cmd.draw(0..4);

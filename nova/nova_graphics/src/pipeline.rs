@@ -13,6 +13,7 @@ struct PipelineInner {
   pipeline: Option<backend::Pipeline>,
   layout: Option<backend::PipelineLayout>,
   push_constant_count: usize,
+  descriptor_layouts: Vec<DescriptorLayout>,
   _shaders: ShaderSet,
 }
 
@@ -30,18 +31,24 @@ impl Pipeline {
       .as_ref()
       .ok_or(PipelineCreationError::NoRenderPass)?;
 
+    let descriptor_layouts = builder
+      .desriptor_layouts
+      .iter()
+      .map(DescriptorLayout::as_backend);
+
+    let push_constant_ranges = if builder.size_of_push_constants > 0 {
+      Some((
+        gfx_hal::pso::ShaderStageFlags::ALL,
+        0..push_constant_count as u32,
+      ))
+    } else {
+      None
+    };
+
     let layout = unsafe {
-      context.device.create_pipeline_layout(
-        iter::empty::<backend::DescriptorLayout>(),
-        if builder.size_of_push_constants > 0 {
-          Some((
-            gfx_hal::pso::ShaderStageFlags::ALL,
-            0..push_constant_count as u32,
-          ))
-        } else {
-          None
-        },
-      )?
+      context
+        .device
+        .create_pipeline_layout(descriptor_layouts, push_constant_ranges)?
     };
 
     let mut desc = gfx_hal::pso::GraphicsPipelineDesc::new(
@@ -87,6 +94,7 @@ impl Pipeline {
       pipeline: Some(pipeline),
       layout: Some(layout),
       push_constant_count,
+      descriptor_layouts: builder.desriptor_layouts,
       _shaders: builder.shaders,
     })))
   }
@@ -95,11 +103,15 @@ impl Pipeline {
     self.0.push_constant_count
   }
 
+  pub fn descriptor_layouts(&self) -> &[DescriptorLayout] {
+    &self.0.descriptor_layouts
+  }
+
   pub(crate) fn as_backend(&self) -> &backend::Pipeline {
     self.0.pipeline.as_ref().unwrap()
   }
 
-  pub(crate) fn backend_layout(&self) -> &backend::PipelineLayout {
+  pub(crate) fn as_backend_layout(&self) -> &backend::PipelineLayout {
     self.0.layout.as_ref().unwrap()
   }
 }
@@ -133,6 +145,7 @@ pub struct PipelineBuilder {
   render_pass: Option<RenderPass>,
   vertex_buffers: Vec<gfx_hal::pso::VertexBufferDesc>,
   vertex_attributes: Vec<gfx_hal::pso::AttributeDesc>,
+  desriptor_layouts: Vec<DescriptorLayout>,
 }
 
 impl PipelineBuilder {
@@ -184,6 +197,11 @@ impl PipelineBuilder {
       offset += attribute.size();
     }
 
+    self
+  }
+
+  pub fn add_descriptor_layout(mut self, layout: &DescriptorLayout) -> Self {
+    self.desriptor_layouts.push(layout.clone());
     self
   }
 

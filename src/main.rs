@@ -18,7 +18,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   // Open a window.
   let window = window::open(window::Options {
     size: (2560.0, 1440.0).into(),
-    resizable: true,
+    resizable: false,
     ..Default::default()
   });
 

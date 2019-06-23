@@ -41,6 +41,11 @@ impl Surface {
     }
   }
 
+  /// Returns the size of the surface in pixels.
+  pub fn size(&self) -> Size<f64> {
+    self.size
+  }
+
   /// Sets the size of the render surface.
   ///
   /// Call this function if the window size changes.

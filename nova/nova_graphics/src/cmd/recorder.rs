@@ -82,6 +82,28 @@ impl<'a> Recorder<'a> {
     self.bound_pipeline = Some(pipeline.clone());
   }
 
+  /// Records a command to bind one or more descriptor sets.
+  pub fn bind_descriptor_sets<'b>(
+    &mut self,
+    first_index: usize,
+    sets: impl IntoIterator<Item = &'b DescriptorSet>,
+  ) {
+    let pipeline = self
+      .bound_pipeline
+      .as_ref()
+      .expect("no graphics pipeline bound");
+
+    unsafe {
+      self.buffer.bind_graphics_descriptor_sets(
+        pipeline.as_backend_layout(),
+        first_index,
+        sets.into_iter().map(DescriptorSet::as_backend),
+        &[],
+      );
+    }
+  }
+
+  /// Records a command to bind a buffer to the given vertex buffer index.
   pub fn bind_vertex_buffer(&mut self, index: u32, buffer: &Buffer) {
     unsafe {
       self
@@ -106,7 +128,7 @@ impl<'a> Recorder<'a> {
 
     unsafe {
       self.buffer.push_graphics_constants(
-        pipeline.backend_layout(),
+        pipeline.as_backend_layout(),
         gfx_hal::pso::ShaderStageFlags::ALL,
         0,
         slice::from_raw_parts(constants as *const T as *const u32, count),

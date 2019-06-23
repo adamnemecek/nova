@@ -29,6 +29,7 @@ impl Buffer {
       BufferKind::Vertex => gfx_hal::buffer::Usage::VERTEX | gfx_hal::buffer::Usage::TRANSFER_DST,
       BufferKind::Index => gfx_hal::buffer::Usage::INDEX | gfx_hal::buffer::Usage::TRANSFER_DST,
       BufferKind::Staging => gfx_hal::buffer::Usage::TRANSFER_SRC,
+      BufferKind::Uniform => gfx_hal::buffer::Usage::UNIFORM | gfx_hal::buffer::Usage::TRANSFER_DST,
     };
 
     let mut buffer = unsafe { context.device.create_buffer(len, usage)? };
@@ -144,6 +145,8 @@ pub enum BufferKind {
   Vertex,
   /// Contains index data.
   Index,
+  /// Contains data readable by shaders.
+  Uniform,
 }
 
 // An error that occurred during the creation of a new `Buffer`.
