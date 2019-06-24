@@ -88,7 +88,15 @@ impl Loader {
             let src = (*src).as_ref();
 
             // Create the image to load data into.
-            let dest = Image::new(&context, size);
+            let dest = match Image::new(&context, size) {
+              Ok(image) => image,
+
+              Err(err) => {
+                               let _ = result.send(Err(err.into()));
+
+                continue; 
+              }
+            };
 
             // Copy the src data into the staging buffer.
             unsafe {
@@ -322,8 +330,10 @@ impl From<channel::RecvError> for LoadBufferError {
 /// thread.
 #[derive(Debug)]
 pub enum LoadImageError {
-  /// The `Loader` background thread has been shut down.
+  /// The `Loader` has been shut down.
   LoaderShutDown,
+  /// An error occurred while creating the [`Image`].
+  CreationFailed(ImageCreationError),
 }
 
 impl std::error::Error for LoadImageError {}
@@ -332,6 +342,7 @@ impl fmt::Display for LoadImageError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
       LoadImageError::LoaderShutDown => write!(f, "background loader has shut down"),
+      LoadImageError::CreationFailed(err) => write!(f, "failed to create image: {}", err),
     }
   }
 }
@@ -339,5 +350,11 @@ impl fmt::Display for LoadImageError {
 impl From<channel::RecvError> for LoadImageError {
   fn from(_: channel::RecvError) -> Self {
     LoadImageError::LoaderShutDown
+  }
+}
+
+impl From<ImageCreationError> for LoadImageError {
+  fn from(err: ImageCreationError) -> Self {
+    LoadImageError::CreationFailed(err)
   }
 }

@@ -158,12 +158,10 @@ impl Surface {
     );
 
     for image in backbuffers {
-      self.swapchain_images.push(Image::from_swapchain_image(
-        &self.context,
-        image,
-        size,
-        Self::FORMAT,
-      ));
+      self.swapchain_images.push(
+        Image::from_swapchain_image(&self.context, image, size, Self::FORMAT)
+          .expect("failed to create swapchain image"),
+      );
     }
   }
 
