@@ -1,4 +1,4 @@
-use nova::{gfx, log, render, time, window};
+use nova::{gfx, log, time, window};
 use std::error::Error;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -19,7 +19,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   // Start the renderer.
-  let renderer = render::start(&graphics, &window, &loader, &logger)?;
+  let renderer = gfx::render::start(&graphics, &window, &loader, &logger)?;
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |main_loop| {
