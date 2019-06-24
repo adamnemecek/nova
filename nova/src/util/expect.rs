@@ -4,11 +4,13 @@
 
 use super::*;
 
-/// A wrapper around a value that can be taken, after which all accesses will
-/// panic.
+/// A container for a value which is initially present but can be taken, after
+/// which all accesses will panic.
 ///
-/// This structure is intended for struct fields which must be owned to properly
-/// destroy in a [`Drop`] implementation, such as graphics device resources.
+/// This container is intended for struct fields with a value that must be
+/// present until the struct is dropped but must also be owned to be properly
+/// destroyed, such as a graphics device resource or an element of an object
+/// pool.
 pub struct Expect<T> {
   value: Option<T>,
 }
