@@ -10,7 +10,7 @@ pub struct DescriptorSet(Arc<DescriptorSetInner>);
 
 struct DescriptorSetInner {
   pool: DescriptorPool,
-  set: Option<backend::DescriptorSet>,
+  set: Expect<backend::DescriptorSet>,
   _descriptors: Vec<Descriptor>,
 }
 
@@ -43,14 +43,14 @@ impl DescriptorSet {
 
     Ok(Self(Arc::new(DescriptorSetInner {
       pool: pool.clone(),
-      set: Some(set),
+      set: set.into(),
       _descriptors: descriptors,
     })))
   }
 
   /// Returns a reference to the underlying backend descriptor set.
   pub(crate) fn as_backend(&self) -> &backend::DescriptorSet {
-    self.0.set.as_ref().unwrap()
+    &self.0.set
   }
 }
 
@@ -58,7 +58,7 @@ impl DescriptorSet {
 // the pool.
 impl Drop for DescriptorSetInner {
   fn drop(&mut self) {
-    self.pool.release(self.set.take().unwrap());
+    self.pool.release(self.set.take());
   }
 }
 

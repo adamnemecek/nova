@@ -8,7 +8,7 @@ use super::*;
 /// the graphics device.
 pub struct Fence {
   context: Context,
-  fence: Option<backend::Fence>,
+  fence: Expect<backend::Fence>,
 }
 
 impl Fence {
@@ -19,7 +19,7 @@ impl Fence {
     let fence = context.device.create_fence(signaled)?;
 
     Ok(Self {
-      fence: Some(fence),
+      fence: fence.into(),
       context: context.clone(),
     })
   }
@@ -44,7 +44,7 @@ impl Fence {
 
   /// Returns a reference to the underlying backend fence.
   pub(crate) fn as_backend(&self) -> &backend::Fence {
-    self.fence.as_ref().unwrap()
+    &self.fence
   }
 }
 
@@ -54,7 +54,7 @@ impl Drop for Fence {
       self
         .context
         .device
-        .destroy_fence(self.fence.take().unwrap())
+        .destroy_fence(self.fence.take())
     };
   }
 }

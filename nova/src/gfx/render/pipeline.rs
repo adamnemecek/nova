@@ -11,8 +11,8 @@ pub struct Pipeline(Arc<PipelineInner>);
 
 struct PipelineInner {
   context: Context,
-  pipeline: Option<backend::Pipeline>,
-  layout: Option<backend::PipelineLayout>,
+  pipeline: Expect<backend::Pipeline>,
+  layout: Expect<backend::PipelineLayout>,
   push_constant_count: usize,
   descriptor_layouts: Vec<DescriptorLayout>,
   _shaders: ShaderSet,
@@ -93,8 +93,8 @@ impl Pipeline {
 
     Ok(Self(Arc::new(PipelineInner {
       context: context.clone(),
-      pipeline: Some(pipeline),
-      layout: Some(layout),
+      pipeline: pipeline.into(),
+      layout: layout.into(),
       push_constant_count,
       descriptor_layouts: builder.desriptor_layouts,
       _shaders: builder.shaders,
@@ -113,12 +113,12 @@ impl Pipeline {
 
   /// Returns a reference to the underlying backend pipeline.
   pub(crate) fn as_backend(&self) -> &backend::Pipeline {
-    self.0.pipeline.as_ref().unwrap()
+    &self.0.pipeline
   }
 
   /// Returns a reference to the underlying backend pipeline layout.
   pub(crate) fn as_backend_layout(&self) -> &backend::PipelineLayout {
-    self.0.layout.as_ref().unwrap()
+    &self.0.layout
   }
 }
 
@@ -128,12 +128,12 @@ impl Drop for PipelineInner {
       self
         .context
         .device
-        .destroy_graphics_pipeline(self.pipeline.take().unwrap());
+        .destroy_graphics_pipeline(self.pipeline.take());
 
       self
         .context
         .device
-        .destroy_pipeline_layout(self.layout.take().unwrap());
+        .destroy_pipeline_layout(self.layout.take());
     }
   }
 }

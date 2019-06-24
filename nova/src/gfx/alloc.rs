@@ -25,21 +25,21 @@ impl Memory {
 
 pub struct MemoryBlock {
   context: Context,
-  memory: Option<backend::Memory>,
+  memory: Expect<backend::Memory>,
 }
 
 impl MemoryBlock {
   pub(crate) fn as_backend(&self) -> &backend::Memory {
-    self.memory.as_ref().unwrap()
+    &self.memory
   }
 }
 
 impl Drop for MemoryBlock {
   fn drop(&mut self) {
-    if let Some(memory) = self.memory.take() {
+    if let Some(memory) = self.memory.try_take() {
       self.context.allocator().free(MemoryBlock {
         context: self.context.clone(),
-        memory: Some(memory),
+        memory: memory.into(),
       });
     }
   }
@@ -90,17 +90,14 @@ impl<'a> Allocator<'a> {
     };
 
     Ok(MemoryBlock {
-      memory: Some(memory),
+      memory: memory.into(),
       context: self.context.clone(),
     })
   }
 
   pub fn free(&self, mut block: MemoryBlock) {
     unsafe {
-      self
-        .context
-        .device
-        .free_memory(block.memory.take().unwrap());
+      self.context.device.free_memory(block.memory.take());
     }
   }
 }

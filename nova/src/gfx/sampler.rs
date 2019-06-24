@@ -15,7 +15,7 @@ pub struct Sampler(Arc<SamplerInner>);
 
 struct SamplerInner {
   context: Context,
-  sampler: Option<backend::Sampler>,
+  sampler: Expect<backend::Sampler>,
 }
 
 impl Sampler {
@@ -34,12 +34,12 @@ impl Sampler {
 
     Ok(Self(Arc::new(SamplerInner {
       context: context.clone(),
-      sampler: Some(sampler),
+      sampler: sampler.into(),
     })))
   }
 
   pub(crate) fn as_backend(&self) -> &backend::Sampler {
-    self.0.sampler.as_ref().unwrap()
+    &self.0.sampler
   }
 }
 
@@ -49,7 +49,7 @@ impl Drop for SamplerInner {
       self
         .context
         .device
-        .destroy_sampler(self.sampler.take().unwrap());
+        .destroy_sampler(self.sampler.take());
     }
   }
 }

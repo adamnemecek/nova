@@ -14,7 +14,7 @@ pub struct Pass(Arc<PassInner>);
 
 struct PassInner {
   context: Context,
-  pass: Option<backend::RenderPass>,
+  pass: Expect<backend::RenderPass>,
 }
 
 impl Pass {
@@ -71,7 +71,7 @@ impl Pass {
 
   /// Returns a reference to the underlying backend render pass.
   pub(crate) fn as_backend(&self) -> &backend::RenderPass {
-    self.0.pass.as_ref().unwrap()
+    &self.0.pass
   }
 }
 
@@ -81,7 +81,7 @@ impl Drop for PassInner {
       self
         .context
         .device
-        .destroy_render_pass(self.pass.take().unwrap());
+        .destroy_render_pass(self.pass.take());
     }
   }
 }

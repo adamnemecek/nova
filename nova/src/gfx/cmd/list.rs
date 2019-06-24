@@ -8,14 +8,14 @@ use super::*;
 /// device.
 pub struct List {
   pool: Pool,
-  buffer: Option<backend::CommandBuffer>,
+  buffer: Expect<backend::CommandBuffer>,
 }
 
 impl List {
   /// Creates a new command list using the given pool.
   pub fn new(pool: &Pool) -> Self {
     List {
-      buffer: Some(pool.allocate()),
+      buffer: pool.allocate().into(),
       pool: pool.clone(),
     }
   }
@@ -23,17 +23,17 @@ impl List {
   /// Begins recording commands, returning a `Recorder` struct with methods for
   /// adding commands to the list.
   pub fn begin(&mut self) -> Recorder {
-    Recorder::new(&self.pool, self.buffer.as_mut().unwrap())
+    Recorder::new(&self.pool, &mut self.buffer)
   }
 
   /// Returns a reference to the underlying backend command buffer.
   pub(crate) fn as_backend(&self) -> &backend::CommandBuffer {
-    self.buffer.as_ref().unwrap()
+    &self.buffer
   }
 }
 
 impl Drop for List {
   fn drop(&mut self) {
-    self.pool.recycle(self.buffer.take().unwrap());
+    self.pool.recycle(self.buffer.take());
   }
 }

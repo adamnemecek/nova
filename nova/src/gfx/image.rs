@@ -13,8 +13,8 @@ pub struct Image(Arc<ImageInner>);
 
 struct ImageInner {
   context: Context,
-  image: Option<backend::Image>,
-  view: Option<backend::ImageView>,
+  image: Expect<backend::Image>,
+  view: Expect<backend::ImageView>,
   memory: Option<MemoryBlock>,
   size: Size<u32>,
 }
@@ -61,8 +61,8 @@ impl Image {
 
     Ok(Self(Arc::new(ImageInner {
       context: context.clone(),
-      image: Some(image),
-      view: Some(view),
+      image: image.into(),
+      view: view.into(),
       memory: Some(memory),
       size,
     })))
@@ -91,8 +91,8 @@ impl Image {
 
     Ok(Self(Arc::new(ImageInner {
       context: context.clone(),
-      image: Some(image),
-      view: Some(view),
+      image: image.into(),
+      view: view.into(),
       memory: None,
       size,
     })))
@@ -105,12 +105,12 @@ impl Image {
 
   /// Returns a reference to the underlying backend image.
   pub(crate) fn as_backend(&self) -> &backend::Image {
-    self.0.image.as_ref().unwrap()
+    &self.0.image
   }
 
   /// Returns a reference to the underlying backend image view.
   pub(crate) fn as_backend_view(&self) -> &backend::ImageView {
-    self.0.view.as_ref().unwrap()
+    &self.0.view
   }
 }
 
@@ -121,7 +121,7 @@ impl Drop for ImageInner {
       self
         .context
         .device
-        .destroy_image_view(self.view.take().unwrap());
+        .destroy_image_view(self.view.take());
 
       // If memory is bound, then this is not a swapchain image so it must
       // be destroyed.
@@ -129,7 +129,7 @@ impl Drop for ImageInner {
         self
           .context
           .device
-          .destroy_image(self.image.take().unwrap());
+          .destroy_image(self.image.take());
       }
     }
   }

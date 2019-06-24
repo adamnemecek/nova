@@ -14,7 +14,7 @@ pub struct Semaphore(Arc<SemaphoreInner>);
 
 struct SemaphoreInner {
   context: Context,
-  semaphore: Option<backend::Semaphore>,
+  semaphore: Expect<backend::Semaphore>,
 }
 
 impl Semaphore {
@@ -23,14 +23,14 @@ impl Semaphore {
     let semaphore = context.device.create_semaphore()?;
 
     Ok(Self(Arc::new(SemaphoreInner {
-      semaphore: Some(semaphore),
+      semaphore: semaphore.into(),
       context: context.clone(),
     })))
   }
 
   /// Returns a reference to the underlying backend semaphore.
   pub(crate) fn as_backend(&self) -> &backend::Semaphore {
-    self.0.semaphore.as_ref().unwrap()
+    &self.0.semaphore
   }
 }
 
@@ -40,7 +40,7 @@ impl Drop for SemaphoreInner {
       self
         .context
         .device
-        .destroy_semaphore(self.semaphore.take().unwrap());
+        .destroy_semaphore(self.semaphore.take());
     }
   }
 }

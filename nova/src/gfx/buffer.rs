@@ -7,7 +7,7 @@ use super::*;
 /// Buffer of data on the graphics device.
 pub struct Buffer {
   context: Context,
-  buffer: Option<backend::Buffer>,
+  buffer: Expect<backend::Buffer>,
   mapped: Option<*mut u8>,
   len: u64,
   _memory: MemoryBlock,
@@ -51,7 +51,7 @@ impl Buffer {
 
     Ok(Self {
       context: context.clone(),
-      buffer: Some(buffer),
+      buffer: buffer.into(),
       mapped,
       len,
       _memory: memory,
@@ -108,7 +108,7 @@ impl Buffer {
 
   /// Returns a reference to the underlying backend buffer.
   pub(crate) fn as_backend(&self) -> &backend::Buffer {
-    self.buffer.as_ref().unwrap()
+    &self.buffer
   }
 }
 
@@ -118,7 +118,7 @@ impl Drop for Buffer {
       self
         .context
         .device
-        .destroy_buffer(self.buffer.take().unwrap());
+        .destroy_buffer(self.buffer.take());
     }
   }
 }

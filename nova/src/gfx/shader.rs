@@ -11,14 +11,14 @@ pub struct Module(Arc<ModuleInner>);
 
 struct ModuleInner {
   context: Context,
-  shader: Option<backend::Shader>,
+  shader: Expect<backend::Shader>,
 }
 
 impl Module {
   pub fn from_backend(context: &Context, shader: backend::Shader) -> Self {
     Self(Arc::new(ModuleInner {
       context: context.clone(),
-      shader: Some(shader),
+      shader: shader.into(),
     }))
   }
 
@@ -26,7 +26,7 @@ impl Module {
   pub(crate) fn backend_entrypoint(&self) -> backend::EntryPoint {
     backend::EntryPoint {
       entry: "main",
-      module: self.0.shader.as_ref().unwrap(),
+      module: &self.0.shader,
       specialization: Default::default(),
     }
   }
@@ -38,7 +38,7 @@ impl Drop for ModuleInner {
       self
         .context
         .device
-        .destroy_shader_module(self.shader.take().unwrap());
+        .destroy_shader_module(self.shader.take());
     }
   }
 }

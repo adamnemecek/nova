@@ -7,11 +7,13 @@ pub mod gfx;
 pub mod log;
 pub mod math;
 pub mod time;
+pub mod util;
 pub mod window;
 
-use self::math::{Point2, Rect, Size, Matrix4};
+use self::math::{Matrix4, Point2, Rect, Size};
+use self::util::Expect;
 use crossbeam_channel as channel;
+use lazy_static::lazy_static;
 use parking_lot::{Mutex, MutexGuard};
 use std::sync::Arc;
 use std::{cmp, fmt, iter, mem, ops, slice, thread};
-use lazy_static::lazy_static;

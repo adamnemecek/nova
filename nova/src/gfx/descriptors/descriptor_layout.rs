@@ -10,7 +10,7 @@ pub struct DescriptorLayout(Arc<DescriptorLayoutInner>);
 
 struct DescriptorLayoutInner {
   context: Context,
-  layout: Option<backend::DescriptorLayout>,
+  layout: Expect<backend::DescriptorLayout>,
   kinds: Vec<DescriptorKind>,
 }
 
@@ -39,7 +39,7 @@ impl DescriptorLayout {
 
     Ok(Self(Arc::new(DescriptorLayoutInner {
       context: context.clone(),
-      layout: Some(layout),
+      layout: layout.into(),
       kinds,
     })))
   }
@@ -58,7 +58,7 @@ impl DescriptorLayout {
 
   /// Returns a reference to the underlying backend descriptor layout.
   pub(crate) fn as_backend(&self) -> &backend::DescriptorLayout {
-    self.0.layout.as_ref().unwrap()
+    &self.0.layout
   }
 }
 
@@ -69,7 +69,7 @@ impl Drop for DescriptorLayoutInner {
       self
         .context
         .device
-        .destroy_descriptor_set_layout(self.layout.take().unwrap());
+        .destroy_descriptor_set_layout(self.layout.take());
     }
   }
 }
