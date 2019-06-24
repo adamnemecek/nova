@@ -2,10 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub mod cmd;
+pub mod shader;
+pub mod vertex;
+
 mod alloc;
 mod backend;
 mod buffer;
-pub mod cmd;
 mod color;
 mod context;
 mod descriptor;
@@ -18,11 +21,8 @@ mod pipeline;
 mod render_pass;
 mod sampler;
 mod semaphore;
-pub mod shader;
 mod surface;
-pub mod vertex;
 
-use self::alloc::*;
 pub use self::buffer::*;
 pub use self::color::*;
 pub use self::context::*;
@@ -37,6 +37,8 @@ pub use self::render_pass::*;
 pub use self::sampler::*;
 pub use self::semaphore::*;
 pub use self::surface::*;
+
+use self::alloc::*;
 use gfx_hal::Device as _;
 use nova_log as log;
 use nova_math::{self as math, Point2, Rect, Size};

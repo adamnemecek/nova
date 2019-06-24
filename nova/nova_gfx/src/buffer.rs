@@ -16,7 +16,6 @@ pub struct Buffer {
 // TODO: Is there a better way to avoid that `*mut u8` is not `Send`?
 unsafe impl Send for Buffer {}
 
-#[allow(clippy::len_without_is_empty)]
 impl Buffer {
   /// Allocates a new buffer of the given length.
   pub fn new(context: &Context, kind: BufferKind, len: u64) -> Result<Self, BufferCreationError> {
@@ -60,6 +59,7 @@ impl Buffer {
   }
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl Buffer {
   /// Returns the length of the buffer bytes.
   pub fn len(&self) -> u64 {
