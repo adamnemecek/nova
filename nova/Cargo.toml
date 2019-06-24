@@ -1,5 +1,5 @@
 [workspace]
-exclude = ["nova_input", "nova_renderer", "nova_ui"]
+exclude = ["nova_input", "nova_ui"]
 
 [package]
 name = "nova"
@@ -12,8 +12,9 @@ lto = true
 
 [dependencies]
 nova_ecs = { path = "./nova_ecs" }
-nova_graphics = { path = "./nova_graphics" }
+nova_gfx = { path = "./nova_gfx" }
 nova_log = { path = "./nova_log" }
 nova_math = { path = "./nova_math" }
+nova_render = { path = "./nova_render" }
 nova_time = { path = "./nova_time" }
 nova_window = { path = "./nova_window" }

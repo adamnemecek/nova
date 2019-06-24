@@ -1,8 +1,4 @@
-use nova::graphics;
-use nova::graphics::renderer;
-use nova::log;
-use nova::time;
-use nova::window;
+use nova::{gfx, log, render, time, window};
 use std::error::Error;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
@@ -12,8 +8,8 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   log::set_global_logger(&logger);
 
   // Create a graphics context and background loader.
-  let graphics = graphics::Context::new(&logger)?;
-  let loader = graphics::Loader::new(&graphics)?;
+  let graphics = gfx::Context::new(&logger)?;
+  let loader = gfx::Loader::new(&graphics)?;
 
   // Open a window.
   let window = window::open(window::Options {
@@ -23,7 +19,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   });
 
   // Start the renderer.
-  let renderer = renderer::start(&graphics, &window, &loader, &logger)?;
+  let renderer = render::start(&graphics, &window, &loader, &logger)?;
 
   // Run the main game loop 60 times per second.
   time::loop_at_frequency(60.0, |main_loop| {

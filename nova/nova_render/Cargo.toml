@@ -1,0 +1,13 @@
+[package]
+name = "nova_render"
+version = "0.1.0"
+authors = ["Brennan Frydl <me@bfrydl.com>"]
+edition = "2018"
+
+[dependencies]
+nova_gfx = { path = "../nova_gfx" }
+nova_log = { path = "../nova_log" }
+nova_math = { path = "../nova_math" }
+nova_sync = { path = "../nova_sync" }
+nova_time = { path = "../nova_time" }
+nova_window = { path = "../nova_window" }

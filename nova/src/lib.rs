@@ -3,8 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pub use nova_ecs as ecs;
-pub use nova_graphics as graphics;
+pub use nova_gfx as gfx;
 pub use nova_log as log;
 pub use nova_math as math;
+pub use nova_render as render;
 pub use nova_time as time;
 pub use nova_window as window;

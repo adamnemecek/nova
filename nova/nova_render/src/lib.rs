@@ -2,7 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use super::*;
+use nova_gfx::*;
+use nova_log as log;
+use nova_window as window;
+use nova_math::{Size, Matrix4};
+use nova_sync::channel;
+use nova_time as time;
+use std::{thread, iter};
 
 /// Renders graphics onto a window on a background thread.
 pub struct Renderer {
@@ -62,13 +68,13 @@ pub fn start(
   let vertex_shader = shader::compile_hlsl(
     &context,
     shader::Stage::Vertex,
-    include_str!("./renderer/shaders/quad.vert"),
+    include_str!("./shaders/quad.vert"),
   );
 
   let fragment_shader = shader::compile_hlsl(
     &context,
     shader::Stage::Fragment,
-    include_str!("./renderer/shaders/color.frag"),
+    include_str!("./shaders/color.frag"),
   );
 
   let pipeline = PipelineBuilder::new()
