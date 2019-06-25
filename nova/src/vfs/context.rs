@@ -5,13 +5,13 @@
 use super::*;
 use std::ffi::OsString;
 use std::fs::File;
-use std::io;
+use std::{env, io};
 
 /// A virtual file system context.
 ///
-/// Each context can have any number of file system paths mounted to virtual
-/// file system paths. VFS operations are mapped to the file system according to
-/// which prefix matches the virtual file path.
+/// Each context can have any number of real file system paths mounted to
+/// virtual file system paths. Virtual file system operations are mapped to the
+/// real file system according to which mount point matches the virtual path.
 ///
 /// Multiple file system paths can be mounted to the same virtual file system
 /// path. When reading a file, the virtual file system will search all matching
@@ -44,10 +44,17 @@ impl Context {
       "virtual file system mount path must be absolute"
     );
 
-    self.mounts.push(Mount {
-      path,
-      fs_path: fs_path.into(),
-    });
+    let mut fs_path = fs_path.into();
+
+    if !fs_path.is_absolute() {
+      // Try to make the `fs_path` absolute, relative to the current working
+      // directory.
+      if let Ok(cwd) = env::current_dir() {
+        fs_path = cwd.join(fs_path);
+      }
+    }
+
+    self.mounts.push(Mount { path, fs_path });
   }
 
   /// Opens a file in the virtual file system.
