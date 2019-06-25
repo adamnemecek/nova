@@ -12,3 +12,4 @@ lto = true
 
 [dependencies]
 nova = { path = "./nova" }
+clap = "2.33.0"

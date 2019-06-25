@@ -8,6 +8,7 @@ pub mod log;
 pub mod math;
 pub mod time;
 pub mod util;
+pub mod vfs;
 pub mod window;
 
 use self::math::{Matrix4, Point2, Rect, Size};

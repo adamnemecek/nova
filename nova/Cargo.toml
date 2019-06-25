@@ -31,6 +31,7 @@ slog-term = "2.4"
 specs = "0.14"
 spin_sleep = "0.3"
 winit = { version = "0.19", features = ["serde"] }
+smallvec = "0.6.10"
 
 [target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
 gfx-backend-vulkan = "0.2"

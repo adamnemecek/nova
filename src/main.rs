@@ -1,7 +1,44 @@
-use nova::{gfx, log, time, window};
+use nova::*;
 use std::error::Error;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
+  let cli = clap::App::new("tvb").arg(
+    clap::Arg::with_name("vfs-mount")
+      .long("vfs-mount")
+      .short("v")
+      .number_of_values(2)
+      .value_names(&["VFS_PATH", "REAL_PATH"])
+      .multiple(true)
+      .help("Adds a virtual file system mount at <VFS_PATH> pointing to the real file system at <REAL_PATH>."),
+  );
+
+  let matches = cli.get_matches();
+
+  let mut vfs = vfs::Context::new();
+
+  if let Some(mut mounts) = matches.values_of("vfs-mount") {
+    while let (Some(prefix), Some(fs_path)) = (mounts.next(), mounts.next()) {
+      vfs.mount(prefix, fs_path);
+    }
+  }
+
+  use std::io::{Read, Write};
+
+  let mut file = vfs.create("/saves/lol")?;
+
+  file.write_fmt(format_args!("hello world"))?;
+
+  file = vfs.open("/control_map.toml")?;
+
+  let mut string = String::new();
+
+  file.read_to_string(&mut string)?;
+
+  print!("{}", &string);
+
+  Ok(())
+
+  /*
   // Create a terminal logger and set it as the global default.
   let logger = log::terminal_compact();
 
@@ -42,6 +79,5 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
   // Shut down the renderer before exiting to clean up resources.
   renderer.shut_down();
-
-  Ok(())
+  */
 }
