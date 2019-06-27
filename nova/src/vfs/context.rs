@@ -3,9 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
+use std::env;
 use std::ffi::OsString;
 use std::fs::File;
-use std::{env, io};
+use std::io::{self, Read as _};
 
 /// A virtual file system context.
 ///
@@ -24,19 +25,24 @@ use std::{env, io};
 /// second, then the files in that directory will override the files in the
 /// application directory. Additionally, new files will be written to the user
 /// directory, not the application directory.
-#[derive(Default)]
+///
+/// This structure is cloneable, and all clones refer to the same virtual
+/// file system context.
+#[derive(Default, Clone)]
 pub struct Context {
-  mounts: Vec<Mount>,
+  mounts: Arc<RwLock<Vec<Mount>>>,
 }
 
 impl Context {
   /// Creates a new, empty virtual file system context.
   pub fn new() -> Self {
-    Self { mounts: Vec::new() }
+    Self {
+      mounts: Arc::new(RwLock::new(Vec::new())),
+    }
   }
 
   /// Mounts a file system path to a virtual file system path.
-  pub fn mount(&mut self, path: impl Into<PathBuf>, fs_path: impl Into<FsPathBuf>) {
+  pub fn mount(&self, path: impl Into<PathBuf>, fs_path: impl Into<FsPathBuf>) {
     let path = path.into();
 
     assert!(
@@ -54,7 +60,20 @@ impl Context {
       }
     }
 
-    self.mounts.push(Mount { path, fs_path });
+    self.mounts.write().push(Mount { path, fs_path });
+  }
+
+  /// Reads the contents of a file in the virtual file system to a `String`.
+  ///
+  /// This function searches for the file in matching mount points in reverse
+  /// of the order they were added.
+  pub fn read_to_string(&self, path: impl AsRef<Path>) -> io::Result<String> {
+    let mut string = String::new();
+    let mut file = self.open(path)?;
+
+    file.read_to_string(&mut string)?;
+
+    Ok(string)
   }
 
   /// Opens a file in the virtual file system.
@@ -118,7 +137,7 @@ impl Context {
   ) -> Option<T> {
     let mut fs_path = OsString::new();
 
-    for mount in self.mounts.iter().rev() {
+    for mount in self.mounts.read().iter().rev() {
       let relative = match path.strip_prefix(&mount.path) {
         Some(path) => path,
         None => continue,

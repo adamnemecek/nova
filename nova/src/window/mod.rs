@@ -65,8 +65,8 @@ pub enum Event {
 /// Opens a new window with the given options.
 pub fn open(options: Options) -> Handle {
   // Create channels to communicate with the window's event loop thread.
-  let (event_sender, events) = channel::unbounded();
-  let (window_sender, window) = channel::bounded(0);
+  let (send_events, recv_events) = channel::unbounded();
+  let (send_window, recv_window) = channel::bounded(0);
 
   // Start the event loop thread.
   thread::spawn(move || {
@@ -80,22 +80,23 @@ pub fn open(options: Options) -> Handle {
       .with_title(options.title)
       .with_resizable(options.resizable)
       .with_dimensions(size)
-      .build(&events_loop)
-      .expect("Could not create window");
+      .build(&events_loop);
+
+    let created = window.is_ok();
 
     // Send the window back to the original thread and drop the channel.
-    if window_sender.send(window).is_err() {
+    if send_window.send(window).is_err() || !created {
       return;
     }
 
-    drop(window_sender);
+    drop(send_window);
 
     // Run the event loop, sending events to the main thread, until the channel
     // is closed on the other end meaning all handles have been dropped and the
     // window should close.
     events_loop.run_forever(|event| {
       if let winit::Event::WindowEvent { event, .. } = event {
-        if event_sender.send(event).is_err() {
+        if send_events.send(event).is_err() {
           return winit::ControlFlow::Break;
         }
       }
@@ -105,9 +106,16 @@ pub fn open(options: Options) -> Handle {
   });
 
   // Receive the window from the background thread and wrap it.
-  let window = window.recv().expect("Could not create window").into();
+  let window = recv_window
+    .recv()
+    .unwrap()
+    .expect("could not createa window")
+    .into();
 
-  Handle { window, events }
+  Handle {
+    window,
+    events: recv_events,
+  }
 }
 
 impl AsRef<winit::Window> for Handle {

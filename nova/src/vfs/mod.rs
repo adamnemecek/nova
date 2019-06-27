@@ -9,3 +9,8 @@ pub use self::{context::*, paths::*};
 
 use super::*;
 use std::path::{Path as FsPath, PathBuf as FsPathBuf};
+
+/// Returns a new, empty virtual file system context.
+pub fn new() -> Context {
+  Context::new()
+}
