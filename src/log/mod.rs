@@ -43,7 +43,8 @@ lazy_static! {
   static ref LOGGER: RwLock<Option<Logger>> = RwLock::new(None);
 }
 
-pub fn init() -> Logger {
+/// Initializes the logging module.
+pub fn init() {
   let decorator = slog_term::term_full();
   let (drain, async_guard) = slog_async::Async::new(decorator.fuse()).build_with_guard();
   let logger = slog::Logger::root(drain.fuse(), o!());
@@ -59,11 +60,10 @@ pub fn init() -> Logger {
   // Store the logger and guard.
   *LOGGER.write() = Some(logger.clone());
   *GUARDS.lock() = Some((global_guard, async_guard));
-
-  logger
 }
 
-pub fn default() -> Logger {
+/// Returns a new `Logger` based on the default.
+pub fn logger() -> Logger {
   LOGGER
     .read()
     .as_ref()
@@ -71,6 +71,10 @@ pub fn default() -> Logger {
     .expect("log::init has not been called")
 }
 
+/// Flushes log records and shuts down the logging module.
+///
+/// This function should be called before exiting the program to ensure that all
+/// log records have been output.
 pub fn shut_down() {
   GUARDS.lock().take();
 }
