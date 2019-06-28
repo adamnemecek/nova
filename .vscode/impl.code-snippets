@@ -1,0 +1,24 @@
+{
+  "impl_fmt_display": {
+    "prefix": "impl_fmt_display",
+    "description": "impl fmt::Display",
+    "body": [
+      "impl fmt::Display for $1 {",
+      "  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {",
+      "    $0",
+      "  }",
+      "}"
+    ]
+  },
+  "impl_fmt_debug": {
+    "prefix": "impl_fmt_debug",
+    "description": "impl fmt::Debug",
+    "body": [
+      "impl fmt::Debug for $1 {",
+      "  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {",
+      "    $0",
+      "  }",
+      "}"
+    ]
+  }
+}

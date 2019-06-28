@@ -19,7 +19,7 @@ fn run() -> i32 {
   let log = log::default();
 
   // Parse CLI args with clap.
-  let cli_args = clap::App::new("tvb").arg(
+  let cli_args = clap::App::new("The Very Best").arg(
     clap::Arg::with_name("vfs-mount")
       .long("vfs-mount")
       .number_of_values(2)
@@ -44,28 +44,38 @@ fn run() -> i32 {
       Ok(config) => config,
 
       Err(err) => {
-        log::crit!(&log, "could not parse tvb.toml: {}", err);
+        log::crit!(&log, "could not parse tvb.toml"; "error" => log::Display(err));
         return 1;
       }
     },
 
     Err(err) => {
-      if err.kind() == io::ErrorKind::NotFound {
-        log::crit!(&log, "could not find tvb.toml");
-      } else {
-        log::crit!(&log, "could not read tvb.toml: {}", err);
+      if err.kind() != io::ErrorKind::NotFound {
+        log::crit!(&log, "could not read tvb.toml"; "error" => log::Display(err));
+        return 1;
       }
 
-      return 1;
+      Default::default()
     }
   };
 
   // Open a window as configured.
-  let window = window::open(window::Options {
-    title: "tvb".into(),
-    size: config.window.size(),
-    resizable: config.window.resizable,
-  });
+  let window = {
+    let options = window::Options {
+      title: "tvb".into(),
+      size: config.window.size(),
+      resizable: config.window.resizable,
+    };
+
+    match window::open(options) {
+      Ok(window) => window,
+
+      Err(err) => {
+        log::crit!(&log, "could not open main window"; "error" => log::Display(err));
+        return 1;
+      }
+    }
+  };
 
   // Process window events every 60th of a second.
   time::loop_at_frequency(60.0, |main_loop| {
@@ -76,7 +86,7 @@ fn run() -> i32 {
         return main_loop.stop();
       }
     }
-  });;
+  });
 
   0
 }

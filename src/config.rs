@@ -5,9 +5,10 @@ use serde_derive::*;
 pub type TomlError = toml::de::Error;
 
 /// Configuration options for the game.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Options {
   /// Configuration options for the main window.
+  #[serde(default)]
   pub window: WindowOptions,
 }
 
@@ -21,6 +22,16 @@ pub struct WindowOptions {
   /// Whether the window is freely resizable.
   #[serde(default = "resizable_default_value")]
   pub resizable: bool,
+}
+
+impl Default for WindowOptions {
+  fn default() -> Self {
+    Self {
+      width: None,
+      height: None,
+      resizable: true,
+    }
+  }
 }
 
 impl WindowOptions {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CARGO_OPTS=
+CARGO_OPTS=--quiet
 
 if [[ "$1" = "release" ]]; then
   CARGO_OPTS="$CARGO_OPTS --release"
