@@ -63,7 +63,7 @@ fn run() -> i32 {
   // Open a window as configured.
   let window = window::open(window::Options {
     title: "tvb".into(),
-    size: (config.window.width, config.window.height).into(),
+    size: config.window.size(),
     resizable: config.window.resizable,
   });
 

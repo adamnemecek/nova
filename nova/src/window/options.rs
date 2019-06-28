@@ -20,7 +20,7 @@ pub struct Options {
   /// Sets the window size in pixels.
   ///
   /// Defaults to `(1280, 720)`.
-  pub size: Size<f64>,
+  pub size: Option<Size<f64>>,
 }
 
 impl Options {
@@ -28,7 +28,7 @@ impl Options {
     Self {
       title: String::new(),
       resizable: false,
-      size: Size::new(1280.0, 720.0),
+      size: None,
     }
   }
 

@@ -1,3 +1,4 @@
+use nova::math::Size;
 use serde_derive::*;
 
 /// An error that occurred while parsing a TOML config file.
@@ -14,12 +15,19 @@ pub struct Options {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WindowOptions {
   /// Width of the window in pixels.
-  pub width: f64,
+  pub width: Option<f64>,
   /// Height of the window in pixels.
-  pub height: f64,
+  pub height: Option<f64>,
   /// Whether the window is freely resizable.
   #[serde(default = "default_resizable")]
   pub resizable: bool,
+}
+
+impl WindowOptions {
+  /// Returns the configured window size if both width and height are set.
+  pub fn size(&self) -> Option<Size<f64>> {
+    Some(Size::new(self.width?, self.height?))
+  }
 }
 
 /// Parses configuration options from a string containing TOML.
