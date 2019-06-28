@@ -19,7 +19,7 @@ pub struct WindowOptions {
   /// Height of the window in pixels.
   pub height: Option<f64>,
   /// Whether the window is freely resizable.
-  #[serde(default = "default_resizable")]
+  #[serde(default = "resizable_default_value")]
   pub resizable: bool,
 }
 
@@ -36,6 +36,6 @@ pub fn from_toml(source: &str) -> Result<Options, TomlError> {
 }
 
 /// Provides the default value of `WindowOptions::resizable`.
-fn default_resizable() -> bool {
+fn resizable_default_value() -> bool {
   true
 }
