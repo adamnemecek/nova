@@ -22,8 +22,8 @@ pub enum Event {
   Resized,
 }
 
-/// Opens a new window with the given options.
-pub fn open(options: Options) -> Result<Handle, OpenError> {
+/// Creates a new window with the given options and returns a `Handle` for it.
+pub fn create(options: Options) -> Result<Handle, OpenError> {
   // Create channels to communicate with the window's event loop thread.
   let (send_events, recv_events) = channel::unbounded();
   let (send_window, recv_window) = channel::bounded(0);
