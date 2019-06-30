@@ -79,6 +79,14 @@ impl Renderer {
   }
 }
 
+// Implement `Drop` to wait for the device to finish executing all commands
+// before destroying resources.
+impl Drop for Renderer {
+  fn drop(&mut self) {
+    self.context.wait_idle();
+  }
+}
+
 /// Starts a new renderer with the given options.
 pub fn start(
   thread_scope: &thread::Scope,
@@ -117,13 +125,15 @@ pub fn start(
 
     // Run the renderer with a `Clock` to limit frame rate until a `Stop`
     // message is received.
-    let mut clock = time::Clock::new().with_frequency(60.0);
+    let mut clock = time::Clock::new();
     let mut is_stopping = false;
 
     log::info!(&logger, "renderer started");
 
     while !is_stopping {
       clock.tick();
+
+      log::info!(&logger, "renderer tick"; "elapsed" => log::Display(clock.elapsed()));
 
       // Render a single frame or exit the loop on failure.
       if let Err(err) = renderer.render() {
@@ -135,7 +145,7 @@ pub fn start(
       while let Ok(message) = recv_messages.try_recv() {
         match message {
           ControlMessage::SetTargetFPS(value) => {
-            clock.set_frequency(value.max(0.0));
+            clock.set_frequency(value);
           }
 
           ControlMessage::Stop => {
@@ -144,6 +154,8 @@ pub fn start(
         }
       }
     }
+
+    drop(renderer);
 
     log::info!(&logger, "renderer stopped");
   });
