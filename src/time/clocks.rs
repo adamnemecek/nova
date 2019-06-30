@@ -146,7 +146,7 @@ impl FixedClock {
 
     // Compute the number of whole fixed durations that have elapsed since the
     // previous tick.
-    let elapsed_durations = (elapsed.as_secs() / self.fixed_duration.as_secs()).max(1.0);
+    let elapsed_durations = (elapsed.as_secs() / self.fixed_duration.as_secs()).max(1.0).floor();
 
     self.elapsed_durations = elapsed_durations as usize;
 
