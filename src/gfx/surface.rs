@@ -36,7 +36,7 @@ impl Surface {
       surface,
 
       present_queue_id,
-      size: window.size(),
+      size: Size::default(),
       resized: false,
 
       swapchain: None,

@@ -7,7 +7,6 @@ use super::*;
 /// Handle to a platform-specific window.
 ///
 /// When this structure is dropped, the window is closed.
-#[derive(Clone)]
 pub struct Handle {
   window: Arc<winit::Window>,
   events: channel::Receiver<winit::WindowEvent>,
@@ -16,23 +15,6 @@ pub struct Handle {
 impl Handle {
   pub(crate) fn new(window: winit::Window, events: channel::Receiver<winit::WindowEvent>) -> Self {
     Self { window: Arc::new(window), events }
-  }
-
-  /// Returns the DPI scaling factor of the window.
-  ///
-  /// On standard DPI screens this returns `1.0`. On high definition screens
-  /// it may return `2.0` or some other multiplier.
-  pub fn dpi_scaling(&self) -> f64 {
-    self.window.get_hidpi_factor()
-  }
-
-  /// Returns the size of the window in pixels.
-  pub fn size(&self) -> Size<f64> {
-    if let Some(size) = self.window.get_inner_size() {
-      Size::new(size.width, size.height) * self.dpi_scaling()
-    } else {
-      Size::default()
-    }
   }
 
   /// Returns the next window event if one is available or `None` if there is no
@@ -45,6 +27,7 @@ impl Handle {
       _ => None,
     })
   }
+
   /// Returns a reference to the underlying winit window.
   pub(crate) fn as_winit(&self) -> &Arc<winit::Window> {
     &self.window
