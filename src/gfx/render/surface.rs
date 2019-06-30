@@ -76,13 +76,7 @@ impl Surface {
     let signal = signal.into().map(cmd::Semaphore::as_backend);
 
     let index = loop {
-      let image = unsafe {
-        self
-          .swapchain
-          .as_mut()
-          .unwrap()
-          .acquire_image(!0, signal, None)
-      };
+      let image = unsafe { self.swapchain.as_mut().unwrap().acquire_image(!0, signal, None) };
 
       match image {
         Ok((index, None)) => {
@@ -97,18 +91,12 @@ impl Surface {
       }
     };
 
-    Ok(Backbuffer {
-      surface: self,
-      index,
-      presented: false,
-    })
+    Ok(Backbuffer { surface: self, index, presented: false })
   }
 
   /// Creates the underlying swapchain.
   fn create_swapchain(&mut self) {
-    let (capabilities, _, _) = self
-      .surface
-      .compatibility(&self.context.adapter.physical_device);
+    let (capabilities, _, _) = self.surface.compatibility(&self.context.adapter.physical_device);
 
     let extent = gfx_hal::window::Extent2D {
       width: math::clamp(
@@ -150,8 +138,7 @@ impl Surface {
 
     self.size = Size::new(f64::from(size.width), f64::from(size.height));
 
-    log::debug!(self.context.logger(),
-      "created swapchain";
+    log::debug!(self.context.logger(), "created swapchain";
       "image_count" => image_count,
       "format" => log::Debug(Self::FORMAT),
       "size" => log::Debug(size),
@@ -229,10 +216,7 @@ impl<'a> Backbuffer<'a> {
 impl<'a> Drop for Backbuffer<'a> {
   fn drop(&mut self) {
     if !self.presented {
-      log::error!(
-        self.surface.context.logger(),
-        "backbuffer was not presented"
-      );
+      log::error!(self.surface.context.logger(), "backbuffer was not presented");
     }
   }
 }

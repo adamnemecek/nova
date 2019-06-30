@@ -67,17 +67,11 @@ pub fn start(
   let acquire_semaphore = cmd::Semaphore::new(&context)?;
   let render_semaphore = cmd::Semaphore::new(&context)?;
 
-  let vertex_shader = shader::compile_hlsl(
-    &context,
-    shader::Stage::Vertex,
-    include_str!("./shaders/quad.vert"),
-  );
+  let vertex_shader =
+    shader::compile_hlsl(&context, shader::Stage::Vertex, include_str!("./shaders/quad.vert"));
 
-  let fragment_shader = shader::compile_hlsl(
-    &context,
-    shader::Stage::Fragment,
-    include_str!("./shaders/color.frag"),
-  );
+  let fragment_shader =
+    shader::compile_hlsl(&context, shader::Stage::Fragment, include_str!("./shaders/color.frag"));
 
   let pipeline = PipelineBuilder::new()
     .set_render_pass(&render_pass)
@@ -129,19 +123,14 @@ pub fn start(
 
     let image_data = ImageData::load_file("assets/do_it.jpg").expect("failed to load image data");
 
-    let image = loader
-      .load_image(image_data.size(), image_data)
-      .recv()
-      .expect("failed to load image");
+    let image =
+      loader.load_image(image_data.size(), image_data).recv().expect("failed to load image");
 
     let sampler = Sampler::new(&context, SamplerFilter::Nearest).expect("failed to create sampler");
 
     let descriptor_set = DescriptorSet::new(
       &descriptor_pool,
-      vec![
-        Descriptor::UniformBuffer(uniform_buffer),
-        Descriptor::SampledImage(image, sampler),
-      ],
+      vec![Descriptor::UniformBuffer(uniform_buffer), Descriptor::SampledImage(image, sampler)],
     )
     .expect("failed to create descriptor set");
 
@@ -172,8 +161,7 @@ pub fn start(
         Ok(backbuffer) => backbuffer,
 
         Err(err) => {
-          log::error!(logger,
-            "failed to acquire surface backbuffer";
+          log::error!(logger, "failed to acquire surface backbuffer";
             "cause" => log::Display(err),
           );
 
@@ -187,9 +175,8 @@ pub fn start(
       framebuffer.set_attachment(backbuffer.image());
 
       if let Err(err) = framebuffer.ensure_created() {
-        log::error!(logger,
-          "failed to create framebuffer";
-          "cause" => log::Display(err),
+        log::error!(logger, "failed to create framebuffer";
+          "error" => log::Display(err),
         );
 
         return render_loop.stop();
@@ -218,9 +205,8 @@ pub fn start(
 
       // Present the backbuffer.
       if let Err(err) = backbuffer.present(&[&render_semaphore]) {
-        log::error!(logger,
-          "failed to present surface backbuffer";
-          "cause" => log::Display(err),
+        log::error!(logger, "failed to present surface backbuffer";
+          "error" => log::Display(err),
         );
 
         return render_loop.stop();
@@ -231,10 +217,7 @@ pub fn start(
     context.wait_idle();
   });
 
-  Ok(Renderer {
-    messages: send_messages,
-    thread,
-  })
+  Ok(Renderer { messages: send_messages, thread })
 }
 
 #[repr(C)]
@@ -242,9 +225,6 @@ pub fn start(
 struct Vertex((f32, f32, f32), (f32, f32), Color);
 
 impl vertex::Data for Vertex {
-  const ATTRIBUTES: &'static [vertex::Attribute] = &[
-    vertex::Attribute::Vector3f32,
-    vertex::Attribute::Vector2f32,
-    vertex::Attribute::Vector4f32,
-  ];
+  const ATTRIBUTES: &'static [vertex::Attribute] =
+    &[vertex::Attribute::Vector3f32, vertex::Attribute::Vector2f32, vertex::Attribute::Vector4f32];
 }

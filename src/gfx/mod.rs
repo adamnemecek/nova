@@ -27,6 +27,7 @@ use self::{
   buffer::*, color::*, descriptors::*, framebuffer::*, image::*, memory::*, render_pass::*,
   sampler::*,
 };
+
 use super::*;
 use gfx_hal::{Device as _, Instance as _, PhysicalDevice as _};
 
@@ -34,14 +35,15 @@ pub fn init(logger: &log::Logger) -> Result<Context, InitError> {
   // Instantiate the backend.
   let backend = backend::Instance::create("nova", 1);
 
-  log::debug!(logger, "instantiated graphics backend"; "name" => backend::NAME);
+  log::debug!(logger, "instantiated graphics backend";
+    "name" => backend::NAME,
+  );
 
   // Get and log all available adapters.
   let mut adapters = backend.enumerate_adapters();
 
   for adapter in &adapters {
-    log::debug!(logger,
-      "found graphics adapter";
+    log::debug!(logger, "found graphics adapter";
       "type" => log::Debug(&adapter.info.device_type),
       "type_id" => adapter.info.device,
       "vendor_id" => adapter.info.vendor,
@@ -60,8 +62,7 @@ pub fn init(logger: &log::Logger) -> Result<Context, InitError> {
   // Select the first adapter in the sorted list.
   let adapter = adapters.into_iter().next().ok_or(InitError::NoAdapter)?;
 
-  log::debug!(logger,
-    "selected graphics adapter";
+  log::debug!(logger, "selected graphics adapter";
     "type" => log::Debug(&adapter.info.device_type),
     "type_id" => adapter.info.device,
     "vendor_id" => adapter.info.vendor,
@@ -77,8 +78,7 @@ pub fn init(logger: &log::Logger) -> Result<Context, InitError> {
     .map(|family| {
       use gfx_hal::QueueFamily as _;
 
-      log::debug!(logger,
-        "found graphics queue family";
+      log::debug!(logger, "found graphics queue family";
         "max_queues" => family.max_queues(),
         "type" => log::Debug(family.queue_type()),
         "id" => family.id().0,
