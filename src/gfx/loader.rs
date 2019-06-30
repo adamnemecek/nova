@@ -15,7 +15,7 @@ pub struct Loader {
 
 struct LoaderState {
   cmd_pool: cmd::Pool,
-  submission: cmd::Submission,
+  queue_id: cmd::QueueId,
   fence: cmd::Fence,
   staging_buffer: Buffer,
 }
@@ -24,24 +24,26 @@ impl LoaderState {
   fn new(context: &Arc<Context>) -> Result<Self, LoaderCreationError> {
     let queue_id = context.queues().find_transfer_queue();
     let cmd_pool = cmd::Pool::new(&context, queue_id)?;
-    let mut submission = cmd::Submission::new(queue_id);
     let fence = cmd::Fence::new(&context, false)?;
 
     let mut staging_buffer = Buffer::new(&context, BufferKind::Staging, STAGING_BUFFER_LEN)
       .map_err(LoaderCreationError::StagingBufferCreationFailed)?;
 
-    Ok(Self { cmd_pool, submission, fence, staging_buffer })
+    Ok(Self { cmd_pool, queue_id, fence, staging_buffer })
   }
 }
 
 impl Loader {
   /// Starts a background thread to load the data for large buffers and images
   /// onto the device, returning a cloneable control handle.
-  pub fn new(context: &Arc<Context>) -> Result<Loader, LoaderCreationError> {
+  pub fn new(
+    thread_scope: &thread::Scope,
+    context: &Arc<Context>,
+  ) -> Result<Loader, LoaderCreationError> {
     let context = context.clone();
     let (send_result, recv_result) = channel::bounded(0);
 
-    thread::spawn(move || {
+    thread_scope.spawn(move |thread_scope| {
       // Initialize the loader state.
       let mut state = match LoaderState::new(&context) {
         Ok(state) => state,
@@ -94,7 +96,7 @@ impl Loader {
             let mut cmd = cmd_list.begin();
 
             cmd.copy_buffer(&state.staging_buffer, 0..dest.len(), &dest, 0);
-            cmd.finish();
+            cmd.end();
 
             // Submit the transfer commands and wait for them to complete.
             state.submission.command_buffers.push(cmd_list);
@@ -167,7 +169,7 @@ impl Loader {
               )],
             );
 
-            cmd.finish();
+            cmd.end();
 
             // Submit the transfer commands and wait for them to complete.
             state.submission.command_buffers.push(cmd_list);

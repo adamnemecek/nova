@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//pub mod render;
+pub mod renderer;
 
 mod backend;
 mod buffer;
@@ -13,25 +13,25 @@ mod descriptors;
 mod framebuffer;
 mod image;
 mod image_data;
-mod loader;
 mod memory;
 mod pipeline;
 mod render_pass;
 mod sampler;
 mod shader;
+mod surface;
 mod vertex;
 
 pub use self::context::*;
 
 use self::{
   buffer::*, color::*, descriptors::*, framebuffer::*, image::*, memory::*, render_pass::*,
-  sampler::*,
+  sampler::*, surface::*,
 };
 
 use super::*;
 use gfx_hal::{Device as _, Instance as _, PhysicalDevice as _};
 
-pub fn init(logger: &log::Logger) -> Result<Context, InitError> {
+pub fn init(logger: &log::Logger) -> Result<Arc<Context>, InitError> {
   // Instantiate the backend.
   let backend = backend::Instance::create("nova", 1);
 
@@ -98,7 +98,7 @@ pub fn init(logger: &log::Logger) -> Result<Context, InitError> {
 
   let queues = cmd::Queues::new(queue_families, queues);
 
-  Ok(Context::new(backend, adapter, device, queues))
+  Ok(Arc::new(Context::new(backend, adapter, device, queues)))
 }
 
 /// An error that occurred during the initialization of a new graphics context.

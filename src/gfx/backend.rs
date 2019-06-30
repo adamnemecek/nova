@@ -37,6 +37,7 @@ pub type Framebuffer = <Backend as gfx_hal::Backend>::Framebuffer;
 pub type Image = <Backend as gfx_hal::Backend>::Image;
 pub type ImageView = <Backend as gfx_hal::Backend>::ImageView;
 pub type Memory = <Backend as gfx_hal::Backend>::Memory;
+pub type PhysicalDevice = <Backend as gfx_hal::Backend>::PhysicalDevice;
 pub type Pipeline = <Backend as gfx_hal::Backend>::GraphicsPipeline;
 pub type PipelineLayout = <Backend as gfx_hal::Backend>::PipelineLayout;
 pub type Queue = <Backend as gfx_hal::Backend>::CommandQueue;

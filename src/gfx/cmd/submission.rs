@@ -6,51 +6,21 @@ use super::*;
 
 /// Describes a submission of one or more command buffers to a command queue on
 /// the graphics device.
-pub struct Submission {
+pub struct Submission<'a, F> {
   /// ID of the command queue to submit to.
   pub queue_id: QueueId,
 
   /// Command lists to submit to the queue.
-  pub command_buffers: Vec<List>,
+  pub lists: &'a [&'a List],
 
   /// Semaphores to wait on before executing the commands in the submission.
-  pub wait_semaphores: Vec<(Semaphore, pipeline::Stage)>,
+  pub wait_semaphores: &'a [(&'a Semaphore, pipeline::Stage)],
 
   /// Semaphores to signal when the commands in the submission have finished
   /// executing.
-  pub signal_semaphores: Vec<Semaphore>,
-}
+  pub signal_semaphores: &'a [&'a Semaphore],
 
-impl Submission {
-  /// Creates a new, empty submission for the given queue ID.
-  pub fn new(queue_id: QueueId) -> Self {
-    Self {
-      queue_id,
-      command_buffers: Vec::new(),
-      wait_semaphores: Vec::new(),
-      signal_semaphores: Vec::new(),
-    }
-  }
-
-  /// Clears the submission for reuse.
-  pub fn clear(&mut self) {
-    self.command_buffers.clear();
-    self.wait_semaphores.clear();
-    self.signal_semaphores.clear();
-  }
-
-  /// Adds a semaphore to the list of semaphores to wait on before executing
-  /// commands in the submission.
-  ///
-  /// The given `stage` indicates which pipeline stage will wait for the
-  /// semaphore.
-  pub fn wait_for(&mut self, semaphore: Semaphore, stage: pipeline::Stage) {
-    self.wait_semaphores.push((semaphore, stage));
-  }
-
-  /// Adds a semaphore to the list of semaphores to signal after executing the
-  /// commands in the submission.
-  pub fn signal(&mut self, semaphore: Semaphore) {
-    self.signal_semaphores.push(semaphore);
-  }
+  /// Fence to signal when the commands in the submission have finished
+  /// executing.
+  pub fence: F,
 }

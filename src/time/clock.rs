@@ -5,22 +5,17 @@
 use super::*;
 
 /// Limits the frequency of a loop and tracks the time between each iteration.
+#[derive(Default)]
 pub struct Clock {
-  ticked_at: Instant,
+  ticked_at: Option<Instant>,
   tick_length: Duration,
   elapsed: Duration,
-}
-
-impl Default for Clock {
-  fn default() -> Self {
-    Self::new()
-  }
 }
 
 impl Clock {
   /// Creates a new clock with a tick length of zero.
   pub fn new() -> Self {
-    Self { ticked_at: Instant::now(), tick_length: Default::default(), elapsed: Default::default() }
+    Self::default()
   }
 
   /// Returns the tick length of the clock.
@@ -74,20 +69,36 @@ impl Clock {
 
   /// Updates the clock.
   ///
-  /// If less time has elapsed than the tick length of the clock, this function
-  /// will block until the remaining time has elapsed.
+  /// The first time this function is called, it sets the initial tick time of
+  /// the clock and returns immediately. The `elapsed()` method will return a
+  /// zero duration.
+  ///
+  /// On subsequent calls, this function will check if the time elapsed since
+  /// the previous call is shorter than the tick length. If so, it will block
+  /// for the remaining time. The `elapsed()` method will then return the actual
+  /// duration of time elapsed since the previous call.
   pub fn tick(&mut self) {
     let mut now = Instant::now();
-    let mut elapsed = now - self.ticked_at;
+
+    let then = match self.ticked_at {
+      Some(instant) => instant,
+
+      None => {
+        self.ticked_at = Some(now);
+        return;
+      }
+    };
+
+    let mut elapsed = now - then;
 
     if elapsed < self.tick_length {
       spin_sleep::sleep((self.tick_length - elapsed).into());
 
       now = Instant::now();
-      elapsed = now - self.ticked_at;
+      elapsed = now - then;
     }
 
-    self.ticked_at = now;
+    self.ticked_at = Some(now);
     self.elapsed = elapsed;
   }
 }

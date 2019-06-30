@@ -11,8 +11,7 @@ edition = "2018"
 lto = true
 
 [dependencies]
-crossbeam-channel = "0.3"
-crossbeam-queue = "0.1"
+crossbeam = "0.7"
 gfx-hal = "0.2"
 glsl-to-spirv = "0.1"
 hibitset = "0.5"

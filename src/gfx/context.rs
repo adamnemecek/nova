@@ -10,8 +10,8 @@ pub struct Context {
   memory: Memory,
   queues: cmd::Queues,
   device: backend::Device,
-  _adapter: backend::Adapter,
-  _backend: Arc<backend::Instance>,
+  adapter: backend::Adapter,
+  backend: Arc<backend::Instance>,
 }
 
 impl Context {
@@ -23,7 +23,15 @@ impl Context {
   ) -> Self {
     let memory = Memory::new(&adapter);
 
-    Context { memory, queues, device, _adapter: adapter, _backend: backend.into() }
+    Context { memory, queues, device, adapter, backend: backend.into() }
+  }
+
+  pub(crate) fn backend(&self) -> &backend::Instance {
+    &self.backend
+  }
+
+  pub(crate) fn physical_device(&self) -> &backend::PhysicalDevice {
+    &self.adapter.physical_device
   }
 
   pub(crate) fn device(&self) -> &backend::Device {

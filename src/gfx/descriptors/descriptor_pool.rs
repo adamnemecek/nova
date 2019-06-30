@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crossbeam_queue::SegQueue;
+use crossbeam::queue::SegQueue;
 use gfx_hal::DescriptorPool as _;
 
 /// A pool of reusable [`DescriptorSet`]s with the same [`DescriptorLayout`].

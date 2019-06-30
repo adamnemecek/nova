@@ -3,9 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crossbeam_queue::SegQueue;
 use gfx_hal::pool::RawCommandPool as _;
-use std::sync::atomic::AtomicBool;
 
 /// Pool of reusable command buffers.
 ///
@@ -17,6 +15,7 @@ pub struct Pool(Rc<RefCell<PoolInner>>);
 struct PoolInner {
   context: Arc<Context>,
   pool: Expect<backend::CommandPool>,
+  queue_id: QueueId,
   level: gfx_hal::command::RawLevel,
   is_recording: bool,
   recycle_bin: Vec<backend::CommandBuffer>,
@@ -36,6 +35,7 @@ impl Pool {
       Ok(pool) => Ok(Self(Rc::new(RefCell::new(PoolInner {
         context: context.clone(),
         pool: pool.into(),
+        queue_id,
         level: gfx_hal::command::RawLevel::Primary,
         is_recording: false,
         recycle_bin: Vec::new(),
@@ -43,6 +43,11 @@ impl Pool {
 
       Err(_) => Err(OutOfMemoryError),
     }
+  }
+
+  /// Returns the queue ID the command pool was created for.
+  pub fn queue_id(&self) -> QueueId {
+    self.0.borrow().queue_id
   }
 
   /// Allocates a new backend command buffer.

@@ -79,20 +79,20 @@ impl Queues {
     self.find_graphics_queue()
   }
 
-  pub fn submit<'a>(&'a self, submission: &'a Submission, fence: impl Into<Option<&'a Fence>>) {
+  pub fn submit<'a, F: Into<Option<&'a Fence>>>(&'a self, submission: Submission<'a, F>) {
     let mut queue = self.queues[submission.queue_id.index].queue.lock();
 
     unsafe {
       queue.submit(
         gfx_hal::Submission {
-          command_buffers: submission.command_buffers.iter().map(cmd::List::as_backend),
+          command_buffers: submission.lists.iter().map(|list| list.as_backend()),
           wait_semaphores: submission
             .wait_semaphores
             .iter()
             .map(|(sem, stage)| (sem.as_backend(), *stage)),
-          signal_semaphores: submission.signal_semaphores.iter().map(Semaphore::as_backend),
+          signal_semaphores: submission.signal_semaphores.iter().map(|sem| sem.as_backend()),
         },
-        fence.into().map(Fence::as_backend),
+        submission.fence.into().map(Fence::as_backend),
       );
     }
   }

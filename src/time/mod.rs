@@ -11,7 +11,7 @@ pub use self::{clock::*, duration::*, instant::*};
 use super::*;
 
 pub fn sleep(duration: Duration) {
-  thread::sleep(duration.into());
+  std::thread::sleep(duration.into());
 }
 
 pub fn spin_sleep(duration: Duration) {

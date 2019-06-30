@@ -224,8 +224,8 @@ impl<'a> Recorder<'a> {
     }
   }
 
-  /// Finishes recording commands, dropping the `Recorder`.
-  pub fn finish(self) {}
+  /// Ends command recording.
+  pub fn end(self) {}
 }
 
 impl<'a> Drop for Recorder<'a> {

@@ -5,40 +5,48 @@
 use super::*;
 use gfx_hal::{Surface as _, Swapchain as _};
 
-// Rendering surface created from a window.
+/// A rendering surface.
 pub struct Surface {
-  size: Size<f64>,
+  context: Arc<Context>,
   surface: backend::Surface,
+
   present_queue_id: cmd::QueueId,
+  size: Size<f64>,
   resized: bool,
 
   swapchain: Option<backend::Swapchain>,
-  swapchain_images: Vec<Image>,
+  swapchain_images: Vec<Arc<Image>>,
 
-  context: Context,
+  logger: log::Logger,
 }
 
 impl Surface {
   /// Format of all surfaces.
   pub const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
 
-  /// Creates a new render surface using the given window.
-  pub fn new(context: &Context, window: &window::Handle) -> Self {
-    let size = window.size();
-    let surface = context.backend.create_surface(window.as_ref());
-    let present_queue_id = context.queues.find_present_queue(&surface);
+  /// Creates a new surface using the given window.
+  pub fn new(context: &Arc<Context>, window: &window::Handle, logger: &log::Logger) -> Self {
+    let surface = context.backend().create_surface(window.as_ref());
+    let present_queue_id = context.queues().find_present_queue(&surface);
 
     Self {
-      size,
+      context: context.clone(),
       surface,
+
       present_queue_id,
+      size: window.size(),
       resized: false,
 
       swapchain: None,
       swapchain_images: Vec::new(),
 
-      context: context.clone(),
+      logger: logger.clone(),
     }
+  }
+
+  /// Returns a reference to the graphics context this surface was created in.
+  pub fn context(&self) -> &Arc<Context> {
+    &self.context
   }
 
   /// Returns the size of the surface in pixels.
@@ -52,7 +60,7 @@ impl Surface {
   pub fn resize(&mut self, size: Size<f64>) {
     if size != self.size {
       self.size = size;
-      self.resized = true;
+      self.destroy_swapchain();
     }
   }
 
@@ -64,11 +72,6 @@ impl Surface {
     &'a mut self,
     signal: impl Into<Option<&'a cmd::Semaphore>>,
   ) -> Result<Backbuffer, SurfaceAcquireError> {
-    if self.resized {
-      self.resized = false;
-      self.destroy_swapchain();
-    }
-
     if self.swapchain.is_none() {
       self.create_swapchain();
     }
@@ -96,7 +99,7 @@ impl Surface {
 
   /// Creates the underlying swapchain.
   fn create_swapchain(&mut self) {
-    let (capabilities, _, _) = self.surface.compatibility(&self.context.adapter.physical_device);
+    let (capabilities, _, _) = self.surface.compatibility(self.context.physical_device());
 
     let extent = gfx_hal::window::Extent2D {
       width: math::clamp(
@@ -127,7 +130,7 @@ impl Surface {
     let (swapchain, backbuffers) = unsafe {
       self
         .context
-        .device
+        .device()
         .create_swapchain(&mut self.surface, config, None)
         .expect("Could not create swapchain")
     };
@@ -138,7 +141,7 @@ impl Surface {
 
     self.size = Size::new(f64::from(size.width), f64::from(size.height));
 
-    log::debug!(self.context.logger(), "created swapchain";
+    log::debug!(&self.logger, "created swapchain";
       "image_count" => image_count,
       "format" => log::Debug(Self::FORMAT),
       "size" => log::Debug(size),
@@ -147,7 +150,8 @@ impl Surface {
     for image in backbuffers {
       self.swapchain_images.push(
         Image::from_swapchain_image(&self.context, image, size, Self::FORMAT)
-          .expect("failed to create swapchain image"),
+          .expect("failed to create swapchain image")
+          .into(),
       );
     }
   }
@@ -157,7 +161,7 @@ impl Surface {
     self.swapchain_images.clear();
 
     if let Some(swapchain) = self.swapchain.take() {
-      unsafe { self.context.device.destroy_swapchain(swapchain) };
+      unsafe { self.context.device().destroy_swapchain(swapchain) };
     }
   }
 }
@@ -177,7 +181,7 @@ pub struct Backbuffer<'a> {
 
 impl<'a> Backbuffer<'a> {
   /// Returns a reference to the `Image` representing the backbuffer.
-  pub fn image(&self) -> &Image {
+  pub fn image(&self) -> &Arc<Image> {
     &self.surface.swapchain_images[self.index as usize]
   }
 
@@ -190,7 +194,7 @@ impl<'a> Backbuffer<'a> {
 
     let swapchain = self.surface.swapchain.as_ref().unwrap();
 
-    let result = self.surface.context.queues.present(
+    let result = self.surface.context.queues().present(
       self.surface.present_queue_id,
       swapchain,
       self.index,
@@ -216,7 +220,7 @@ impl<'a> Backbuffer<'a> {
 impl<'a> Drop for Backbuffer<'a> {
   fn drop(&mut self) {
     if !self.presented {
-      log::error!(self.surface.context.logger(), "backbuffer was not presented");
+      log::error!(&self.surface.logger, "backbuffer was neverü presented");
     }
   }
 }

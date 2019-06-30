@@ -23,13 +23,13 @@ pub enum Event {
 }
 
 /// Creates a new window with the given options and returns a `Handle` for it.
-pub fn create(options: Options) -> Result<Handle, OpenError> {
+pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, OpenError> {
   // Create channels to communicate with the window's event loop thread.
   let (send_events, recv_events) = channel::unbounded();
   let (send_window, recv_window) = channel::bounded(0);
 
   // Start the event loop thread.
-  thread::spawn(move || {
+  thread_scope.spawn(move |_| {
     // Set up an event loop and create the window.
     let mut events_loop = winit::EventsLoop::new();
 

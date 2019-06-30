@@ -11,12 +11,13 @@ pub mod util;
 pub mod vfs;
 pub mod window;
 
+pub use crossbeam::{channel, thread};
+
 use self::math::{Matrix4, Point2, Rect, Size};
 use self::util::Expect;
-use crossbeam_channel as channel;
 use lazy_static::lazy_static;
 use parking_lot::{Mutex, MutexGuard, RwLock};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::{cmp, fmt, iter, mem, ops, slice, thread};
+use std::{cmp, fmt, iter, mem, ops, slice};
