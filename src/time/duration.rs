@@ -93,3 +93,9 @@ impl fmt::Debug for Duration {
     }
   }
 }
+
+impl fmt::Display for Duration {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fmt::Debug::fmt(self, f)
+  }
+}
