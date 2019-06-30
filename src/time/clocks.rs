@@ -4,7 +4,10 @@
 
 use super::*;
 
-/// Limits the frequency of a loop and tracks the time between each iteration.
+/// Tracks the time between calls to a `tick()` method.
+///
+/// This can be used to track the “delta time” or duration of time between two
+/// iterations of a loop.
 #[derive(Default)]
 pub struct Clock {
   ticked_at: Option<Instant>,
@@ -12,7 +15,7 @@ pub struct Clock {
 }
 
 impl Clock {
-  /// Creates a new clock with a tick length of zero.
+  /// Creates a new clock with a fixed duration of zero.
   pub fn new() -> Self {
     Self::default()
   }
@@ -34,74 +37,66 @@ impl Clock {
     self.ticked_at.expect("clock has not been ticked")
   }
 
-  /// Updates the clock.
-  ///
-  /// The first time this function is called, it sets the initial tick time of
-  /// the clock and returns immediately. The `elapsed()` method will return a
-  /// zero duration.
-  ///
-  /// On subsequent calls, this function will check if the time elapsed since
-  /// the previous call is shorter than the tick length. If so, it will block
-  /// for the remaining time. The `elapsed()` method will then return the actual
-  /// duration of time elapsed since the previous call.
+  /// Updates the clock based on the time elapsed since the previous call to
+  /// this method.
   pub fn tick(&mut self) {
-    let mut now = Instant::now();
+    let now = Instant::now();
 
-    match self.ticked_at {
-      Some(then) => {
-        self.elapsed = now - then;
-      }
-
-      None => {}
-    };
+    if let Some(then) = self.ticked_at {
+      self.elapsed = now - then;
+    }
 
     self.ticked_at = Some(now);
   }
 }
 
+/// A [`Clock`] that tries to maintain a fixed duration fixed duration.
 #[derive(Debug)]
 pub struct FixedClock {
-  tick_length: Duration,
+  fixed_duration: Duration,
   ticked_at: Option<Instant>,
   elapsed: Duration,
-  elapsed_ticks: usize,
+  elapsed_durations: usize,
   early: Duration,
   late: Duration,
 }
 
 impl FixedClock {
-  pub fn new(tick_length: Duration) -> Self {
-    debug_assert!(tick_length > Duration::ZERO, "tick length must be greater than zero");
+  /// Creates a new clock with the given fixed duration.
+  pub fn new(fixed_duration: Duration) -> Self {
+    debug_assert!(fixed_duration > Duration::ZERO, "fixed duration must be greater than zero");
 
     Self {
-      tick_length,
+      fixed_duration,
       ticked_at: None,
       elapsed: Default::default(),
-      elapsed_ticks: 0,
+      elapsed_durations: 0,
       early: Default::default(),
       late: Default::default(),
     }
   }
 
-  /// Returns the target tick length of the clock.
-  pub fn tick_length(&self) -> Duration {
-    self.tick_length
+  /// Returns the fixed duration of the clock.
+  pub fn fixed_duration(&self) -> Duration {
+    self.fixed_duration
   }
 
   /// Returns the amount of time elapsed between the most recent tick and the
-  /// tick immediately before it.
+  /// tick before it.
   ///
-  /// This is also commonly known as “delta time”.
+  /// This is also commonly known as “delta time”. It is always a multiple of
+  /// the fixed duration as of the previous tick.
   pub fn elapsed(&self) -> Duration {
     self.elapsed
   }
 
-  /// Returns the amount of time elapsed between the most recent tick and the
-  /// tick immediately before it, as a who
+  /// Returns the number of whole fixed durations of time that elapsed between
+  /// the most recent tick and the tick before it.
   ///
-  /// This is also commonly known as “delta time”.
-  pub fn elapsed_ticks(&self) -> Duration {
-    self.elapsed
+  /// This is usually `1`, but may be larger if enough time elapsed between the
+  /// last two ticks.
+  pub fn elapsed_durations(&self) -> usize {
+    self.elapsed_durations
   }
 
   /// Returns the instant in time of the most recent tick.
@@ -113,18 +108,14 @@ impl FixedClock {
     self.ticked_at.expect("clock has not been ticked")
   }
 
-  /// Sets the frequency of clock ticks.
+  /// Updates the clock based on the time elapsed since the previous call to
+  /// this method.
   ///
-  /// This is equivalent to setting the tick length to `1 / value` seconds.
-  pub fn set_frequency(&mut self, value: f64) {
-    self.tick_length = if value.is_infinite() && value > 0.0 {
-      Duration::default()
-    } else {
-      Duration::from_secs(1.0 / value)
-    };
-  }
-
+  /// This method will try to keep ticks spaced evenly according to the current
+  /// fixed duration, and will sleep or spin the current thread to do so.
   pub fn tick(&mut self) {
+    // Get the instant of the last tick or return immediately if this is the
+    // first tick.
     let then = match self.ticked_at {
       Some(then) => then,
 
@@ -134,24 +125,38 @@ impl FixedClock {
       }
     };
 
-    let threshold = self.tick_length + self.early - self.late;
+    // Compute the ideal duration of time since the previous tick, adjusting the
+    // fixed duration according to how early or late the previous tick was.
+    let ideal_duration = self.fixed_duration + self.early - self.late;
 
+    // Compute the actual time elapsed since the previous tick.
     let mut now = Instant::now();
     let mut elapsed = now - then;
 
-    if elapsed < threshold {
-      spin_sleep(threshold - elapsed);
+    // If less time has elapsed than the ideal duration, spin or sleep until it
+    // has.
+    if elapsed < ideal_duration {
+      spin_sleep(ideal_duration - elapsed);
 
       now = Instant::now();
       elapsed = now - then;
     }
 
-    let elapsed_ticks = (elapsed.as_secs() / self.tick_length.as_secs()).max(1.0).round();
+    self.ticked_at = Some(now);
 
-    self.elapsed = self.tick_length * elapsed_ticks;
-    self.elapsed_ticks = elapsed_ticks as usize;
+    // Compute the number of whole fixed durations that have elapsed since the
+    // previous tick.
+    let elapsed_durations = (elapsed.as_secs() / self.fixed_duration.as_secs()).max(1.0);
+
+    self.elapsed_durations = elapsed_durations as usize;
+
+    // Compute the adjusted elapsed time which is always a multiple of the
+    // fixed duration.
+    self.elapsed = self.fixed_duration * elapsed_durations;
+
+    // Store the difference between the real and adjusted elapsed time in the
+    // early and late durations for next frame.
     self.early = self.elapsed - elapsed;
     self.late = elapsed - self.elapsed;
-    self.ticked_at = Some(now);
   }
 }
