@@ -4,7 +4,7 @@
 
 pub use slog::{
   b, crit, debug, error, info, o, trace, warn, Drain, Error as SerializationError, Key, Level,
-  Logger, Record, Serializer, Value,
+  Logger, Record, Result as SerializationResult, Serializer, Value,
 };
 
 use super::*;
@@ -13,12 +13,7 @@ use super::*;
 pub struct Debug<T>(pub T);
 
 impl<T: fmt::Debug> Value for Debug<T> {
-  fn serialize(
-    &self,
-    _: &Record,
-    key: Key,
-    serializer: &mut Serializer,
-  ) -> Result<(), SerializationError> {
+  fn serialize(&self, _: &Record, key: Key, serializer: &mut Serializer) -> SerializationResult {
     serializer.emit_arguments(key, &format_args!("{:?}", self.0))
   }
 }

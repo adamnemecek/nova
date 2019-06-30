@@ -100,6 +100,7 @@ impl ops::Mul<f64> for Duration {
   }
 }
 
+// Implement formatting and logging traits to display human-readable durations.
 impl fmt::Debug for Duration {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let secs = self.0;
@@ -127,5 +128,16 @@ impl fmt::Debug for Duration {
 impl fmt::Display for Duration {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     fmt::Debug::fmt(self, f)
+  }
+}
+
+impl log::Value for Duration {
+  fn serialize(
+    &self,
+    _: &log::Record,
+    key: log::Key,
+    serializer: &mut log::Serializer,
+  ) -> log::SerializationResult {
+    serializer.emit_arguments(key, &format_args!("{}", self))
   }
 }
