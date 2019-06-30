@@ -2,10 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod handle;
-
-pub use self::handle::*;
-
 use super::*;
 
 /// Renders individual frames to a [`Surface`].
@@ -93,7 +89,7 @@ pub fn start(
   context: &Arc<Context>,
   window: &window::Handle,
   logger: &log::Logger,
-) -> Result<Handle, StartError> {
+) -> Result<(), StartError> {
   let logger = logger.clone();
 
   // Create a surface to render to.
@@ -114,34 +110,21 @@ pub fn start(
       }
     };
 
-    // Create a `Handle` for sending control messages to this thread and then
-    // send it back to the main thread.
-    let (send_messages, recv_messages) = channel::unbounded();
-    let handle = Handle::new(send_messages);
-
-    if send_result.send(Ok(handle)).is_err() {
+    if send_result.send(Ok(())).is_err() {
       return;
     }
 
-    // Run the renderer until a `Stop` message is received.
-    let mut is_stopping = false;
-
+    // Run the renderer indefinitely (until the window is closed).
     log::info!(&logger, "renderer started");
 
-    while !is_stopping {
+    loop {
       // Render a single frame or exit the loop on failure.
       if let Err(err) = renderer.render() {
-        log::crit!(&logger, "could not render frame: {}", err);
-        break;
-      }
-
-      // Process control messages sent since the previous frame.
-      while let Ok(message) = recv_messages.try_recv() {
-        match message {
-          ControlMessage::Stop => {
-            is_stopping = true;
-          }
+        if err != RenderError::BackbufferAcquireFailed(SurfaceAcquireError::WindowClosed) {
+          log::crit!(&logger, "could not render frame: {}", err);
         }
+
+        break;
       }
     }
 
@@ -187,7 +170,7 @@ impl From<channel::RecvError> for StartError {
 }
 
 /// An error that occurred while rendering a frame.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum RenderError {
   /// Failed to acquire backbuffer.
   BackbufferAcquireFailed(SurfaceAcquireError),

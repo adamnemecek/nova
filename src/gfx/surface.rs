@@ -7,6 +7,7 @@ use gfx_hal::{Surface as _, Swapchain as _};
 
 /// A rendering surface.
 pub struct Surface {
+  window: ArcWeak<winit::Window>,
   context: Arc<Context>,
   surface: backend::Surface,
 
@@ -26,10 +27,11 @@ impl Surface {
 
   /// Creates a new surface using the given window.
   pub fn new(context: &Arc<Context>, window: &window::Handle, logger: &log::Logger) -> Self {
-    let surface = context.backend().create_surface(window.as_ref());
+    let surface = context.backend().create_surface(window.as_winit());
     let present_queue_id = context.queues().find_present_queue(&surface);
 
     Self {
+      window: Arc::downgrade(window.as_winit()),
       context: context.clone(),
       surface,
 
@@ -49,21 +51,6 @@ impl Surface {
     &self.context
   }
 
-  /// Returns the size of the surface in pixels.
-  pub fn size(&self) -> Size<f64> {
-    self.size
-  }
-
-  /// Sets the size of the render surface.
-  ///
-  /// Call this function if the window size changes.
-  pub fn resize(&mut self, size: Size<f64>) {
-    if size != self.size {
-      self.size = size;
-      self.destroy_swapchain();
-    }
-  }
-
   /// Acquire a backbuffer from the render surface.
   ///
   /// If the given `signal` semaphore is provided, it will be signaled when the
@@ -72,10 +59,28 @@ impl Surface {
     &'a mut self,
     signal: impl Into<Option<&'a cmd::Semaphore>>,
   ) -> Result<Backbuffer, SurfaceAcquireError> {
+    // Get the current window size in pixels.
+    let window = self.window.upgrade().ok_or(SurfaceAcquireError::WindowClosed)?;
+
+    let size = window
+      .get_inner_size()
+      .ok_or(SurfaceAcquireError::WindowClosed)?
+      .to_physical(window.get_hidpi_factor());
+
+    let size = Size::new(size.width, size.height);
+
+    // Destroy the swapchain if its size has changed.
+    if self.size != size {
+      self.destroy_swapchain();
+      self.size = size;
+    }
+
+    // Ensure the swapchain has been created.
     if self.swapchain.is_none() {
       self.create_swapchain();
     }
 
+    // Acquire an image from the surface.
     let signal = signal.into().map(cmd::Semaphore::as_backend);
 
     let index = loop {
@@ -226,10 +231,12 @@ impl<'a> Drop for Backbuffer<'a> {
 }
 
 /// An error that occurred while acquiring a backbuffer from a render surface.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SurfaceAcquireError {
   /// The device is out of memory.
   OutOfMemory,
+  /// The window has been closed.
+  WindowClosed,
   /// The surface is no longer usable.
   SurfaceLost,
   /// The device is no longer usable.
@@ -243,6 +250,7 @@ impl fmt::Display for SurfaceAcquireError {
       "{}",
       match self {
         SurfaceAcquireError::OutOfMemory => "out of memory",
+        SurfaceAcquireError::WindowClosed => "window closed",
         SurfaceAcquireError::SurfaceLost => "surface lost",
         SurfaceAcquireError::DeviceLost => "device lost",
       }
@@ -269,7 +277,7 @@ impl From<gfx_hal::AcquireError> for SurfaceAcquireError {
 }
 
 /// An error that occurred while presenting a backbuffer from a render surface.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SurfacePresentError {
   /// The device is out of memory.
   OutOfMemory,

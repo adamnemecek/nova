@@ -45,11 +45,8 @@ impl Handle {
       _ => None,
     })
   }
-}
-
-// Implement `AsRef` to expose a reference to the underlying winit window.
-impl AsRef<winit::Window> for Handle {
-  fn as_ref(&self) -> &winit::Window {
+  /// Returns a reference to the underlying winit window.
+  pub(crate) fn as_winit(&self) -> &Arc<winit::Window> {
     &self.window
   }
 }

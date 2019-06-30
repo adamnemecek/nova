@@ -19,5 +19,5 @@ use lazy_static::lazy_static;
 use parking_lot::{Mutex, MutexGuard, RwLock};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, Weak as ArcWeak};
 use std::{cmp, fmt, iter, mem, ops, slice, u64};
