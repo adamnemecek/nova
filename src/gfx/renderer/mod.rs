@@ -8,7 +8,8 @@ pub use self::handle::*;
 
 use super::*;
 
-pub struct Renderer {
+/// Renders individual frames to a [`Surface`].
+struct Renderer {
   context: Arc<Context>,
   surface: Surface,
   cmd_pool: cmd::Pool,
@@ -19,9 +20,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn new(surface: Surface, queue_id: cmd::QueueId) -> Result<Self, StartError> {
+  /// Creates a new renderer targeting the given surface.
+  fn new(surface: Surface) -> Result<Self, StartError> {
     let context = surface.context();
 
+    let queue_id = context.queues().find_graphics_queue();
     let cmd_pool = cmd::Pool::new(context, queue_id)?;
     let acquire_semaphore = cmd::Semaphore::new(context)?;
     let render_semaphore = cmd::Semaphore::new(context)?;
@@ -42,7 +45,11 @@ impl Renderer {
     })
   }
 
-  pub fn render(&mut self) -> Result<(), RenderError> {
+  /// Renders a single frame.
+  ///
+  /// This function blocks until the commands for the frame have been fully
+  /// executed.
+  fn render(&mut self) -> Result<(), RenderError> {
     let backbuffer = self.surface.acquire(&self.acquire_semaphore)?;
 
     self.framebuffer.set_attachment(backbuffer.image());
@@ -72,12 +79,7 @@ impl Renderer {
   }
 }
 
-impl Drop for Renderer {
-  fn drop(&mut self) {
-    self.context.wait_idle();
-  }
-}
-
+/// Starts a new renderer with the given options.
 pub fn start(
   thread_scope: &thread::Scope,
   context: &Arc<Context>,
@@ -86,22 +88,26 @@ pub fn start(
 ) -> Result<Handle, StartError> {
   let logger = logger.clone();
 
+  // Create a surface to render to.
   let surface = Surface::new(&context, window, &logger);
-  let queue_id = context.queues().find_graphics_queue();
 
+  // Create a channel to receive the `Handle` from the render thread.
   let (send_result, recv_result) = channel::bounded(0);
 
+  // Start a thread to run the render loop.
   thread_scope.spawn(move |_| {
-    let mut renderer = match Renderer::new(surface, queue_id) {
+    // Create a new renderer or send the error back to the main thread.
+    let mut renderer = match Renderer::new(surface) {
       Ok(renderer) => renderer,
 
       Err(err) => {
         let _ = send_result.send(Err(err));
-
         return;
       }
     };
 
+    // Create a `Handle` for sending control messages to this thread and then
+    // send it back to the main thread.
     let (send_messages, recv_messages) = channel::unbounded();
     let handle = Handle::new(send_messages);
 
@@ -109,47 +115,49 @@ pub fn start(
       return;
     }
 
-    log::info!(&logger, "renderer started");
-
+    // Run the renderer with a `Clock` to limit frame rate until a `Stop`
+    // message is received.
     let mut clock = time::Clock::new().with_frequency(60.0);
     let mut is_stopping = false;
+
+    log::info!(&logger, "renderer started");
 
     while !is_stopping {
       clock.tick();
 
+      // Render a single frame or exit the loop on failure.
       if let Err(err) = renderer.render() {
         log::crit!(&logger, "could not render frame: {}", err);
         break;
       }
 
-      loop {
-        match recv_messages.try_recv() {
-          Ok(ControlMessage::SetTargetFPS(value)) => {
+      // Process control messages sent since the previous frame.
+      while let Ok(message) = recv_messages.try_recv() {
+        match message {
+          ControlMessage::SetTargetFPS(value) => {
             clock.set_frequency(value.max(0.0));
           }
 
-          Ok(ControlMessage::Stop) => {
+          ControlMessage::Stop => {
             is_stopping = true;
-          }
-
-          Err(_) => {
-            break;
           }
         }
       }
     }
 
-    drop(renderer);
-
     log::info!(&logger, "renderer stopped");
   });
 
+  // Receive the handle or error from the render thread initialization.
   recv_result.recv()?
 }
 
+/// An error that occurred while starting a new renderer.
 #[derive(Debug)]
 pub enum StartError {
+  /// Out of either device or host memory.
   OutOfMemory,
+  /// An unknown error occurred.
   Unknown,
 }
 
@@ -162,22 +170,28 @@ impl fmt::Display for StartError {
   }
 }
 
+// Implement `From` to convert from out of memory errors.
 impl From<OutOfMemoryError> for StartError {
   fn from(_: OutOfMemoryError) -> Self {
     StartError::OutOfMemory
   }
 }
 
+// Implement `From` to convert from channel receive errors.
 impl From<channel::RecvError> for StartError {
   fn from(_: channel::RecvError) -> Self {
     StartError::Unknown
   }
 }
 
+/// An error that occurred while rendering a frame.
 #[derive(Debug)]
-pub enum RenderError {
+enum RenderError {
+  /// Failed to acquire backbuffer.
   BackbufferAcquireFailed(SurfaceAcquireError),
+  /// Failed to present backbuffer.
   BackbufferPresentFailed(SurfacePresentError),
+  /// Out of either host or device memory.
   OutOfMemory,
 }
 
@@ -197,18 +211,21 @@ impl fmt::Display for RenderError {
   }
 }
 
+// Implement `From` to convert from surface acquire errors.
 impl From<SurfaceAcquireError> for RenderError {
   fn from(err: SurfaceAcquireError) -> Self {
     RenderError::BackbufferAcquireFailed(err)
   }
 }
 
+// Implement `From` to convert from surface present errors.
 impl From<SurfacePresentError> for RenderError {
   fn from(err: SurfacePresentError) -> Self {
     RenderError::BackbufferPresentFailed(err)
   }
 }
 
+// Implement `From` to convert from out of memory errors.
 impl From<OutOfMemoryError> for RenderError {
   fn from(_: OutOfMemoryError) -> Self {
     RenderError::OutOfMemory
