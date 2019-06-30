@@ -9,11 +9,8 @@ mod pool;
 mod queues;
 mod recorder;
 mod semaphore;
-mod submission;
 
-pub use self::{
-  barrier::*, fence::*, list::*, pool::*, queues::*, recorder::*, semaphore::*, submission::*,
-};
+pub use self::{barrier::*, fence::*, list::*, pool::*, queues::*, recorder::*, semaphore::*};
 pub use gfx_hal::image::Layout as ImageLayout;
 
 use super::*;
