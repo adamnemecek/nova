@@ -5,10 +5,7 @@
 use super::*;
 
 /// A set of bound [`Descriptor`]s containing shader resources.
-#[derive(Clone)]
-pub struct DescriptorSet(Arc<DescriptorSetInner>);
-
-struct DescriptorSetInner {
+pub struct DescriptorSet {
   pool: DescriptorPool,
   set: Expect<backend::DescriptorSet>,
   _descriptors: Vec<Descriptor>,
@@ -24,39 +21,32 @@ impl DescriptorSet {
     pool: &DescriptorPool,
     descriptors: impl Into<Vec<Descriptor>>,
   ) -> Result<Self, DescriptorSetCreationError> {
-    let context = pool.context();
     let set = pool.acquire()?;
     let descriptors = descriptors.into();
 
     unsafe {
-      context
-        .device
-        .write_descriptor_sets(descriptors.iter().enumerate().map(|(index, descriptor)| {
-          gfx_hal::pso::DescriptorSetWrite {
-            set: &set,
-            binding: index as u32,
-            array_offset: 0,
-            descriptors: iter::once(descriptor.as_backend()),
-          }
-        }));
+      pool.context().device().write_descriptor_sets(descriptors.iter().enumerate().map(
+        |(index, descriptor)| gfx_hal::pso::DescriptorSetWrite {
+          set: &set,
+          binding: index as u32,
+          array_offset: 0,
+          descriptors: iter::once(descriptor.as_backend()),
+        },
+      ));
     }
 
-    Ok(Self(Arc::new(DescriptorSetInner {
-      pool: pool.clone(),
-      set: set.into(),
-      _descriptors: descriptors,
-    })))
+    Ok(Self { pool: pool.clone(), set: set.into(), _descriptors: descriptors })
   }
 
   /// Returns a reference to the underlying backend descriptor set.
-  pub(crate) fn as_backend(&self) -> &backend::DescriptorSet {
-    &self.0.set
+  pub fn as_backend(&self) -> &backend::DescriptorSet {
+    &self.set
   }
 }
 
 // Implement `Drop` to release the underlying backend descriptor set back to
 // the pool.
-impl Drop for DescriptorSetInner {
+impl Drop for DescriptorSet {
   fn drop(&mut self) {
     self.pool.release(self.set.take());
   }

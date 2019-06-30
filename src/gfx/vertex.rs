@@ -39,7 +39,7 @@ impl Attribute {
   }
 
   /// Returns the equivalent backend format.
-  pub(crate) fn backend_format(self) -> gfx_hal::format::Format {
+  pub fn backend_format(self) -> gfx_hal::format::Format {
     match self {
       Attribute::Vector2f32 => gfx_hal::format::Format::Rg32Sfloat,
       Attribute::Vector3f32 => gfx_hal::format::Format::Rgb32Sfloat,

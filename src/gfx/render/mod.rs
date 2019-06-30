@@ -7,7 +7,7 @@ mod pass;
 mod pipeline;
 mod surface;
 
-pub(crate) use self::{framebuffer::*, pass::*, pipeline::*};
+pub use self::{framebuffer::*, pass::*, pipeline::*};
 
 use self::surface::*;
 use super::*;

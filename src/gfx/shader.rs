@@ -6,50 +6,41 @@ use super::*;
 pub use gfx_hal::pso::Stage;
 use std::io::Read as _;
 
-#[derive(Clone)]
-pub struct Module(Arc<ModuleInner>);
-
-struct ModuleInner {
-  context: Context,
+pub struct Module {
+  context: Arc<Context>,
   shader: Expect<backend::Shader>,
 }
 
 impl Module {
-  pub fn from_backend(context: &Context, shader: backend::Shader) -> Self {
-    Self(Arc::new(ModuleInner {
-      context: context.clone(),
-      shader: shader.into(),
-    }))
+  pub fn new(context: &Arc<Context>, shader: backend::Shader) -> Self {
+    Self { context: context.clone(), shader: shader.into() }
   }
 
   /// ( ͡° ͜ʖ ͡°)
-  pub(crate) fn backend_entrypoint(&self) -> backend::EntryPoint {
-    backend::EntryPoint {
-      entry: "main",
-      module: &self.0.shader,
-      specialization: Default::default(),
-    }
+  pub fn backend_entrypoint(&self) -> backend::EntryPoint {
+    backend::EntryPoint { entry: "main", module: &self.shader, specialization: Default::default() }
   }
 }
 
-impl Drop for ModuleInner {
+impl Drop for Module {
   fn drop(&mut self) {
     unsafe {
-      self
-        .context
-        .device
-        .destroy_shader_module(self.shader.take());
+      self.context.device().destroy_shader_module(self.shader.take());
     }
   }
 }
 
-pub fn compile_spirv(context: &Context, byte_code: &[u8]) -> Result<Module, CreationError> {
-  let shader = unsafe { context.device.create_shader_module(byte_code)? };
+pub fn compile_spirv(context: &Arc<Context>, byte_code: &[u8]) -> Result<Module, CreationError> {
+  let shader = unsafe { context.device().create_shader_module(byte_code)? };
 
-  Ok(Module::from_backend(context, shader))
+  Ok(Module::new(context, shader))
 }
 
-pub fn compile_hlsl(context: &Context, stage: Stage, code: &str) -> Result<Module, CreationError> {
+pub fn compile_hlsl(
+  context: &Arc<Context>,
+  stage: Stage,
+  code: &str,
+) -> Result<Module, CreationError> {
   let mut output = glsl_to_spirv::compile(
     code,
     match stage {
@@ -65,9 +56,7 @@ pub fn compile_hlsl(context: &Context, stage: Stage, code: &str) -> Result<Modul
 
   let mut spirv = Vec::with_capacity(output.metadata().map(|m| m.len()).unwrap_or(8192) as usize);
 
-  output
-    .read_to_end(&mut spirv)
-    .expect("Could not read compiled shader");
+  output.read_to_end(&mut spirv).expect("Could not read compiled shader");
 
   compile_spirv(context, &spirv)
 }

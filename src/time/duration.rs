@@ -52,10 +52,7 @@ impl From<Duration> for StdDuration {
   fn from(value: Duration) -> Self {
     let nanos = (value.0 * 1_000_000_000.0) as u128;
 
-    StdDuration::new(
-      (nanos / 1_000_000_000) as u64,
-      (nanos % 1_000_000_000) as u32,
-    )
+    StdDuration::new((nanos / 1_000_000_000) as u64, (nanos % 1_000_000_000) as u32)
   }
 }
 

@@ -6,41 +6,29 @@ use super::*;
 
 /// Synchronization primitive used to control order of execution between command
 /// buffers.
-///
-/// This structure is cloneable and all clones refer to the same semaphore. When
-/// all clones are dropped, the underlying backend resource is destroyed.
-#[derive(Clone)]
-pub struct Semaphore(Arc<SemaphoreInner>);
-
-struct SemaphoreInner {
-  context: Context,
+pub struct Semaphore {
+  context: Arc<Context>,
   semaphore: Expect<backend::Semaphore>,
 }
 
 impl Semaphore {
   /// Creates a new semaphore in the given context.
-  pub fn new(context: &Context) -> Result<Self, OutOfMemoryError> {
-    let semaphore = context.device.create_semaphore()?;
+  pub fn new(context: &Arc<Context>) -> Result<Self, OutOfMemoryError> {
+    let semaphore = context.device().create_semaphore()?;
 
-    Ok(Self(Arc::new(SemaphoreInner {
-      semaphore: semaphore.into(),
-      context: context.clone(),
-    })))
+    Ok(Self { context: context.clone(), semaphore: semaphore.into() })
   }
 
   /// Returns a reference to the underlying backend semaphore.
-  pub(crate) fn as_backend(&self) -> &backend::Semaphore {
-    &self.0.semaphore
+  pub fn as_backend(&self) -> &backend::Semaphore {
+    &self.semaphore
   }
 }
 
-impl Drop for SemaphoreInner {
+impl Drop for Semaphore {
   fn drop(&mut self) {
     unsafe {
-      self
-        .context
-        .device
-        .destroy_semaphore(self.semaphore.take());
+      self.context.device().destroy_semaphore(self.semaphore.take());
     }
   }
 }

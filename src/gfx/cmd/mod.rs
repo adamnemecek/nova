@@ -6,15 +6,18 @@ mod barrier;
 mod fence;
 mod list;
 mod pool;
-mod queue;
+mod queues;
 mod recorder;
 mod semaphore;
 mod submission;
 
-pub use self::{barrier::*, fence::*, list::*, pool::*, queue::*, recorder::*, semaphore::*, submission::*};
+pub use self::{
+  barrier::*, fence::*, list::*, pool::*, queues::*, recorder::*, semaphore::*, submission::*,
+};
+pub use gfx_hal::image::Layout as ImageLayout;
+
 use super::*;
 use gfx_hal::command::RawCommandBuffer as _;
-pub use gfx_hal::image::Layout as ImageLayout;
 
 /// Description of a copy operation from a source buffer to a destination
 /// buffer.

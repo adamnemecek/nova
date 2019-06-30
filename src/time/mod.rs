@@ -6,9 +6,9 @@ mod duration;
 mod instant;
 mod loops;
 
-pub use self::loops::{loop_at_frequency, LoopContext};
 pub use self::duration::Duration;
 pub use self::instant::Instant;
+pub use self::loops::{loop_at_frequency, LoopContext};
 
 use super::*;
 

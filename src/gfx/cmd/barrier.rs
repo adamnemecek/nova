@@ -12,7 +12,7 @@ pub struct Barrier<'a>(backend::Barrier<'a>);
 
 impl<'a> Barrier<'a> {
   /// Returns a reference to the backend barrier description.
-  pub(crate) fn as_backend(&self) -> &backend::Barrier<'a> {
+  pub fn as_backend(&self) -> &backend::Barrier<'a> {
     &self.0
   }
 }

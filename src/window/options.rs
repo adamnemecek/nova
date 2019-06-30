@@ -25,11 +25,7 @@ pub struct Options {
 
 impl Options {
   pub fn new() -> Self {
-    Self {
-      title: String::new(),
-      resizable: false,
-      size: None,
-    }
+    Self { title: String::new(), resizable: false, size: None }
   }
 
   pub fn set_title(&mut self, title: &str) {

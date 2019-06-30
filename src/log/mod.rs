@@ -64,11 +64,7 @@ pub fn init() {
 
 /// Returns a new `Logger` based on the default.
 pub fn logger() -> Logger {
-  LOGGER
-    .read()
-    .as_ref()
-    .cloned()
-    .expect("log::init has not been called")
+  LOGGER.read().as_ref().cloned().expect("log::init has not been called")
 }
 
 /// Flushes log records and shuts down the logging module.

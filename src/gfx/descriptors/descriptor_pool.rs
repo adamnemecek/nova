@@ -15,27 +15,26 @@ use gfx_hal::DescriptorPool as _;
 pub struct DescriptorPool(Arc<DescriptorPoolInner>);
 
 struct DescriptorPoolInner {
-  context: Context,
-  layout: DescriptorLayout,
+  layout: Arc<DescriptorLayout>,
   pool: Option<Mutex<backend::DescriptorPool>>,
   recycled_sets: SegQueue<backend::DescriptorSet>,
 }
 
 impl DescriptorPool {
   /// Creates a new pool of up to `max_sets` sets with the given `layout`.
-  pub fn new(layout: &DescriptorLayout, max_sets: usize) -> Result<Self, OutOfMemoryError> {
-    let context = layout.context();
+  pub fn new(
+    layout: impl Into<Arc<DescriptorLayout>>,
+    max_sets: usize,
+  ) -> Result<Self, OutOfMemoryError> {
+    let layout = layout.into();
 
     let ranges = layout
       .kinds()
       .iter()
-      .map(|kind| gfx_hal::pso::DescriptorRangeDesc {
-        ty: kind.backend_ty(),
-        count: max_sets,
-      });
+      .map(|kind| gfx_hal::pso::DescriptorRangeDesc { ty: kind.backend_ty(), count: max_sets });
 
     let pool = unsafe {
-      context.device.create_descriptor_pool(
+      layout.context().device().create_descriptor_pool(
         max_sets,
         ranges,
         gfx_hal::pso::DescriptorPoolCreateFlags::FREE_DESCRIPTOR_SET,
@@ -43,16 +42,14 @@ impl DescriptorPool {
     };
 
     Ok(Self(Arc::new(DescriptorPoolInner {
-      context: context.clone(),
-      layout: layout.clone(),
+      layout,
       pool: Some(Mutex::new(pool)),
       recycled_sets: SegQueue::new(),
     })))
   }
 
-  /// Returns a reference to the graphics context the pool was created in.
-  pub fn context(&self) -> &Context {
-    &self.0.context
+  pub fn context(&self) -> &Arc<Context> {
+    self.0.layout.context()
   }
 
   /// Acquires a backend descriptor set from the pool.
@@ -84,7 +81,7 @@ impl Drop for DescriptorPoolInner {
         pool.free_sets(iter::once(set));
       }
 
-      self.context.device.destroy_descriptor_pool(pool);
+      self.layout.context().device().destroy_descriptor_pool(pool);
     }
   }
 }

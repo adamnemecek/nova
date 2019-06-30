@@ -18,7 +18,7 @@ pub enum Descriptor {
 impl Descriptor {
   /// Returns a backend descriptor definition referencing the contained
   /// resources.
-  pub(crate) fn as_backend(&self) -> backend::Descriptor {
+  pub fn as_backend(&self) -> backend::Descriptor {
     match self {
       Descriptor::UniformBuffer(buffer) => {
         gfx_hal::pso::Descriptor::Buffer(buffer.as_backend(), Some(0)..Some(buffer.len()))

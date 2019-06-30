@@ -6,22 +6,16 @@ use super::*;
 
 /// A description of a render pass, including the required attachments,
 /// subpasses, and subpass dependencies.
-///
-/// This structure is cloneable and all clones refer to the same render pass.
-/// When all clones are dropped, the underyling backend resources are destroyed.
-#[derive(Clone)]
-pub struct Pass(Arc<PassInner>);
-
-struct PassInner {
-  context: Context,
-  pass: Expect<backend::RenderPass>,
+pub struct RenderPass {
+  context: Arc<Context>,
+  render_pass: Expect<backend::RenderPass>,
 }
 
-impl Pass {
+impl RenderPass {
   pub const FORMAT: gfx_hal::format::Format = gfx_hal::format::Format::Bgra8Unorm;
 
   /// Creates a new default render pass.
-  pub fn new(context: &Context) -> Self {
+  pub fn new(context: &Arc<Context>) -> Self {
     let color_attachment = gfx_hal::pass::Attachment {
       format: Some(Self::FORMAT),
       samples: 1,
@@ -50,44 +44,32 @@ impl Pass {
           | gfx_hal::image::Access::COLOR_ATTACHMENT_WRITE),
     };
 
-    let pass = unsafe {
+    let render_pass = unsafe {
       context
-        .device
+        .device()
         .create_render_pass(&[color_attachment], &[subpass], &[dependency])
         .expect("failed to create render pass")
         .into()
     };
 
-    Pass(Arc::new(PassInner {
-      pass,
-      context: context.clone(),
-    }))
+    Self { render_pass, context: context.clone() }
   }
 
   /// Returns a reference to the context the render pass was created in.
   pub fn context(&self) -> &Context {
-    &self.0.context
+    &self.context
   }
 
   /// Returns a reference to the underlying backend render pass.
-  pub(crate) fn as_backend(&self) -> &backend::RenderPass {
-    &self.0.pass
+  pub fn as_backend(&self) -> &backend::RenderPass {
+    &self.render_pass
   }
 }
 
-impl Drop for PassInner {
+impl Drop for RenderPass {
   fn drop(&mut self) {
     unsafe {
-      self
-        .context
-        .device
-        .destroy_render_pass(self.pass.take());
+      self.context.device().destroy_render_pass(self.render_pass.take());
     }
-  }
-}
-
-impl cmp::PartialEq for Pass {
-  fn eq(&self, other: &Pass) -> bool {
-    Arc::ptr_eq(&self.0, &other.0)
   }
 }

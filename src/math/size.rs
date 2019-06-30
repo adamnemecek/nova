@@ -43,9 +43,6 @@ impl<T: ScalarNum> ops::Mul<T> for Size<T> {
   type Output = Self;
 
   fn mul(self, multiplier: T) -> Self {
-    Size {
-      width: self.width * multiplier,
-      height: self.height * multiplier,
-    }
+    Size { width: self.width * multiplier, height: self.height * multiplier }
   }
 }

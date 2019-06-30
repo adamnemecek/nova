@@ -11,10 +11,7 @@ pub struct PathIter<'a> {
 
 impl<'a> PathIter<'a> {
   pub fn new(path: &'a Path) -> Self {
-    Self {
-      path: path.as_ref(),
-      initial: true,
-    }
+    Self { path: path.as_ref(), initial: true }
   }
 
   pub fn as_path(&self) -> &'a Path {

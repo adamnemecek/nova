@@ -13,45 +13,30 @@ pub struct Recorder<'a> {
   pool: &'a Pool,
   buffer: &'a mut backend::CommandBuffer,
   in_render_pass: bool,
-  bound_pipeline: Option<render::Pipeline>,
+  bound_pipeline: Option<Rc<pipeline::Graphics>>,
 }
 
 impl<'a> Recorder<'a> {
   /// Creates a new recorder for the given buffer and begins recording.
   pub fn new(pool: &'a Pool, buffer: &'a mut backend::CommandBuffer) -> Self {
-    if pool.is_recording().swap(true, atomic::Ordering::Acquire) {
-      panic!("can only record commands using one command buffer at a time per pool");
-    }
+    pool.set_recording(true);
 
     unsafe {
-      buffer.begin(
-        gfx_hal::command::CommandBufferFlags::EMPTY,
-        Default::default(),
-      );
+      buffer.begin(gfx_hal::command::CommandBufferFlags::EMPTY, Default::default());
     }
 
-    Self {
-      pool,
-      buffer,
-      in_render_pass: false,
-      bound_pipeline: None,
-    }
+    Self { pool, buffer, in_render_pass: false, bound_pipeline: None }
   }
 
   /// Records a command to begin a render pass.
-  pub fn begin_render_pass(&mut self, framebuffer: &mut render::Framebuffer) {
+  pub fn begin_render_pass(&mut self, framebuffer: &Framebuffer) {
     debug_assert!(!self.in_render_pass, "already began a render pass");
 
     let render_pass = framebuffer.pass().unwrap();
     let size = framebuffer.size();
 
     let viewport = gfx_hal::pso::Viewport {
-      rect: gfx_hal::pso::Rect {
-        x: 0,
-        y: 0,
-        w: size.width as i16,
-        h: size.height as i16,
-      },
+      rect: gfx_hal::pso::Rect { x: 0, y: 0, w: size.width as i16, h: size.height as i16 },
       depth: 0.0..1.0,
     };
 
@@ -77,8 +62,8 @@ impl<'a> Recorder<'a> {
     self.in_render_pass = true;
   }
 
-  /// Records a command to bind a pipeline to use for draw commands.
-  pub fn bind_pipeline(&mut self, pipeline: &render::Pipeline) {
+  /// Records a command to bind a graphics pipeline to use for draw commands.
+  pub fn bind_graphics_pipeline(&mut self, pipeline: &Rc<pipeline::Graphics>) {
     unsafe { self.buffer.bind_graphics_pipeline(pipeline.as_backend()) };
 
     self.bound_pipeline = Some(pipeline.clone());
@@ -91,14 +76,11 @@ impl<'a> Recorder<'a> {
     first_index: usize,
     sets: impl IntoIterator<Item = &'b DescriptorSet>,
   ) {
-    let pipeline = self
-      .bound_pipeline
-      .as_ref()
-      .expect("no graphics pipeline bound");
+    let pipeline = self.bound_pipeline.as_ref().expect("no graphics pipeline bound");
 
     unsafe {
       self.buffer.bind_graphics_descriptor_sets(
-        pipeline.as_backend_layout(),
+        pipeline.layout(),
         first_index,
         sets.into_iter().map(DescriptorSet::as_backend),
         &[],
@@ -110,9 +92,7 @@ impl<'a> Recorder<'a> {
   /// the current pipeline.
   pub fn bind_vertex_buffer(&mut self, index: u32, buffer: &Buffer) {
     unsafe {
-      self
-        .buffer
-        .bind_vertex_buffers(index, iter::once((buffer.as_backend(), 0)));
+      self.buffer.bind_vertex_buffers(index, iter::once((buffer.as_backend(), 0)));
     }
   }
 
@@ -121,10 +101,7 @@ impl<'a> Recorder<'a> {
   /// `T` must be the same type as specified during pipeline creation or another
   /// type of equal size.
   pub fn push_constants<T: Sized>(&mut self, constants: &T) {
-    let pipeline = self
-      .bound_pipeline
-      .as_ref()
-      .expect("no graphics pipeline bound");
+    let pipeline = self.bound_pipeline.as_ref().expect("no graphics pipeline bound");
 
     let count = pipeline.push_constant_count();
 
@@ -136,7 +113,7 @@ impl<'a> Recorder<'a> {
 
     unsafe {
       self.buffer.push_graphics_constants(
-        pipeline.as_backend_layout(),
+        pipeline.layout(),
         gfx_hal::pso::ShaderStageFlags::ALL,
         0,
         slice::from_raw_parts(constants as *const T as *const u32, count),
@@ -165,7 +142,7 @@ impl<'a> Recorder<'a> {
   /// recorded before and after.
   pub fn pipeline_barrier(
     &mut self,
-    stages: ops::Range<render::PipelineStage>,
+    stages: ops::Range<pipeline::Stage>,
     barriers: &[Barrier<'_>],
   ) {
     unsafe {
@@ -185,14 +162,7 @@ impl<'a> Recorder<'a> {
     dest: &Buffer,
     dest_index: u64,
   ) {
-    self.copy_buffer_regions(
-      src,
-      dest,
-      iter::once(BufferCopy {
-        src_range,
-        dest_index,
-      }),
-    );
+    self.copy_buffer_regions(src, dest, iter::once(BufferCopy { src_range, dest_index }));
   }
 
   /// Records a command to copy multiple regions of a source buffer to a
@@ -207,13 +177,11 @@ impl<'a> Recorder<'a> {
       self.buffer.copy_buffer(
         src.as_backend(),
         dest.as_backend(),
-        regions
-          .into_iter()
-          .map(|copy| gfx_hal::command::BufferCopy {
-            src: copy.src_range.start,
-            dst: copy.dest_index,
-            size: copy.src_range.end - copy.src_range.start,
-          }),
+        regions.into_iter().map(|copy| gfx_hal::command::BufferCopy {
+          src: copy.src_range.start,
+          dst: copy.dest_index,
+          size: copy.src_range.end - copy.src_range.start,
+        }),
       );
     }
   }
@@ -270,9 +238,6 @@ impl<'a> Drop for Recorder<'a> {
       self.buffer.finish();
     }
 
-    self
-      .pool
-      .is_recording()
-      .store(false, atomic::Ordering::Release);
+    self.pool.set_recording(false);
   }
 }

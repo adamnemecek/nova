@@ -36,19 +36,14 @@ pub struct Context {
 impl Context {
   /// Creates a new, empty virtual file system context.
   pub fn new() -> Self {
-    Self {
-      mounts: Arc::new(RwLock::new(Vec::new())),
-    }
+    Self { mounts: Arc::new(RwLock::new(Vec::new())) }
   }
 
   /// Mounts a file system path to a virtual file system path.
   pub fn mount(&self, path: impl Into<PathBuf>, fs_path: impl Into<FsPathBuf>) {
     let path = path.into();
 
-    assert!(
-      path.is_absolute(),
-      "virtual file system mount path must be absolute"
-    );
+    assert!(path.is_absolute(), "virtual file system mount path must be absolute");
 
     let mut fs_path = fs_path.into();
 

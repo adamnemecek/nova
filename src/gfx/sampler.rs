@@ -4,54 +4,43 @@
 
 use super::*;
 
-#[derive(Debug, Clone, Copy)]
-pub enum SamplerFilter {
-  Nearest,
-  Linear,
-}
-
-#[derive(Clone)]
-pub struct Sampler(Arc<SamplerInner>);
-
-struct SamplerInner {
-  context: Context,
+pub struct Sampler {
+  context: Arc<Context>,
   sampler: Expect<backend::Sampler>,
 }
 
 impl Sampler {
-  pub fn new(context: &Context, filter: SamplerFilter) -> Result<Self, SamplerCreationError> {
+  pub fn new(context: &Arc<Context>, filter: SamplerFilter) -> Result<Self, SamplerCreationError> {
     let sampler = unsafe {
-      context
-        .device
-        .create_sampler(gfx_hal::image::SamplerInfo::new(
-          match filter {
-            SamplerFilter::Nearest => gfx_hal::image::Filter::Nearest,
-            SamplerFilter::Linear => gfx_hal::image::Filter::Linear,
-          },
-          gfx_hal::image::WrapMode::Tile,
-        ))?
+      context.device().create_sampler(gfx_hal::image::SamplerInfo::new(
+        match filter {
+          SamplerFilter::Nearest => gfx_hal::image::Filter::Nearest,
+          SamplerFilter::Linear => gfx_hal::image::Filter::Linear,
+        },
+        gfx_hal::image::WrapMode::Tile,
+      ))?
     };
 
-    Ok(Self(Arc::new(SamplerInner {
-      context: context.clone(),
-      sampler: sampler.into(),
-    })))
+    Ok(Self { context: context.clone(), sampler: sampler.into() })
   }
 
-  pub(crate) fn as_backend(&self) -> &backend::Sampler {
-    &self.0.sampler
+  pub fn as_backend(&self) -> &backend::Sampler {
+    &self.sampler
   }
 }
 
-impl Drop for SamplerInner {
+impl Drop for Sampler {
   fn drop(&mut self) {
     unsafe {
-      self
-        .context
-        .device
-        .destroy_sampler(self.sampler.take());
+      self.context.device().destroy_sampler(self.sampler.take());
     }
   }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SamplerFilter {
+  Nearest,
+  Linear,
 }
 
 /// An error that occurred while creating a `Sampler`.

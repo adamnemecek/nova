@@ -12,34 +12,34 @@ use std::sync::atomic::AtomicBool;
 /// This structure is cloneable and all clones refer to the same semaphore. When
 /// all clones are dropped, the underlying backend resources are destroyed.
 #[derive(Clone)]
-pub struct Pool(Arc<PoolInner>);
+pub struct Pool(Rc<RefCell<PoolInner>>);
 
 struct PoolInner {
-  context: Context,
-  pool: Option<Mutex<backend::CommandPool>>,
+  context: Arc<Context>,
+  pool: Expect<backend::CommandPool>,
   level: gfx_hal::command::RawLevel,
-  recycled_buffers: SegQueue<backend::CommandBuffer>,
-  recording: AtomicBool,
+  is_recording: bool,
+  recycle_bin: Vec<backend::CommandBuffer>,
 }
 
 impl Pool {
   /// Creates a new command pool for the given queue ID.
-  pub fn new(context: &Context, queue_id: QueueId) -> Result<Self, OutOfMemoryError> {
+  pub fn new(context: &Arc<Context>, queue_id: QueueId) -> Result<Self, OutOfMemoryError> {
     let pool = unsafe {
-      context.device.create_command_pool(
+      context.device().create_command_pool(
         queue_id.as_backend(),
         gfx_hal::pool::CommandPoolCreateFlags::RESET_INDIVIDUAL,
       )
     };
 
     match pool {
-      Ok(pool) => Ok(Pool(Arc::new(PoolInner {
-        pool: Some(Mutex::new(pool)),
+      Ok(pool) => Ok(Self(Rc::new(RefCell::new(PoolInner {
         context: context.clone(),
+        pool: pool.into(),
         level: gfx_hal::command::RawLevel::Primary,
-        recycled_buffers: SegQueue::new(),
-        recording: AtomicBool::new(false),
-      }))),
+        is_recording: false,
+        recycle_bin: Vec::new(),
+      })))),
 
       Err(_) => Err(OutOfMemoryError),
     }
@@ -47,11 +47,10 @@ impl Pool {
 
   /// Allocates a new backend command buffer.
   pub fn allocate(&self) -> backend::CommandBuffer {
-    self
-      .0
-      .recycled_buffers
-      .pop()
-      .unwrap_or_else(|_| self.as_backend().allocate_one(self.0.level))
+    let mut inner = self.0.borrow_mut();
+    let level = inner.level;
+
+    inner.recycle_bin.pop().unwrap_or_else(|| inner.pool.allocate_one(level))
   }
 
   /// Registers a backend command buffer for reuse.
@@ -60,35 +59,32 @@ impl Pool {
       buffer.reset(true);
     }
 
-    self.0.recycled_buffers.push(buffer);
+    self.0.borrow_mut().recycle_bin.push(buffer);
   }
 
-  /// Returns a reference to an atomic boolean value indicating whether or not
-  /// any command buffers allocated from this pool are currently recording.
-  pub fn is_recording(&self) -> &AtomicBool {
-    &self.0.recording
-  }
+  /// Sets whether a command buffer in the pool is recording or not.
+  pub fn set_recording(&self, value: bool) {
+    let mut inner = self.0.borrow_mut();
 
-  /// Returns a locked reference to the underlying backend command pool.
-  pub(crate) fn as_backend(&self) -> MutexGuard<backend::CommandPool> {
-    self.0.pool.as_ref().unwrap().lock()
+    assert!(!value || !inner.is_recording, "a command buffer in the pool is already recording");
+
+    inner.is_recording = value;
   }
 }
 
 impl Drop for PoolInner {
   fn drop(&mut self) {
-    let context = &self.context;
-    let mut pool = self.pool.take().unwrap().into_inner();
+    let mut pool = self.pool.take();
 
     // Free all allocated command buffers before destroying the pool.
-    while let Ok(buffer) = self.recycled_buffers.pop() {
+    while let Some(buffer) = self.recycle_bin.pop() {
       unsafe {
         pool.free(iter::once(buffer));
       }
     }
 
     unsafe {
-      context.device.destroy_command_pool(pool);
+      self.context.device().destroy_command_pool(pool);
     }
   }
 }

@@ -27,9 +27,7 @@ impl<T> Expect<T> {
   ///
   /// Panics if the value has already been taken.
   pub fn take(&mut self) -> T {
-    self
-      .try_take()
-      .expect("expected value has already been taken")
+    self.try_take().expect("expected value has already been taken")
   }
 
   /// Takes the value out of the `Expect`, returning `None` if the value has

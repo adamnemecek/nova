@@ -15,10 +15,7 @@ pub struct Handle {
 
 impl Handle {
   pub(crate) fn new(window: winit::Window, events: channel::Receiver<winit::WindowEvent>) -> Self {
-    Self {
-      window: Arc::new(window),
-      events,
-    }
+    Self { window: Arc::new(window), events }
   }
 
   /// Returns the DPI scaling factor of the window.

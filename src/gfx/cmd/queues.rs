@@ -15,7 +15,7 @@ pub struct QueueId {
 
 impl QueueId {
   /// Returns the underlying backend queue family ID.
-  pub(crate) fn as_backend(&self) -> gfx_hal::queue::QueueFamilyId {
+  pub fn as_backend(&self) -> gfx_hal::queue::QueueFamilyId {
     self.family_id
   }
 }
@@ -59,10 +59,7 @@ impl Queues {
     // Return the first queue that supports graphics commands.
     for (index, queue) in self.queues.iter().enumerate() {
       if queue.family.supports_graphics() {
-        return QueueId {
-          index,
-          family_id: queue.family.id(),
-        };
+        return QueueId { index, family_id: queue.family.id() };
       }
     }
 
@@ -74,10 +71,7 @@ impl Queues {
     // First look for a queue that is specifically made for transfers.
     for (index, queue) in self.queues.iter().enumerate() {
       if !queue.family.supports_graphics() && !queue.family.supports_compute() {
-        return QueueId {
-          index,
-          family_id: queue.family.id(),
-        };
+        return QueueId { index, family_id: queue.family.id() };
       }
     }
 
@@ -96,10 +90,7 @@ impl Queues {
             .wait_semaphores
             .iter()
             .map(|(sem, stage)| (sem.as_backend(), *stage)),
-          signal_semaphores: submission
-            .signal_semaphores
-            .iter()
-            .map(Semaphore::as_backend),
+          signal_semaphores: submission.signal_semaphores.iter().map(Semaphore::as_backend),
         },
         fence.into().map(Fence::as_backend),
       );
@@ -112,10 +103,7 @@ impl Queues {
       use gfx_hal::Surface as _;
 
       if surface.supports_queue_family(&queue.family) {
-        return QueueId {
-          index,
-          family_id: queue.family.id(),
-        };
+        return QueueId { index, family_id: queue.family.id() };
       }
     }
 
@@ -132,10 +120,10 @@ impl Queues {
     use gfx_hal::queue::RawCommandQueue as _;
 
     let result = unsafe {
-      self.queues[queue_id.index].queue.lock().present(
-        iter::once((swapchain, image_index)),
-        wait_for.iter().map(|s| s.as_backend()),
-      )
+      self.queues[queue_id.index]
+        .queue
+        .lock()
+        .present(iter::once((swapchain, image_index)), wait_for.iter().map(|s| s.as_backend()))
     };
 
     match result {

@@ -6,7 +6,7 @@ use super::*;
 
 /// Buffer of data on the graphics device.
 pub struct Buffer {
-  context: Context,
+  context: Arc<Context>,
   buffer: Expect<backend::Buffer>,
   mapped: Option<*mut u8>,
   len: u64,
@@ -18,12 +18,11 @@ unsafe impl Send for Buffer {}
 
 impl Buffer {
   /// Allocates a new buffer of the given length.
-  pub fn new(context: &Context, kind: BufferKind, len: u64) -> Result<Self, BufferCreationError> {
-    let memory_kind = match kind {
-      BufferKind::Staging => MemoryKind::HostMapped,
-      _ => MemoryKind::DeviceLocal,
-    };
-
+  pub fn new(
+    context: &Arc<Context>,
+    kind: BufferKind,
+    len: u64,
+  ) -> Result<Self, BufferCreationError> {
     let usage = match kind {
       BufferKind::Vertex => gfx_hal::buffer::Usage::VERTEX | gfx_hal::buffer::Usage::TRANSFER_DST,
       BufferKind::Index => gfx_hal::buffer::Usage::INDEX | gfx_hal::buffer::Usage::TRANSFER_DST,
@@ -31,31 +30,29 @@ impl Buffer {
       BufferKind::Uniform => gfx_hal::buffer::Usage::UNIFORM | gfx_hal::buffer::Usage::TRANSFER_DST,
     };
 
-    let mut buffer = unsafe { context.device.create_buffer(len, usage)? };
-    let requirements = unsafe { context.device.get_buffer_requirements(&buffer) };
-    let memory = context.allocator().alloc(memory_kind, requirements)?;
+    let mut buffer = unsafe { context.device().create_buffer(len, usage)? };
+    let memory = alloc(
+      &context,
+      unsafe { context.device().get_buffer_requirements(&buffer) },
+      match kind {
+        BufferKind::Staging => MemoryProperties::CPU_VISIBLE | MemoryProperties::COHERENT,
+        _ => MemoryProperties::DEVICE_LOCAL,
+      },
+    )?;
 
     unsafe {
-      context
-        .device
-        .bind_buffer_memory(memory.as_backend(), 0, &mut buffer)?;
+      context.device().bind_buffer_memory(memory.as_backend(), 0, &mut buffer)?;
     }
 
     let mapped = match kind {
       BufferKind::Staging => {
-        Some(unsafe { context.device.map_memory(memory.as_backend(), 0..len)? })
+        Some(unsafe { context.device().map_memory(memory.as_backend(), 0..len)? })
       }
 
       _ => None,
     };
 
-    Ok(Self {
-      context: context.clone(),
-      buffer: buffer.into(),
-      mapped,
-      len,
-      _memory: memory,
-    })
+    Ok(Self { context: context.clone(), buffer: buffer.into(), mapped, len, _memory: memory })
   }
 }
 
@@ -69,9 +66,7 @@ impl Buffer {
   pub fn slice_as_ref<T: Copy>(&self, bounds: impl ops::RangeBounds<u64>) -> &[T] {
     let mapped = unsafe {
       slice::from_raw_parts(
-        self
-          .mapped
-          .expect("cannot get a direct reference to a non-staging buffer"),
+        self.mapped.expect("cannot get a direct reference to a non-staging buffer"),
         self.len as usize,
       )
     };
@@ -79,19 +74,14 @@ impl Buffer {
     let slice = &mapped[clamp_buffer_range_usize(&self, bounds)];
 
     unsafe {
-      slice::from_raw_parts(
-        &slice[0] as *const u8 as *const T,
-        slice.len() / mem::size_of::<T>(),
-      )
+      slice::from_raw_parts(&slice[0] as *const u8 as *const T, slice.len() / mem::size_of::<T>())
     }
   }
 
   pub fn slice_as_mut<T: Copy>(&mut self, bounds: impl ops::RangeBounds<u64>) -> &mut [T] {
     let mapped = unsafe {
       slice::from_raw_parts_mut(
-        self
-          .mapped
-          .expect("cannot get a direct reference to a non-staging buffer"),
+        self.mapped.expect("cannot get a direct reference to a non-staging buffer"),
         self.len as usize,
       )
     };
@@ -107,7 +97,7 @@ impl Buffer {
   }
 
   /// Returns a reference to the underlying backend buffer.
-  pub(crate) fn as_backend(&self) -> &backend::Buffer {
+  pub fn as_backend(&self) -> &backend::Buffer {
     &self.buffer
   }
 }
@@ -115,10 +105,7 @@ impl Buffer {
 impl Drop for Buffer {
   fn drop(&mut self) {
     unsafe {
-      self
-        .context
-        .device
-        .destroy_buffer(self.buffer.take());
+      self.context.device().destroy_buffer(self.buffer.take());
     }
   }
 }

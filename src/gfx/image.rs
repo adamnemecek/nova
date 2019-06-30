@@ -5,14 +5,8 @@
 use super::*;
 
 /// A device image.
-///
-/// This structure is cloneable and all clones refer to the same image. When all
-/// clones are dropped, the underlying device resources are destroyed.
-#[derive(Clone)]
-pub struct Image(Arc<ImageInner>);
-
-struct ImageInner {
-  context: Context,
+pub struct Image {
+  context: Arc<Context>,
   image: Expect<backend::Image>,
   view: Expect<backend::ImageView>,
   memory: Option<MemoryBlock>,
@@ -21,9 +15,9 @@ struct ImageInner {
 
 impl Image {
   /// Creates a new device image of the given `size` in pixels.
-  pub fn new(context: &Context, size: Size<u32>) -> Result<Self, ImageCreationError> {
+  pub fn new(context: &Arc<Context>, size: Size<u32>) -> Result<Self, ImageCreationError> {
     let mut image = unsafe {
-      context.device.create_image(
+      context.device().create_image(
         gfx_hal::image::Kind::D2(size.width, size.height, 1, 1),
         1,
         gfx_hal::format::Format::Bgra8Unorm,
@@ -33,20 +27,15 @@ impl Image {
       )?
     };
 
-    let requirements = unsafe { context.device.get_image_requirements(&image) };
-
-    let memory = context
-      .allocator()
-      .alloc(MemoryKind::DeviceLocal, requirements)?;
+    let requirements = unsafe { context.device().get_image_requirements(&image) };
+    let memory = alloc(&context, requirements, MemoryProperties::DEVICE_LOCAL)?;
 
     unsafe {
-      context
-        .device
-        .bind_image_memory(memory.as_backend(), 0, &mut image)?;
+      context.device().bind_image_memory(memory.as_backend(), 0, &mut image)?;
     }
 
     let view = unsafe {
-      context.device.create_image_view(
+      context.device().create_image_view(
         &image,
         gfx_hal::image::ViewKind::D2,
         gfx_hal::format::Format::Bgra8Unorm,
@@ -59,24 +48,24 @@ impl Image {
       )?
     };
 
-    Ok(Self(Arc::new(ImageInner {
+    Ok(Self {
       context: context.clone(),
       image: image.into(),
       view: view.into(),
-      memory: Some(memory),
+      memory: memory.into(),
       size,
-    })))
+    })
   }
 
   /// Creates an [`Image`] to represent a swapchain image.
-  pub(crate) fn from_swapchain_image(
-    context: &Context,
+  pub fn from_swapchain_image(
+    context: &Arc<Context>,
     image: backend::Image,
     size: Size<u32>,
     format: gfx_hal::format::Format,
   ) -> Result<Self, ImageCreationError> {
     let view = unsafe {
-      context.device.create_image_view(
+      context.device().create_image_view(
         &image,
         gfx_hal::image::ViewKind::D2,
         format,
@@ -89,55 +78,46 @@ impl Image {
       )?
     };
 
-    Ok(Self(Arc::new(ImageInner {
+    Ok(Self {
       context: context.clone(),
       image: image.into(),
       view: view.into(),
       memory: None,
       size,
-    })))
+    })
   }
 
   /// Returns the size of the image in pixels.
   pub fn size(&self) -> Size<u32> {
-    self.0.size
+    self.size
   }
 
   /// Returns a reference to the underlying backend image.
-  pub(crate) fn as_backend(&self) -> &backend::Image {
-    &self.0.image
+  pub fn as_backend(&self) -> &backend::Image {
+    &self.image
   }
 
   /// Returns a reference to the underlying backend image view.
-  pub(crate) fn as_backend_view(&self) -> &backend::ImageView {
-    &self.0.view
+  pub fn as_backend_view(&self) -> &backend::ImageView {
+    &self.view
   }
 }
 
 // Implement `Drop` to destroy graphics resources.
-impl Drop for ImageInner {
+impl Drop for Image {
   fn drop(&mut self) {
+    let device = self.context.device();
+
     unsafe {
-      self
-        .context
-        .device
-        .destroy_image_view(self.view.take());
+      device.destroy_image_view(self.view.take());
 
       // If memory is bound, then this is not a swapchain image so it must
       // be destroyed.
-      if self.memory.is_some() {
-        self
-          .context
-          .device
-          .destroy_image(self.image.take());
+      if let Some(memory) = self.memory.take() {
+        device.destroy_image(self.image.take());
+        free(memory);
       }
     }
-  }
-}
-
-impl cmp::PartialEq for Image {
-  fn eq(&self, other: &Image) -> bool {
-    Arc::ptr_eq(&self.0, &other.0)
   }
 }
 

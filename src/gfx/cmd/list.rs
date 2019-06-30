@@ -14,10 +14,7 @@ pub struct List {
 impl List {
   /// Creates a new command list using the given pool.
   pub fn new(pool: &Pool) -> Self {
-    List {
-      buffer: pool.allocate().into(),
-      pool: pool.clone(),
-    }
+    List { buffer: pool.allocate().into(), pool: pool.clone() }
   }
 
   /// Begins recording commands, returning a `Recorder` struct with methods for
@@ -27,7 +24,7 @@ impl List {
   }
 
   /// Returns a reference to the underlying backend command buffer.
-  pub(crate) fn as_backend(&self) -> &backend::CommandBuffer {
+  pub fn as_backend(&self) -> &backend::CommandBuffer {
     &self.buffer
   }
 }
