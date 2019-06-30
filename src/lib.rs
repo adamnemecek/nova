@@ -20,4 +20,4 @@ use parking_lot::{Mutex, MutexGuard, RwLock};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::{cmp, fmt, iter, mem, ops, slice};
+use std::{cmp, fmt, iter, mem, ops, slice, u64};

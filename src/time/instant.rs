@@ -9,7 +9,7 @@ use std::time::Instant as StdInstant;
 ///
 /// Like the standard library `Instant`, this structure can be used to calculate
 /// `Duration` values using the `elapsed()` method for example.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Instant(StdInstant);
 
 impl Instant {

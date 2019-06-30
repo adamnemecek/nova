@@ -133,8 +133,6 @@ pub fn start(
     while !is_stopping {
       clock.tick();
 
-      log::info!(&logger, "renderer tick"; "elapsed" => log::Display(clock.elapsed()));
-
       // Render a single frame or exit the loop on failure.
       if let Err(err) = renderer.render() {
         log::crit!(&logger, "could not render frame: {}", err);
@@ -144,10 +142,6 @@ pub fn start(
       // Process control messages sent since the previous frame.
       while let Ok(message) = recv_messages.try_recv() {
         match message {
-          ControlMessage::SetTargetFPS(value) => {
-            clock.set_frequency(value);
-          }
-
           ControlMessage::Stop => {
             is_stopping = true;
           }

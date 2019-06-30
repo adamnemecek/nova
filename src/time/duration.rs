@@ -2,10 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use std::fmt;
-use std::ops::Sub;
-use std::time::Duration as StdDuration;
-use std::u64;
+use super::*;
 
 /// Represents a span of time.
 ///
@@ -17,6 +14,9 @@ use std::u64;
 pub struct Duration(f64);
 
 impl Duration {
+  /// A zero-length duration.
+  pub const ZERO: Duration = Duration(0.0);
+
   /// Creates a `Duration` from a given number of seconds.
   ///
   /// This function will panic if the given value is not finite, is less than
@@ -37,6 +37,12 @@ impl Duration {
     }
 
     Duration(value)
+  }
+
+  /// Returns a new duration based on the given `hz` value, or frequency of the
+  /// clock per second.
+  pub fn from_hz(hz: f64) -> Self {
+    Duration::from_secs(1.0 / hz)
   }
 
   /// Converts the duration to a fractional number of seconds.
@@ -62,11 +68,35 @@ impl From<StdDuration> for Duration {
   }
 }
 
-impl Sub<Duration> for Duration {
-  type Output = Duration;
+impl ops::Add<Duration> for Duration {
+  type Output = Self;
+
+  fn add(self, other: Self) -> Self::Output {
+    Self::from_secs(self.0 + other.0)
+  }
+}
+
+impl ops::Sub<Duration> for Duration {
+  type Output = Self;
 
   fn sub(self, other: Self) -> Self::Output {
     Self((self.0 - other.0).max(0.0))
+  }
+}
+
+impl ops::Rem<Duration> for Duration {
+  type Output = Self;
+
+  fn rem(self, other: Self) -> Self::Output {
+    Self::from_secs(self.0 % other.0)
+  }
+}
+
+impl ops::Mul<f64> for Duration {
+  type Output = Self;
+
+  fn mul(self, value: f64) -> Self::Output {
+    Self::from_secs(self.0 * value)
   }
 }
 

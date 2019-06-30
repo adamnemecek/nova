@@ -2,13 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-mod clock;
+mod clocks;
 mod duration;
 mod instant;
 
-pub use self::{clock::*, duration::*, instant::*};
+pub use self::{clocks::*, duration::*, instant::*};
 
 use super::*;
+use std::time::{Duration as StdDuration, Instant as StdInstant};
+
+pub fn now() -> Instant {
+  Instant::now()
+}
 
 pub fn sleep(duration: Duration) {
   std::thread::sleep(duration.into());
