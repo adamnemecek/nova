@@ -127,11 +127,25 @@ pub fn start(
     // message is received.
     let mut clock = time::Clock::new();
     let mut is_stopping = false;
+    let mut then = time::now();
+
+    clock.set_synchronized(true);
 
     log::info!(&logger, "renderer started");
 
     while !is_stopping {
       clock.tick();
+
+      let now = time::now();
+
+      log::debug!(&logger, "tick";
+        "delta" => clock.delta_time(),
+        "intervals" => clock.fixed_intervals(),
+        "fixed" => clock.fixed_delta_time(),
+        "real" => now - then,
+      );
+
+      then = now;
 
       // Render a single frame or exit the loop on failure.
       if let Err(err) = renderer.render() {
