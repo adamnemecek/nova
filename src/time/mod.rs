@@ -9,7 +9,6 @@ mod instant;
 pub use self::{clocks::*, duration::*, instant::*};
 
 use super::*;
-use std::time::{Duration as StdDuration, Instant as StdInstant};
 
 pub fn now() -> Instant {
   Instant::now()

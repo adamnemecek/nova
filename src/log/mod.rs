@@ -9,11 +9,22 @@ pub use slog::{
 
 use super::*;
 
+lazy_static! {
+  static ref GUARDS: Mutex<Option<(slog_scope::GlobalLoggerGuard, slog_async::AsyncGuard)>> =
+    Mutex::new(None);
+  static ref LOGGER: RwLock<Option<Logger>> = RwLock::new(None);
+}
+
 /// A struct wrapper for log values that formats the value with `fmt::Debug`.
 pub struct Debug<T>(pub T);
 
 impl<T: fmt::Debug> Value for Debug<T> {
-  fn serialize(&self, _: &Record, key: Key, serializer: &mut Serializer) -> SerializationResult {
+  fn serialize(
+    &self,
+    _: &Record,
+    key: Key,
+    serializer: &mut dyn Serializer,
+  ) -> SerializationResult {
     serializer.emit_arguments(key, &format_args!("{:?}", self.0))
   }
 }
@@ -26,16 +37,10 @@ impl<T: fmt::Display> Value for Display<T> {
     &self,
     _: &Record,
     key: Key,
-    serializer: &mut Serializer,
+    serializer: &mut dyn Serializer,
   ) -> Result<(), SerializationError> {
     serializer.emit_arguments(key, &format_args!("{}", self.0))
   }
-}
-
-lazy_static! {
-  static ref GUARDS: Mutex<Option<(slog_scope::GlobalLoggerGuard, slog_async::AsyncGuard)>> =
-    Mutex::new(None);
-  static ref LOGGER: RwLock<Option<Logger>> = RwLock::new(None);
 }
 
 /// Initializes the logging module.

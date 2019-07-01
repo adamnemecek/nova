@@ -46,3 +46,17 @@ impl<T: ScalarNum> ops::Mul<T> for Size<T> {
     Size { width: self.width * multiplier, height: self.height * multiplier }
   }
 }
+
+impl<T: serde::Serialize + ScalarNum> serde::Serialize for Size<T> {
+  fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    (self.width, self.height).serialize(serializer)
+  }
+}
+
+impl<'de, T: serde::Deserialize<'de> + ScalarNum> serde::Deserialize<'de> for Size<T> {
+  fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+    let (width, height) = <(T, T)>::deserialize(deserializer)?;
+
+    Ok(Size { width, height })
+  }
+}

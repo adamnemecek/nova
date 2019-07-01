@@ -7,13 +7,11 @@ use super::*;
 /// Starts a new renderer with the given options.
 pub fn start(
   thread_scope: &thread::Scope,
-  context: &Arc<Context>,
+  context: Arc<Context>,
   window: &window::Handle,
-  ecs: &ecs::Handle,
-  logger: &log::Logger,
+  logger: log::Logger,
 ) -> Result<(), StartError> {
   let context = context.clone();
-  let ecs = ecs.clone();
   let logger = logger.clone();
 
   // Create resources needed for rendering.

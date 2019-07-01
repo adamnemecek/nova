@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
+use std::time::Duration as StdDuration;
 
 /// Represents a span of time.
 ///
@@ -136,7 +137,7 @@ impl log::Value for Duration {
     &self,
     _: &log::Record,
     key: log::Key,
-    serializer: &mut log::Serializer,
+    serializer: &mut dyn log::Serializer,
   ) -> log::SerializationResult {
     serializer.emit_arguments(key, &format_args!("{}", self))
   }

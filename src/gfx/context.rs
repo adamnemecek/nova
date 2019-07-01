@@ -15,15 +15,75 @@ pub struct Context {
 }
 
 impl Context {
-  pub(crate) fn new(
-    backend: impl Into<Arc<backend::Instance>>,
-    adapter: backend::Adapter,
-    device: backend::Device,
-    queues: cmd::Queues,
-  ) -> Self {
+  pub fn new(logger: log::Logger) -> Result<Self, InitError> {
+    // Instantiate the backend.
+    let backend = backend::Instance::create("nova", 1);
+
+    log::debug!(logger, "instantiated graphics backend";
+      "name" => backend::NAME,
+    );
+
+    // Get and log all available adapters.
+    let mut adapters = backend.enumerate_adapters();
+
+    for adapter in &adapters {
+      log::debug!(logger, "found graphics adapter";
+        "type" => log::Debug(&adapter.info.device_type),
+        "type_id" => adapter.info.device,
+        "vendor_id" => adapter.info.vendor,
+        "name" => &adapter.info.name,
+      );
+    }
+
+    // Sort adapters from most powerful type to least.
+    adapters.sort_by_key(|adapter| match adapter.info.device_type {
+      gfx_hal::adapter::DeviceType::DiscreteGpu => 3,
+      gfx_hal::adapter::DeviceType::IntegratedGpu => 2,
+      gfx_hal::adapter::DeviceType::Cpu => 1,
+      _ => 0,
+    });
+
+    // Select the first adapter in the sorted list.
+    let adapter = adapters.into_iter().next().ok_or(InitError::NoAdapter)?;
+
+    log::debug!(logger, "selected graphics adapter";
+      "type" => log::Debug(&adapter.info.device_type),
+      "type_id" => adapter.info.device,
+      "vendor_id" => adapter.info.vendor,
+      "name" => &adapter.info.name,
+    );
+
+    // Get all queue families.
+    let queue_families = adapter.queue_families.clone();
+
+    // Open the physical device and one queue in every family.
+    let queue_requests = queue_families
+      .iter()
+      .map(|family| {
+        use gfx_hal::QueueFamily as _;
+
+        log::debug!(logger, "found graphics queue family";
+          "max_queues" => family.max_queues(),
+          "type" => log::Debug(family.queue_type()),
+          "id" => family.id().0,
+        );
+
+        (family, &[1.0][..])
+      })
+      .collect::<Vec<_>>();
+
+    let gfx_hal::Gpu { device, queues } = unsafe {
+      use gfx_hal::PhysicalDevice as _;
+
+      adapter.physical_device.open(&queue_requests[..], gfx_hal::Features::empty())?
+    };
+
+    log::debug!(logger, "opened graphics device");
+
+    let queues = cmd::Queues::new(queue_families, queues);
     let memory = Memory::new(&adapter);
 
-    Context { memory, queues, device, adapter, backend: backend.into() }
+    Ok(Context { memory, queues, device, adapter, backend: backend.into() })
   }
 
   pub(crate) fn backend(&self) -> &backend::Instance {
@@ -50,5 +110,32 @@ impl Context {
   /// being executed.
   pub(crate) fn wait_idle(&self) {
     let _ = self.device.wait_idle();
+  }
+}
+
+/// An error that occurred during the initialization of a new graphics context.
+#[derive(Debug)]
+pub enum InitError {
+  /// There is no suitable graphics adapter.
+  NoAdapter,
+  /// An error occurred while creating the graphics device.
+  DeviceCreationFailed(DeviceCreationError),
+}
+
+impl std::error::Error for InitError {}
+
+impl fmt::Display for InitError {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match self {
+      InitError::NoAdapter => write!(f, "no suitable graphics adapter"),
+      InitError::DeviceCreationFailed(cause) => write!(f, "failed to create device: {}", cause),
+    }
+  }
+}
+
+// Impl `From` to convert from device creation errors.
+impl From<DeviceCreationError> for InitError {
+  fn from(cause: DeviceCreationError) -> Self {
+    InitError::DeviceCreationFailed(cause)
   }
 }

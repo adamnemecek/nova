@@ -3,10 +3,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod handle;
-mod options;
+mod settings;
 
-pub use self::handle::*;
-pub use self::options::*;
+pub use self::{handle::*, settings::*};
 
 use super::*;
 
@@ -22,8 +21,8 @@ pub enum Event {
   Resized,
 }
 
-/// Creates a new window with the given options and returns a `Handle` for it.
-pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, OpenError> {
+/// Creates a new window with the given settings and returns a `Handle` for it.
+pub fn open(thread_scope: &thread::Scope, settings: Settings) -> Result<Handle, OpenError> {
   // Create channels to communicate with the window's event loop thread.
   let (send_events, recv_events) = mpsc::unbounded();
   let (send_window, recv_window) = oneshot::channel();
@@ -36,7 +35,7 @@ pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, 
     let monitor = events_loop.get_primary_monitor();
 
     // Use the given size or a default size that is a multiple of 1280x720.
-    let size = match options.size {
+    let size = match settings.size {
       Some(size) => winit::dpi::PhysicalSize::new(size.width, size.height),
 
       None => {
@@ -57,8 +56,8 @@ pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, 
     // Try to create a winit window with the given options and send the result
     // back to the original thread.
     let window = winit::WindowBuilder::new()
-      .with_title(options.title)
-      .with_resizable(options.resizable)
+      .with_title(settings.title.unwrap_or_else(default_title))
+      .with_resizable(settings.resizable.unwrap_or(true))
       .with_dimensions(size.to_logical(monitor.get_hidpi_factor()))
       .build(&events_loop);
 
