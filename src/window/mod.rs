@@ -25,8 +25,8 @@ pub enum Event {
 /// Creates a new window with the given options and returns a `Handle` for it.
 pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, OpenError> {
   // Create channels to communicate with the window's event loop thread.
-  let (send_events, recv_events) = channel::unbounded();
-  let (send_window, recv_window) = channel::bounded(0);
+  let (send_events, recv_events) = mpsc::unbounded();
+  let (send_window, recv_window) = oneshot::channel();
 
   // Start the event loop thread.
   thread_scope.spawn(move |_| {
@@ -68,14 +68,12 @@ pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, 
       return;
     }
 
-    drop(send_window);
-
     // Run the event loop, sending events to the window handle, until the
     // channel is closed on the other end meaning all handles have been dropped
     // and the window should close.
     events_loop.run_forever(|event| {
       if let winit::Event::WindowEvent { event, .. } = event {
-        if send_events.send(event).is_err() {
+        if send_events.unbounded_send(event).is_err() {
           return winit::ControlFlow::Break;
         }
       }
@@ -85,7 +83,7 @@ pub fn create(thread_scope: &thread::Scope, options: Options) -> Result<Handle, 
   });
 
   // Receive the window from the background thread and wrap it.
-  let window = recv_window.recv()??;
+  let window = block_on(recv_window)??;
 
   Ok(Handle::new(window, recv_events))
 }
@@ -107,8 +105,8 @@ impl fmt::Display for OpenError {
   }
 }
 
-impl From<channel::RecvError> for OpenError {
-  fn from(_: channel::RecvError) -> Self {
+impl From<oneshot::Canceled> for OpenError {
+  fn from(_: oneshot::Canceled) -> Self {
     OpenError::Unknown
   }
 }

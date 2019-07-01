@@ -3,14 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use super::*;
-use std::sync::atomic;
 
 /// Records commands into a command list.
 ///
 /// Recording finishes when this structure is dropped or when the `finish()`
 /// method is called.
 pub struct Recorder<'a> {
-  pool: &'a Pool,
+  pool: &'a RefCell<Pool>,
   buffer: &'a mut backend::CommandBuffer,
   in_render_pass: bool,
   bound_pipeline: Option<Rc<pipeline::Graphics>>,
@@ -18,8 +17,8 @@ pub struct Recorder<'a> {
 
 impl<'a> Recorder<'a> {
   /// Creates a new recorder for the given buffer and begins recording.
-  pub fn new(pool: &'a Pool, buffer: &'a mut backend::CommandBuffer) -> Self {
-    pool.set_recording(true);
+  pub fn new(pool: &'a RefCell<Pool>, buffer: &'a mut backend::CommandBuffer) -> Self {
+    pool.borrow_mut().set_recording(true);
 
     unsafe {
       buffer.begin(gfx_hal::command::CommandBufferFlags::EMPTY, Default::default());
@@ -238,6 +237,6 @@ impl<'a> Drop for Recorder<'a> {
       self.buffer.finish();
     }
 
-    self.pool.set_recording(false);
+    self.pool.borrow_mut().set_recording(false);
   }
 }

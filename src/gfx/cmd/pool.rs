@@ -6,13 +6,7 @@ use super::*;
 use gfx_hal::pool::RawCommandPool as _;
 
 /// Pool of reusable command buffers.
-///
-/// This structure is cloneable and all clones refer to the same semaphore. When
-/// all clones are dropped, the underlying backend resources are destroyed.
-#[derive(Clone)]
-pub struct Pool(Rc<RefCell<PoolInner>>);
-
-struct PoolInner {
+pub struct Pool {
   context: Arc<Context>,
   pool: Expect<backend::CommandPool>,
   queue_id: QueueId,
@@ -28,56 +22,55 @@ impl Pool {
       context.device().create_command_pool(
         queue_id.as_backend(),
         gfx_hal::pool::CommandPoolCreateFlags::RESET_INDIVIDUAL,
-      )
+      )?
     };
 
-    match pool {
-      Ok(pool) => Ok(Self(Rc::new(RefCell::new(PoolInner {
-        context: context.clone(),
-        pool: pool.into(),
-        queue_id,
-        level: gfx_hal::command::RawLevel::Primary,
-        is_recording: false,
-        recycle_bin: Vec::new(),
-      })))),
-
-      Err(_) => Err(OutOfMemoryError),
-    }
+    Ok(Self {
+      context: context.clone(),
+      pool: pool.into(),
+      queue_id,
+      level: gfx_hal::command::RawLevel::Primary,
+      is_recording: false,
+      recycle_bin: Vec::new(),
+    })
   }
 
   /// Returns the queue ID the command pool was created for.
   pub fn queue_id(&self) -> QueueId {
-    self.0.borrow().queue_id
+    self.queue_id
   }
 
   /// Allocates a new backend command buffer.
-  pub fn allocate(&self) -> backend::CommandBuffer {
-    let mut inner = self.0.borrow_mut();
-    let level = inner.level;
-
-    inner.recycle_bin.pop().unwrap_or_else(|| inner.pool.allocate_one(level))
+  pub fn allocate(&mut self) -> backend::CommandBuffer {
+    self.recycle_bin.pop().unwrap_or_else(|| self.pool.allocate_one(self.level))
   }
 
   /// Registers a backend command buffer for reuse.
-  pub fn recycle(&self, mut buffer: backend::CommandBuffer) {
+  pub fn recycle(&mut self, mut buffer: backend::CommandBuffer) {
     unsafe {
       buffer.reset(true);
     }
 
-    self.0.borrow_mut().recycle_bin.push(buffer);
+    self.recycle_bin.push(buffer);
   }
 
   /// Sets whether a command buffer in the pool is recording or not.
-  pub fn set_recording(&self, value: bool) {
-    let mut inner = self.0.borrow_mut();
+  pub fn set_recording(&mut self, value: bool) {
+    assert!(
+      !value || !self.is_recording,
+      "a command list in the same command pool is already recording"
+    );
 
-    assert!(!value || !inner.is_recording, "a command buffer in the pool is already recording");
+    self.is_recording = value;
+  }
 
-    inner.is_recording = value;
+  /// Returns the pool wrapped in an `Rc<RefCell<T>>`.
+  pub fn into_ref_cell(self) -> Rc<RefCell<Self>> {
+    Rc::new(RefCell::new(self))
   }
 }
 
-impl Drop for PoolInner {
+impl Drop for Pool {
   fn drop(&mut self) {
     let mut pool = self.pool.take();
 

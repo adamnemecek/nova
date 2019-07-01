@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+pub use specs::{Component, Join, ParJoin};
+
+use super::storage::UnprotectedStorage;
 use super::*;
-use hibitset::BitSet;
-use shred_derive::*;
-use specs::storage::UnprotectedStorage;
 
 /// Provides read-only access to the components of type `C` in an instance.
 #[derive(SystemData)]

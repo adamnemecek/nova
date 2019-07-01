@@ -9,22 +9,27 @@ use super::*;
 /// When this structure is dropped, the window is closed.
 pub struct Handle {
   window: Arc<winit::Window>,
-  events: channel::Receiver<winit::WindowEvent>,
+  events: mpsc::UnboundedReceiver<winit::WindowEvent>,
 }
 
 impl Handle {
-  pub(crate) fn new(window: winit::Window, events: channel::Receiver<winit::WindowEvent>) -> Self {
+  pub(crate) fn new(
+    window: winit::Window,
+    events: mpsc::UnboundedReceiver<winit::WindowEvent>,
+  ) -> Self {
     Self { window: Arc::new(window), events }
   }
 
   /// Returns the next window event if one is available or `None` if there is no
   /// available event.
-  pub fn next_event(&self) -> Option<Event> {
-    self.events.try_recv().ok().and_then(|event| match event {
-      winit::WindowEvent::CloseRequested => Some(Event::CloseRequested),
-      winit::WindowEvent::Resized(_) => Some(Event::Resized),
+  pub fn next_event(&mut self) -> Option<Event> {
+    let event = self.events.try_next().ok()??;
 
-      _ => None,
+    Some(match event {
+      winit::WindowEvent::CloseRequested => Event::CloseRequested,
+      winit::WindowEvent::Resized(_) => Event::Resized,
+
+      _ => return None,
     })
   }
 

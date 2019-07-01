@@ -5,6 +5,5 @@
 mod expect;
 
 pub use self::expect::*;
-pub use crossbeam::sync::WaitGroup;
 
 use super::*;

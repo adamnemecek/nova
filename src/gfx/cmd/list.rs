@@ -7,14 +7,19 @@ use super::*;
 /// List of commands that can be submitted to a command queue of a graphics
 /// device.
 pub struct List {
-  pool: Pool,
+  pool: Rc<RefCell<Pool>>,
   buffer: Expect<backend::CommandBuffer>,
 }
 
 impl List {
   /// Creates a new command list using the given pool.
-  pub fn new(pool: &Pool) -> Self {
-    List { buffer: pool.allocate().into(), pool: pool.clone() }
+  pub fn new(pool: &Rc<RefCell<Pool>>) -> Self {
+    List { buffer: pool.borrow_mut().allocate().into(), pool: pool.clone() }
+  }
+
+  /// Returns the queue ID this command list was created for.
+  pub fn queue_id(&self) -> QueueId {
+    self.pool.borrow().queue_id()
   }
 
   /// Begins recording commands, returning a `Recorder` struct with methods for
@@ -31,6 +36,6 @@ impl List {
 
 impl Drop for List {
   fn drop(&mut self) {
-    self.pool.recycle(self.buffer.take());
+    self.pool.borrow_mut().recycle(self.buffer.take());
   }
 }

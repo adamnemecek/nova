@@ -11,7 +11,10 @@ pub mod util;
 pub mod vfs;
 pub mod window;
 
-pub use crossbeam::{channel, thread};
+pub use crossbeam_utils::thread;
+pub use futures;
+pub use futures::channel::{mpsc, oneshot};
+pub use futures::executor::block_on;
 
 use self::math::{Matrix4, Point2, Rect, Size};
 use self::util::Expect;

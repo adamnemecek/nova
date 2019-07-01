@@ -3,81 +3,30 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 mod components;
+mod context;
 mod entities;
 
-pub use self::components::{Components, ComponentsMut};
-pub use self::entities::Entities;
+pub use self::{components::*, context::*, entities::*};
 pub use shred::{ReadExpect as Resource, Resource as ResourceLike, WriteExpect as ResourceMut};
-pub use specs::join::{Join, ParJoin};
 pub use specs::storage;
-pub use specs::storage::{BTreeStorage, DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
-pub use specs::storage::{ComponentEvent, FlaggedStorage};
-pub use specs::world::Entity;
-pub use specs::{BitSet, Component};
 
-/// A standalone ECS context containing resources, entities, and components.
-#[derive(Default)]
-pub struct Context {
-  world: specs::World,
+use super::*;
+use hibitset::*;
+use shred_derive::*;
+
+#[derive(Clone)]
+pub struct Handle {
+  context: Arc<Mutex<Context>>,
 }
 
-impl Context {
-  /// Create a new, empty ECS context.
-  pub fn new() -> Self {
-    Self::default()
+impl Handle {
+  pub fn lock(&self) -> MutexGuard<Context> {
+    self.context.lock()
   }
+}
 
-  /// Gets an immutable reference to the resource of the type `R`.
-  ///
-  /// Panics if no such resource exists.
-  pub fn resource<R: ResourceLike>(&self) -> Resource<R> {
-    self.world.system_data()
-  }
+pub fn new() -> Handle {
+  let context = Context::new();
 
-  /// Gets a mutable reference to the resource of the type `R`.
-  ///
-  /// Panics if no such resource exists.
-  pub fn resource_mut<R: ResourceLike>(&self) -> ResourceMut<R> {
-    self.world.system_data()
-  }
-
-  /// Sets the available resource of type `R`.
-  ///
-  /// If a resource of type `R` already exists, the old value dropped.
-  pub fn put_resource<R: ResourceLike>(&mut self, value: R) {
-    self.world.add_resource(value);
-  }
-
-  /// Returns an `Entities` struct for creating, deleting, and listing entities.
-  pub fn entities(&self) -> Entities {
-    self.world.system_data()
-  }
-
-  /// Finalizes the creation and deletion of any entities created or deleted
-  /// since the previous call to this function.
-  ///
-  /// A deleted entity is still considered alive until this function is called.
-  pub fn commit_entities(&mut self) {
-    self.world.maintain();
-  }
-
-  /// Registers a possible component type.
-  pub fn register_component<C: Component>(&mut self)
-  where
-    C::Storage: Default,
-  {
-    self.world.register::<C>();
-  }
-
-  /// Returns a `Components<C>` struct for reading the components of type `C`
-  /// for all entities.
-  pub fn components<C: Component>(&self) -> Components<C> {
-    self.world.system_data()
-  }
-
-  /// Returns a `ComponentsMut<C>` struct for reading and writing the components
-  /// of type `C` for all entities.
-  pub fn components_mut<C: Component>(&self) -> ComponentsMut<C> {
-    self.world.system_data()
-  }
+  Handle { context: Arc::new(Mutex::new(context)) }
 }

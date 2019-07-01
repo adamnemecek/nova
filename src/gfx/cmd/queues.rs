@@ -7,7 +7,7 @@ use gfx_hal::queue::RawCommandQueue as _;
 use gfx_hal::QueueFamily as _;
 
 /// Uniquely identifies a single command queue of a graphics device.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct QueueId {
   index: usize,
   family_id: gfx_hal::queue::QueueFamilyId,
@@ -80,6 +80,14 @@ impl Queues {
   }
 
   pub fn submit<'a, F: Into<Option<&'a Fence>>>(&'a self, submission: Submission<'a, F>) {
+    let queue_id =
+      submission.lists.first().expect("must submit at least one command list").queue_id();
+
+    debug_assert!(
+      submission.lists.iter().all(|cmd| cmd.queue_id() == queue_id),
+      "all command lists must have the same queue ID"
+    );
+
     let mut queue = self.queues[submission.queue_id.index].queue.lock();
 
     unsafe {
