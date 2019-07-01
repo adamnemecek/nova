@@ -13,11 +13,11 @@ pub mod window;
 
 pub use crossbeam_utils::thread;
 pub use futures;
-pub use futures::channel::{mpsc, oneshot};
-pub use futures::executor::block_on;
 
 use self::math::{Matrix4, Point2, Rect, Size};
 use self::util::Expect;
+use futures::channel::{mpsc, oneshot};
+use futures::executor::block_on;
 use lazy_static::lazy_static;
 use parking_lot::{Mutex, MutexGuard, RwLock};
 use std::cell::RefCell;

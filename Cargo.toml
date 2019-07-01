@@ -13,7 +13,7 @@ lto = true
 [dependencies]
 crossbeam-queue = "0.1"
 crossbeam-utils = "0.6"
-futures-preview = { git = "https://github.com/rust-lang-nursery/futures-rs" }
+futures-preview = "0.3.0-alpha.16"
 gfx-hal = "0.2"
 glsl-to-spirv = "0.1"
 hibitset = "0.5"
