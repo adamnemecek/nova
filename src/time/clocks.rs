@@ -125,16 +125,19 @@ pub enum LoopFlow {
   Continue,
 }
 
+/// A join handle for a loop thread spawned with [`spawn_clock_loop`].
+pub type LoopJoinHandle<'a> = thread::ScopedJoinHandle<'a, ()>;
+
 /// Spawns a new thread and runs `tick_fn` in a loop with a [`Clock`].
 ///
 /// The clock is synchronized and has its fixed delta time initalized to the
 /// value of `interval`, meaning the loop will execute at that interval or as
 /// near to it as possible.
-pub fn spawn_clock_loop(
-  scope: &thread::Scope,
+pub fn spawn_clock_loop<'a>(
+  scope: &'a thread::Scope,
   interval: Duration,
   mut tick_fn: impl FnMut(&mut Clock) -> LoopFlow + Send + 'static,
-) {
+) -> thread::ScopedJoinHandle<'a, ()> {
   let mut clock = Clock::new();
 
   clock.set_fixed_delta_time(interval);
@@ -147,5 +150,5 @@ pub fn spawn_clock_loop(
       LoopFlow::Break => break,
       LoopFlow::Continue => continue,
     }
-  });
+  })
 }
