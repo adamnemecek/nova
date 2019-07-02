@@ -86,29 +86,29 @@ impl Context {
     Ok(Context { memory, queues, device, adapter, backend: backend.into() })
   }
 
-  pub(crate) fn backend(&self) -> &backend::Instance {
+  pub(super) fn backend(&self) -> &backend::Instance {
     &self.backend
   }
 
-  pub(crate) fn physical_device(&self) -> &backend::PhysicalDevice {
+  pub(super) fn physical_device(&self) -> &backend::PhysicalDevice {
     &self.adapter.physical_device
   }
 
-  pub(crate) fn device(&self) -> &backend::Device {
+  pub(super) fn device(&self) -> &backend::Device {
     &self.device
   }
 
-  pub(crate) fn memory(&self) -> &Memory {
+  pub(super) fn memory(&self) -> &Memory {
     &self.memory
   }
 
-  pub(crate) fn queues(&self) -> &cmd::Queues {
+  pub(super) fn queues(&self) -> &cmd::Queues {
     &self.queues
   }
 
   /// Waits for the graphics device to be idle, meaning no command buffers are
   /// being executed.
-  pub(crate) fn wait_idle(&self) {
+  pub(super) fn wait_idle(&self) {
     let _ = self.device.wait_idle();
   }
 }

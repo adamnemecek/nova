@@ -13,7 +13,7 @@ pub struct Handle {
 }
 
 impl Handle {
-  pub(crate) fn new(
+  pub(super) fn new(
     window: winit::Window,
     events: mpsc::UnboundedReceiver<winit::WindowEvent>,
   ) -> Self {

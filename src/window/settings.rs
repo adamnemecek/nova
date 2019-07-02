@@ -24,6 +24,6 @@ pub struct Settings {
   pub size: Option<Size<f64>>,
 }
 
-pub(crate) fn default_title() -> String {
+pub(super) fn default_title() -> String {
   DEFAULT_TITLE.clone()
 }
