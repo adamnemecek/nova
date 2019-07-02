@@ -115,3 +115,37 @@ impl Clock {
     self.fixed_remainder = delta_time - adjusted_time;
   }
 }
+
+/// A value indicating whether a loop should break and stop or continue and
+/// run again.
+pub enum LoopFlow {
+  /// Break the loop.
+  Break,
+  /// Continue with the next iteration.
+  Continue,
+}
+
+/// Spawns a new thread and runs `tick_fn` in a loop with a [`Clock`].
+///
+/// The clock is synchronized and has its fixed delta time initalized to the
+/// value of `interval`, meaning the loop will execute at that interval or as
+/// near to it as possible.
+pub fn spawn_clock_loop(
+  scope: &thread::Scope,
+  interval: Duration,
+  mut tick_fn: impl FnMut(&mut Clock) -> LoopFlow + Send + 'static,
+) {
+  let mut clock = Clock::new();
+
+  clock.set_fixed_delta_time(interval);
+  clock.set_synchronized(true);
+
+  scope.spawn(move |_| loop {
+    clock.tick();
+
+    match tick_fn(&mut clock) {
+      LoopFlow::Break => break,
+      LoopFlow::Continue => continue,
+    }
+  });
+}
