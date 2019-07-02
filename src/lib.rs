@@ -23,6 +23,7 @@ use lazy_static::lazy_static;
 use parking_lot::{Mutex, RwLock};
 use serde_derive::*;
 use std::cell::RefCell;
+use std::convert::{TryFrom, TryInto};
 use std::rc::Rc;
 use std::sync::{Arc, Weak as ArcWeak};
 use std::{cmp, fmt, iter, mem, ops, slice, u64};
