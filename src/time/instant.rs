@@ -8,7 +8,7 @@ use super::*;
 ///
 /// Like the standard library `Instant`, this structure can be used to calculate
 /// `Duration` values using the `elapsed()` method for example.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Instant(std::time::Instant);
 
 impl Instant {
@@ -38,6 +38,13 @@ impl ops::Sub<Instant> for Instant {
 
   fn sub(self, other: Self) -> Self::Output {
     (self.0 - other.0).into()
+  }
+}
+
+// Delegate `Debug` to the underlying standard instant.
+impl fmt::Debug for Instant {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    self.0.fmt(f)
   }
 }
 
